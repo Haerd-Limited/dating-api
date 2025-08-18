@@ -1,15 +1,11 @@
 package user
 
 import (
-	"errors"
 	"net/http"
 
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/user"
-	"github.com/Haerd-Limited/dating-api/internal/user/storage"
-	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 )
 
 type Handler interface {
@@ -37,6 +33,7 @@ func (h *handler) MyProfile() http.HandlerFunc {
 	}
 }
 
+/*
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, storage.ErrUserDoesNotExists):
@@ -55,3 +52,4 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}
 }
+*/

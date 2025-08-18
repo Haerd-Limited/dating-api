@@ -24,72 +24,79 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID        string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Email     null.String `boil:"email" json:"email,omitempty" toml:"email" yaml:"email,omitempty"`
-	FirstName string      `boil:"first_name" json:"first_name" toml:"first_name" yaml:"first_name"`
-	LastName  null.String `boil:"last_name" json:"last_name,omitempty" toml:"last_name" yaml:"last_name,omitempty"`
-	Phone     null.String `boil:"phone" json:"phone,omitempty" toml:"phone" yaml:"phone,omitempty"`
-	CreatedAt time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID             string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Email          null.String `boil:"email" json:"email,omitempty" toml:"email" yaml:"email,omitempty"`
+	FirstName      string      `boil:"first_name" json:"first_name" toml:"first_name" yaml:"first_name"`
+	LastName       null.String `boil:"last_name" json:"last_name,omitempty" toml:"last_name" yaml:"last_name,omitempty"`
+	Phone          null.String `boil:"phone" json:"phone,omitempty" toml:"phone" yaml:"phone,omitempty"`
+	CreatedAt      time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt      time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	OnboardingStep int16       `boil:"onboarding_step" json:"onboarding_step" toml:"onboarding_step" yaml:"onboarding_step"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserColumns = struct {
-	ID        string
-	Email     string
-	FirstName string
-	LastName  string
-	Phone     string
-	CreatedAt string
-	UpdatedAt string
+	ID             string
+	Email          string
+	FirstName      string
+	LastName       string
+	Phone          string
+	CreatedAt      string
+	UpdatedAt      string
+	OnboardingStep string
 }{
-	ID:        "id",
-	Email:     "email",
-	FirstName: "first_name",
-	LastName:  "last_name",
-	Phone:     "phone",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
+	ID:             "id",
+	Email:          "email",
+	FirstName:      "first_name",
+	LastName:       "last_name",
+	Phone:          "phone",
+	CreatedAt:      "created_at",
+	UpdatedAt:      "updated_at",
+	OnboardingStep: "onboarding_step",
 }
 
 var UserTableColumns = struct {
-	ID        string
-	Email     string
-	FirstName string
-	LastName  string
-	Phone     string
-	CreatedAt string
-	UpdatedAt string
+	ID             string
+	Email          string
+	FirstName      string
+	LastName       string
+	Phone          string
+	CreatedAt      string
+	UpdatedAt      string
+	OnboardingStep string
 }{
-	ID:        "users.id",
-	Email:     "users.email",
-	FirstName: "users.first_name",
-	LastName:  "users.last_name",
-	Phone:     "users.phone",
-	CreatedAt: "users.created_at",
-	UpdatedAt: "users.updated_at",
+	ID:             "users.id",
+	Email:          "users.email",
+	FirstName:      "users.first_name",
+	LastName:       "users.last_name",
+	Phone:          "users.phone",
+	CreatedAt:      "users.created_at",
+	UpdatedAt:      "users.updated_at",
+	OnboardingStep: "users.onboarding_step",
 }
 
 // Generated where
 
 var UserWhere = struct {
-	ID        whereHelperstring
-	Email     whereHelpernull_String
-	FirstName whereHelperstring
-	LastName  whereHelpernull_String
-	Phone     whereHelpernull_String
-	CreatedAt whereHelpertime_Time
-	UpdatedAt whereHelpertime_Time
+	ID             whereHelperstring
+	Email          whereHelpernull_String
+	FirstName      whereHelperstring
+	LastName       whereHelpernull_String
+	Phone          whereHelpernull_String
+	CreatedAt      whereHelpertime_Time
+	UpdatedAt      whereHelpertime_Time
+	OnboardingStep whereHelperint16
 }{
-	ID:        whereHelperstring{field: "\"users\".\"id\""},
-	Email:     whereHelpernull_String{field: "\"users\".\"email\""},
-	FirstName: whereHelperstring{field: "\"users\".\"first_name\""},
-	LastName:  whereHelpernull_String{field: "\"users\".\"last_name\""},
-	Phone:     whereHelpernull_String{field: "\"users\".\"phone\""},
-	CreatedAt: whereHelpertime_Time{field: "\"users\".\"created_at\""},
-	UpdatedAt: whereHelpertime_Time{field: "\"users\".\"updated_at\""},
+	ID:             whereHelperstring{field: "\"users\".\"id\""},
+	Email:          whereHelpernull_String{field: "\"users\".\"email\""},
+	FirstName:      whereHelperstring{field: "\"users\".\"first_name\""},
+	LastName:       whereHelpernull_String{field: "\"users\".\"last_name\""},
+	Phone:          whereHelpernull_String{field: "\"users\".\"phone\""},
+	CreatedAt:      whereHelpertime_Time{field: "\"users\".\"created_at\""},
+	UpdatedAt:      whereHelpertime_Time{field: "\"users\".\"updated_at\""},
+	OnboardingStep: whereHelperint16{field: "\"users\".\"onboarding_step\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -338,9 +345,9 @@ func (r *userR) GetVoicePrompts() VoicePromptSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "email", "first_name", "last_name", "phone", "created_at", "updated_at"}
+	userAllColumns            = []string{"id", "email", "first_name", "last_name", "phone", "created_at", "updated_at", "onboarding_step"}
 	userColumnsWithoutDefault = []string{"first_name"}
-	userColumnsWithDefault    = []string{"id", "email", "last_name", "phone", "created_at", "updated_at"}
+	userColumnsWithDefault    = []string{"id", "email", "last_name", "phone", "created_at", "updated_at", "onboarding_step"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )

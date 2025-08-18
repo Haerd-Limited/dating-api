@@ -13,8 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 	gomock "go.uber.org/mock/gomock"
+
+	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 )
 
 // MockUserRepository is a mock of UserRepository interface.

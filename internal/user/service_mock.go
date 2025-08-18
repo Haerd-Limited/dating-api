@@ -13,8 +13,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	domain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	gomock "go.uber.org/mock/gomock"
+
+	domain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 )
 
 // MockService is a mock of Service interface.

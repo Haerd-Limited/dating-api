@@ -68,7 +68,8 @@ func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*st
 
 	// 2) Scaffold empty profile
 	profile := &entity.UserProfile{
-		UserID: user.ID,
+		UserID:      user.ID,
+		DisplayName: null.StringFrom(fmt.Sprintf("%s %s", user.FirstName, user.LastName.String)),
 	}
 	if err := profile.Insert(ctx, tx, boil.Infer()); err != nil {
 		return rollback(fmt.Errorf("insert user_profile: %w", err))

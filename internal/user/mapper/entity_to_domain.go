@@ -11,10 +11,11 @@ func UserEntityToUserDomain(user *entity.User) *domain.User {
 	}
 
 	return &domain.User{
-		ID:          user.ID,
-		Email:       user.Email.String,
-		PhoneNumber: user.Phone.String,
-		FirstName:   user.FirstName,
-		LastName:    &user.LastName.String,
+		ID:             user.ID,
+		Email:          user.Email.String,
+		PhoneNumber:    user.Phone.String,
+		FirstName:      user.FirstName,
+		LastName:       &user.LastName.String,
+		OnboardingStep: int(user.OnboardingStep),
 	}
 }

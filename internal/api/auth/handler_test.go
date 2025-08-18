@@ -260,8 +260,7 @@ func TestLoginHandler(t *testing.T) {
 				},
 			},
 			input: dto.LoginRequest{
-				Email:    "lionel@gmail.com",
-				Password: "testPassword",
+				PhoneNumber: "+44 7957662563",
 			},
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
@@ -286,7 +285,7 @@ func TestLoginHandler(t *testing.T) {
 				"message": InvalidLoginInputMsg,
 			},
 			input: dto.LoginRequest{
-				Password: "testPassword",
+				PhoneNumber: "+44 7958552448",
 			},
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
@@ -303,8 +302,7 @@ func TestLoginHandler(t *testing.T) {
 				"message": messages.InternalServerErrorMsg,
 			},
 			input: dto.LoginRequest{
-				Email:    "lionel@gmail.com",
-				Password: "testPassword",
+				PhoneNumber: "+44 7924773928",
 			},
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
@@ -325,8 +323,7 @@ func TestLoginHandler(t *testing.T) {
 				"message": InvalidCredentialsMsg,
 			},
 			input: dto.LoginRequest{
-				Email:    "lionel@gmail.com",
-				Password: "testPassword1",
+				PhoneNumber: "+44 7924773928",
 			},
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()

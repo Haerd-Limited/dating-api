@@ -475,7 +475,7 @@ func (interestL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular
 	}
 
 	query := NewQuery(
-		qm.Select("\"users\".\"id\", \"users\".\"email\", \"users\".\"first_name\", \"users\".\"last_name\", \"users\".\"phone\", \"users\".\"created_at\", \"users\".\"updated_at\", \"a\".\"interest_id\""),
+		qm.Select("\"users\".\"id\", \"users\".\"email\", \"users\".\"first_name\", \"users\".\"last_name\", \"users\".\"phone\", \"users\".\"created_at\", \"users\".\"updated_at\", \"users\".\"onboarding_step\", \"a\".\"interest_id\""),
 		qm.From("\"users\""),
 		qm.InnerJoin("\"user_interests\" as \"a\" on \"users\".\"id\" = \"a\".\"user_id\""),
 		qm.WhereIn("\"a\".\"interest_id\" in ?", argsSlice...),
@@ -496,7 +496,7 @@ func (interestL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular
 		one := new(User)
 		var localJoinCol int16
 
-		err = results.Scan(&one.ID, &one.Email, &one.FirstName, &one.LastName, &one.Phone, &one.CreatedAt, &one.UpdatedAt, &localJoinCol)
+		err = results.Scan(&one.ID, &one.Email, &one.FirstName, &one.LastName, &one.Phone, &one.CreatedAt, &one.UpdatedAt, &one.OnboardingStep, &localJoinCol)
 		if err != nil {
 			return errors.Wrap(err, "failed to scan eager loaded results for users")
 		}
