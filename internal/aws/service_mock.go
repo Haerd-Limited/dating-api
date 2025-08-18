@@ -13,9 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	domain "github.com/Haerd-Limited/dating-api/internal/aws/domain"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockAWSService is a mock of AWSService interface.

@@ -90,8 +90,8 @@ func (as *authService) Register(ctx context.Context, registerDetails *authDomain
 	}, nil
 }
 
-func (as *authService) Login(ctx context.Context, loginInput authDomain.Login) (*authDomain.AuthTokensAndUserID, error) {
-	userDetails, err := as.UserService.AuthenticateUser(ctx, loginInput.Email, loginInput.Password)
+func (as *authService) Login(ctx context.Context, loginDetails authDomain.Login) (*authDomain.AuthTokensAndUserID, error) {
+	userDetails, err := as.UserService.AuthenticateUser(ctx, loginDetails.PhoneNumber)
 	if err != nil {
 		return nil, fmt.Errorf("failed authenticating user: %w", err)
 	}

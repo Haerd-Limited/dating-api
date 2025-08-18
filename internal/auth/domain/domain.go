@@ -19,8 +19,7 @@ type (
 	}
 
 	Login struct {
-		Email    string
-		Password string
+		PhoneNumber string
 	}
 
 	Refresh struct {

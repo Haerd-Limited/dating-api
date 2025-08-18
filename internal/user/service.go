@@ -18,7 +18,7 @@ import (
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=user
 type Service interface {
 	CreateUser(ctx context.Context, user *domain.User) (*CreateUserResult, error)
-	AuthenticateUser(ctx context.Context, email, password string) (*domain.User, error)
+	AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error)
 	GetUserDetails(ctx context.Context, id string) (*domain.User, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
 }
@@ -81,13 +81,13 @@ func (us *userService) CreateUser(ctx context.Context, user *domain.User) (*Crea
 }
 
 // AuthenticateUser checks credentials and returns the user if valid, otherwise an error.
-func (us *userService) AuthenticateUser(ctx context.Context, email, password string) (*domain.User, error) {
-	userEntity, err := us.userRepo.GetUserByEmail(ctx, email)
+func (us *userService) AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error) {
+	userEntity, err := us.userRepo.GetByPhoneNumber(ctx, phoneNumber)
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
 
-	// todo: update/implement
+	// todo: update/implement using phonenumber like hinge
 
 	return mapper.UserEntityToUserDomain(userEntity), nil
 }

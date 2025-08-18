@@ -13,9 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	domain "github.com/Haerd-Limited/dating-api/internal/user/domain"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.
@@ -42,18 +41,18 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // AuthenticateUser mocks base method.
-func (m *MockService) AuthenticateUser(ctx context.Context, email, password string) (*domain.User, error) {
+func (m *MockService) AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AuthenticateUser", ctx, email, password)
+	ret := m.ctrl.Call(m, "AuthenticateUser", ctx, phoneNumber)
 	ret0, _ := ret[0].(*domain.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AuthenticateUser indicates an expected call of AuthenticateUser.
-func (mr *MockServiceMockRecorder) AuthenticateUser(ctx, email, password any) *gomock.Call {
+func (mr *MockServiceMockRecorder) AuthenticateUser(ctx, phoneNumber any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticateUser", reflect.TypeOf((*MockService)(nil).AuthenticateUser), ctx, email, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticateUser", reflect.TypeOf((*MockService)(nil).AuthenticateUser), ctx, phoneNumber)
 }
 
 // CreateUser mocks base method.

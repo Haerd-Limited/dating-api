@@ -16,7 +16,7 @@ import (
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type UserRepository interface {
 	InsertUser(ctx context.Context, user *entity.User) (*string, error)
-	GetUserByEmail(ctx context.Context, email string) (*entity.User, error)
+	GetByPhoneNumber(ctx context.Context, number string) (*entity.User, error)
 	GetUserByID(ctx context.Context, id string) (*entity.User, error)
 	UpdateUser(ctx context.Context, user *entity.User) error
 }
@@ -90,11 +90,11 @@ func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*st
 	return &user.ID, nil
 }
 
-// GetUserByEmail retrieves a user by their email address.
-func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*entity.User, error) {
-	user, err := entity.Users(entity.UserWhere.Email.EQ(null.StringFrom(email))).One(ctx, r.db)
+// GetByPhoneNumber retrieves a user by their phoneNumber.
+func (r *userRepository) GetByPhoneNumber(ctx context.Context, number string) (*entity.User, error) {
+	user, err := entity.Users(entity.UserWhere.Phone.EQ(null.StringFrom(number))).One(ctx, r.db)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user by email %s: %w", email, err)
+		return nil, fmt.Errorf("failed to get user by phone number %s: %w", number, err)
 	}
 
 	return user, nil

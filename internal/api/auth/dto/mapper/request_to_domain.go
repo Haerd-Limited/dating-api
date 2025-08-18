@@ -60,8 +60,7 @@ func MapRegisterRequestToDomain(request dto.RegisterRequest) (*domain.Register, 
 
 func MapLoginRequestToDomain(request dto.LoginRequest) domain.Login {
 	return domain.Login{
-		Email:    request.Email,
-		Password: request.Password,
+		PhoneNumber: request.PhoneNumber,
 	}
 }
 

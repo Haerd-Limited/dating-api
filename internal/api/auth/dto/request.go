@@ -12,8 +12,7 @@ type RegisterRequest struct {
 	DateOfBirth string  `json:"dateOfBirth" validate:"required"`
 }
 type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	PhoneNumber string `json:"PhoneNumber" validate:"required"`
 }
 
 type RefreshRequest struct {
