@@ -1,10 +1,7 @@
 package domain
 
 import (
-	"mime/multipart"
 	"time"
-
-	"github.com/Haerd-Limited/dating-api/internal/user/domain"
 )
 
 type (
@@ -15,15 +12,10 @@ type (
 		ExpiresAt time.Time
 	}
 	Register struct {
-		FullName           string
-		Username           string
-		Email              string
-		Password           string
-		DateOfBirth        time.Time
-		Bio                string
-		Gender             string
-		ProfileImage       *multipart.File
-		ProfileImageHeader *multipart.FileHeader
+		Email       string
+		PhoneNumber string
+		FirstName   string
+		LastName    *string
 	}
 
 	Login struct {
@@ -38,13 +30,8 @@ type (
 	RevokeRefreshToken struct {
 		RefreshToken string
 	}
-
-	AuthTokensAndUser struct {
-		RefreshToken string
-		AccessToken  string
-		User         domain.User
-	}
-	AuthTokens struct {
+	AuthTokensAndUserID struct {
+		UserID       string
 		RefreshToken string
 		AccessToken  string
 	}

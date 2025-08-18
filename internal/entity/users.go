@@ -24,71 +24,79 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID           string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Email        null.String `boil:"email" json:"email,omitempty" toml:"email" yaml:"email,omitempty"`
-	Phone        null.String `boil:"phone" json:"phone,omitempty" toml:"phone" yaml:"phone,omitempty"`
-	PasswordHash null.String `boil:"password_hash" json:"password_hash,omitempty" toml:"password_hash" yaml:"password_hash,omitempty"`
-	CreatedAt    time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt    time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ID        string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Email     null.String `boil:"email" json:"email,omitempty" toml:"email" yaml:"email,omitempty"`
+	FirstName string      `boil:"first_name" json:"first_name" toml:"first_name" yaml:"first_name"`
+	LastName  null.String `boil:"last_name" json:"last_name,omitempty" toml:"last_name" yaml:"last_name,omitempty"`
+	Phone     null.String `boil:"phone" json:"phone,omitempty" toml:"phone" yaml:"phone,omitempty"`
+	CreatedAt time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserColumns = struct {
-	ID           string
-	Email        string
-	Phone        string
-	PasswordHash string
-	CreatedAt    string
-	UpdatedAt    string
+	ID        string
+	Email     string
+	FirstName string
+	LastName  string
+	Phone     string
+	CreatedAt string
+	UpdatedAt string
 }{
-	ID:           "id",
-	Email:        "email",
-	Phone:        "phone",
-	PasswordHash: "password_hash",
-	CreatedAt:    "created_at",
-	UpdatedAt:    "updated_at",
+	ID:        "id",
+	Email:     "email",
+	FirstName: "first_name",
+	LastName:  "last_name",
+	Phone:     "phone",
+	CreatedAt: "created_at",
+	UpdatedAt: "updated_at",
 }
 
 var UserTableColumns = struct {
-	ID           string
-	Email        string
-	Phone        string
-	PasswordHash string
-	CreatedAt    string
-	UpdatedAt    string
+	ID        string
+	Email     string
+	FirstName string
+	LastName  string
+	Phone     string
+	CreatedAt string
+	UpdatedAt string
 }{
-	ID:           "users.id",
-	Email:        "users.email",
-	Phone:        "users.phone",
-	PasswordHash: "users.password_hash",
-	CreatedAt:    "users.created_at",
-	UpdatedAt:    "users.updated_at",
+	ID:        "users.id",
+	Email:     "users.email",
+	FirstName: "users.first_name",
+	LastName:  "users.last_name",
+	Phone:     "users.phone",
+	CreatedAt: "users.created_at",
+	UpdatedAt: "users.updated_at",
 }
 
 // Generated where
 
 var UserWhere = struct {
-	ID           whereHelperstring
-	Email        whereHelpernull_String
-	Phone        whereHelpernull_String
-	PasswordHash whereHelpernull_String
-	CreatedAt    whereHelpertime_Time
-	UpdatedAt    whereHelpertime_Time
+	ID        whereHelperstring
+	Email     whereHelpernull_String
+	FirstName whereHelperstring
+	LastName  whereHelpernull_String
+	Phone     whereHelpernull_String
+	CreatedAt whereHelpertime_Time
+	UpdatedAt whereHelpertime_Time
 }{
-	ID:           whereHelperstring{field: "\"users\".\"id\""},
-	Email:        whereHelpernull_String{field: "\"users\".\"email\""},
-	Phone:        whereHelpernull_String{field: "\"users\".\"phone\""},
-	PasswordHash: whereHelpernull_String{field: "\"users\".\"password_hash\""},
-	CreatedAt:    whereHelpertime_Time{field: "\"users\".\"created_at\""},
-	UpdatedAt:    whereHelpertime_Time{field: "\"users\".\"updated_at\""},
+	ID:        whereHelperstring{field: "\"users\".\"id\""},
+	Email:     whereHelpernull_String{field: "\"users\".\"email\""},
+	FirstName: whereHelperstring{field: "\"users\".\"first_name\""},
+	LastName:  whereHelpernull_String{field: "\"users\".\"last_name\""},
+	Phone:     whereHelpernull_String{field: "\"users\".\"phone\""},
+	CreatedAt: whereHelpertime_Time{field: "\"users\".\"created_at\""},
+	UpdatedAt: whereHelpertime_Time{field: "\"users\".\"updated_at\""},
 }
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
 	UserPreference          string
 	UserProfile             string
+	DeviceTokens            string
 	UserAMatches            string
 	UserBMatches            string
 	SenderMessagesVoices    string
@@ -101,6 +109,7 @@ var UserRels = struct {
 }{
 	UserPreference:          "UserPreference",
 	UserProfile:             "UserProfile",
+	DeviceTokens:            "DeviceTokens",
 	UserAMatches:            "UserAMatches",
 	UserBMatches:            "UserBMatches",
 	SenderMessagesVoices:    "SenderMessagesVoices",
@@ -116,6 +125,7 @@ var UserRels = struct {
 type userR struct {
 	UserPreference          *UserPreference            `boil:"UserPreference" json:"UserPreference" toml:"UserPreference" yaml:"UserPreference"`
 	UserProfile             *UserProfile               `boil:"UserProfile" json:"UserProfile" toml:"UserProfile" yaml:"UserProfile"`
+	DeviceTokens            DeviceTokenSlice           `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
 	UserAMatches            MatchSlice                 `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
 	UserBMatches            MatchSlice                 `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
 	SenderMessagesVoices    MessagesVoiceSlice         `boil:"SenderMessagesVoices" json:"SenderMessagesVoices" toml:"SenderMessagesVoices" yaml:"SenderMessagesVoices"`
@@ -162,6 +172,22 @@ func (r *userR) GetUserProfile() *UserProfile {
 	}
 
 	return r.UserProfile
+}
+
+func (o *User) GetDeviceTokens() DeviceTokenSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetDeviceTokens()
+}
+
+func (r *userR) GetDeviceTokens() DeviceTokenSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.DeviceTokens
 }
 
 func (o *User) GetUserAMatches() MatchSlice {
@@ -312,9 +338,9 @@ func (r *userR) GetVoicePrompts() VoicePromptSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "email", "phone", "password_hash", "created_at", "updated_at"}
-	userColumnsWithoutDefault = []string{}
-	userColumnsWithDefault    = []string{"id", "email", "phone", "password_hash", "created_at", "updated_at"}
+	userAllColumns            = []string{"id", "email", "first_name", "last_name", "phone", "created_at", "updated_at"}
+	userColumnsWithoutDefault = []string{"first_name"}
+	userColumnsWithDefault    = []string{"id", "email", "last_name", "phone", "created_at", "updated_at"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )
@@ -644,6 +670,20 @@ func (o *User) UserProfile(mods ...qm.QueryMod) userProfileQuery {
 	queryMods = append(queryMods, mods...)
 
 	return UserProfiles(queryMods...)
+}
+
+// DeviceTokens retrieves all the device_token's DeviceTokens with an executor.
+func (o *User) DeviceTokens(mods ...qm.QueryMod) deviceTokenQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"device_tokens\".\"user_id\"=?", o.ID),
+	)
+
+	return DeviceTokens(queryMods...)
 }
 
 // UserAMatches retrieves all the match's Matches with an executor via user_a column.
@@ -998,6 +1038,119 @@ func (userL) LoadUserProfile(ctx context.Context, e boil.ContextExecutor, singul
 				local.R.UserProfile = foreign
 				if foreign.R == nil {
 					foreign.R = &userProfileR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadDeviceTokens allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadDeviceTokens(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`device_tokens`),
+		qm.WhereIn(`device_tokens.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load device_tokens")
+	}
+
+	var resultSlice []*DeviceToken
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice device_tokens")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on device_tokens")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for device_tokens")
+	}
+
+	if len(deviceTokenAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.DeviceTokens = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &deviceTokenR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.DeviceTokens = append(local.R.DeviceTokens, foreign)
+				if foreign.R == nil {
+					foreign.R = &deviceTokenR{}
 				}
 				foreign.R.User = local
 				break
@@ -2155,6 +2308,59 @@ func (o *User) SetUserProfile(ctx context.Context, exec boil.ContextExecutor, in
 		}
 	} else {
 		related.R.User = o
+	}
+	return nil
+}
+
+// AddDeviceTokens adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.DeviceTokens.
+// Sets related.R.User appropriately.
+func (o *User) AddDeviceTokens(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*DeviceToken) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"device_tokens\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, deviceTokenPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			DeviceTokens: related,
+		}
+	} else {
+		o.R.DeviceTokens = append(o.R.DeviceTokens, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &deviceTokenR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
 	}
 	return nil
 }

@@ -3,56 +3,58 @@ package mapper
 import (
 	"errors"
 	"strings"
-	"time"
 	"unicode"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/auth/dto"
 	"github.com/Haerd-Limited/dating-api/internal/auth/domain"
-	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 )
 
 const (
-	minUsernameLen = 3
-	maxUsernameLen = 20
+	minNameLen = 3
+	maxNameLen = 20
 )
 
 var (
-	ErrUsernameContainsSpaces = errors.New("username must not contain spaces")
-	ErrInvalidUserameLength   = errors.New("username must be between 3 and 20 characters")
+	ErrNameContainsSpaces = errors.New("name must not contain spaces")
+	ErrInvalidNameLength  = errors.New("name must be between 3 and 20 characters")
 )
 
-func MapRegisterRequestToDomain(request *validators.RegisterForm) (*domain.Register, error) {
-	dob, err := time.Parse("2006-01-02", request.DateOfBirth)
+func MapRegisterRequestToDomain(request dto.RegisterRequest) (*domain.Register, error) {
+	/*dob, err := time.Parse("2006-01-02", request.DateOfBirth)
 	if err != nil {
 		return nil, commonErrors.ErrInvalidDob
+	}*/
+	firstName := strings.TrimSpace(request.FirstName)
+
+	var lastName string
+	if request.LastName != nil {
+		lastName = strings.TrimSpace(*request.LastName)
 	}
 
-	if request.Gender != "male" && request.Gender != "female" {
-		return nil, commonErrors.ErrInvalidGender
+	if hasAnySpace(firstName) || hasAnySpace(lastName) {
+		return nil, ErrNameContainsSpaces
 	}
 
-	username := strings.TrimSpace(request.Username)
-
-	if hasAnySpace(username) {
-		return nil, ErrUsernameContainsSpaces
+	// first name length check
+	if l := len(firstName); l < minNameLen || l > maxNameLen {
+		return nil, ErrInvalidNameLength
 	}
 
-	// Username length check
-	if l := len(username); l < minUsernameLen || l > maxUsernameLen {
-		return nil, ErrInvalidUserameLength
+	// last name length check
+	if l := len(lastName); l < minNameLen || l > maxNameLen {
+		return nil, ErrInvalidNameLength
+	}
+
+	if !looksLikeEmail(strings.TrimSpace(request.Email)) {
+		return nil, validators.ErrInvalidEmail
 	}
 
 	return &domain.Register{
-		FullName:           strings.TrimSpace(request.FullName),
-		Username:           username,
-		Email:              strings.TrimSpace(request.Email),
-		Password:           strings.TrimSpace(request.Password),
-		DateOfBirth:        dob,
-		Bio:                request.Bio,
-		Gender:             request.Gender,
-		ProfileImage:       &request.ProfileImage,
-		ProfileImageHeader: request.ImageHeader,
+		FirstName:   firstName,
+		LastName:    &lastName,
+		PhoneNumber: normalizePhone(request.PhoneNumber),
+		Email:       strings.TrimSpace(request.Email),
 	}, nil
 }
 
@@ -78,4 +80,14 @@ func MapLogoutRequestToDomain(request dto.LogoutRequest) domain.RevokeRefreshTok
 // hasAnySpace returns true if s contains any Unicode whitespace character.
 func hasAnySpace(s string) bool {
 	return strings.IndexFunc(s, unicode.IsSpace) >= 0
+}
+
+func looksLikeEmail(s string) bool { return strings.Contains(s, "@") && strings.Contains(s, ".") }
+func normalizePhone(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return ""
+	}
+
+	return s // stub
 }

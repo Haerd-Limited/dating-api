@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  create_auth_tables sql
+	@cd ./migrations && goose create  create_device_token_tables sql
 .PHONY: migrate-create
 
 

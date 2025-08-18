@@ -17,13 +17,15 @@ import (
 	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"
-	authStorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
+	authstorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/config"
 	"github.com/Haerd-Limited/dating-api/internal/http/router"
+	"github.com/Haerd-Limited/dating-api/internal/onboarding"
+	onboardingstorage "github.com/Haerd-Limited/dating-api/internal/onboarding/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
-	commonDb "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/db"
+	commondb "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/db"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 	s3Storage "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/storage"
 )
@@ -53,7 +55,7 @@ func main() {
 		logger.Sugar().Fatalf("failed to connect to database: %v", err)
 	}
 
-	if err := commonDb.RunMigrations(db.DB, nil); err != nil {
+	if err := commondb.RunMigrations(db.DB, nil); err != nil {
 		logger.Sugar().Fatalf("failed to run migrations: %v", err)
 	}
 
@@ -63,11 +65,7 @@ func main() {
 
 	debug.SetGCPercent(20)
 
-	userRepo := storage.NewUserRepository(db)
-
-	authRepo := authStorage.NewAuthRepository(db)
-
-	//notificationRepo := notificationStorage.NewNotificationRepository(db)
+	// notificationRepo := notificationStorage.NewNotificationRepository(db)
 
 	s3Uploader, err := s3Storage.NewS3Uploader(cfg.S3BucketName, cfg.AWSRegion)
 	if err != nil {
@@ -76,8 +74,13 @@ func main() {
 
 	awsService := aws.NewAwsService(logger, s3Uploader)
 
+	onboardingRepo := onboardingstorage.NewOnboardingRepository(db)
+	onboardingService := onboarding.NewOnboardingService(logger, onboardingRepo)
+
+	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)
 
+	authRepo := authstorage.NewAuthRepository(db)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService)
 
 	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)
@@ -90,6 +93,7 @@ func main() {
 		cfg.JwtSecret,
 		authService,
 		userService,
+		onboardingService,
 	)
 
 	// Start server with context

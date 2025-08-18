@@ -27,12 +27,12 @@ type Handler interface {
 
 type handler struct {
 	logger      *zap.Logger
-	authService auth.AuthService
+	authService auth.Service
 }
 
 func NewAuthHandler(
 	logger *zap.Logger,
-	authService auth.AuthService,
+	authService auth.Service,
 ) Handler {
 	return &handler{
 		logger:      logger,
@@ -49,9 +49,10 @@ func (h *handler) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		var req dto.RegisterRequest
+
 		// Validates and decodes request
-		req, err := validators.DecodeAndValidateRegisterForm(r)
-		if err != nil {
+		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
 			h.logger.Sugar().Errorw("failed to decode and validate register request body", "context", ctx, "error", err)
 
 			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
@@ -59,7 +60,7 @@ func (h *handler) Register() http.HandlerFunc {
 			render.Json(
 				w,
 				statusCode,
-				mapper.ToRegisterResponse(
+				mapper.ToAuthResponse(
 					nil,
 					errMsg,
 				))
@@ -74,7 +75,7 @@ func (h *handler) Register() http.HandlerFunc {
 			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 
 			render.Json(w, statusCode,
-				mapper.ToRegisterResponse(
+				mapper.ToAuthResponse(
 					nil,
 					errMsg,
 				),
@@ -90,7 +91,7 @@ func (h *handler) Register() http.HandlerFunc {
 			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 
 			render.Json(w, statusCode,
-				mapper.ToRegisterResponse(
+				mapper.ToAuthResponse(
 					nil,
 					errMsg,
 				),
@@ -99,7 +100,7 @@ func (h *handler) Register() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusCreated, mapper.ToRegisterResponse(result, "Registration successful"))
+		render.Json(w, http.StatusCreated, mapper.ToAuthResponse(result, "Registration successful"))
 	}
 }
 
@@ -116,7 +117,7 @@ func (h *handler) Login() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				mapper.MapAuthTokensAndUserResponse(
+				mapper.ToAuthResponse(
 					nil,
 					InvalidLoginInputMsg,
 				))
@@ -131,7 +132,7 @@ func (h *handler) Login() http.HandlerFunc {
 			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 
 			render.Json(w, statusCode,
-				mapper.MapAuthTokensAndUserResponse(
+				mapper.ToAuthResponse(
 					nil,
 					errMsg,
 				),
@@ -140,7 +141,7 @@ func (h *handler) Login() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.MapAuthTokensAndUserResponse(userCredentials, "Login successful"))
+		render.Json(w, http.StatusOK, mapper.ToAuthResponse(userCredentials, "Login successful"))
 	}
 }
 
@@ -157,7 +158,7 @@ func (h *handler) Refresh() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				mapper.MapAuthTokensToResponse(
+				mapper.ToAuthResponse(
 					nil,
 					InvalidRefreshTokenMsg,
 				))
@@ -172,7 +173,7 @@ func (h *handler) Refresh() http.HandlerFunc {
 			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 
 			render.Json(w, statusCode,
-				mapper.MapAuthTokensToResponse(
+				mapper.ToAuthResponse(
 					nil,
 					errMsg,
 				),
@@ -181,9 +182,7 @@ func (h *handler) Refresh() http.HandlerFunc {
 			return
 		}
 
-		resp := mapper.MapAuthTokensToResponse(result, "Tokens refreshed successfully")
-
-		render.Json(w, http.StatusOK, resp)
+		render.Json(w, http.StatusOK, mapper.ToAuthResponse(result, "Tokens refreshed successfully"))
 	}
 }
 
@@ -243,8 +242,6 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidUploadFormMsg
 	case errors.Is(err, user.ErrEmailAlreadyExists):
 		return http.StatusConflict, messages.EmailAlreadyExistsMsg
-	case errors.Is(err, user.ErrUserNameAlreadyExists):
-		return http.StatusConflict, messages.UserNameAlreadyExistsMsg
 	case errors.Is(err, user.ErrUserDetailsAlreadyExists):
 		return http.StatusConflict, messages.UserDetailsAlreadyExistsMsg
 	case errors.Is(err, user.ErrInvalidCredentials):
@@ -263,9 +260,9 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, InvalidEmailMsg
 	case errors.Is(err, validators.ErrMissingRequiredField):
 		return http.StatusBadRequest, MissingRequiredFieldMsg
-	case errors.Is(err, mapper.ErrInvalidUserameLength):
+	case errors.Is(err, mapper.ErrInvalidNameLength):
 		return http.StatusBadRequest, InvalidUsernameLengthMsg
-	case errors.Is(err, mapper.ErrUsernameContainsSpaces):
+	case errors.Is(err, mapper.ErrNameContainsSpaces):
 		return http.StatusBadRequest, UsernameContainsSpacesMsg
 
 	default:

@@ -24,152 +24,147 @@ import (
 
 // UserProfile is an object representing the database table.
 type UserProfile struct {
-	UserID             string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	DisplayName        null.String `boil:"display_name" json:"display_name,omitempty" toml:"display_name" yaml:"display_name,omitempty"`
-	Birthdate          null.Time   `boil:"birthdate" json:"birthdate,omitempty" toml:"birthdate" yaml:"birthdate,omitempty"`
-	HeightCM           null.Int16  `boil:"height_cm" json:"height_cm,omitempty" toml:"height_cm" yaml:"height_cm,omitempty"`
-	Bio                null.String `boil:"bio" json:"bio,omitempty" toml:"bio" yaml:"bio,omitempty"`
-	Geo                string      `boil:"geo" json:"geo,omitempty" toml:"geo" yaml:"geo,omitempty"`
-	City               null.String `boil:"city" json:"city,omitempty" toml:"city" yaml:"city,omitempty"`
-	Country            null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
-	GenderID           null.Int16  `boil:"gender_id" json:"gender_id,omitempty" toml:"gender_id" yaml:"gender_id,omitempty"`
-	SexualityID        null.Int16  `boil:"sexuality_id" json:"sexuality_id,omitempty" toml:"sexuality_id" yaml:"sexuality_id,omitempty"`
-	RelationshipTypeID null.Int16  `boil:"relationship_type_id" json:"relationship_type_id,omitempty" toml:"relationship_type_id" yaml:"relationship_type_id,omitempty"`
-	DatingIntentionID  null.Int16  `boil:"dating_intention_id" json:"dating_intention_id,omitempty" toml:"dating_intention_id" yaml:"dating_intention_id,omitempty"`
-	ReligionID         null.Int16  `boil:"religion_id" json:"religion_id,omitempty" toml:"religion_id" yaml:"religion_id,omitempty"`
-	EducationLevelID   null.Int16  `boil:"education_level_id" json:"education_level_id,omitempty" toml:"education_level_id" yaml:"education_level_id,omitempty"`
-	DrinkingID         null.Int16  `boil:"drinking_id" json:"drinking_id,omitempty" toml:"drinking_id" yaml:"drinking_id,omitempty"`
-	SmokingID          null.Int16  `boil:"smoking_id" json:"smoking_id,omitempty" toml:"smoking_id" yaml:"smoking_id,omitempty"`
-	MarijuanaID        null.Int16  `boil:"marijuana_id" json:"marijuana_id,omitempty" toml:"marijuana_id" yaml:"marijuana_id,omitempty"`
-	DrugsID            null.Int16  `boil:"drugs_id" json:"drugs_id,omitempty" toml:"drugs_id" yaml:"drugs_id,omitempty"`
-	ChildrenStatusID   null.Int16  `boil:"children_status_id" json:"children_status_id,omitempty" toml:"children_status_id" yaml:"children_status_id,omitempty"`
-	FamilyPlanID       null.Int16  `boil:"family_plan_id" json:"family_plan_id,omitempty" toml:"family_plan_id" yaml:"family_plan_id,omitempty"`
-	EthnicityID        null.Int16  `boil:"ethnicity_id" json:"ethnicity_id,omitempty" toml:"ethnicity_id" yaml:"ethnicity_id,omitempty"`
-	Work               null.String `boil:"work" json:"work,omitempty" toml:"work" yaml:"work,omitempty"`
-	JobTitle           null.String `boil:"job_title" json:"job_title,omitempty" toml:"job_title" yaml:"job_title,omitempty"`
-	University         null.String `boil:"university" json:"university,omitempty" toml:"university" yaml:"university,omitempty"`
-	ProfileMeta        null.JSON   `boil:"profile_meta" json:"profile_meta,omitempty" toml:"profile_meta" yaml:"profile_meta,omitempty"`
-	CreatedAt          time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt          time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	UserID            string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	DisplayName       null.String `boil:"display_name" json:"display_name,omitempty" toml:"display_name" yaml:"display_name,omitempty"`
+	Birthdate         null.Time   `boil:"birthdate" json:"birthdate,omitempty" toml:"birthdate" yaml:"birthdate,omitempty"`
+	HeightCM          null.Int16  `boil:"height_cm" json:"height_cm,omitempty" toml:"height_cm" yaml:"height_cm,omitempty"`
+	Bio               null.String `boil:"bio" json:"bio,omitempty" toml:"bio" yaml:"bio,omitempty"`
+	Geo               string      `boil:"geo" json:"geo,omitempty" toml:"geo" yaml:"geo,omitempty"`
+	City              null.String `boil:"city" json:"city,omitempty" toml:"city" yaml:"city,omitempty"`
+	Country           null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
+	GenderID          null.Int16  `boil:"gender_id" json:"gender_id,omitempty" toml:"gender_id" yaml:"gender_id,omitempty"`
+	DatingIntentionID null.Int16  `boil:"dating_intention_id" json:"dating_intention_id,omitempty" toml:"dating_intention_id" yaml:"dating_intention_id,omitempty"`
+	ReligionID        null.Int16  `boil:"religion_id" json:"religion_id,omitempty" toml:"religion_id" yaml:"religion_id,omitempty"`
+	EducationLevelID  null.Int16  `boil:"education_level_id" json:"education_level_id,omitempty" toml:"education_level_id" yaml:"education_level_id,omitempty"`
+	PoliticalBeliefID null.Int16  `boil:"political_belief_id" json:"political_belief_id,omitempty" toml:"political_belief_id" yaml:"political_belief_id,omitempty"`
+	DrinkingID        null.Int16  `boil:"drinking_id" json:"drinking_id,omitempty" toml:"drinking_id" yaml:"drinking_id,omitempty"`
+	SmokingID         null.Int16  `boil:"smoking_id" json:"smoking_id,omitempty" toml:"smoking_id" yaml:"smoking_id,omitempty"`
+	MarijuanaID       null.Int16  `boil:"marijuana_id" json:"marijuana_id,omitempty" toml:"marijuana_id" yaml:"marijuana_id,omitempty"`
+	DrugsID           null.Int16  `boil:"drugs_id" json:"drugs_id,omitempty" toml:"drugs_id" yaml:"drugs_id,omitempty"`
+	ChildrenStatusID  null.Int16  `boil:"children_status_id" json:"children_status_id,omitempty" toml:"children_status_id" yaml:"children_status_id,omitempty"`
+	FamilyPlanID      null.Int16  `boil:"family_plan_id" json:"family_plan_id,omitempty" toml:"family_plan_id" yaml:"family_plan_id,omitempty"`
+	EthnicityID       null.Int16  `boil:"ethnicity_id" json:"ethnicity_id,omitempty" toml:"ethnicity_id" yaml:"ethnicity_id,omitempty"`
+	Work              null.String `boil:"work" json:"work,omitempty" toml:"work" yaml:"work,omitempty"`
+	JobTitle          null.String `boil:"job_title" json:"job_title,omitempty" toml:"job_title" yaml:"job_title,omitempty"`
+	University        null.String `boil:"university" json:"university,omitempty" toml:"university" yaml:"university,omitempty"`
+	ProfileMeta       null.JSON   `boil:"profile_meta" json:"profile_meta,omitempty" toml:"profile_meta" yaml:"profile_meta,omitempty"`
+	CreatedAt         time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt         time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *userProfileR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userProfileL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserProfileColumns = struct {
-	UserID             string
-	DisplayName        string
-	Birthdate          string
-	HeightCM           string
-	Bio                string
-	Geo                string
-	City               string
-	Country            string
-	GenderID           string
-	SexualityID        string
-	RelationshipTypeID string
-	DatingIntentionID  string
-	ReligionID         string
-	EducationLevelID   string
-	DrinkingID         string
-	SmokingID          string
-	MarijuanaID        string
-	DrugsID            string
-	ChildrenStatusID   string
-	FamilyPlanID       string
-	EthnicityID        string
-	Work               string
-	JobTitle           string
-	University         string
-	ProfileMeta        string
-	CreatedAt          string
-	UpdatedAt          string
+	UserID            string
+	DisplayName       string
+	Birthdate         string
+	HeightCM          string
+	Bio               string
+	Geo               string
+	City              string
+	Country           string
+	GenderID          string
+	DatingIntentionID string
+	ReligionID        string
+	EducationLevelID  string
+	PoliticalBeliefID string
+	DrinkingID        string
+	SmokingID         string
+	MarijuanaID       string
+	DrugsID           string
+	ChildrenStatusID  string
+	FamilyPlanID      string
+	EthnicityID       string
+	Work              string
+	JobTitle          string
+	University        string
+	ProfileMeta       string
+	CreatedAt         string
+	UpdatedAt         string
 }{
-	UserID:             "user_id",
-	DisplayName:        "display_name",
-	Birthdate:          "birthdate",
-	HeightCM:           "height_cm",
-	Bio:                "bio",
-	Geo:                "geo",
-	City:               "city",
-	Country:            "country",
-	GenderID:           "gender_id",
-	SexualityID:        "sexuality_id",
-	RelationshipTypeID: "relationship_type_id",
-	DatingIntentionID:  "dating_intention_id",
-	ReligionID:         "religion_id",
-	EducationLevelID:   "education_level_id",
-	DrinkingID:         "drinking_id",
-	SmokingID:          "smoking_id",
-	MarijuanaID:        "marijuana_id",
-	DrugsID:            "drugs_id",
-	ChildrenStatusID:   "children_status_id",
-	FamilyPlanID:       "family_plan_id",
-	EthnicityID:        "ethnicity_id",
-	Work:               "work",
-	JobTitle:           "job_title",
-	University:         "university",
-	ProfileMeta:        "profile_meta",
-	CreatedAt:          "created_at",
-	UpdatedAt:          "updated_at",
+	UserID:            "user_id",
+	DisplayName:       "display_name",
+	Birthdate:         "birthdate",
+	HeightCM:          "height_cm",
+	Bio:               "bio",
+	Geo:               "geo",
+	City:              "city",
+	Country:           "country",
+	GenderID:          "gender_id",
+	DatingIntentionID: "dating_intention_id",
+	ReligionID:        "religion_id",
+	EducationLevelID:  "education_level_id",
+	PoliticalBeliefID: "political_belief_id",
+	DrinkingID:        "drinking_id",
+	SmokingID:         "smoking_id",
+	MarijuanaID:       "marijuana_id",
+	DrugsID:           "drugs_id",
+	ChildrenStatusID:  "children_status_id",
+	FamilyPlanID:      "family_plan_id",
+	EthnicityID:       "ethnicity_id",
+	Work:              "work",
+	JobTitle:          "job_title",
+	University:        "university",
+	ProfileMeta:       "profile_meta",
+	CreatedAt:         "created_at",
+	UpdatedAt:         "updated_at",
 }
 
 var UserProfileTableColumns = struct {
-	UserID             string
-	DisplayName        string
-	Birthdate          string
-	HeightCM           string
-	Bio                string
-	Geo                string
-	City               string
-	Country            string
-	GenderID           string
-	SexualityID        string
-	RelationshipTypeID string
-	DatingIntentionID  string
-	ReligionID         string
-	EducationLevelID   string
-	DrinkingID         string
-	SmokingID          string
-	MarijuanaID        string
-	DrugsID            string
-	ChildrenStatusID   string
-	FamilyPlanID       string
-	EthnicityID        string
-	Work               string
-	JobTitle           string
-	University         string
-	ProfileMeta        string
-	CreatedAt          string
-	UpdatedAt          string
+	UserID            string
+	DisplayName       string
+	Birthdate         string
+	HeightCM          string
+	Bio               string
+	Geo               string
+	City              string
+	Country           string
+	GenderID          string
+	DatingIntentionID string
+	ReligionID        string
+	EducationLevelID  string
+	PoliticalBeliefID string
+	DrinkingID        string
+	SmokingID         string
+	MarijuanaID       string
+	DrugsID           string
+	ChildrenStatusID  string
+	FamilyPlanID      string
+	EthnicityID       string
+	Work              string
+	JobTitle          string
+	University        string
+	ProfileMeta       string
+	CreatedAt         string
+	UpdatedAt         string
 }{
-	UserID:             "user_profiles.user_id",
-	DisplayName:        "user_profiles.display_name",
-	Birthdate:          "user_profiles.birthdate",
-	HeightCM:           "user_profiles.height_cm",
-	Bio:                "user_profiles.bio",
-	Geo:                "user_profiles.geo",
-	City:               "user_profiles.city",
-	Country:            "user_profiles.country",
-	GenderID:           "user_profiles.gender_id",
-	SexualityID:        "user_profiles.sexuality_id",
-	RelationshipTypeID: "user_profiles.relationship_type_id",
-	DatingIntentionID:  "user_profiles.dating_intention_id",
-	ReligionID:         "user_profiles.religion_id",
-	EducationLevelID:   "user_profiles.education_level_id",
-	DrinkingID:         "user_profiles.drinking_id",
-	SmokingID:          "user_profiles.smoking_id",
-	MarijuanaID:        "user_profiles.marijuana_id",
-	DrugsID:            "user_profiles.drugs_id",
-	ChildrenStatusID:   "user_profiles.children_status_id",
-	FamilyPlanID:       "user_profiles.family_plan_id",
-	EthnicityID:        "user_profiles.ethnicity_id",
-	Work:               "user_profiles.work",
-	JobTitle:           "user_profiles.job_title",
-	University:         "user_profiles.university",
-	ProfileMeta:        "user_profiles.profile_meta",
-	CreatedAt:          "user_profiles.created_at",
-	UpdatedAt:          "user_profiles.updated_at",
+	UserID:            "user_profiles.user_id",
+	DisplayName:       "user_profiles.display_name",
+	Birthdate:         "user_profiles.birthdate",
+	HeightCM:          "user_profiles.height_cm",
+	Bio:               "user_profiles.bio",
+	Geo:               "user_profiles.geo",
+	City:              "user_profiles.city",
+	Country:           "user_profiles.country",
+	GenderID:          "user_profiles.gender_id",
+	DatingIntentionID: "user_profiles.dating_intention_id",
+	ReligionID:        "user_profiles.religion_id",
+	EducationLevelID:  "user_profiles.education_level_id",
+	PoliticalBeliefID: "user_profiles.political_belief_id",
+	DrinkingID:        "user_profiles.drinking_id",
+	SmokingID:         "user_profiles.smoking_id",
+	MarijuanaID:       "user_profiles.marijuana_id",
+	DrugsID:           "user_profiles.drugs_id",
+	ChildrenStatusID:  "user_profiles.children_status_id",
+	FamilyPlanID:      "user_profiles.family_plan_id",
+	EthnicityID:       "user_profiles.ethnicity_id",
+	Work:              "user_profiles.work",
+	JobTitle:          "user_profiles.job_title",
+	University:        "user_profiles.university",
+	ProfileMeta:       "user_profiles.profile_meta",
+	CreatedAt:         "user_profiles.created_at",
+	UpdatedAt:         "user_profiles.updated_at",
 }
 
 // Generated where
@@ -202,112 +197,107 @@ func (w whereHelpernull_JSON) IsNull() qm.QueryMod    { return qmhelper.WhereIsN
 func (w whereHelpernull_JSON) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var UserProfileWhere = struct {
-	UserID             whereHelperstring
-	DisplayName        whereHelpernull_String
-	Birthdate          whereHelpernull_Time
-	HeightCM           whereHelpernull_Int16
-	Bio                whereHelpernull_String
-	Geo                whereHelperstring
-	City               whereHelpernull_String
-	Country            whereHelpernull_String
-	GenderID           whereHelpernull_Int16
-	SexualityID        whereHelpernull_Int16
-	RelationshipTypeID whereHelpernull_Int16
-	DatingIntentionID  whereHelpernull_Int16
-	ReligionID         whereHelpernull_Int16
-	EducationLevelID   whereHelpernull_Int16
-	DrinkingID         whereHelpernull_Int16
-	SmokingID          whereHelpernull_Int16
-	MarijuanaID        whereHelpernull_Int16
-	DrugsID            whereHelpernull_Int16
-	ChildrenStatusID   whereHelpernull_Int16
-	FamilyPlanID       whereHelpernull_Int16
-	EthnicityID        whereHelpernull_Int16
-	Work               whereHelpernull_String
-	JobTitle           whereHelpernull_String
-	University         whereHelpernull_String
-	ProfileMeta        whereHelpernull_JSON
-	CreatedAt          whereHelpertime_Time
-	UpdatedAt          whereHelpertime_Time
+	UserID            whereHelperstring
+	DisplayName       whereHelpernull_String
+	Birthdate         whereHelpernull_Time
+	HeightCM          whereHelpernull_Int16
+	Bio               whereHelpernull_String
+	Geo               whereHelperstring
+	City              whereHelpernull_String
+	Country           whereHelpernull_String
+	GenderID          whereHelpernull_Int16
+	DatingIntentionID whereHelpernull_Int16
+	ReligionID        whereHelpernull_Int16
+	EducationLevelID  whereHelpernull_Int16
+	PoliticalBeliefID whereHelpernull_Int16
+	DrinkingID        whereHelpernull_Int16
+	SmokingID         whereHelpernull_Int16
+	MarijuanaID       whereHelpernull_Int16
+	DrugsID           whereHelpernull_Int16
+	ChildrenStatusID  whereHelpernull_Int16
+	FamilyPlanID      whereHelpernull_Int16
+	EthnicityID       whereHelpernull_Int16
+	Work              whereHelpernull_String
+	JobTitle          whereHelpernull_String
+	University        whereHelpernull_String
+	ProfileMeta       whereHelpernull_JSON
+	CreatedAt         whereHelpertime_Time
+	UpdatedAt         whereHelpertime_Time
 }{
-	UserID:             whereHelperstring{field: "\"user_profiles\".\"user_id\""},
-	DisplayName:        whereHelpernull_String{field: "\"user_profiles\".\"display_name\""},
-	Birthdate:          whereHelpernull_Time{field: "\"user_profiles\".\"birthdate\""},
-	HeightCM:           whereHelpernull_Int16{field: "\"user_profiles\".\"height_cm\""},
-	Bio:                whereHelpernull_String{field: "\"user_profiles\".\"bio\""},
-	Geo:                whereHelperstring{field: "\"user_profiles\".\"geo\""},
-	City:               whereHelpernull_String{field: "\"user_profiles\".\"city\""},
-	Country:            whereHelpernull_String{field: "\"user_profiles\".\"country\""},
-	GenderID:           whereHelpernull_Int16{field: "\"user_profiles\".\"gender_id\""},
-	SexualityID:        whereHelpernull_Int16{field: "\"user_profiles\".\"sexuality_id\""},
-	RelationshipTypeID: whereHelpernull_Int16{field: "\"user_profiles\".\"relationship_type_id\""},
-	DatingIntentionID:  whereHelpernull_Int16{field: "\"user_profiles\".\"dating_intention_id\""},
-	ReligionID:         whereHelpernull_Int16{field: "\"user_profiles\".\"religion_id\""},
-	EducationLevelID:   whereHelpernull_Int16{field: "\"user_profiles\".\"education_level_id\""},
-	DrinkingID:         whereHelpernull_Int16{field: "\"user_profiles\".\"drinking_id\""},
-	SmokingID:          whereHelpernull_Int16{field: "\"user_profiles\".\"smoking_id\""},
-	MarijuanaID:        whereHelpernull_Int16{field: "\"user_profiles\".\"marijuana_id\""},
-	DrugsID:            whereHelpernull_Int16{field: "\"user_profiles\".\"drugs_id\""},
-	ChildrenStatusID:   whereHelpernull_Int16{field: "\"user_profiles\".\"children_status_id\""},
-	FamilyPlanID:       whereHelpernull_Int16{field: "\"user_profiles\".\"family_plan_id\""},
-	EthnicityID:        whereHelpernull_Int16{field: "\"user_profiles\".\"ethnicity_id\""},
-	Work:               whereHelpernull_String{field: "\"user_profiles\".\"work\""},
-	JobTitle:           whereHelpernull_String{field: "\"user_profiles\".\"job_title\""},
-	University:         whereHelpernull_String{field: "\"user_profiles\".\"university\""},
-	ProfileMeta:        whereHelpernull_JSON{field: "\"user_profiles\".\"profile_meta\""},
-	CreatedAt:          whereHelpertime_Time{field: "\"user_profiles\".\"created_at\""},
-	UpdatedAt:          whereHelpertime_Time{field: "\"user_profiles\".\"updated_at\""},
+	UserID:            whereHelperstring{field: "\"user_profiles\".\"user_id\""},
+	DisplayName:       whereHelpernull_String{field: "\"user_profiles\".\"display_name\""},
+	Birthdate:         whereHelpernull_Time{field: "\"user_profiles\".\"birthdate\""},
+	HeightCM:          whereHelpernull_Int16{field: "\"user_profiles\".\"height_cm\""},
+	Bio:               whereHelpernull_String{field: "\"user_profiles\".\"bio\""},
+	Geo:               whereHelperstring{field: "\"user_profiles\".\"geo\""},
+	City:              whereHelpernull_String{field: "\"user_profiles\".\"city\""},
+	Country:           whereHelpernull_String{field: "\"user_profiles\".\"country\""},
+	GenderID:          whereHelpernull_Int16{field: "\"user_profiles\".\"gender_id\""},
+	DatingIntentionID: whereHelpernull_Int16{field: "\"user_profiles\".\"dating_intention_id\""},
+	ReligionID:        whereHelpernull_Int16{field: "\"user_profiles\".\"religion_id\""},
+	EducationLevelID:  whereHelpernull_Int16{field: "\"user_profiles\".\"education_level_id\""},
+	PoliticalBeliefID: whereHelpernull_Int16{field: "\"user_profiles\".\"political_belief_id\""},
+	DrinkingID:        whereHelpernull_Int16{field: "\"user_profiles\".\"drinking_id\""},
+	SmokingID:         whereHelpernull_Int16{field: "\"user_profiles\".\"smoking_id\""},
+	MarijuanaID:       whereHelpernull_Int16{field: "\"user_profiles\".\"marijuana_id\""},
+	DrugsID:           whereHelpernull_Int16{field: "\"user_profiles\".\"drugs_id\""},
+	ChildrenStatusID:  whereHelpernull_Int16{field: "\"user_profiles\".\"children_status_id\""},
+	FamilyPlanID:      whereHelpernull_Int16{field: "\"user_profiles\".\"family_plan_id\""},
+	EthnicityID:       whereHelpernull_Int16{field: "\"user_profiles\".\"ethnicity_id\""},
+	Work:              whereHelpernull_String{field: "\"user_profiles\".\"work\""},
+	JobTitle:          whereHelpernull_String{field: "\"user_profiles\".\"job_title\""},
+	University:        whereHelpernull_String{field: "\"user_profiles\".\"university\""},
+	ProfileMeta:       whereHelpernull_JSON{field: "\"user_profiles\".\"profile_meta\""},
+	CreatedAt:         whereHelpertime_Time{field: "\"user_profiles\".\"created_at\""},
+	UpdatedAt:         whereHelpertime_Time{field: "\"user_profiles\".\"updated_at\""},
 }
 
 // UserProfileRels is where relationship names are stored.
 var UserProfileRels = struct {
-	ChildrenStatus   string
-	DatingIntention  string
-	Drinking         string
-	Drug             string
-	EducationLevel   string
-	Ethnicity        string
-	FamilyPlan       string
-	Gender           string
-	Marijuana        string
-	RelationshipType string
-	Religion         string
-	Sexuality        string
-	Smoking          string
-	User             string
+	ChildrenStatus  string
+	DatingIntention string
+	Drinking        string
+	Drug            string
+	EducationLevel  string
+	Ethnicity       string
+	FamilyPlan      string
+	Gender          string
+	Marijuana       string
+	PoliticalBelief string
+	Religion        string
+	Smoking         string
+	User            string
 }{
-	ChildrenStatus:   "ChildrenStatus",
-	DatingIntention:  "DatingIntention",
-	Drinking:         "Drinking",
-	Drug:             "Drug",
-	EducationLevel:   "EducationLevel",
-	Ethnicity:        "Ethnicity",
-	FamilyPlan:       "FamilyPlan",
-	Gender:           "Gender",
-	Marijuana:        "Marijuana",
-	RelationshipType: "RelationshipType",
-	Religion:         "Religion",
-	Sexuality:        "Sexuality",
-	Smoking:          "Smoking",
-	User:             "User",
+	ChildrenStatus:  "ChildrenStatus",
+	DatingIntention: "DatingIntention",
+	Drinking:        "Drinking",
+	Drug:            "Drug",
+	EducationLevel:  "EducationLevel",
+	Ethnicity:       "Ethnicity",
+	FamilyPlan:      "FamilyPlan",
+	Gender:          "Gender",
+	Marijuana:       "Marijuana",
+	PoliticalBelief: "PoliticalBelief",
+	Religion:        "Religion",
+	Smoking:         "Smoking",
+	User:            "User",
 }
 
 // userProfileR is where relationships are stored.
 type userProfileR struct {
-	ChildrenStatus   *FamilyStatus     `boil:"ChildrenStatus" json:"ChildrenStatus" toml:"ChildrenStatus" yaml:"ChildrenStatus"`
-	DatingIntention  *DatingIntention  `boil:"DatingIntention" json:"DatingIntention" toml:"DatingIntention" yaml:"DatingIntention"`
-	Drinking         *Habit            `boil:"Drinking" json:"Drinking" toml:"Drinking" yaml:"Drinking"`
-	Drug             *Habit            `boil:"Drug" json:"Drug" toml:"Drug" yaml:"Drug"`
-	EducationLevel   *EducationLevel   `boil:"EducationLevel" json:"EducationLevel" toml:"EducationLevel" yaml:"EducationLevel"`
-	Ethnicity        *Ethnicity        `boil:"Ethnicity" json:"Ethnicity" toml:"Ethnicity" yaml:"Ethnicity"`
-	FamilyPlan       *FamilyPlan       `boil:"FamilyPlan" json:"FamilyPlan" toml:"FamilyPlan" yaml:"FamilyPlan"`
-	Gender           *Gender           `boil:"Gender" json:"Gender" toml:"Gender" yaml:"Gender"`
-	Marijuana        *Habit            `boil:"Marijuana" json:"Marijuana" toml:"Marijuana" yaml:"Marijuana"`
-	RelationshipType *RelationshipType `boil:"RelationshipType" json:"RelationshipType" toml:"RelationshipType" yaml:"RelationshipType"`
-	Religion         *Religion         `boil:"Religion" json:"Religion" toml:"Religion" yaml:"Religion"`
-	Sexuality        *Sexuality        `boil:"Sexuality" json:"Sexuality" toml:"Sexuality" yaml:"Sexuality"`
-	Smoking          *Habit            `boil:"Smoking" json:"Smoking" toml:"Smoking" yaml:"Smoking"`
-	User             *User             `boil:"User" json:"User" toml:"User" yaml:"User"`
+	ChildrenStatus  *FamilyStatus    `boil:"ChildrenStatus" json:"ChildrenStatus" toml:"ChildrenStatus" yaml:"ChildrenStatus"`
+	DatingIntention *DatingIntention `boil:"DatingIntention" json:"DatingIntention" toml:"DatingIntention" yaml:"DatingIntention"`
+	Drinking        *Habit           `boil:"Drinking" json:"Drinking" toml:"Drinking" yaml:"Drinking"`
+	Drug            *Habit           `boil:"Drug" json:"Drug" toml:"Drug" yaml:"Drug"`
+	EducationLevel  *EducationLevel  `boil:"EducationLevel" json:"EducationLevel" toml:"EducationLevel" yaml:"EducationLevel"`
+	Ethnicity       *Ethnicity       `boil:"Ethnicity" json:"Ethnicity" toml:"Ethnicity" yaml:"Ethnicity"`
+	FamilyPlan      *FamilyPlan      `boil:"FamilyPlan" json:"FamilyPlan" toml:"FamilyPlan" yaml:"FamilyPlan"`
+	Gender          *Gender          `boil:"Gender" json:"Gender" toml:"Gender" yaml:"Gender"`
+	Marijuana       *Habit           `boil:"Marijuana" json:"Marijuana" toml:"Marijuana" yaml:"Marijuana"`
+	PoliticalBelief *PoliticalBelief `boil:"PoliticalBelief" json:"PoliticalBelief" toml:"PoliticalBelief" yaml:"PoliticalBelief"`
+	Religion        *Religion        `boil:"Religion" json:"Religion" toml:"Religion" yaml:"Religion"`
+	Smoking         *Habit           `boil:"Smoking" json:"Smoking" toml:"Smoking" yaml:"Smoking"`
+	User            *User            `boil:"User" json:"User" toml:"User" yaml:"User"`
 }
 
 // NewStruct creates a new relationship struct
@@ -459,20 +449,20 @@ func (r *userProfileR) GetMarijuana() *Habit {
 	return r.Marijuana
 }
 
-func (o *UserProfile) GetRelationshipType() *RelationshipType {
+func (o *UserProfile) GetPoliticalBelief() *PoliticalBelief {
 	if o == nil {
 		return nil
 	}
 
-	return o.R.GetRelationshipType()
+	return o.R.GetPoliticalBelief()
 }
 
-func (r *userProfileR) GetRelationshipType() *RelationshipType {
+func (r *userProfileR) GetPoliticalBelief() *PoliticalBelief {
 	if r == nil {
 		return nil
 	}
 
-	return r.RelationshipType
+	return r.PoliticalBelief
 }
 
 func (o *UserProfile) GetReligion() *Religion {
@@ -489,22 +479,6 @@ func (r *userProfileR) GetReligion() *Religion {
 	}
 
 	return r.Religion
-}
-
-func (o *UserProfile) GetSexuality() *Sexuality {
-	if o == nil {
-		return nil
-	}
-
-	return o.R.GetSexuality()
-}
-
-func (r *userProfileR) GetSexuality() *Sexuality {
-	if r == nil {
-		return nil
-	}
-
-	return r.Sexuality
 }
 
 func (o *UserProfile) GetSmoking() *Habit {
@@ -543,9 +517,9 @@ func (r *userProfileR) GetUser() *User {
 type userProfileL struct{}
 
 var (
-	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "bio", "geo", "city", "country", "gender_id", "sexuality_id", "relationship_type_id", "dating_intention_id", "religion_id", "education_level_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at"}
+	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "bio", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at"}
 	userProfileColumnsWithoutDefault = []string{"user_id"}
-	userProfileColumnsWithDefault    = []string{"display_name", "birthdate", "height_cm", "bio", "geo", "city", "country", "gender_id", "sexuality_id", "relationship_type_id", "dating_intention_id", "religion_id", "education_level_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at"}
+	userProfileColumnsWithDefault    = []string{"display_name", "birthdate", "height_cm", "bio", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )
@@ -954,15 +928,15 @@ func (o *UserProfile) Marijuana(mods ...qm.QueryMod) habitQuery {
 	return Habits(queryMods...)
 }
 
-// RelationshipType pointed to by the foreign key.
-func (o *UserProfile) RelationshipType(mods ...qm.QueryMod) relationshipTypeQuery {
+// PoliticalBelief pointed to by the foreign key.
+func (o *UserProfile) PoliticalBelief(mods ...qm.QueryMod) politicalBeliefQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.RelationshipTypeID),
+		qm.Where("\"id\" = ?", o.PoliticalBeliefID),
 	}
 
 	queryMods = append(queryMods, mods...)
 
-	return RelationshipTypes(queryMods...)
+	return PoliticalBeliefs(queryMods...)
 }
 
 // Religion pointed to by the foreign key.
@@ -974,17 +948,6 @@ func (o *UserProfile) Religion(mods ...qm.QueryMod) religionQuery {
 	queryMods = append(queryMods, mods...)
 
 	return Religions(queryMods...)
-}
-
-// Sexuality pointed to by the foreign key.
-func (o *UserProfile) Sexuality(mods ...qm.QueryMod) sexualityQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.SexualityID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return Sexualities(queryMods...)
 }
 
 // Smoking pointed to by the foreign key.
@@ -2125,9 +2088,9 @@ func (userProfileL) LoadMarijuana(ctx context.Context, e boil.ContextExecutor, s
 	return nil
 }
 
-// LoadRelationshipType allows an eager lookup of values, cached into the
+// LoadPoliticalBelief allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (userProfileL) LoadRelationshipType(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserProfile interface{}, mods queries.Applicator) error {
+func (userProfileL) LoadPoliticalBelief(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserProfile interface{}, mods queries.Applicator) error {
 	var slice []*UserProfile
 	var object *UserProfile
 
@@ -2158,8 +2121,8 @@ func (userProfileL) LoadRelationshipType(ctx context.Context, e boil.ContextExec
 		if object.R == nil {
 			object.R = &userProfileR{}
 		}
-		if !queries.IsNil(object.RelationshipTypeID) {
-			args[object.RelationshipTypeID] = struct{}{}
+		if !queries.IsNil(object.PoliticalBeliefID) {
+			args[object.PoliticalBeliefID] = struct{}{}
 		}
 
 	} else {
@@ -2168,8 +2131,8 @@ func (userProfileL) LoadRelationshipType(ctx context.Context, e boil.ContextExec
 				obj.R = &userProfileR{}
 			}
 
-			if !queries.IsNil(obj.RelationshipTypeID) {
-				args[obj.RelationshipTypeID] = struct{}{}
+			if !queries.IsNil(obj.PoliticalBeliefID) {
+				args[obj.PoliticalBeliefID] = struct{}{}
 			}
 
 		}
@@ -2187,8 +2150,8 @@ func (userProfileL) LoadRelationshipType(ctx context.Context, e boil.ContextExec
 	}
 
 	query := NewQuery(
-		qm.From(`relationship_types`),
-		qm.WhereIn(`relationship_types.id in ?`, argsSlice...),
+		qm.From(`political_beliefs`),
+		qm.WhereIn(`political_beliefs.id in ?`, argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -2196,22 +2159,22 @@ func (userProfileL) LoadRelationshipType(ctx context.Context, e boil.ContextExec
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load RelationshipType")
+		return errors.Wrap(err, "failed to eager load PoliticalBelief")
 	}
 
-	var resultSlice []*RelationshipType
+	var resultSlice []*PoliticalBelief
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice RelationshipType")
+		return errors.Wrap(err, "failed to bind eager loaded slice PoliticalBelief")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for relationship_types")
+		return errors.Wrap(err, "failed to close results of eager load for political_beliefs")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for relationship_types")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for political_beliefs")
 	}
 
-	if len(relationshipTypeAfterSelectHooks) != 0 {
+	if len(politicalBeliefAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -2225,9 +2188,9 @@ func (userProfileL) LoadRelationshipType(ctx context.Context, e boil.ContextExec
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.RelationshipType = foreign
+		object.R.PoliticalBelief = foreign
 		if foreign.R == nil {
-			foreign.R = &relationshipTypeR{}
+			foreign.R = &politicalBeliefR{}
 		}
 		foreign.R.UserProfiles = append(foreign.R.UserProfiles, object)
 		return nil
@@ -2235,10 +2198,10 @@ func (userProfileL) LoadRelationshipType(ctx context.Context, e boil.ContextExec
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if queries.Equal(local.RelationshipTypeID, foreign.ID) {
-				local.R.RelationshipType = foreign
+			if queries.Equal(local.PoliticalBeliefID, foreign.ID) {
+				local.R.PoliticalBelief = foreign
 				if foreign.R == nil {
-					foreign.R = &relationshipTypeR{}
+					foreign.R = &politicalBeliefR{}
 				}
 				foreign.R.UserProfiles = append(foreign.R.UserProfiles, local)
 				break
@@ -2363,130 +2326,6 @@ func (userProfileL) LoadReligion(ctx context.Context, e boil.ContextExecutor, si
 				local.R.Religion = foreign
 				if foreign.R == nil {
 					foreign.R = &religionR{}
-				}
-				foreign.R.UserProfiles = append(foreign.R.UserProfiles, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadSexuality allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (userProfileL) LoadSexuality(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserProfile interface{}, mods queries.Applicator) error {
-	var slice []*UserProfile
-	var object *UserProfile
-
-	if singular {
-		var ok bool
-		object, ok = maybeUserProfile.(*UserProfile)
-		if !ok {
-			object = new(UserProfile)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeUserProfile)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUserProfile))
-			}
-		}
-	} else {
-		s, ok := maybeUserProfile.(*[]*UserProfile)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeUserProfile)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUserProfile))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &userProfileR{}
-		}
-		if !queries.IsNil(object.SexualityID) {
-			args[object.SexualityID] = struct{}{}
-		}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &userProfileR{}
-			}
-
-			if !queries.IsNil(obj.SexualityID) {
-				args[obj.SexualityID] = struct{}{}
-			}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`sexualities`),
-		qm.WhereIn(`sexualities.id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load Sexuality")
-	}
-
-	var resultSlice []*Sexuality
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Sexuality")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for sexualities")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for sexualities")
-	}
-
-	if len(sexualityAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.Sexuality = foreign
-		if foreign.R == nil {
-			foreign.R = &sexualityR{}
-		}
-		foreign.R.UserProfiles = append(foreign.R.UserProfiles, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if queries.Equal(local.SexualityID, foreign.ID) {
-				local.R.Sexuality = foreign
-				if foreign.R == nil {
-					foreign.R = &sexualityR{}
 				}
 				foreign.R.UserProfiles = append(foreign.R.UserProfiles, local)
 				break
@@ -3461,10 +3300,10 @@ func (o *UserProfile) RemoveMarijuana(ctx context.Context, exec boil.ContextExec
 	return nil
 }
 
-// SetRelationshipType of the userProfile to the related item.
-// Sets o.R.RelationshipType to related.
+// SetPoliticalBelief of the userProfile to the related item.
+// Sets o.R.PoliticalBelief to related.
 // Adds o to related.R.UserProfiles.
-func (o *UserProfile) SetRelationshipType(ctx context.Context, exec boil.ContextExecutor, insert bool, related *RelationshipType) error {
+func (o *UserProfile) SetPoliticalBelief(ctx context.Context, exec boil.ContextExecutor, insert bool, related *PoliticalBelief) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -3474,7 +3313,7 @@ func (o *UserProfile) SetRelationshipType(ctx context.Context, exec boil.Context
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"user_profiles\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"relationship_type_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"political_belief_id"}),
 		strmangle.WhereClause("\"", "\"", 2, userProfilePrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.UserID}
@@ -3488,17 +3327,17 @@ func (o *UserProfile) SetRelationshipType(ctx context.Context, exec boil.Context
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	queries.Assign(&o.RelationshipTypeID, related.ID)
+	queries.Assign(&o.PoliticalBeliefID, related.ID)
 	if o.R == nil {
 		o.R = &userProfileR{
-			RelationshipType: related,
+			PoliticalBelief: related,
 		}
 	} else {
-		o.R.RelationshipType = related
+		o.R.PoliticalBelief = related
 	}
 
 	if related.R == nil {
-		related.R = &relationshipTypeR{
+		related.R = &politicalBeliefR{
 			UserProfiles: UserProfileSlice{o},
 		}
 	} else {
@@ -3508,26 +3347,26 @@ func (o *UserProfile) SetRelationshipType(ctx context.Context, exec boil.Context
 	return nil
 }
 
-// RemoveRelationshipType relationship.
-// Sets o.R.RelationshipType to nil.
+// RemovePoliticalBelief relationship.
+// Sets o.R.PoliticalBelief to nil.
 // Removes o from all passed in related items' relationships struct.
-func (o *UserProfile) RemoveRelationshipType(ctx context.Context, exec boil.ContextExecutor, related *RelationshipType) error {
+func (o *UserProfile) RemovePoliticalBelief(ctx context.Context, exec boil.ContextExecutor, related *PoliticalBelief) error {
 	var err error
 
-	queries.SetScanner(&o.RelationshipTypeID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("relationship_type_id")); err != nil {
+	queries.SetScanner(&o.PoliticalBeliefID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("political_belief_id")); err != nil {
 		return errors.Wrap(err, "failed to update local table")
 	}
 
 	if o.R != nil {
-		o.R.RelationshipType = nil
+		o.R.PoliticalBelief = nil
 	}
 	if related == nil || related.R == nil {
 		return nil
 	}
 
 	for i, ri := range related.R.UserProfiles {
-		if queries.Equal(o.RelationshipTypeID, ri.RelationshipTypeID) {
+		if queries.Equal(o.PoliticalBeliefID, ri.PoliticalBeliefID) {
 			continue
 		}
 
@@ -3608,86 +3447,6 @@ func (o *UserProfile) RemoveReligion(ctx context.Context, exec boil.ContextExecu
 
 	for i, ri := range related.R.UserProfiles {
 		if queries.Equal(o.ReligionID, ri.ReligionID) {
-			continue
-		}
-
-		ln := len(related.R.UserProfiles)
-		if ln > 1 && i < ln-1 {
-			related.R.UserProfiles[i] = related.R.UserProfiles[ln-1]
-		}
-		related.R.UserProfiles = related.R.UserProfiles[:ln-1]
-		break
-	}
-	return nil
-}
-
-// SetSexuality of the userProfile to the related item.
-// Sets o.R.Sexuality to related.
-// Adds o to related.R.UserProfiles.
-func (o *UserProfile) SetSexuality(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Sexuality) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"user_profiles\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"sexuality_id"}),
-		strmangle.WhereClause("\"", "\"", 2, userProfilePrimaryKeyColumns),
-	)
-	values := []interface{}{related.ID, o.UserID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	queries.Assign(&o.SexualityID, related.ID)
-	if o.R == nil {
-		o.R = &userProfileR{
-			Sexuality: related,
-		}
-	} else {
-		o.R.Sexuality = related
-	}
-
-	if related.R == nil {
-		related.R = &sexualityR{
-			UserProfiles: UserProfileSlice{o},
-		}
-	} else {
-		related.R.UserProfiles = append(related.R.UserProfiles, o)
-	}
-
-	return nil
-}
-
-// RemoveSexuality relationship.
-// Sets o.R.Sexuality to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *UserProfile) RemoveSexuality(ctx context.Context, exec boil.ContextExecutor, related *Sexuality) error {
-	var err error
-
-	queries.SetScanner(&o.SexualityID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("sexuality_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.Sexuality = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.UserProfiles {
-		if queries.Equal(o.SexualityID, ri.SexualityID) {
 			continue
 		}
 

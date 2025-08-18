@@ -8,23 +8,21 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"golang.org/x/crypto/bcrypt"
 
 	authDomain "github.com/Haerd-Limited/dating-api/internal/auth/domain"
 	"github.com/Haerd-Limited/dating-api/internal/auth/mapper"
 	authStorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
-	awsDomain "github.com/Haerd-Limited/dating-api/internal/aws/domain"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/auth"
 )
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=auth
-type AuthService interface {
-	Register(ctx context.Context, registerInput *authDomain.Register) (*authDomain.AuthTokensAndUser, error)
-	Login(ctx context.Context, loginInput authDomain.Login) (*authDomain.AuthTokensAndUser, error)
-	RefreshToken(ctx context.Context, refreshInput authDomain.Refresh) (*authDomain.AuthTokens, error)
+type Service interface {
+	Register(ctx context.Context, registerDetails *authDomain.Register) (*authDomain.AuthTokensAndUserID, error)
+	Login(ctx context.Context, loginInput authDomain.Login) (*authDomain.AuthTokensAndUserID, error)
+	RefreshToken(ctx context.Context, refreshInput authDomain.Refresh) (*authDomain.AuthTokensAndUserID, error)
 	RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput authDomain.RevokeRefreshToken) error
 }
 
@@ -42,7 +40,7 @@ func NewAuthService(
 	UserService user.Service,
 	AuthRepository authStorage.AuthRepository,
 	awsService aws.AWSService,
-) AuthService {
+) Service {
 	return &authService{
 		logger:      logger,
 		jwtSecret:   jwtSecret,
@@ -59,36 +57,13 @@ var (
 	ErrRefreshTokenNotFound       = errors.New("refresh token not found")
 )
 
-func (as *authService) Register(ctx context.Context, registerInput *authDomain.Register) (*authDomain.AuthTokensAndUser, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(registerInput.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
-	}
-
-	userDomain := &domain.User{
-		FullName:       registerInput.FullName,
-		Username:       registerInput.Username,
-		HashedPassword: string(hashedPassword),
-		Email:          registerInput.Email,
-		Dob:            registerInput.DateOfBirth,
-		Bio:            registerInput.Bio,
-		Gender:         registerInput.Gender,
-	}
-
-	if registerInput.ProfileImage != nil && registerInput.ProfileImageHeader != nil {
-		// upload post image to s3
-		userDomain.ProfileImageURL, err = as.awsService.UploadImage(ctx, awsDomain.ImageUpload{
-			AuthorID:    registerInput.Username,
-			ImageHeader: *registerInput.ProfileImageHeader,
-			ImageFile:   *registerInput.ProfileImage,
-			FolderPath:  awsDomain.FolderProfilePictures,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to upload image file: %v", err)
-		}
-	}
-
-	createUserResult, err := as.UserService.CreateUser(ctx, userDomain)
+func (as *authService) Register(ctx context.Context, registerDetails *authDomain.Register) (*authDomain.AuthTokensAndUserID, error) {
+	createUserResult, err := as.UserService.CreateUser(ctx, &domain.User{
+		Email:       registerDetails.Email,
+		PhoneNumber: registerDetails.PhoneNumber,
+		FirstName:   registerDetails.FirstName,
+		LastName:    registerDetails.LastName,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
@@ -108,19 +83,14 @@ func (as *authService) Register(ctx context.Context, registerInput *authDomain.R
 		return nil, fmt.Errorf("failed to insert refresh token: %w", err)
 	}
 
-	return &authDomain.AuthTokensAndUser{
+	return &authDomain.AuthTokensAndUserID{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken.Token,
-		User: domain.User{
-			FullName:        userDomain.FullName,
-			Username:        userDomain.Username,
-			Email:           userDomain.Email,
-			ProfileImageURL: userDomain.ProfileImageURL,
-		},
+		UserID:       createUserResult.UserID,
 	}, nil
 }
 
-func (as *authService) Login(ctx context.Context, loginInput authDomain.Login) (*authDomain.AuthTokensAndUser, error) {
+func (as *authService) Login(ctx context.Context, loginInput authDomain.Login) (*authDomain.AuthTokensAndUserID, error) {
 	userDetails, err := as.UserService.AuthenticateUser(ctx, loginInput.Email, loginInput.Password)
 	if err != nil {
 		return nil, fmt.Errorf("failed authenticating user: %w", err)
@@ -151,18 +121,14 @@ func (as *authService) Login(ctx context.Context, loginInput authDomain.Login) (
 		return nil, fmt.Errorf("failed to insert refresh token: %w", err)
 	}
 
-	return &authDomain.AuthTokensAndUser{
+	return &authDomain.AuthTokensAndUserID{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken.Token,
-		User: domain.User{
-			FullName: userDetails.FullName,
-			Username: userDetails.Username,
-			Email:    userDetails.Email,
-		},
+		UserID:       userDetails.ID,
 	}, nil
 }
 
-func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain.Refresh) (*authDomain.AuthTokens, error) {
+func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain.Refresh) (*authDomain.AuthTokensAndUserID, error) {
 	refreshToken, err := as.AuthRepo.GetRefreshToken(ctx, refreshInput.RefreshToken)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -202,7 +168,7 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain
 		return nil, fmt.Errorf("failed to store new refresh token: %w", err)
 	}
 
-	return &authDomain.AuthTokens{
+	return &authDomain.AuthTokensAndUserID{
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken.Token,
 	}, nil

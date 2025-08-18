@@ -8,6 +8,8 @@ import "testing"
 func TestUpsert(t *testing.T) {
 	t.Run("DatingIntentions", testDatingIntentionsUpsert)
 
+	t.Run("DeviceTokens", testDeviceTokensUpsert)
+
 	t.Run("EducationLevels", testEducationLevelsUpsert)
 
 	t.Run("Ethnicities", testEthnicitiesUpsert)
@@ -32,15 +34,13 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Photos", testPhotosUpsert)
 
+	t.Run("PoliticalBeliefs", testPoliticalBeliefsUpsert)
+
 	t.Run("PromptTypes", testPromptTypesUpsert)
 
 	t.Run("RefreshTokens", testRefreshTokensUpsert)
 
-	t.Run("RelationshipTypes", testRelationshipTypesUpsert)
-
 	t.Run("Religions", testReligionsUpsert)
-
-	t.Run("Sexualities", testSexualitiesUpsert)
 
 	t.Run("SpatialRefSys", testSpatialRefSysUpsert)
 

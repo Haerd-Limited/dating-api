@@ -21,24 +21,24 @@ var (
 	_ = queries.Equal
 )
 
-func testUserPreferences(t *testing.T) {
+func testDeviceTokens(t *testing.T) {
 	t.Parallel()
 
-	query := UserPreferences()
+	query := DeviceTokens()
 
 	if query.Query == nil {
 		t.Error("expected a query, got nothing")
 	}
 }
 
-func testUserPreferencesDelete(t *testing.T) {
+func testDeviceTokensDelete(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func testUserPreferencesDelete(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,14 +64,14 @@ func testUserPreferencesDelete(t *testing.T) {
 	}
 }
 
-func testUserPreferencesQueryDeleteAll(t *testing.T) {
+func testDeviceTokensQueryDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -81,13 +81,13 @@ func testUserPreferencesQueryDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if rowsAff, err := UserPreferences().DeleteAll(ctx, tx); err != nil {
+	if rowsAff, err := DeviceTokens().DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,14 +97,14 @@ func testUserPreferencesQueryDeleteAll(t *testing.T) {
 	}
 }
 
-func testUserPreferencesSliceDeleteAll(t *testing.T) {
+func testDeviceTokensSliceDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func testUserPreferencesSliceDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := UserPreferenceSlice{o}
+	slice := DeviceTokenSlice{o}
 
 	if rowsAff, err := slice.DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
@@ -122,7 +122,7 @@ func testUserPreferencesSliceDeleteAll(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,14 +132,14 @@ func testUserPreferencesSliceDeleteAll(t *testing.T) {
 	}
 }
 
-func testUserPreferencesExists(t *testing.T) {
+func testDeviceTokensExists(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -149,23 +149,23 @@ func testUserPreferencesExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := UserPreferenceExists(ctx, tx, o.UserID)
+	e, err := DeviceTokenExists(ctx, tx, o.ID)
 	if err != nil {
-		t.Errorf("Unable to check if UserPreference exists: %s", err)
+		t.Errorf("Unable to check if DeviceToken exists: %s", err)
 	}
 	if !e {
-		t.Errorf("Expected UserPreferenceExists to return true, but got false.")
+		t.Errorf("Expected DeviceTokenExists to return true, but got false.")
 	}
 }
 
-func testUserPreferencesFind(t *testing.T) {
+func testDeviceTokensFind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -175,24 +175,24 @@ func testUserPreferencesFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	userPreferenceFound, err := FindUserPreference(ctx, tx, o.UserID)
+	deviceTokenFound, err := FindDeviceToken(ctx, tx, o.ID)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if userPreferenceFound == nil {
+	if deviceTokenFound == nil {
 		t.Error("want a record, got nil")
 	}
 }
 
-func testUserPreferencesBind(t *testing.T) {
+func testDeviceTokensBind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -202,19 +202,19 @@ func testUserPreferencesBind(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = UserPreferences().Bind(ctx, tx, o); err != nil {
+	if err = DeviceTokens().Bind(ctx, tx, o); err != nil {
 		t.Error(err)
 	}
 }
 
-func testUserPreferencesOne(t *testing.T) {
+func testDeviceTokensOne(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -224,38 +224,38 @@ func testUserPreferencesOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	if x, err := UserPreferences().One(ctx, tx); err != nil {
+	if x, err := DeviceTokens().One(ctx, tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
 	}
 }
 
-func testUserPreferencesAll(t *testing.T) {
+func testDeviceTokensAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	userPreferenceOne := &UserPreference{}
-	userPreferenceTwo := &UserPreference{}
-	if err = randomize.Struct(seed, userPreferenceOne, userPreferenceDBTypes, false, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	deviceTokenOne := &DeviceToken{}
+	deviceTokenTwo := &DeviceToken{}
+	if err = randomize.Struct(seed, deviceTokenOne, deviceTokenDBTypes, false, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
-	if err = randomize.Struct(seed, userPreferenceTwo, userPreferenceDBTypes, false, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	if err = randomize.Struct(seed, deviceTokenTwo, deviceTokenDBTypes, false, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = userPreferenceOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = deviceTokenOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = userPreferenceTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = deviceTokenTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := UserPreferences().All(ctx, tx)
+	slice, err := DeviceTokens().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -265,31 +265,31 @@ func testUserPreferencesAll(t *testing.T) {
 	}
 }
 
-func testUserPreferencesCount(t *testing.T) {
+func testDeviceTokensCount(t *testing.T) {
 	t.Parallel()
 
 	var err error
 	seed := randomize.NewSeed()
-	userPreferenceOne := &UserPreference{}
-	userPreferenceTwo := &UserPreference{}
-	if err = randomize.Struct(seed, userPreferenceOne, userPreferenceDBTypes, false, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	deviceTokenOne := &DeviceToken{}
+	deviceTokenTwo := &DeviceToken{}
+	if err = randomize.Struct(seed, deviceTokenOne, deviceTokenDBTypes, false, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
-	if err = randomize.Struct(seed, userPreferenceTwo, userPreferenceDBTypes, false, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	if err = randomize.Struct(seed, deviceTokenTwo, deviceTokenDBTypes, false, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = userPreferenceOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = deviceTokenOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = userPreferenceTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = deviceTokenTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -299,155 +299,155 @@ func testUserPreferencesCount(t *testing.T) {
 	}
 }
 
-func userPreferenceBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func userPreferenceAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func userPreferenceAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func userPreferenceBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func userPreferenceAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func userPreferenceBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func userPreferenceAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func userPreferenceBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func userPreferenceAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *UserPreference) error {
-	*o = UserPreference{}
+func deviceTokenAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *DeviceToken) error {
+	*o = DeviceToken{}
 	return nil
 }
 
-func testUserPreferencesHooks(t *testing.T) {
+func testDeviceTokensHooks(t *testing.T) {
 	t.Parallel()
 
 	var err error
 
 	ctx := context.Background()
-	empty := &UserPreference{}
-	o := &UserPreference{}
+	empty := &DeviceToken{}
+	o := &DeviceToken{}
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, false); err != nil {
-		t.Errorf("Unable to randomize UserPreference object: %s", err)
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, false); err != nil {
+		t.Errorf("Unable to randomize DeviceToken object: %s", err)
 	}
 
-	AddUserPreferenceHook(boil.BeforeInsertHook, userPreferenceBeforeInsertHook)
+	AddDeviceTokenHook(boil.BeforeInsertHook, deviceTokenBeforeInsertHook)
 	if err = o.doBeforeInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeInsertHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceBeforeInsertHooks = []UserPreferenceHook{}
+	deviceTokenBeforeInsertHooks = []DeviceTokenHook{}
 
-	AddUserPreferenceHook(boil.AfterInsertHook, userPreferenceAfterInsertHook)
+	AddDeviceTokenHook(boil.AfterInsertHook, deviceTokenAfterInsertHook)
 	if err = o.doAfterInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterInsertHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceAfterInsertHooks = []UserPreferenceHook{}
+	deviceTokenAfterInsertHooks = []DeviceTokenHook{}
 
-	AddUserPreferenceHook(boil.AfterSelectHook, userPreferenceAfterSelectHook)
+	AddDeviceTokenHook(boil.AfterSelectHook, deviceTokenAfterSelectHook)
 	if err = o.doAfterSelectHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterSelectHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceAfterSelectHooks = []UserPreferenceHook{}
+	deviceTokenAfterSelectHooks = []DeviceTokenHook{}
 
-	AddUserPreferenceHook(boil.BeforeUpdateHook, userPreferenceBeforeUpdateHook)
+	AddDeviceTokenHook(boil.BeforeUpdateHook, deviceTokenBeforeUpdateHook)
 	if err = o.doBeforeUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpdateHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceBeforeUpdateHooks = []UserPreferenceHook{}
+	deviceTokenBeforeUpdateHooks = []DeviceTokenHook{}
 
-	AddUserPreferenceHook(boil.AfterUpdateHook, userPreferenceAfterUpdateHook)
+	AddDeviceTokenHook(boil.AfterUpdateHook, deviceTokenAfterUpdateHook)
 	if err = o.doAfterUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpdateHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceAfterUpdateHooks = []UserPreferenceHook{}
+	deviceTokenAfterUpdateHooks = []DeviceTokenHook{}
 
-	AddUserPreferenceHook(boil.BeforeDeleteHook, userPreferenceBeforeDeleteHook)
+	AddDeviceTokenHook(boil.BeforeDeleteHook, deviceTokenBeforeDeleteHook)
 	if err = o.doBeforeDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeDeleteHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceBeforeDeleteHooks = []UserPreferenceHook{}
+	deviceTokenBeforeDeleteHooks = []DeviceTokenHook{}
 
-	AddUserPreferenceHook(boil.AfterDeleteHook, userPreferenceAfterDeleteHook)
+	AddDeviceTokenHook(boil.AfterDeleteHook, deviceTokenAfterDeleteHook)
 	if err = o.doAfterDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterDeleteHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceAfterDeleteHooks = []UserPreferenceHook{}
+	deviceTokenAfterDeleteHooks = []DeviceTokenHook{}
 
-	AddUserPreferenceHook(boil.BeforeUpsertHook, userPreferenceBeforeUpsertHook)
+	AddDeviceTokenHook(boil.BeforeUpsertHook, deviceTokenBeforeUpsertHook)
 	if err = o.doBeforeUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpsertHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceBeforeUpsertHooks = []UserPreferenceHook{}
+	deviceTokenBeforeUpsertHooks = []DeviceTokenHook{}
 
-	AddUserPreferenceHook(boil.AfterUpsertHook, userPreferenceAfterUpsertHook)
+	AddDeviceTokenHook(boil.AfterUpsertHook, deviceTokenAfterUpsertHook)
 	if err = o.doAfterUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpsertHook function to empty object, but got: %#v", o)
 	}
-	userPreferenceAfterUpsertHooks = []UserPreferenceHook{}
+	deviceTokenAfterUpsertHooks = []DeviceTokenHook{}
 }
 
-func testUserPreferencesInsert(t *testing.T) {
+func testDeviceTokensInsert(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -457,7 +457,7 @@ func testUserPreferencesInsert(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -467,24 +467,24 @@ func testUserPreferencesInsert(t *testing.T) {
 	}
 }
 
-func testUserPreferencesInsertWhitelist(t *testing.T) {
+func testDeviceTokensInsertWhitelist(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert(ctx, tx, boil.Whitelist(strmangle.SetMerge(userPreferencePrimaryKeyColumns, userPreferenceColumnsWithoutDefault)...)); err != nil {
+	if err = o.Insert(ctx, tx, boil.Whitelist(strmangle.SetMerge(deviceTokenPrimaryKeyColumns, deviceTokenColumnsWithoutDefault)...)); err != nil {
 		t.Error(err)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -494,17 +494,17 @@ func testUserPreferencesInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testUserPreferenceToOneUserUsingUser(t *testing.T) {
+func testDeviceTokenToOneUserUsingUser(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var local UserPreference
+	var local DeviceToken
 	var foreign User
 
 	seed := randomize.NewSeed()
-	if err := randomize.Struct(seed, &local, userPreferenceDBTypes, false, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	if err := randomize.Struct(seed, &local, deviceTokenDBTypes, false, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 	if err := randomize.Struct(seed, &foreign, userDBTypes, false, userColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize User struct: %s", err)
@@ -534,8 +534,8 @@ func testUserPreferenceToOneUserUsingUser(t *testing.T) {
 		return nil
 	})
 
-	slice := UserPreferenceSlice{&local}
-	if err = local.L.LoadUser(ctx, tx, false, (*[]*UserPreference)(&slice), nil); err != nil {
+	slice := DeviceTokenSlice{&local}
+	if err = local.L.LoadUser(ctx, tx, false, (*[]*DeviceToken)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
 	if local.R.User == nil {
@@ -555,18 +555,18 @@ func testUserPreferenceToOneUserUsingUser(t *testing.T) {
 	}
 }
 
-func testUserPreferenceToOneSetOpUserUsingUser(t *testing.T) {
+func testDeviceTokenToOneSetOpUserUsingUser(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a UserPreference
+	var a DeviceToken
 	var b, c User
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, userPreferenceDBTypes, false, strmangle.SetComplement(userPreferencePrimaryKeyColumns, userPreferenceColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &a, deviceTokenDBTypes, false, strmangle.SetComplement(deviceTokenPrimaryKeyColumns, deviceTokenColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 	if err = randomize.Struct(seed, &b, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
@@ -593,30 +593,34 @@ func testUserPreferenceToOneSetOpUserUsingUser(t *testing.T) {
 			t.Error("relationship struct not set to correct value")
 		}
 
-		if x.R.UserPreference != &a {
+		if x.R.DeviceTokens[0] != &a {
 			t.Error("failed to append to foreign relationship struct")
 		}
 		if a.UserID != x.ID {
 			t.Error("foreign key was wrong value", a.UserID)
 		}
 
-		if exists, err := UserPreferenceExists(ctx, tx, a.UserID); err != nil {
-			t.Fatal(err)
-		} else if !exists {
-			t.Error("want 'a' to exist")
+		zero := reflect.Zero(reflect.TypeOf(a.UserID))
+		reflect.Indirect(reflect.ValueOf(&a.UserID)).Set(zero)
+
+		if err = a.Reload(ctx, tx); err != nil {
+			t.Fatal("failed to reload", err)
 		}
 
+		if a.UserID != x.ID {
+			t.Error("foreign key was wrong value", a.UserID, x.ID)
+		}
 	}
 }
 
-func testUserPreferencesReload(t *testing.T) {
+func testDeviceTokensReload(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -631,14 +635,14 @@ func testUserPreferencesReload(t *testing.T) {
 	}
 }
 
-func testUserPreferencesReloadAll(t *testing.T) {
+func testDeviceTokensReloadAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -648,21 +652,21 @@ func testUserPreferencesReloadAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := UserPreferenceSlice{o}
+	slice := DeviceTokenSlice{o}
 
 	if err = slice.ReloadAll(ctx, tx); err != nil {
 		t.Error(err)
 	}
 }
 
-func testUserPreferencesSelect(t *testing.T) {
+func testDeviceTokensSelect(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -672,7 +676,7 @@ func testUserPreferencesSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice, err := UserPreferences().All(ctx, tx)
+	slice, err := DeviceTokens().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -683,25 +687,25 @@ func testUserPreferencesSelect(t *testing.T) {
 }
 
 var (
-	userPreferenceDBTypes = map[string]string{`UserID`: `uuid`, `DistanceKM`: `smallint`, `AgeMin`: `smallint`, `AgeMax`: `smallint`, `SeekGenderIds`: `ARRAYinteger`, `SeekIntentionIds`: `ARRAYinteger`, `SeekReligionIds`: `ARRAYinteger`, `SeekPoliticalBeliefIds`: `ARRAYinteger`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`}
-	_                     = bytes.MinRead
+	deviceTokenDBTypes = map[string]string{`ID`: `uuid`, `UserID`: `uuid`, `Token`: `text`, `CreatedAt`: `timestamp without time zone`, `UpdatedAt`: `timestamp without time zone`}
+	_                  = bytes.MinRead
 )
 
-func testUserPreferencesUpdate(t *testing.T) {
+func testDeviceTokensUpdate(t *testing.T) {
 	t.Parallel()
 
-	if 0 == len(userPreferencePrimaryKeyColumns) {
+	if 0 == len(deviceTokenPrimaryKeyColumns) {
 		t.Skip("Skipping table with no primary key columns")
 	}
-	if len(userPreferenceAllColumns) == len(userPreferencePrimaryKeyColumns) {
+	if len(deviceTokenAllColumns) == len(deviceTokenPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -711,7 +715,7 @@ func testUserPreferencesUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -720,8 +724,8 @@ func testUserPreferencesUpdate(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferencePrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	if rowsAff, err := o.Update(ctx, tx, boil.Infer()); err != nil {
@@ -731,18 +735,18 @@ func testUserPreferencesUpdate(t *testing.T) {
 	}
 }
 
-func testUserPreferencesSliceUpdateAll(t *testing.T) {
+func testDeviceTokensSliceUpdateAll(t *testing.T) {
 	t.Parallel()
 
-	if len(userPreferenceAllColumns) == len(userPreferencePrimaryKeyColumns) {
+	if len(deviceTokenAllColumns) == len(deviceTokenPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &UserPreference{}
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferenceColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := &DeviceToken{}
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -752,7 +756,7 @@ func testUserPreferencesSliceUpdateAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -761,18 +765,18 @@ func testUserPreferencesSliceUpdateAll(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, userPreferenceDBTypes, true, userPreferencePrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	if err = randomize.Struct(seed, o, deviceTokenDBTypes, true, deviceTokenPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	// Remove Primary keys and unique columns from what we plan to update
 	var fields []string
-	if strmangle.StringSliceMatch(userPreferenceAllColumns, userPreferencePrimaryKeyColumns) {
-		fields = userPreferenceAllColumns
+	if strmangle.StringSliceMatch(deviceTokenAllColumns, deviceTokenPrimaryKeyColumns) {
+		fields = deviceTokenAllColumns
 	} else {
 		fields = strmangle.SetComplement(
-			userPreferenceAllColumns,
-			userPreferencePrimaryKeyColumns,
+			deviceTokenAllColumns,
+			deviceTokenPrimaryKeyColumns,
 		)
 	}
 
@@ -790,7 +794,7 @@ func testUserPreferencesSliceUpdateAll(t *testing.T) {
 		}
 	}
 
-	slice := UserPreferenceSlice{o}
+	slice := DeviceTokenSlice{o}
 	if rowsAff, err := slice.UpdateAll(ctx, tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
@@ -798,29 +802,29 @@ func testUserPreferencesSliceUpdateAll(t *testing.T) {
 	}
 }
 
-func testUserPreferencesUpsert(t *testing.T) {
+func testDeviceTokensUpsert(t *testing.T) {
 	t.Parallel()
 
-	if len(userPreferenceAllColumns) == len(userPreferencePrimaryKeyColumns) {
+	if len(deviceTokenAllColumns) == len(deviceTokenPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
 	// Attempt the INSERT side of an UPSERT
-	o := UserPreference{}
-	if err = randomize.Struct(seed, &o, userPreferenceDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	o := DeviceToken{}
+	if err = randomize.Struct(seed, &o, deviceTokenDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 	if err = o.Upsert(ctx, tx, false, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert UserPreference: %s", err)
+		t.Errorf("Unable to upsert DeviceToken: %s", err)
 	}
 
-	count, err := UserPreferences().Count(ctx, tx)
+	count, err := DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -829,15 +833,15 @@ func testUserPreferencesUpsert(t *testing.T) {
 	}
 
 	// Attempt the UPDATE side of an UPSERT
-	if err = randomize.Struct(seed, &o, userPreferenceDBTypes, false, userPreferencePrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize UserPreference struct: %s", err)
+	if err = randomize.Struct(seed, &o, deviceTokenDBTypes, false, deviceTokenPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize DeviceToken struct: %s", err)
 	}
 
 	if err = o.Upsert(ctx, tx, true, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert UserPreference: %s", err)
+		t.Errorf("Unable to upsert DeviceToken: %s", err)
 	}
 
-	count, err = UserPreferences().Count(ctx, tx)
+	count, err = DeviceTokens().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}

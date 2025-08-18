@@ -21,24 +21,24 @@ var (
 	_ = queries.Equal
 )
 
-func testRelationshipTypes(t *testing.T) {
+func testPoliticalBeliefs(t *testing.T) {
 	t.Parallel()
 
-	query := RelationshipTypes()
+	query := PoliticalBeliefs()
 
 	if query.Query == nil {
 		t.Error("expected a query, got nothing")
 	}
 }
 
-func testRelationshipTypesDelete(t *testing.T) {
+func testPoliticalBeliefsDelete(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func testRelationshipTypesDelete(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,14 +64,14 @@ func testRelationshipTypesDelete(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesQueryDeleteAll(t *testing.T) {
+func testPoliticalBeliefsQueryDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -81,13 +81,13 @@ func testRelationshipTypesQueryDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if rowsAff, err := RelationshipTypes().DeleteAll(ctx, tx); err != nil {
+	if rowsAff, err := PoliticalBeliefs().DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,14 +97,14 @@ func testRelationshipTypesQueryDeleteAll(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesSliceDeleteAll(t *testing.T) {
+func testPoliticalBeliefsSliceDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func testRelationshipTypesSliceDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := RelationshipTypeSlice{o}
+	slice := PoliticalBeliefSlice{o}
 
 	if rowsAff, err := slice.DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
@@ -122,7 +122,7 @@ func testRelationshipTypesSliceDeleteAll(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,14 +132,14 @@ func testRelationshipTypesSliceDeleteAll(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesExists(t *testing.T) {
+func testPoliticalBeliefsExists(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -149,23 +149,23 @@ func testRelationshipTypesExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := RelationshipTypeExists(ctx, tx, o.ID)
+	e, err := PoliticalBeliefExists(ctx, tx, o.ID)
 	if err != nil {
-		t.Errorf("Unable to check if RelationshipType exists: %s", err)
+		t.Errorf("Unable to check if PoliticalBelief exists: %s", err)
 	}
 	if !e {
-		t.Errorf("Expected RelationshipTypeExists to return true, but got false.")
+		t.Errorf("Expected PoliticalBeliefExists to return true, but got false.")
 	}
 }
 
-func testRelationshipTypesFind(t *testing.T) {
+func testPoliticalBeliefsFind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -175,24 +175,24 @@ func testRelationshipTypesFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	relationshipTypeFound, err := FindRelationshipType(ctx, tx, o.ID)
+	politicalBeliefFound, err := FindPoliticalBelief(ctx, tx, o.ID)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if relationshipTypeFound == nil {
+	if politicalBeliefFound == nil {
 		t.Error("want a record, got nil")
 	}
 }
 
-func testRelationshipTypesBind(t *testing.T) {
+func testPoliticalBeliefsBind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -202,19 +202,19 @@ func testRelationshipTypesBind(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = RelationshipTypes().Bind(ctx, tx, o); err != nil {
+	if err = PoliticalBeliefs().Bind(ctx, tx, o); err != nil {
 		t.Error(err)
 	}
 }
 
-func testRelationshipTypesOne(t *testing.T) {
+func testPoliticalBeliefsOne(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -224,38 +224,38 @@ func testRelationshipTypesOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	if x, err := RelationshipTypes().One(ctx, tx); err != nil {
+	if x, err := PoliticalBeliefs().One(ctx, tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
 	}
 }
 
-func testRelationshipTypesAll(t *testing.T) {
+func testPoliticalBeliefsAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	relationshipTypeOne := &RelationshipType{}
-	relationshipTypeTwo := &RelationshipType{}
-	if err = randomize.Struct(seed, relationshipTypeOne, relationshipTypeDBTypes, false, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	politicalBeliefOne := &PoliticalBelief{}
+	politicalBeliefTwo := &PoliticalBelief{}
+	if err = randomize.Struct(seed, politicalBeliefOne, politicalBeliefDBTypes, false, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
-	if err = randomize.Struct(seed, relationshipTypeTwo, relationshipTypeDBTypes, false, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	if err = randomize.Struct(seed, politicalBeliefTwo, politicalBeliefDBTypes, false, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = relationshipTypeOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = politicalBeliefOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = relationshipTypeTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = politicalBeliefTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := RelationshipTypes().All(ctx, tx)
+	slice, err := PoliticalBeliefs().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -265,31 +265,31 @@ func testRelationshipTypesAll(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesCount(t *testing.T) {
+func testPoliticalBeliefsCount(t *testing.T) {
 	t.Parallel()
 
 	var err error
 	seed := randomize.NewSeed()
-	relationshipTypeOne := &RelationshipType{}
-	relationshipTypeTwo := &RelationshipType{}
-	if err = randomize.Struct(seed, relationshipTypeOne, relationshipTypeDBTypes, false, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	politicalBeliefOne := &PoliticalBelief{}
+	politicalBeliefTwo := &PoliticalBelief{}
+	if err = randomize.Struct(seed, politicalBeliefOne, politicalBeliefDBTypes, false, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
-	if err = randomize.Struct(seed, relationshipTypeTwo, relationshipTypeDBTypes, false, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	if err = randomize.Struct(seed, politicalBeliefTwo, politicalBeliefDBTypes, false, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = relationshipTypeOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = politicalBeliefOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = relationshipTypeTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = politicalBeliefTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -299,155 +299,155 @@ func testRelationshipTypesCount(t *testing.T) {
 	}
 }
 
-func relationshipTypeBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func relationshipTypeAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func relationshipTypeAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func relationshipTypeBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func relationshipTypeAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func relationshipTypeBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func relationshipTypeAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func relationshipTypeBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func relationshipTypeAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *RelationshipType) error {
-	*o = RelationshipType{}
+func politicalBeliefAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *PoliticalBelief) error {
+	*o = PoliticalBelief{}
 	return nil
 }
 
-func testRelationshipTypesHooks(t *testing.T) {
+func testPoliticalBeliefsHooks(t *testing.T) {
 	t.Parallel()
 
 	var err error
 
 	ctx := context.Background()
-	empty := &RelationshipType{}
-	o := &RelationshipType{}
+	empty := &PoliticalBelief{}
+	o := &PoliticalBelief{}
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, false); err != nil {
-		t.Errorf("Unable to randomize RelationshipType object: %s", err)
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, false); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief object: %s", err)
 	}
 
-	AddRelationshipTypeHook(boil.BeforeInsertHook, relationshipTypeBeforeInsertHook)
+	AddPoliticalBeliefHook(boil.BeforeInsertHook, politicalBeliefBeforeInsertHook)
 	if err = o.doBeforeInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeInsertHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeBeforeInsertHooks = []RelationshipTypeHook{}
+	politicalBeliefBeforeInsertHooks = []PoliticalBeliefHook{}
 
-	AddRelationshipTypeHook(boil.AfterInsertHook, relationshipTypeAfterInsertHook)
+	AddPoliticalBeliefHook(boil.AfterInsertHook, politicalBeliefAfterInsertHook)
 	if err = o.doAfterInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterInsertHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeAfterInsertHooks = []RelationshipTypeHook{}
+	politicalBeliefAfterInsertHooks = []PoliticalBeliefHook{}
 
-	AddRelationshipTypeHook(boil.AfterSelectHook, relationshipTypeAfterSelectHook)
+	AddPoliticalBeliefHook(boil.AfterSelectHook, politicalBeliefAfterSelectHook)
 	if err = o.doAfterSelectHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterSelectHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeAfterSelectHooks = []RelationshipTypeHook{}
+	politicalBeliefAfterSelectHooks = []PoliticalBeliefHook{}
 
-	AddRelationshipTypeHook(boil.BeforeUpdateHook, relationshipTypeBeforeUpdateHook)
+	AddPoliticalBeliefHook(boil.BeforeUpdateHook, politicalBeliefBeforeUpdateHook)
 	if err = o.doBeforeUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpdateHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeBeforeUpdateHooks = []RelationshipTypeHook{}
+	politicalBeliefBeforeUpdateHooks = []PoliticalBeliefHook{}
 
-	AddRelationshipTypeHook(boil.AfterUpdateHook, relationshipTypeAfterUpdateHook)
+	AddPoliticalBeliefHook(boil.AfterUpdateHook, politicalBeliefAfterUpdateHook)
 	if err = o.doAfterUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpdateHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeAfterUpdateHooks = []RelationshipTypeHook{}
+	politicalBeliefAfterUpdateHooks = []PoliticalBeliefHook{}
 
-	AddRelationshipTypeHook(boil.BeforeDeleteHook, relationshipTypeBeforeDeleteHook)
+	AddPoliticalBeliefHook(boil.BeforeDeleteHook, politicalBeliefBeforeDeleteHook)
 	if err = o.doBeforeDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeDeleteHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeBeforeDeleteHooks = []RelationshipTypeHook{}
+	politicalBeliefBeforeDeleteHooks = []PoliticalBeliefHook{}
 
-	AddRelationshipTypeHook(boil.AfterDeleteHook, relationshipTypeAfterDeleteHook)
+	AddPoliticalBeliefHook(boil.AfterDeleteHook, politicalBeliefAfterDeleteHook)
 	if err = o.doAfterDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterDeleteHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeAfterDeleteHooks = []RelationshipTypeHook{}
+	politicalBeliefAfterDeleteHooks = []PoliticalBeliefHook{}
 
-	AddRelationshipTypeHook(boil.BeforeUpsertHook, relationshipTypeBeforeUpsertHook)
+	AddPoliticalBeliefHook(boil.BeforeUpsertHook, politicalBeliefBeforeUpsertHook)
 	if err = o.doBeforeUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpsertHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeBeforeUpsertHooks = []RelationshipTypeHook{}
+	politicalBeliefBeforeUpsertHooks = []PoliticalBeliefHook{}
 
-	AddRelationshipTypeHook(boil.AfterUpsertHook, relationshipTypeAfterUpsertHook)
+	AddPoliticalBeliefHook(boil.AfterUpsertHook, politicalBeliefAfterUpsertHook)
 	if err = o.doAfterUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpsertHook function to empty object, but got: %#v", o)
 	}
-	relationshipTypeAfterUpsertHooks = []RelationshipTypeHook{}
+	politicalBeliefAfterUpsertHooks = []PoliticalBeliefHook{}
 }
 
-func testRelationshipTypesInsert(t *testing.T) {
+func testPoliticalBeliefsInsert(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -457,7 +457,7 @@ func testRelationshipTypesInsert(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -467,24 +467,24 @@ func testRelationshipTypesInsert(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesInsertWhitelist(t *testing.T) {
+func testPoliticalBeliefsInsertWhitelist(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert(ctx, tx, boil.Whitelist(strmangle.SetMerge(relationshipTypePrimaryKeyColumns, relationshipTypeColumnsWithoutDefault)...)); err != nil {
+	if err = o.Insert(ctx, tx, boil.Whitelist(strmangle.SetMerge(politicalBeliefPrimaryKeyColumns, politicalBeliefColumnsWithoutDefault)...)); err != nil {
 		t.Error(err)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -494,18 +494,18 @@ func testRelationshipTypesInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testRelationshipTypeToManyUserProfiles(t *testing.T) {
+func testPoliticalBeliefToManyUserProfiles(t *testing.T) {
 	var err error
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a RelationshipType
+	var a PoliticalBelief
 	var b, c UserProfile
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	if err = randomize.Struct(seed, &a, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
@@ -519,8 +519,8 @@ func testRelationshipTypeToManyUserProfiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	queries.Assign(&b.RelationshipTypeID, a.ID)
-	queries.Assign(&c.RelationshipTypeID, a.ID)
+	queries.Assign(&b.PoliticalBeliefID, a.ID)
+	queries.Assign(&c.PoliticalBeliefID, a.ID)
 	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
@@ -535,10 +535,10 @@ func testRelationshipTypeToManyUserProfiles(t *testing.T) {
 
 	bFound, cFound := false, false
 	for _, v := range check {
-		if queries.Equal(v.RelationshipTypeID, b.RelationshipTypeID) {
+		if queries.Equal(v.PoliticalBeliefID, b.PoliticalBeliefID) {
 			bFound = true
 		}
-		if queries.Equal(v.RelationshipTypeID, c.RelationshipTypeID) {
+		if queries.Equal(v.PoliticalBeliefID, c.PoliticalBeliefID) {
 			cFound = true
 		}
 	}
@@ -550,8 +550,8 @@ func testRelationshipTypeToManyUserProfiles(t *testing.T) {
 		t.Error("expected to find c")
 	}
 
-	slice := RelationshipTypeSlice{&a}
-	if err = a.L.LoadUserProfiles(ctx, tx, false, (*[]*RelationshipType)(&slice), nil); err != nil {
+	slice := PoliticalBeliefSlice{&a}
+	if err = a.L.LoadUserProfiles(ctx, tx, false, (*[]*PoliticalBelief)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
 	if got := len(a.R.UserProfiles); got != 2 {
@@ -571,18 +571,18 @@ func testRelationshipTypeToManyUserProfiles(t *testing.T) {
 	}
 }
 
-func testRelationshipTypeToManyAddOpUserProfiles(t *testing.T) {
+func testPoliticalBeliefToManyAddOpUserProfiles(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a RelationshipType
+	var a PoliticalBelief
 	var b, c, d, e UserProfile
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, relationshipTypeDBTypes, false, strmangle.SetComplement(relationshipTypePrimaryKeyColumns, relationshipTypeColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &a, politicalBeliefDBTypes, false, strmangle.SetComplement(politicalBeliefPrimaryKeyColumns, politicalBeliefColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 	foreigners := []*UserProfile{&b, &c, &d, &e}
@@ -616,17 +616,17 @@ func testRelationshipTypeToManyAddOpUserProfiles(t *testing.T) {
 		first := x[0]
 		second := x[1]
 
-		if !queries.Equal(a.ID, first.RelationshipTypeID) {
-			t.Error("foreign key was wrong value", a.ID, first.RelationshipTypeID)
+		if !queries.Equal(a.ID, first.PoliticalBeliefID) {
+			t.Error("foreign key was wrong value", a.ID, first.PoliticalBeliefID)
 		}
-		if !queries.Equal(a.ID, second.RelationshipTypeID) {
-			t.Error("foreign key was wrong value", a.ID, second.RelationshipTypeID)
+		if !queries.Equal(a.ID, second.PoliticalBeliefID) {
+			t.Error("foreign key was wrong value", a.ID, second.PoliticalBeliefID)
 		}
 
-		if first.R.RelationshipType != &a {
+		if first.R.PoliticalBelief != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
-		if second.R.RelationshipType != &a {
+		if second.R.PoliticalBelief != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
 
@@ -647,18 +647,18 @@ func testRelationshipTypeToManyAddOpUserProfiles(t *testing.T) {
 	}
 }
 
-func testRelationshipTypeToManySetOpUserProfiles(t *testing.T) {
+func testPoliticalBeliefToManySetOpUserProfiles(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a RelationshipType
+	var a PoliticalBelief
 	var b, c, d, e UserProfile
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, relationshipTypeDBTypes, false, strmangle.SetComplement(relationshipTypePrimaryKeyColumns, relationshipTypeColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &a, politicalBeliefDBTypes, false, strmangle.SetComplement(politicalBeliefPrimaryKeyColumns, politicalBeliefColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 	foreigners := []*UserProfile{&b, &c, &d, &e}
@@ -704,29 +704,29 @@ func testRelationshipTypeToManySetOpUserProfiles(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	if !queries.IsValuerNil(b.RelationshipTypeID) {
+	if !queries.IsValuerNil(b.PoliticalBeliefID) {
 		t.Error("want b's foreign key value to be nil")
 	}
-	if !queries.IsValuerNil(c.RelationshipTypeID) {
+	if !queries.IsValuerNil(c.PoliticalBeliefID) {
 		t.Error("want c's foreign key value to be nil")
 	}
-	if !queries.Equal(a.ID, d.RelationshipTypeID) {
-		t.Error("foreign key was wrong value", a.ID, d.RelationshipTypeID)
+	if !queries.Equal(a.ID, d.PoliticalBeliefID) {
+		t.Error("foreign key was wrong value", a.ID, d.PoliticalBeliefID)
 	}
-	if !queries.Equal(a.ID, e.RelationshipTypeID) {
-		t.Error("foreign key was wrong value", a.ID, e.RelationshipTypeID)
+	if !queries.Equal(a.ID, e.PoliticalBeliefID) {
+		t.Error("foreign key was wrong value", a.ID, e.PoliticalBeliefID)
 	}
 
-	if b.R.RelationshipType != nil {
+	if b.R.PoliticalBelief != nil {
 		t.Error("relationship was not removed properly from the foreign struct")
 	}
-	if c.R.RelationshipType != nil {
+	if c.R.PoliticalBelief != nil {
 		t.Error("relationship was not removed properly from the foreign struct")
 	}
-	if d.R.RelationshipType != &a {
+	if d.R.PoliticalBelief != &a {
 		t.Error("relationship was not added properly to the foreign struct")
 	}
-	if e.R.RelationshipType != &a {
+	if e.R.PoliticalBelief != &a {
 		t.Error("relationship was not added properly to the foreign struct")
 	}
 
@@ -738,18 +738,18 @@ func testRelationshipTypeToManySetOpUserProfiles(t *testing.T) {
 	}
 }
 
-func testRelationshipTypeToManyRemoveOpUserProfiles(t *testing.T) {
+func testPoliticalBeliefToManyRemoveOpUserProfiles(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a RelationshipType
+	var a PoliticalBelief
 	var b, c, d, e UserProfile
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, relationshipTypeDBTypes, false, strmangle.SetComplement(relationshipTypePrimaryKeyColumns, relationshipTypeColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &a, politicalBeliefDBTypes, false, strmangle.SetComplement(politicalBeliefPrimaryKeyColumns, politicalBeliefColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 	foreigners := []*UserProfile{&b, &c, &d, &e}
@@ -789,23 +789,23 @@ func testRelationshipTypeToManyRemoveOpUserProfiles(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	if !queries.IsValuerNil(b.RelationshipTypeID) {
+	if !queries.IsValuerNil(b.PoliticalBeliefID) {
 		t.Error("want b's foreign key value to be nil")
 	}
-	if !queries.IsValuerNil(c.RelationshipTypeID) {
+	if !queries.IsValuerNil(c.PoliticalBeliefID) {
 		t.Error("want c's foreign key value to be nil")
 	}
 
-	if b.R.RelationshipType != nil {
+	if b.R.PoliticalBelief != nil {
 		t.Error("relationship was not removed properly from the foreign struct")
 	}
-	if c.R.RelationshipType != nil {
+	if c.R.PoliticalBelief != nil {
 		t.Error("relationship was not removed properly from the foreign struct")
 	}
-	if d.R.RelationshipType != &a {
+	if d.R.PoliticalBelief != &a {
 		t.Error("relationship to a should have been preserved")
 	}
-	if e.R.RelationshipType != &a {
+	if e.R.PoliticalBelief != &a {
 		t.Error("relationship to a should have been preserved")
 	}
 
@@ -822,14 +822,14 @@ func testRelationshipTypeToManyRemoveOpUserProfiles(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesReload(t *testing.T) {
+func testPoliticalBeliefsReload(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -844,14 +844,14 @@ func testRelationshipTypesReload(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesReloadAll(t *testing.T) {
+func testPoliticalBeliefsReloadAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -861,21 +861,21 @@ func testRelationshipTypesReloadAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := RelationshipTypeSlice{o}
+	slice := PoliticalBeliefSlice{o}
 
 	if err = slice.ReloadAll(ctx, tx); err != nil {
 		t.Error(err)
 	}
 }
 
-func testRelationshipTypesSelect(t *testing.T) {
+func testPoliticalBeliefsSelect(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -885,7 +885,7 @@ func testRelationshipTypesSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice, err := RelationshipTypes().All(ctx, tx)
+	slice, err := PoliticalBeliefs().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -896,25 +896,25 @@ func testRelationshipTypesSelect(t *testing.T) {
 }
 
 var (
-	relationshipTypeDBTypes = map[string]string{`ID`: `smallint`, `Label`: `text`}
-	_                       = bytes.MinRead
+	politicalBeliefDBTypes = map[string]string{`ID`: `smallint`, `Label`: `text`}
+	_                      = bytes.MinRead
 )
 
-func testRelationshipTypesUpdate(t *testing.T) {
+func testPoliticalBeliefsUpdate(t *testing.T) {
 	t.Parallel()
 
-	if 0 == len(relationshipTypePrimaryKeyColumns) {
+	if 0 == len(politicalBeliefPrimaryKeyColumns) {
 		t.Skip("Skipping table with no primary key columns")
 	}
-	if len(relationshipTypeAllColumns) == len(relationshipTypePrimaryKeyColumns) {
+	if len(politicalBeliefAllColumns) == len(politicalBeliefPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -924,7 +924,7 @@ func testRelationshipTypesUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -933,8 +933,8 @@ func testRelationshipTypesUpdate(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypePrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	if rowsAff, err := o.Update(ctx, tx, boil.Infer()); err != nil {
@@ -944,18 +944,18 @@ func testRelationshipTypesUpdate(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesSliceUpdateAll(t *testing.T) {
+func testPoliticalBeliefsSliceUpdateAll(t *testing.T) {
 	t.Parallel()
 
-	if len(relationshipTypeAllColumns) == len(relationshipTypePrimaryKeyColumns) {
+	if len(politicalBeliefAllColumns) == len(politicalBeliefPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &RelationshipType{}
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypeColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := &PoliticalBelief{}
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -965,7 +965,7 @@ func testRelationshipTypesSliceUpdateAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -974,18 +974,18 @@ func testRelationshipTypesSliceUpdateAll(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, relationshipTypeDBTypes, true, relationshipTypePrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	if err = randomize.Struct(seed, o, politicalBeliefDBTypes, true, politicalBeliefPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	// Remove Primary keys and unique columns from what we plan to update
 	var fields []string
-	if strmangle.StringSliceMatch(relationshipTypeAllColumns, relationshipTypePrimaryKeyColumns) {
-		fields = relationshipTypeAllColumns
+	if strmangle.StringSliceMatch(politicalBeliefAllColumns, politicalBeliefPrimaryKeyColumns) {
+		fields = politicalBeliefAllColumns
 	} else {
 		fields = strmangle.SetComplement(
-			relationshipTypeAllColumns,
-			relationshipTypePrimaryKeyColumns,
+			politicalBeliefAllColumns,
+			politicalBeliefPrimaryKeyColumns,
 		)
 	}
 
@@ -1003,7 +1003,7 @@ func testRelationshipTypesSliceUpdateAll(t *testing.T) {
 		}
 	}
 
-	slice := RelationshipTypeSlice{o}
+	slice := PoliticalBeliefSlice{o}
 	if rowsAff, err := slice.UpdateAll(ctx, tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
@@ -1011,29 +1011,29 @@ func testRelationshipTypesSliceUpdateAll(t *testing.T) {
 	}
 }
 
-func testRelationshipTypesUpsert(t *testing.T) {
+func testPoliticalBeliefsUpsert(t *testing.T) {
 	t.Parallel()
 
-	if len(relationshipTypeAllColumns) == len(relationshipTypePrimaryKeyColumns) {
+	if len(politicalBeliefAllColumns) == len(politicalBeliefPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
 	// Attempt the INSERT side of an UPSERT
-	o := RelationshipType{}
-	if err = randomize.Struct(seed, &o, relationshipTypeDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	o := PoliticalBelief{}
+	if err = randomize.Struct(seed, &o, politicalBeliefDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 	if err = o.Upsert(ctx, tx, false, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert RelationshipType: %s", err)
+		t.Errorf("Unable to upsert PoliticalBelief: %s", err)
 	}
 
-	count, err := RelationshipTypes().Count(ctx, tx)
+	count, err := PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -1042,15 +1042,15 @@ func testRelationshipTypesUpsert(t *testing.T) {
 	}
 
 	// Attempt the UPDATE side of an UPSERT
-	if err = randomize.Struct(seed, &o, relationshipTypeDBTypes, false, relationshipTypePrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize RelationshipType struct: %s", err)
+	if err = randomize.Struct(seed, &o, politicalBeliefDBTypes, false, politicalBeliefPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize PoliticalBelief struct: %s", err)
 	}
 
 	if err = o.Upsert(ctx, tx, true, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert RelationshipType: %s", err)
+		t.Errorf("Unable to upsert PoliticalBelief: %s", err)
 	}
 
-	count, err = RelationshipTypes().Count(ctx, tx)
+	count, err = PoliticalBeliefs().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}

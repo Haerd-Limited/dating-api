@@ -8,18 +8,21 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
+	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/user"
-	auth2 "github.com/Haerd-Limited/dating-api/internal/auth"
-	haerdMiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
-	user2 "github.com/Haerd-Limited/dating-api/internal/user"
+	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
+	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
+	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
+	internaluser "github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
 
 func New(
 	logger *zap.Logger,
 	jwtSecret string,
-	authService auth2.AuthService,
-	userService user2.Service,
+	authService internalauth.Service,
+	userService internaluser.Service,
+	onboardingService internalonboarding.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -30,7 +33,8 @@ func New(
 
 	authHandler := auth.NewAuthHandler(logger, authService)
 	userHandler := user.NewUserHandler(logger, userService)
-	//notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
+	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
+	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
@@ -44,26 +48,41 @@ func New(
 					r.Post("/logout", authHandler.Logout())
 				},
 			)
+
+			// --- Protected (must be logged in)
+			r.Group(func(r chi.Router) {
+				r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
+
+				// Onboarding (single PATCH endpoint + helpers)
+				r.Patch("/onboarding", onboardingHandler.Patch())                      // partial update to profile + prefs
+				r.Patch("/onboarding/visibility", onboardingHandler.PatchVisibility()) // batch toggle visibility
+				r.Post("/onboarding/complete", onboardingHandler.Complete())           // validate & activate
+				r.Get("/onboarding/state", onboardingHandler.State())
+
+				// Media (used during onboarding & later)
+				/*
+					r.Post("/media/photos/presign", mediaHandler.PresignPhoto()) // returns URL/fields
+					r.Post("/media/photos", mediaHandler.AttachPhoto())          // save URL, position, is_primary
+					r.Patch("/media/photos/{id}", mediaHandler.UpdatePhoto())    // reorder / set primary
+					r.Delete("/media/photos/{id}", mediaHandler.DeletePhoto())
+
+					r.Post("/media/voice/presign", mediaHandler.PresignVoice())
+					r.Post("/media/voice", mediaHandler.AttachVoice())
+					r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
+				*/
+
+				// Current user
+				r.Route("/users/me", func(r chi.Router) {
+					r.Get("/", userHandler.MyProfile()) // full profile (with visibility flags)
+				})
+			})
 			/*r.Route(
 				"/notifications", func(r chi.Router) {
-					r.Use(haerdMiddleware.AuthMiddleware([]byte(jwtSecret))) // Protected endpoints: wrap these with auth middleware.
+					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret))) // Protected endpoints: wrap these with auth middleware.
 					r.Post("/device-token", notificationsHandler.RegisterDeviceToken())
 					r.Post("/push-test", notificationsHandler.TestPushNotification()) // for testing in postman
 				},
 			)*/
-
-			r.Route(
-				"/users", func(r chi.Router) {
-					r.Use(haerdMiddleware.AuthMiddleware([]byte(jwtSecret))) // Protected endpoints: wrap these with auth middleware.
-					r.Get("/{userID}/profile", userHandler.ViewProfile())    // anyone's profile
-
-					r.Route("/me", func(r chi.Router) {
-						r.Get("/", userHandler.MyProfile())       // logged-in user's own profile
-						r.Patch("/", userHandler.UpdateProfile()) // PUT or PATCH depending on your style
-					})
-				},
-			)
-
 		},
 	)
 

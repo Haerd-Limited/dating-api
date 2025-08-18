@@ -25,67 +25,67 @@ import (
 
 // UserPreference is an object representing the database table.
 type UserPreference struct {
-	UserID                  string           `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	DistanceKM              null.Int16       `boil:"distance_km" json:"distance_km,omitempty" toml:"distance_km" yaml:"distance_km,omitempty"`
-	AgeMin                  null.Int16       `boil:"age_min" json:"age_min,omitempty" toml:"age_min" yaml:"age_min,omitempty"`
-	AgeMax                  null.Int16       `boil:"age_max" json:"age_max,omitempty" toml:"age_max" yaml:"age_max,omitempty"`
-	SeekGenderIds           types.Int64Array `boil:"seek_gender_ids" json:"seek_gender_ids,omitempty" toml:"seek_gender_ids" yaml:"seek_gender_ids,omitempty"`
-	SeekIntentionIds        types.Int64Array `boil:"seek_intention_ids" json:"seek_intention_ids,omitempty" toml:"seek_intention_ids" yaml:"seek_intention_ids,omitempty"`
-	SeekReligionIds         types.Int64Array `boil:"seek_religion_ids" json:"seek_religion_ids,omitempty" toml:"seek_religion_ids" yaml:"seek_religion_ids,omitempty"`
-	SeekRelationshipTypeIds types.Int64Array `boil:"seek_relationship_type_ids" json:"seek_relationship_type_ids,omitempty" toml:"seek_relationship_type_ids" yaml:"seek_relationship_type_ids,omitempty"`
-	CreatedAt               time.Time        `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt               time.Time        `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	UserID                 string           `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	DistanceKM             null.Int16       `boil:"distance_km" json:"distance_km,omitempty" toml:"distance_km" yaml:"distance_km,omitempty"`
+	AgeMin                 null.Int16       `boil:"age_min" json:"age_min,omitempty" toml:"age_min" yaml:"age_min,omitempty"`
+	AgeMax                 null.Int16       `boil:"age_max" json:"age_max,omitempty" toml:"age_max" yaml:"age_max,omitempty"`
+	SeekGenderIds          types.Int64Array `boil:"seek_gender_ids" json:"seek_gender_ids,omitempty" toml:"seek_gender_ids" yaml:"seek_gender_ids,omitempty"`
+	SeekIntentionIds       types.Int64Array `boil:"seek_intention_ids" json:"seek_intention_ids,omitempty" toml:"seek_intention_ids" yaml:"seek_intention_ids,omitempty"`
+	SeekReligionIds        types.Int64Array `boil:"seek_religion_ids" json:"seek_religion_ids,omitempty" toml:"seek_religion_ids" yaml:"seek_religion_ids,omitempty"`
+	SeekPoliticalBeliefIds types.Int64Array `boil:"seek_political_belief_ids" json:"seek_political_belief_ids,omitempty" toml:"seek_political_belief_ids" yaml:"seek_political_belief_ids,omitempty"`
+	CreatedAt              time.Time        `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt              time.Time        `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *userPreferenceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userPreferenceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserPreferenceColumns = struct {
-	UserID                  string
-	DistanceKM              string
-	AgeMin                  string
-	AgeMax                  string
-	SeekGenderIds           string
-	SeekIntentionIds        string
-	SeekReligionIds         string
-	SeekRelationshipTypeIds string
-	CreatedAt               string
-	UpdatedAt               string
+	UserID                 string
+	DistanceKM             string
+	AgeMin                 string
+	AgeMax                 string
+	SeekGenderIds          string
+	SeekIntentionIds       string
+	SeekReligionIds        string
+	SeekPoliticalBeliefIds string
+	CreatedAt              string
+	UpdatedAt              string
 }{
-	UserID:                  "user_id",
-	DistanceKM:              "distance_km",
-	AgeMin:                  "age_min",
-	AgeMax:                  "age_max",
-	SeekGenderIds:           "seek_gender_ids",
-	SeekIntentionIds:        "seek_intention_ids",
-	SeekReligionIds:         "seek_religion_ids",
-	SeekRelationshipTypeIds: "seek_relationship_type_ids",
-	CreatedAt:               "created_at",
-	UpdatedAt:               "updated_at",
+	UserID:                 "user_id",
+	DistanceKM:             "distance_km",
+	AgeMin:                 "age_min",
+	AgeMax:                 "age_max",
+	SeekGenderIds:          "seek_gender_ids",
+	SeekIntentionIds:       "seek_intention_ids",
+	SeekReligionIds:        "seek_religion_ids",
+	SeekPoliticalBeliefIds: "seek_political_belief_ids",
+	CreatedAt:              "created_at",
+	UpdatedAt:              "updated_at",
 }
 
 var UserPreferenceTableColumns = struct {
-	UserID                  string
-	DistanceKM              string
-	AgeMin                  string
-	AgeMax                  string
-	SeekGenderIds           string
-	SeekIntentionIds        string
-	SeekReligionIds         string
-	SeekRelationshipTypeIds string
-	CreatedAt               string
-	UpdatedAt               string
+	UserID                 string
+	DistanceKM             string
+	AgeMin                 string
+	AgeMax                 string
+	SeekGenderIds          string
+	SeekIntentionIds       string
+	SeekReligionIds        string
+	SeekPoliticalBeliefIds string
+	CreatedAt              string
+	UpdatedAt              string
 }{
-	UserID:                  "user_preferences.user_id",
-	DistanceKM:              "user_preferences.distance_km",
-	AgeMin:                  "user_preferences.age_min",
-	AgeMax:                  "user_preferences.age_max",
-	SeekGenderIds:           "user_preferences.seek_gender_ids",
-	SeekIntentionIds:        "user_preferences.seek_intention_ids",
-	SeekReligionIds:         "user_preferences.seek_religion_ids",
-	SeekRelationshipTypeIds: "user_preferences.seek_relationship_type_ids",
-	CreatedAt:               "user_preferences.created_at",
-	UpdatedAt:               "user_preferences.updated_at",
+	UserID:                 "user_preferences.user_id",
+	DistanceKM:             "user_preferences.distance_km",
+	AgeMin:                 "user_preferences.age_min",
+	AgeMax:                 "user_preferences.age_max",
+	SeekGenderIds:          "user_preferences.seek_gender_ids",
+	SeekIntentionIds:       "user_preferences.seek_intention_ids",
+	SeekReligionIds:        "user_preferences.seek_religion_ids",
+	SeekPoliticalBeliefIds: "user_preferences.seek_political_belief_ids",
+	CreatedAt:              "user_preferences.created_at",
+	UpdatedAt:              "user_preferences.updated_at",
 }
 
 // Generated where
@@ -115,27 +115,27 @@ func (w whereHelpertypes_Int64Array) IsNull() qm.QueryMod    { return qmhelper.W
 func (w whereHelpertypes_Int64Array) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var UserPreferenceWhere = struct {
-	UserID                  whereHelperstring
-	DistanceKM              whereHelpernull_Int16
-	AgeMin                  whereHelpernull_Int16
-	AgeMax                  whereHelpernull_Int16
-	SeekGenderIds           whereHelpertypes_Int64Array
-	SeekIntentionIds        whereHelpertypes_Int64Array
-	SeekReligionIds         whereHelpertypes_Int64Array
-	SeekRelationshipTypeIds whereHelpertypes_Int64Array
-	CreatedAt               whereHelpertime_Time
-	UpdatedAt               whereHelpertime_Time
+	UserID                 whereHelperstring
+	DistanceKM             whereHelpernull_Int16
+	AgeMin                 whereHelpernull_Int16
+	AgeMax                 whereHelpernull_Int16
+	SeekGenderIds          whereHelpertypes_Int64Array
+	SeekIntentionIds       whereHelpertypes_Int64Array
+	SeekReligionIds        whereHelpertypes_Int64Array
+	SeekPoliticalBeliefIds whereHelpertypes_Int64Array
+	CreatedAt              whereHelpertime_Time
+	UpdatedAt              whereHelpertime_Time
 }{
-	UserID:                  whereHelperstring{field: "\"user_preferences\".\"user_id\""},
-	DistanceKM:              whereHelpernull_Int16{field: "\"user_preferences\".\"distance_km\""},
-	AgeMin:                  whereHelpernull_Int16{field: "\"user_preferences\".\"age_min\""},
-	AgeMax:                  whereHelpernull_Int16{field: "\"user_preferences\".\"age_max\""},
-	SeekGenderIds:           whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_gender_ids\""},
-	SeekIntentionIds:        whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_intention_ids\""},
-	SeekReligionIds:         whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_religion_ids\""},
-	SeekRelationshipTypeIds: whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_relationship_type_ids\""},
-	CreatedAt:               whereHelpertime_Time{field: "\"user_preferences\".\"created_at\""},
-	UpdatedAt:               whereHelpertime_Time{field: "\"user_preferences\".\"updated_at\""},
+	UserID:                 whereHelperstring{field: "\"user_preferences\".\"user_id\""},
+	DistanceKM:             whereHelpernull_Int16{field: "\"user_preferences\".\"distance_km\""},
+	AgeMin:                 whereHelpernull_Int16{field: "\"user_preferences\".\"age_min\""},
+	AgeMax:                 whereHelpernull_Int16{field: "\"user_preferences\".\"age_max\""},
+	SeekGenderIds:          whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_gender_ids\""},
+	SeekIntentionIds:       whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_intention_ids\""},
+	SeekReligionIds:        whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_religion_ids\""},
+	SeekPoliticalBeliefIds: whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_political_belief_ids\""},
+	CreatedAt:              whereHelpertime_Time{field: "\"user_preferences\".\"created_at\""},
+	UpdatedAt:              whereHelpertime_Time{field: "\"user_preferences\".\"updated_at\""},
 }
 
 // UserPreferenceRels is where relationship names are stored.
@@ -175,9 +175,9 @@ func (r *userPreferenceR) GetUser() *User {
 type userPreferenceL struct{}
 
 var (
-	userPreferenceAllColumns            = []string{"user_id", "distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_relationship_type_ids", "created_at", "updated_at"}
+	userPreferenceAllColumns            = []string{"user_id", "distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at"}
 	userPreferenceColumnsWithoutDefault = []string{"user_id"}
-	userPreferenceColumnsWithDefault    = []string{"distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_relationship_type_ids", "created_at", "updated_at"}
+	userPreferenceColumnsWithDefault    = []string{"distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at"}
 	userPreferencePrimaryKeyColumns     = []string{"user_id"}
 	userPreferenceGeneratedColumns      = []string{}
 )

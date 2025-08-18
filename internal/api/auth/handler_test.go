@@ -20,7 +20,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	"github.com/Haerd-Limited/dating-api/internal/auth/domain"
 	"github.com/Haerd-Limited/dating-api/internal/user"
-	userDomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 )
 
@@ -36,7 +35,7 @@ func TestRegisterHandler(t *testing.T) {
 		name       string
 		setupCtx   func() context.Context
 		buildBody  func() (io.Reader, string)
-		mock       func(mockService *auth.MockAuthService)
+		mock       func(mockService *auth.MockService)
 		wantStatus int
 		wantBody   map[string]interface{}
 	}{
@@ -58,16 +57,12 @@ func TestRegisterHandler(t *testing.T) {
 				_ = w.Close()
 				return &buf, w.FormDataContentType()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 				mockService.EXPECT().Register(gomock.Any(), gomock.Any()).Return(
-					&domain.AuthTokensAndUser{
+					&domain.AuthTokensAndUserID{
 						AccessToken:  "testAccessToken",
 						RefreshToken: "testRefreshToken",
-						User: userDomain.User{
-							FullName: "lionel wilson",
-							Username: "lionellegendz",
-							Email:    "lionel@gmail.com",
-						},
+						UserID:       "anID",
 					}, nil,
 				)
 			},
@@ -100,7 +95,7 @@ func TestRegisterHandler(t *testing.T) {
 				_ = w.Close()
 				return &buf, w.FormDataContentType()
 			},
-			mock:       func(mockService *auth.MockAuthService) {},
+			mock:       func(mockService *auth.MockService) {},
 			wantStatus: http.StatusBadRequest,
 			wantBody: map[string]interface{}{
 				"message": MissingRequiredFieldMsg,
@@ -124,7 +119,7 @@ func TestRegisterHandler(t *testing.T) {
 				_ = w.Close()
 				return &buf, w.FormDataContentType()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 			},
 			wantStatus: http.StatusBadRequest,
 			wantBody: map[string]interface{}{
@@ -149,7 +144,7 @@ func TestRegisterHandler(t *testing.T) {
 				_ = w.Close()
 				return &buf, w.FormDataContentType()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 			},
 			wantStatus: http.StatusBadRequest,
 			wantBody: map[string]interface{}{
@@ -174,7 +169,7 @@ func TestRegisterHandler(t *testing.T) {
 				_ = w.Close()
 				return &buf, w.FormDataContentType()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 			},
 			wantStatus: http.StatusBadRequest,
 			wantBody: map[string]interface{}{
@@ -199,7 +194,7 @@ func TestRegisterHandler(t *testing.T) {
 				_ = w.Close()
 				return &buf, w.FormDataContentType()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 				mockService.EXPECT().Register(gomock.Any(), gomock.Any()).Return(
 					nil, assert.AnError,
 				)
@@ -213,7 +208,7 @@ func TestRegisterHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockService := auth.NewMockAuthService(ctrl)
+			mockService := auth.NewMockService(ctrl)
 			tc.mock(mockService)
 
 			body, contentType := tc.buildBody()
@@ -246,7 +241,7 @@ func TestLoginHandler(t *testing.T) {
 		ctx   func(ctx context.Context) context.Context
 		input dto.LoginRequest
 		mock  func(
-			mockService *auth.MockAuthService,
+			mockService *auth.MockService,
 		)
 		wantStatus int
 		wantBody   any
@@ -272,17 +267,13 @@ func TestLoginHandler(t *testing.T) {
 				return context.Background()
 			},
 			mock: func(
-				mockService *auth.MockAuthService,
+				mockService *auth.MockService,
 			) {
 				mockService.EXPECT().Login(gomock.Any(), gomock.Any()).Return(
-					&domain.AuthTokensAndUser{
+					&domain.AuthTokensAndUserID{
 						RefreshToken: "testRefreshToken",
 						AccessToken:  "testAccessToken",
-						User: userDomain.User{
-							FullName: "lionel wilson",
-							Username: "lionellegendz",
-							Email:    "lionel@gmail.com",
-						},
+						UserID:       "anID",
 					},
 					nil,
 				)
@@ -301,7 +292,7 @@ func TestLoginHandler(t *testing.T) {
 				return context.Background()
 			},
 			mock: func(
-				mockService *auth.MockAuthService,
+				mockService *auth.MockService,
 			) {
 			},
 		},
@@ -319,7 +310,7 @@ func TestLoginHandler(t *testing.T) {
 				return context.Background()
 			},
 			mock: func(
-				mockService *auth.MockAuthService,
+				mockService *auth.MockService,
 			) {
 				mockService.EXPECT().Login(gomock.Any(), gomock.Any()).Return(
 					nil,
@@ -341,7 +332,7 @@ func TestLoginHandler(t *testing.T) {
 				return context.Background()
 			},
 			mock: func(
-				mockService *auth.MockAuthService,
+				mockService *auth.MockService,
 			) {
 				mockService.EXPECT().Login(gomock.Any(), gomock.Any()).Return(
 					nil,
@@ -354,7 +345,7 @@ func TestLoginHandler(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(
 			tc.name, func(t *testing.T) {
-				mockService := auth.NewMockAuthService(ctrl)
+				mockService := auth.NewMockService(ctrl)
 
 				tc.mock(mockService)
 
@@ -407,7 +398,7 @@ func TestRefreshHandler(t *testing.T) {
 		ctx   func(ctx context.Context) context.Context
 		input dto.RefreshRequest
 		mock  func(
-			mockService *auth.MockAuthService,
+			mockService *auth.MockService,
 		)
 		wantStatus int
 		wantBody   any
@@ -427,10 +418,10 @@ func TestRefreshHandler(t *testing.T) {
 				return context.Background()
 			},
 			mock: func(
-				mockService *auth.MockAuthService,
+				mockService *auth.MockService,
 			) {
 				mockService.EXPECT().RefreshToken(gomock.Any(), gomock.Any()).Return(
-					&domain.AuthTokens{
+					&domain.AuthTokensAndUserID{
 						RefreshToken: "newRefreshToken",
 						AccessToken:  "newAccessToken",
 					},
@@ -449,7 +440,7 @@ func TestRefreshHandler(t *testing.T) {
 				return context.Background()
 			},
 			mock: func(
-				mockService *auth.MockAuthService,
+				mockService *auth.MockService,
 			) {
 			},
 		},
@@ -466,7 +457,7 @@ func TestRefreshHandler(t *testing.T) {
 				return context.Background()
 			},
 			mock: func(
-				mockService *auth.MockAuthService,
+				mockService *auth.MockService,
 			) {
 				mockService.EXPECT().RefreshToken(gomock.Any(), gomock.Any()).Return(
 					nil,
@@ -487,7 +478,7 @@ func TestRefreshHandler(t *testing.T) {
 				return context.Background()
 			},
 			mock: func(
-				mockService *auth.MockAuthService,
+				mockService *auth.MockService,
 			) {
 				mockService.EXPECT().RefreshToken(gomock.Any(), gomock.Any()).Return(
 					nil,
@@ -500,7 +491,7 @@ func TestRefreshHandler(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(
 			tc.name, func(t *testing.T) {
-				mockService := auth.NewMockAuthService(ctrl)
+				mockService := auth.NewMockService(ctrl)
 
 				tc.mock(mockService)
 
@@ -551,7 +542,7 @@ func TestLogoutHandler(t *testing.T) {
 		name       string
 		ctx        func(ctx context.Context) context.Context
 		input      dto.LogoutRequest
-		mock       func(mockService *auth.MockAuthService)
+		mock       func(mockService *auth.MockService)
 		wantStatus int
 		wantBody   map[string]interface{}
 	}{
@@ -567,7 +558,7 @@ func TestLogoutHandler(t *testing.T) {
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 				mockService.EXPECT().
 					RevokeRefreshToken(gomock.Any(), gomock.Any()).
 					Return(nil)
@@ -583,7 +574,7 @@ func TestLogoutHandler(t *testing.T) {
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 				// no call expected
 			},
 		},
@@ -599,7 +590,7 @@ func TestLogoutHandler(t *testing.T) {
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 				mockService.EXPECT().
 					RevokeRefreshToken(gomock.Any(), gomock.Any()).
 					Return(assert.AnError)
@@ -617,7 +608,7 @@ func TestLogoutHandler(t *testing.T) {
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
 			},
-			mock: func(mockService *auth.MockAuthService) {
+			mock: func(mockService *auth.MockService) {
 				mockService.EXPECT().
 					RevokeRefreshToken(gomock.Any(), gomock.Any()).
 					Return(auth.ErrRefreshTokenAlreadyRevoked)
@@ -627,7 +618,7 @@ func TestLogoutHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockService := auth.NewMockAuthService(ctrl)
+			mockService := auth.NewMockService(ctrl)
 			tc.mock(mockService)
 
 			body, err := json.Marshal(tc.input)

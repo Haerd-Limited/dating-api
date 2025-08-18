@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/aarondl/null/v8"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/jmoiron/sqlx"
 
@@ -43,8 +43,48 @@ func (r *userRepository) UpdateUser(ctx context.Context, user *entity.User) erro
 }
 
 func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*string, error) {
-	if err := user.Insert(ctx, r.db, boil.Infer()); err != nil {
-		return nil, fmt.Errorf("failed inserting user entity: %w", err)
+	// Start a transaction so user and scaffold are atomic
+	tx, err := r.db.BeginTxx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
+
+	rollback := func(e error) (*string, error) {
+		_ = tx.Rollback()
+		return nil, e
+	}
+
+	// 1) Insert user
+	if err := user.Insert(ctx, tx, boil.Infer()); err != nil {
+		return rollback(fmt.Errorf("failed inserting user entity: %w", err))
+	}
+
+	// If ID is DB-generated (DEFAULT gen_random_uuid()), make sure we have it loaded
+	if user.ID == "" {
+		if err := user.Reload(ctx, tx); err != nil {
+			return rollback(fmt.Errorf("reload user after insert: %w", err))
+		}
+	}
+
+	// 2) Scaffold empty profile
+	profile := &entity.UserProfile{
+		UserID: user.ID,
+	}
+	if err := profile.Insert(ctx, tx, boil.Infer()); err != nil {
+		return rollback(fmt.Errorf("insert user_profile: %w", err))
+	}
+
+	// 3) Scaffold preferences row (timestamps have DEFAULT now())
+	prefs := &entity.UserPreference{
+		UserID: user.ID,
+	}
+	if err := prefs.Insert(ctx, tx, boil.Infer()); err != nil {
+		return rollback(fmt.Errorf("insert user_preferences: %w", err))
+	}
+
+	// 4) Commit
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit tx: %w", err)
 	}
 
 	return &user.ID, nil

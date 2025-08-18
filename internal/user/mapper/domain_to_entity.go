@@ -7,17 +7,11 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user/domain"
 )
 
-func ToUserEntity(user *domain.User) *entity.User {
-	if user == nil {
-		return nil
-	}
-
+func ToUserEntity(user domain.User) *entity.User {
 	return &entity.User{
-		Email:         null.StringFrom(user.Email),
-		PasswordHash:  null.StringFrom(user.HashedPassword),
-		DateOfBirth:   null.TimeFrom(user.Dob),
-		Gender:        null.StringFrom(user.Gender),
-		Bio:           null.StringFrom(user.Bio),
-		ProfilePicURL: null.StringFromPtr(user.ProfileImageURL),
+		Email:     null.StringFrom(user.Email),
+		FirstName: user.FirstName,
+		LastName:  null.StringFromPtr(user.LastName),
+		Phone:     null.StringFrom(user.PhoneNumber),
 	}
 }

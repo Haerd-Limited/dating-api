@@ -2,13 +2,13 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15
+    image: postgis/postgis:17-3.5
     container_name: haerd_dating_db
     restart: always
     environment:
       POSTGRES_USER: haerdappuser
       POSTGRES_PASSWORD: H@erd_2025
-      POSTGRES_DB: haerd-dating-db
+      POSTGRES_DB: haerd_dating_db
     ports:
       - "5433:5432"
     volumes:
@@ -19,8 +19,8 @@ services:
   api:
     build:
       context: .
-      #dockerfile: Dockerfile
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile
+      #dockerfile: Dockerfile.local
     container_name: haerd_dating_api
     restart: unless-stopped
     env_file:
