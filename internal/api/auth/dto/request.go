@@ -1,0 +1,30 @@
+package dto
+
+import (
+	"github.com/go-playground/validator/v10"
+)
+
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type LogoutRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+func (lr LoginRequest) Validate() error {
+	return validator.New().Struct(lr)
+}
+
+func (rfr RefreshRequest) Validate() error {
+	return validator.New().Struct(rfr)
+}
+
+func (lor LogoutRequest) Validate() error {
+	return validator.New().Struct(lor)
+}
