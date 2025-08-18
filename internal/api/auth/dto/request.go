@@ -6,13 +6,13 @@ import (
 
 type RegisterRequest struct {
 	Email       string  `json:"email" validate:"required,email"`
-	PhoneNumber string  `json:"PhoneNumber" validate:"required"`
-	FirstName   string  `json:"firstName" validate:"required"`
-	LastName    *string `json:"lastName"`
-	DateOfBirth string  `json:"dateOfBirth" validate:"required"`
+	PhoneNumber string  `json:"phone_number" validate:"required"`
+	FirstName   string  `json:"first_name" validate:"required"`
+	LastName    *string `json:"last_name"`
+	DateOfBirth string  `json:"date_of_birth" validate:"required"`
 }
 type LoginRequest struct {
-	PhoneNumber string `json:"PhoneNumber" validate:"required"`
+	PhoneNumber string `json:"phone_number" validate:"required"`
 }
 
 type RefreshRequest struct {

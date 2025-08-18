@@ -13,7 +13,6 @@ func ToDomain(userID string, dto dto.UpdateOnboardingRequest) domain.OnboardingU
 			DisplayName: dto.DisplayName,
 			Birthdate:   dto.Birthdate,
 			HeightCM:    dto.HeightCM,
-			Bio:         dto.Bio,
 
 			// Location
 			Latitude:  dto.Latitude,

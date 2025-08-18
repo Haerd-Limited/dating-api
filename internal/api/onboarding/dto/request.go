@@ -9,7 +9,6 @@ type UpdateOnboardingRequest struct {
 	DisplayName *string `json:"display_name,omitempty"`
 	Birthdate   *string `json:"birthdate,omitempty"` // "YYYY-MM-DD"
 	HeightCM    *int16  `json:"height_cm,omitempty"`
-	Bio         *string `json:"bio,omitempty"`
 
 	// Location
 	Latitude  *float64 `json:"latitude,omitempty"`

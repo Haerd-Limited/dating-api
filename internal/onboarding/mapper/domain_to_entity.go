@@ -26,10 +26,6 @@ func MapProfileToEntity(userID string, p *domain.UserProfile) (*entity.UserProfi
 		ent.DisplayName = null.StringFrom(*p.DisplayName)
 	}
 
-	if p.Bio != nil {
-		ent.Bio = null.StringFrom(*p.Bio)
-	}
-
 	if p.City != nil {
 		ent.City = null.StringFrom(*p.City)
 	}

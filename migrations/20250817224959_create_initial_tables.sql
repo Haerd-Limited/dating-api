@@ -105,7 +105,6 @@ CREATE TABLE user_profiles (
                                display_name TEXT,
                                birthdate DATE,
                                height_cm SMALLINT,
-                               bio TEXT,
 
     -- location
                                geo GEOGRAPHY(Point, 4326),

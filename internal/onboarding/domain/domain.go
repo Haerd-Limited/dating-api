@@ -20,7 +20,6 @@ type UserProfile struct {
 	DisplayName *string
 	Birthdate   *string // keep string; service can parse to time.Time if needed
 	HeightCM    *int16
-	Bio         *string
 
 	// Location
 	Latitude  *float64

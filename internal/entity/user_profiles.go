@@ -28,7 +28,6 @@ type UserProfile struct {
 	DisplayName       null.String `boil:"display_name" json:"display_name,omitempty" toml:"display_name" yaml:"display_name,omitempty"`
 	Birthdate         null.Time   `boil:"birthdate" json:"birthdate,omitempty" toml:"birthdate" yaml:"birthdate,omitempty"`
 	HeightCM          null.Int16  `boil:"height_cm" json:"height_cm,omitempty" toml:"height_cm" yaml:"height_cm,omitempty"`
-	Bio               null.String `boil:"bio" json:"bio,omitempty" toml:"bio" yaml:"bio,omitempty"`
 	Geo               string      `boil:"geo" json:"geo,omitempty" toml:"geo" yaml:"geo,omitempty"`
 	City              null.String `boil:"city" json:"city,omitempty" toml:"city" yaml:"city,omitempty"`
 	Country           null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
@@ -60,7 +59,6 @@ var UserProfileColumns = struct {
 	DisplayName       string
 	Birthdate         string
 	HeightCM          string
-	Bio               string
 	Geo               string
 	City              string
 	Country           string
@@ -87,7 +85,6 @@ var UserProfileColumns = struct {
 	DisplayName:       "display_name",
 	Birthdate:         "birthdate",
 	HeightCM:          "height_cm",
-	Bio:               "bio",
 	Geo:               "geo",
 	City:              "city",
 	Country:           "country",
@@ -116,7 +113,6 @@ var UserProfileTableColumns = struct {
 	DisplayName       string
 	Birthdate         string
 	HeightCM          string
-	Bio               string
 	Geo               string
 	City              string
 	Country           string
@@ -143,7 +139,6 @@ var UserProfileTableColumns = struct {
 	DisplayName:       "user_profiles.display_name",
 	Birthdate:         "user_profiles.birthdate",
 	HeightCM:          "user_profiles.height_cm",
-	Bio:               "user_profiles.bio",
 	Geo:               "user_profiles.geo",
 	City:              "user_profiles.city",
 	Country:           "user_profiles.country",
@@ -201,7 +196,6 @@ var UserProfileWhere = struct {
 	DisplayName       whereHelpernull_String
 	Birthdate         whereHelpernull_Time
 	HeightCM          whereHelpernull_Int16
-	Bio               whereHelpernull_String
 	Geo               whereHelperstring
 	City              whereHelpernull_String
 	Country           whereHelpernull_String
@@ -228,7 +222,6 @@ var UserProfileWhere = struct {
 	DisplayName:       whereHelpernull_String{field: "\"user_profiles\".\"display_name\""},
 	Birthdate:         whereHelpernull_Time{field: "\"user_profiles\".\"birthdate\""},
 	HeightCM:          whereHelpernull_Int16{field: "\"user_profiles\".\"height_cm\""},
-	Bio:               whereHelpernull_String{field: "\"user_profiles\".\"bio\""},
 	Geo:               whereHelperstring{field: "\"user_profiles\".\"geo\""},
 	City:              whereHelpernull_String{field: "\"user_profiles\".\"city\""},
 	Country:           whereHelpernull_String{field: "\"user_profiles\".\"country\""},
@@ -517,9 +510,9 @@ func (r *userProfileR) GetUser() *User {
 type userProfileL struct{}
 
 var (
-	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "bio", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at"}
+	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at"}
 	userProfileColumnsWithoutDefault = []string{"user_id"}
-	userProfileColumnsWithDefault    = []string{"display_name", "birthdate", "height_cm", "bio", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at"}
+	userProfileColumnsWithDefault    = []string{"display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )
