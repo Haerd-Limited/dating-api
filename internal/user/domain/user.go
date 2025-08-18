@@ -7,15 +7,10 @@ import (
 
 type (
 	User struct {
-		ID              string
-		FullName        string
-		Username        string
-		HashedPassword  string
-		Email           string
-		Dob             time.Time
-		Bio             string
-		Gender          string
-		ProfileImageURL *string
+		ID             string
+		Email          string
+		HashedPassword string
+		Dob            time.Time
 	}
 
 	UserProfile struct {

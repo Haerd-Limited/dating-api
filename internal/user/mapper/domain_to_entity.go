@@ -13,10 +13,8 @@ func ToUserEntity(user *domain.User) *entity.User {
 	}
 
 	return &entity.User{
-		FullName:      user.FullName,
-		Username:      user.Username,
-		Email:         user.Email,
-		Password:      user.HashedPassword,
+		Email:         null.StringFrom(user.Email),
+		PasswordHash:  null.StringFrom(user.HashedPassword),
 		DateOfBirth:   null.TimeFrom(user.Dob),
 		Gender:        null.StringFrom(user.Gender),
 		Bio:           null.StringFrom(user.Bio),
