@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -27,25 +28,23 @@ func GenerateAccessToken(userID string, jwtSecret []byte) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
-func GenerateRefreshToken(userID string) (*authDomain.RefreshToken, error) {
-	id := uuid.New().String()
-	token := uuid.New().String()
-	expires := time.Now().Add(7 * 24 * time.Hour)
-
-	rt := &authDomain.RefreshToken{
-		ID:        id,
+func GenerateRefreshToken(userID string) *authDomain.RefreshToken {
+	return &authDomain.RefreshToken{
+		ID:        uuid.New().String(),
 		UserID:    userID,
-		Token:     token,
-		ExpiresAt: expires,
+		Token:     uuid.New().String(),
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 	}
-
-	return rt, nil
 }
 
 func ParseAccessToken(tokenStr string, jwtSecret []byte) (string, error) {
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
 	})
+
+	if token == nil {
+		return "", errors.New("token is nil")
+	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		return claims["sub"].(string), nil
