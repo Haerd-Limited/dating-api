@@ -22,4 +22,6 @@ const (
 	InvalidUUIDMsg              = "Invalid ID format. Must be a valid UUID."
 	NotASimpleEcho              = "This is not a simple echo"
 	AuthenticationRequiredMsg   = "Authentication required: please log in"
+	RequestTimeoutMsg           = "Request timed out"
+	RequestCancelledMsg         = "Request cancelled"
 )
