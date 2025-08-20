@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
-
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/jmoiron/sqlx"
 
@@ -37,7 +35,7 @@ var (
 
 func (r *authRepository) InsertRefreshToken(ctx context.Context, refreshToken *entity.RefreshToken) error {
 	if err := refreshToken.Insert(ctx, r.db, boil.Infer()); err != nil {
-		return fmt.Errorf("repo auth insert refresh token: %w", err)
+		return err
 	}
 
 	return nil
@@ -47,9 +45,9 @@ func (r *authRepository) GetRefreshToken(ctx context.Context, refreshToken strin
 	rt, err := entity.RefreshTokens(entity.RefreshTokenWhere.Token.EQ(refreshToken)).One(ctx, r.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("repo auth select refresh token: token=%s: %w", utils.Redacted(refreshToken), ErrRefreshTokenNotFound)
+			return nil, ErrRefreshTokenNotFound
 		}
-		return nil, fmt.Errorf("repo auth select refresh token token=%s: %w", utils.Redacted(refreshToken), err)
+		return nil, err
 	}
 
 	return rt, nil
@@ -59,7 +57,7 @@ func (r *authRepository) RevokeRefreshToken(ctx context.Context, refreshTokenID 
 	rt, err := entity.RefreshTokens(entity.RefreshTokenWhere.ID.EQ(refreshTokenID)).One(ctx, r.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return fmt.Errorf("repo auth select refresh token id=%s: %w", refreshTokenID, ErrRefreshTokenNotFound)
+			return ErrRefreshTokenNotFound
 		}
 		return fmt.Errorf("repo auth select refresh token id=%s: %w", refreshTokenID, err)
 	}

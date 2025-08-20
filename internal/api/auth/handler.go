@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"context"
 	"errors"
+	"github.com/Haerd-Limited/dating-api/internal/auth/storage"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -86,18 +89,22 @@ func (h *handler) Register() http.HandlerFunc {
 
 		result, err := h.authService.Register(ctx, registerDetails)
 		if err != nil {
-			h.logger.Sugar().Errorw("Error registering user", "error", err)
-
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-
-			render.Json(w, statusCode,
-				mapper.ToAuthResponse(
+			switch {
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // don't write a response
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error registering user", "error", err)
+				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, code, mapper.ToAuthResponse(
 					nil,
-					errMsg,
-				),
-			)
-
-			return
+					msg,
+				))
+				return
+			}
 		}
 
 		render.Json(w, http.StatusCreated, mapper.ToAuthResponse(result, "Registration successful"))
@@ -127,18 +134,22 @@ func (h *handler) Login() http.HandlerFunc {
 
 		userCredentials, err := h.authService.Login(ctx, mapper.MapLoginRequestToDomain(req))
 		if err != nil {
-			h.logger.Sugar().Errorw("Error logging in user", "error", err)
-
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-
-			render.Json(w, statusCode,
-				mapper.ToAuthResponse(
+			switch {
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // don't write a response
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error logging in user", "error", err)
+				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, code, mapper.ToAuthResponse(
 					nil,
-					errMsg,
-				),
-			)
-
-			return
+					msg,
+				))
+				return
+			}
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToAuthResponse(userCredentials, "Login successful"))
@@ -168,18 +179,22 @@ func (h *handler) Refresh() http.HandlerFunc {
 
 		result, err := h.authService.RefreshToken(ctx, mapper.MapRefreshRequestToDomain(req))
 		if err != nil {
-			h.logger.Sugar().Errorw("Error refreshing tokens", "context", ctx, "error", err)
-
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-
-			render.Json(w, statusCode,
-				mapper.ToAuthResponse(
+			switch { //todo: refactor this as it's repeated in all handlers
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // don't write a response
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error refreshing tokens", "error", err)
+				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, code, mapper.ToAuthResponse(
 					nil,
-					errMsg,
-				),
-			)
-
-			return
+					msg,
+				))
+				return
+			}
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToAuthResponse(result, "Tokens refreshed successfully"))
@@ -210,17 +225,22 @@ func (h *handler) Logout() http.HandlerFunc {
 
 		err := h.authService.RevokeRefreshToken(ctx, logoutInput)
 		if err != nil {
-			h.logger.Sugar().Errorw("Error logging out", "error", err)
 
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleMessageResponse(
-					errMsg,
-				),
-			)
-
-			return
+			switch { //todo: refactor this as it's repeated in all handlers
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // don't write a response
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error logging out", "error", err)
+				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, code, commonMappers.ToSimpleMessageResponse(
+					msg,
+				))
+				return
+			}
 		}
 
 		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Logged out successfully"))
@@ -238,6 +258,10 @@ const (
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, context.Canceled):
+		return constants.StatusClientClosedRequest, messages.RequestCancelledMsg
+	case errors.Is(err, context.DeadlineExceeded):
+		return http.StatusRequestTimeout, messages.RequestTimeoutMsg
 	case errors.Is(err, http.ErrNotMultipart):
 		return http.StatusBadRequest, messages.InvalidUploadFormMsg
 	case errors.Is(err, user.ErrEmailAlreadyExists):
@@ -246,7 +270,7 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusConflict, messages.UserDetailsAlreadyExistsMsg
 	case errors.Is(err, user.ErrInvalidCredentials):
 		return http.StatusBadRequest, InvalidCredentialsMsg
-	case errors.Is(err, auth.ErrRefreshTokenRevoked), errors.Is(err, auth.ErrRefreshTokenExpired), errors.Is(err, auth.ErrRefreshTokenNotFound):
+	case errors.Is(err, auth.ErrRefreshTokenRevoked), errors.Is(err, auth.ErrRefreshTokenExpired), errors.Is(err, storage.ErrRefreshTokenNotFound):
 		return http.StatusUnauthorized, TokenRevokedOrExpiredMsg
 	case errors.Is(err, auth.ErrRefreshTokenAlreadyRevoked):
 		return http.StatusOK, TokenRevokedOrExpiredMsg

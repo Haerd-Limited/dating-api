@@ -2,9 +2,9 @@ package auth
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 	"time"
 
 	"go.uber.org/zap"
@@ -54,7 +54,6 @@ var (
 	ErrRefreshTokenExpired        = errors.New("refresh token expired")
 	ErrRefreshTokenRevoked        = errors.New("refresh token has been revoked")
 	ErrRefreshTokenAlreadyRevoked = errors.New("refresh token already revoked")
-	ErrRefreshTokenNotFound       = errors.New("refresh token not found")
 )
 
 func (as *authService) Register(ctx context.Context, registerDetails *authDomain.Register) (*authDomain.AuthTokensAndUserID, error) {
@@ -70,17 +69,14 @@ func (as *authService) Register(ctx context.Context, registerDetails *authDomain
 
 	accessToken, err := auth.GenerateAccessToken(createUserResult.UserID, []byte(as.jwtSecret))
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate access token: %w", err)
+		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", createUserResult.UserID, err)
 	}
 
-	refreshToken, err := auth.GenerateRefreshToken(createUserResult.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
-	}
+	refreshToken := auth.GenerateRefreshToken(createUserResult.UserID)
 
 	err = as.AuthRepo.InsertRefreshToken(ctx, mapper.ToRefreshTokenEntity(refreshToken))
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert refresh token: %w", err)
+		return nil, fmt.Errorf("failed to insert refresh token userID=%s: %w", refreshToken.UserID, err)
 	}
 
 	return &authDomain.AuthTokensAndUserID{
@@ -91,34 +87,29 @@ func (as *authService) Register(ctx context.Context, registerDetails *authDomain
 }
 
 func (as *authService) Login(ctx context.Context, loginDetails authDomain.Login) (*authDomain.AuthTokensAndUserID, error) {
-	userDetails, err := as.UserService.AuthenticateUser(ctx, loginDetails.PhoneNumber)
+	userDetails, err := as.UserService.AuthenticateUser(ctx, utils.Redacted(loginDetails.PhoneNumber))
 	if err != nil {
-		return nil, fmt.Errorf("failed authenticating user: %w", err)
+		return nil, fmt.Errorf("failed to authenticate user phone=%s: %w", loginDetails.PhoneNumber, err)
 	}
-
-	as.logger.Info("Authentication successful. Generating tokens...", zap.String("userID", userDetails.ID))
 
 	// Revoke/delete other user associated refresh tokens
 	err = as.AuthRepo.RevokeAllRefreshTokens(ctx, userDetails.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to revoke all refresh tokens: %w", err)
+		return nil, fmt.Errorf("failed to revoke all refresh tokens userID=%s: %w", userDetails.ID, err)
 	}
 
 	accessToken, err := auth.GenerateAccessToken(userDetails.ID, []byte(as.jwtSecret))
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate access token: %w", err)
+		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", userDetails.ID, err)
 	}
 
-	refreshToken, err := auth.GenerateRefreshToken(userDetails.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
-	}
+	refreshToken := auth.GenerateRefreshToken(userDetails.ID)
 
 	refreshTokenEntity := mapper.ToRefreshTokenEntity(refreshToken)
 
 	err = as.AuthRepo.InsertRefreshToken(ctx, refreshTokenEntity)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert refresh token: %w", err)
+		return nil, fmt.Errorf("failed to insert refresh token userID=%s token=%s: %w", refreshToken.UserID, utils.Redacted(refreshToken.Token), err)
 	}
 
 	return &authDomain.AuthTokensAndUserID{
@@ -131,18 +122,14 @@ func (as *authService) Login(ctx context.Context, loginDetails authDomain.Login)
 func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain.Refresh) (*authDomain.AuthTokensAndUserID, error) {
 	refreshToken, err := as.AuthRepo.GetRefreshToken(ctx, refreshInput.RefreshToken)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrRefreshTokenNotFound
-		}
-
-		return nil, err
+		return nil, fmt.Errorf("failed to get refresh token refreshToken=%s: %w", utils.Redacted(refreshInput.RefreshToken), err)
 	}
 
-	if time.Now().After(refreshToken.ExpiresAt) {
+	if time.Now().After(refreshToken.ExpiresAt) { //todo: move to repository layer
 		return nil, ErrRefreshTokenExpired
 	}
 
-	if refreshToken.Revoked {
+	if refreshToken.Revoked { //todo: move to repository layer
 		return nil, ErrRefreshTokenRevoked
 	}
 
@@ -153,19 +140,16 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain
 
 	accessToken, err := auth.GenerateAccessToken(refreshToken.UserID, []byte(as.jwtSecret))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", refreshToken.UserID, err)
 	}
 
-	newRefreshToken, err := auth.GenerateRefreshToken(refreshToken.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate new refresh token: %w", err)
-	}
+	newRefreshToken := auth.GenerateRefreshToken(refreshToken.UserID)
 
 	newRefreshTokenEntity := mapper.ToRefreshTokenEntity(newRefreshToken)
 
 	err = as.AuthRepo.InsertRefreshToken(ctx, newRefreshTokenEntity)
 	if err != nil {
-		return nil, fmt.Errorf("failed to store new refresh token: %w", err)
+		return nil, fmt.Errorf("failed to store new refresh token userID=%s: %w", refreshToken.UserID, err)
 	}
 
 	return &authDomain.AuthTokensAndUserID{
@@ -175,14 +159,8 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain
 }
 
 func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput authDomain.RevokeRefreshToken) error {
-	as.logger.Info("Refreshing tokens...")
-
 	refreshToken, err := as.AuthRepo.GetRefreshToken(ctx, revokeRefreshTokenInput.RefreshToken)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return ErrRefreshTokenNotFound
-		}
-
 		return err
 	}
 
@@ -192,7 +170,7 @@ func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshToke
 
 	err = as.AuthRepo.RevokeRefreshToken(ctx, refreshToken.ID)
 	if err != nil {
-		return fmt.Errorf("failed to revoke token: %w", err)
+		return fmt.Errorf("failed to revoke token id=%s: %w", refreshToken.ID, err)
 	}
 
 	return nil
