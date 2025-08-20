@@ -2,6 +2,13 @@ package utils
 
 import "fmt"
 
+func Redacted(s string) string {
+	if len(s) <= 6 {
+		return "***"
+	}
+	return "***" + s[len(s)-6:]
+}
+
 func TypePtrToStringPtr[v any](input *v) *string {
 	if input == nil {
 		return nil
