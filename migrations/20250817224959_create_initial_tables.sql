@@ -60,7 +60,8 @@ CREATE TABLE interests (
 CREATE TABLE prompt_types (
                               id SMALLSERIAL PRIMARY KEY,
                               key TEXT UNIQUE NOT NULL,
-                              label TEXT NOT NULL
+                              label TEXT NOT NULL,
+                              category TEXT NOT NULL
 );
 
 -- NEW: political beliefs
