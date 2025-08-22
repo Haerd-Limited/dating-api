@@ -31,7 +31,7 @@ type User struct {
 	Phone          null.String `boil:"phone" json:"phone,omitempty" toml:"phone" yaml:"phone,omitempty"`
 	CreatedAt      time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt      time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	OnboardingStep int16       `boil:"onboarding_step" json:"onboarding_step" toml:"onboarding_step" yaml:"onboarding_step"`
+	OnboardingStep string      `boil:"onboarding_step" json:"onboarding_step" toml:"onboarding_step" yaml:"onboarding_step"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -87,7 +87,7 @@ var UserWhere = struct {
 	Phone          whereHelpernull_String
 	CreatedAt      whereHelpertime_Time
 	UpdatedAt      whereHelpertime_Time
-	OnboardingStep whereHelperint16
+	OnboardingStep whereHelperstring
 }{
 	ID:             whereHelperstring{field: "\"users\".\"id\""},
 	Email:          whereHelpernull_String{field: "\"users\".\"email\""},
@@ -96,7 +96,7 @@ var UserWhere = struct {
 	Phone:          whereHelpernull_String{field: "\"users\".\"phone\""},
 	CreatedAt:      whereHelpertime_Time{field: "\"users\".\"created_at\""},
 	UpdatedAt:      whereHelpertime_Time{field: "\"users\".\"updated_at\""},
-	OnboardingStep: whereHelperint16{field: "\"users\".\"onboarding_step\""},
+	OnboardingStep: whereHelperstring{field: "\"users\".\"onboarding_step\""},
 }
 
 // UserRels is where relationship names are stored.

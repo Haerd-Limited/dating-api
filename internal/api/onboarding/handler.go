@@ -1,14 +1,16 @@
 package onboarding
 
 import (
+	standardcontext "context"
 	"errors"
+	"github.com/Haerd-Limited/dating-api/internal/onboarding/service"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"net/http"
 
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto/mapper"
-	"github.com/Haerd-Limited/dating-api/internal/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
@@ -28,12 +30,12 @@ type Handler interface {
 
 type handler struct {
 	logger            *zap.Logger
-	onboardingService onboarding.Service
+	onboardingService service.Service
 }
 
 func NewOnboardingHandler(
 	logger *zap.Logger,
-	onboardingService onboarding.Service,
+	onboardingService service.Service,
 ) Handler {
 	return &handler{
 		logger:            logger,
@@ -75,25 +77,27 @@ func (h *handler) Patch() http.HandlerFunc {
 			return
 		}
 
-		err := h.onboardingService.Patch(ctx, mapper.ToDomain(userID, req))
+		progress, err := h.onboardingService.Patch(ctx, mapper.ToDomain(userID, req))
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to patch onboarding", "context", ctx, "error", err)
-
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleMessageResponse(
-					errMsg,
-				),
-			)
-
-			return
+			switch {
+			case errors.Is(err, standardcontext.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // don't write a response
+			case errors.Is(err, standardcontext.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("failed to patch onboarding", "context", ctx, "error", err)
+				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, code, commonMappers.ToSimpleMessageResponse(msg))
+				return
+			}
 		}
 
 		render.Json(
 			w,
 			http.StatusOK,
-			nil,
+			mapper.ToOnboardingProgressResponse(progress),
 		)
 	}
 }
@@ -115,6 +119,10 @@ func (h *handler) State() http.HandlerFunc {
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, standardcontext.Canceled):
+		return constants.StatusClientClosedRequest, messages.RequestCancelledMsg
+	case errors.Is(err, standardcontext.DeadlineExceeded):
+		return http.StatusRequestTimeout, messages.RequestTimeoutMsg
 	case errors.Is(err, http.ErrNotMultipart):
 		return http.StatusBadRequest, messages.InvalidUploadFormMsg
 	case errors.Is(err, user.ErrEmailAlreadyExists):
@@ -127,7 +135,7 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, commonErrors.ErrInvalidGender):
 		return http.StatusBadRequest, messages.InvalidGenderMsg
-	case errors.Is(err, onboarding.ErrInvalidAgePreference):
+	case errors.Is(err, service.ErrInvalidAgePreference):
 		return http.StatusBadRequest, "Invalid age preference"
 
 	default:
