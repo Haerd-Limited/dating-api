@@ -87,6 +87,16 @@ func MapLocationRequestToDomain(req dto.LocationRequest, userID string) (domain.
 	}, nil
 }
 
+func MapLifestyleRequestToDomain(req dto.LifestyleRequest, userID string) (domain.Lifestyle, error) {
+	return domain.Lifestyle{
+		UserID:      userID,
+		DrinkingID:  req.DrinkingID,
+		MarijuanaID: req.MarijuanaID,
+		SmokingID:   req.SmokingID,
+		DrugsID:     req.DrugsID,
+	}, nil
+}
+
 // hasAnySpace returns true if s contains any Unicode whitespace character.
 func hasAnySpace(s string) bool {
 	return strings.IndexFunc(s, unicode.IsSpace) >= 0

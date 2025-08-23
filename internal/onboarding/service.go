@@ -18,6 +18,7 @@ type Service interface {
 	Register(ctx context.Context, registerDetails domain.Register) (domain.RegisterResult, error)
 	Basics(ctx context.Context, basicDetails domain.Basics) (domain.BasicsResult, error)
 	Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error)
+	Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error)
 }
 
 type onboardingService struct {
@@ -114,24 +115,24 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 		return domain.LocationResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
 	}
 
-	userProfile.City = &locationDetails.City
-	userProfile.Country = &locationDetails.Country
-	userProfile.Latitude = &locationDetails.Latitude
-	userProfile.Longitude = &locationDetails.Longitude
+	userProfile.City = locationDetails.City
+	userProfile.Country = locationDetails.Country
+	userProfile.Latitude = locationDetails.Latitude
+	userProfile.Longitude = locationDetails.Longitude
 
 	err = os.updateUserProfile(ctx, userProfile)
 	if err != nil {
 		return domain.LocationResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
+	habits, err := os.getHabits(ctx)
+	if err != nil {
+		return domain.LocationResult{}, err
+	}
+
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, locationDetails.UserID)
 	if err != nil {
 		return domain.LocationResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
-	}
-
-	habits, err := os.GetHabits(ctx)
-	if err != nil {
-		return domain.LocationResult{}, err
 	}
 
 	return domain.LocationResult{
@@ -140,7 +141,65 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 	}, nil
 }
 
-func (os *onboardingService) GetHabits(ctx context.Context) ([]domain.Habit, error) {
+func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error) {
+	userProfile, err := os.getUserProfile(ctx, lifestyleDetails.UserID)
+	if err != nil {
+		return domain.LifestyleResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+	}
+
+	userProfile.MarijuanaID = lifestyleDetails.MarijuanaID
+	userProfile.SmokingID = lifestyleDetails.SmokingID
+	userProfile.DrugsID = lifestyleDetails.DrugsID
+	userProfile.DrinkingID = lifestyleDetails.DrinkingID
+
+	err = os.updateUserProfile(ctx, userProfile)
+	if err != nil {
+		return domain.LifestyleResult{}, fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	religions, err := os.getReligions(ctx)
+	if err != nil {
+		return domain.LifestyleResult{}, fmt.Errorf("failed to get religions: %w", err)
+	}
+
+	politicalBeliefs, err := os.getPoliticalBeliefs(ctx)
+	if err != nil {
+		return domain.LifestyleResult{}, fmt.Errorf("failed to get political beliefs: %w", err)
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, lifestyleDetails.UserID)
+	if err != nil {
+		return domain.LifestyleResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	return domain.LifestyleResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+		Content: domain.LifestyleContent{
+			Religions:        religions,
+			PoliticalBeliefs: politicalBeliefs,
+		},
+	}, nil
+}
+
+func (os *onboardingService) getPoliticalBeliefs(ctx context.Context) ([]domain.PoliticalBelief, error) {
+	politicalBeliefsEntities, err := os.repo.GetPoliticalBeliefs(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get political beliefs: %w", err)
+	}
+
+	return mapper.MapPoliticalBeliefsToDomain(politicalBeliefsEntities), nil
+}
+
+func (os *onboardingService) getReligions(ctx context.Context) ([]domain.Religion, error) {
+	religionsEntities, err := os.repo.GetReligions(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get religions: %w", err)
+	}
+
+	return mapper.MapReligionsToDomain(religionsEntities), nil
+}
+
+func (os *onboardingService) getHabits(ctx context.Context) ([]domain.Habit, error) {
 	habitEntities, err := os.repo.GetHabits(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get habits: %w", err)
@@ -155,16 +214,11 @@ func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile 
 		return fmt.Errorf("failed to map user profile to entity: %w", err)
 	}
 
-	os.logger.Info("updating user profile",
-		zap.Any("geo", updatedUserProfileEntity.Geo),
-		zap.Any("lat", userProfile.Latitude),
-		zap.Any("long", userProfile.Longitude),
-	)
-
 	err = os.repo.UpdateUserProfile(ctx, updatedUserProfileEntity)
 	if err != nil {
 		return fmt.Errorf("failed to update user profile: %w", err)
 	}
+
 	return nil
 }
 
@@ -189,5 +243,6 @@ func (os *onboardingService) bumpOnboardingStep(ctx context.Context, userID stri
 	if err != nil {
 		return domain.OnboardingStepsUnset, fmt.Errorf("failed to update user onboarding step: %w", err)
 	}
+
 	return domain.Steps(userDomain.OnboardingStep), nil
 }

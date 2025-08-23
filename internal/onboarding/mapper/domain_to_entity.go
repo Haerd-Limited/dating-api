@@ -27,12 +27,12 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 		ent.DisplayName = null.StringFrom(*p.DisplayName)
 	}
 
-	if p.City != nil {
-		ent.City = null.StringFrom(*p.City)
+	if p.City != "" {
+		ent.City = null.StringFrom(p.City)
 	}
 
-	if p.Country != nil {
-		ent.Country = null.StringFrom(*p.Country)
+	if p.Country != "" {
+		ent.Country = null.StringFrom(p.Country)
 	}
 
 	if p.Work != nil {
@@ -65,28 +65,28 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 		ent.EducationLevelID = null.Int16From(int16(*p.EducationLevelID))
 	}
 
-	if p.PoliticalBeliefID != nil {
-		ent.PoliticalBeliefID = null.Int16From(int16(*p.PoliticalBeliefID))
+	if p.PoliticalBeliefID != 0 {
+		ent.PoliticalBeliefID = null.Int16From(p.PoliticalBeliefID)
 	}
 
-	if p.DrinkingID != nil {
-		ent.DrinkingID = null.Int16From(int16(*p.DrinkingID))
+	if p.DrinkingID != 0 {
+		ent.DrinkingID = null.Int16From(p.DrinkingID)
 	}
 
-	if p.SmokingID != nil {
-		ent.SmokingID = null.Int16From(int16(*p.SmokingID))
+	if p.SmokingID != 0 {
+		ent.SmokingID = null.Int16From(p.SmokingID)
 	}
 
-	if p.MarijuanaID != nil {
-		ent.MarijuanaID = null.Int16From(int16(*p.MarijuanaID))
+	if p.MarijuanaID != 0 {
+		ent.MarijuanaID = null.Int16From(p.MarijuanaID)
 	}
 
-	if p.DrugsID != nil {
-		ent.DrugsID = null.Int16From(int16(*p.DrugsID))
+	if p.DrugsID != 0 {
+		ent.DrugsID = null.Int16From(p.DrugsID)
 	}
 
-	if p.ChildrenStatusID != nil {
-		ent.ChildrenStatusID = null.Int16From(int16(*p.ChildrenStatusID))
+	if p.ChildrenStatusID != 0 {
+		ent.ChildrenStatusID = null.Int16From(p.ChildrenStatusID)
 	}
 
 	if p.FamilyPlanID != nil {
@@ -110,8 +110,8 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 	// NOTE: lat/lon → geo is handled in the repository with ST_MakePoint if you decide to pass them down.
 
 	// Location → Geo
-	if p.Latitude != nil && p.Longitude != nil {
-		ent.Geo = fmt.Sprintf("SRID=4326;POINT(%f %f)", *p.Longitude, *p.Latitude)
+	if p.Latitude != 0.0 && p.Longitude != 0.0 {
+		ent.Geo = fmt.Sprintf("SRID=4326;POINT(%f %f)", p.Longitude, p.Latitude)
 	} else {
 		// fallback default to avoid PostGIS parse error
 		ent.Geo = "SRID=4326;POINT(0 0)"

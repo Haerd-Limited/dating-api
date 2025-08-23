@@ -11,6 +11,8 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type OnboardingRepository interface {
+	GetReligions(ctx context.Context) (entity.ReligionSlice, error)
+	GetPoliticalBeliefs(ctx context.Context) (entity.PoliticalBeliefSlice, error)
 	GetHabits(ctx context.Context) (entity.HabitSlice, error)
 	GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error)
 	GetGenders(ctx context.Context) (entity.GenderSlice, error)
@@ -26,6 +28,24 @@ func NewOnboardingRepository(db *sqlx.DB) OnboardingRepository {
 	return &onboardingRepository{
 		db: db,
 	}
+}
+
+func (or *onboardingRepository) GetReligions(ctx context.Context) (entity.ReligionSlice, error) {
+	religions, err := entity.Religions().All(ctx, or.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return religions, nil
+}
+
+func (or *onboardingRepository) GetPoliticalBeliefs(ctx context.Context) (entity.PoliticalBeliefSlice, error) {
+	politicalBeliefs, err := entity.PoliticalBeliefs().All(ctx, or.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return politicalBeliefs, nil
 }
 
 func (or *onboardingRepository) GetHabits(ctx context.Context) (entity.HabitSlice, error) {

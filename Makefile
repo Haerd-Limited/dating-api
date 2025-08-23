@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  seed_habits_table sql
+	@cd ./migrations && goose create  seed_hinge_religions_politics sql
 .PHONY: migrate-create
 
 

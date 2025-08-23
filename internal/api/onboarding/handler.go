@@ -135,7 +135,7 @@ func (h *handler) Basics() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse("all fields are required"),
+				commonMappers.ToSimpleErrorResponse(messages.AllFieldsRequiredMsg),
 			)
 
 			return
@@ -200,7 +200,7 @@ func (h *handler) Location() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse("all fields are required"),
+				commonMappers.ToSimpleErrorResponse(messages.AllFieldsRequiredMsg),
 			)
 
 			return
@@ -241,6 +241,68 @@ func (h *handler) Location() http.HandlerFunc {
 
 func (h *handler) Lifestyle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			authHeader := r.Header.Get("Authorization")
+			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
+
+			render.Json(
+				w,
+				http.StatusUnauthorized,
+				commonMappers.ToSimpleErrorResponse(
+					messages.AuthenticationRequiredMsg,
+				))
+
+			return
+		}
+
+		var req dto.LifestyleRequest
+
+		// Validates and decodes request
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate lifestyle request body", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(messages.AllFieldsRequiredMsg),
+			)
+
+			return
+		}
+
+		lifestyleDetails, err := mapper.MapLifestyleRequestToDomain(req, userID)
+		if err != nil {
+			h.logger.Sugar().Errorw("failed to map lifestyle request to domain", "error", err)
+			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+			render.Json(w, statusCode,
+				commonMappers.ToSimpleErrorResponse(errMsg),
+			)
+
+			return
+		}
+
+		result, err := h.onboardingService.Lifestyle(ctx, lifestyleDetails)
+		if err != nil {
+			switch {
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // no need to return a response. Client socket is closed.
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error updating lifestyle details", "error", err)
+				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
+
+				return
+			}
+		}
+
+		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
 	}
 }
 

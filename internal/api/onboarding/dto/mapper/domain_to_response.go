@@ -23,6 +23,11 @@ func ToOnboardingResponse(result any) dto.OnboardingResponse {
 			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
 			Content:         MapLocationContentToDto(v.Content),
 		}
+	case domain.LifestyleResult:
+		return dto.OnboardingResponse{
+			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+			Content:         MapLifestyleContentToDto(v.Content),
+		}
 	default:
 		return dto.OnboardingResponse{}
 	}
@@ -42,6 +47,29 @@ func mapOnboardingStepsToDto(steps domain.OnboardingSteps) dto.OnboardingSteps {
 		Progress:     steps.Progress,
 		Steps:        stringSteps,
 		TotalSteps:   steps.TotalSteps,
+	}
+}
+
+func MapLifestyleContentToDto(content domain.LifestyleContent) dto.LifestyleContent {
+	var religions []dto.Religion
+	for _, religion := range content.Religions {
+		religions = append(religions, dto.Religion{
+			ID:    religion.ID,
+			Label: religion.Label,
+		})
+	}
+
+	var politicalBeliefs []dto.PoliticalBelief
+	for _, politicalBelief := range content.PoliticalBeliefs {
+		politicalBeliefs = append(politicalBeliefs, dto.PoliticalBelief{
+			ID:    politicalBelief.ID,
+			Label: politicalBelief.Label,
+		})
+	}
+
+	return dto.LifestyleContent{
+		Religions:        religions,
+		PoliticalBeliefs: politicalBeliefs,
 	}
 }
 

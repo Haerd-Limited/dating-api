@@ -10,6 +10,34 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
+type Lifestyle struct {
+	UserID      string
+	DrinkingID  int16
+	SmokingID   int16
+	MarijuanaID int16
+	DrugsID     int16
+}
+
+type LifestyleResult struct {
+	OnboardingSteps
+	Content LifestyleContent
+}
+
+type LifestyleContent struct {
+	Religions        []Religion
+	PoliticalBeliefs []PoliticalBelief
+}
+
+type Religion struct {
+	ID    int16
+	Label string
+}
+
+type PoliticalBelief struct {
+	ID    int16
+	Label string
+}
+
 type Location struct {
 	UserID    string
 	Latitude  float64
@@ -80,22 +108,22 @@ type UserProfile struct {
 	UserID      string
 
 	// Location
-	Latitude  *float64
-	Longitude *float64
-	City      *string
-	Country   *string
+	Latitude  float64
+	Longitude float64
+	City      string
+	Country   string
 
 	// Single-selects
 	GenderID          int16
 	DatingIntentionID int16
 	ReligionID        *int32
 	EducationLevelID  *int32
-	PoliticalBeliefID *int32
-	DrinkingID        *int32
-	SmokingID         *int32
-	MarijuanaID       *int32
-	DrugsID           *int32
-	ChildrenStatusID  *int32
+	PoliticalBeliefID int16
+	DrinkingID        int16
+	SmokingID         int16
+	MarijuanaID       int16
+	DrugsID           int16
+	ChildrenStatusID  int16
 	FamilyPlanID      *int32
 	EthnicityID       *int32
 

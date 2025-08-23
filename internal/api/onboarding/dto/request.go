@@ -4,6 +4,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type LifestyleRequest struct {
+	DrinkingID  int16 `json:"drinking_id" validate:"required"`
+	SmokingID   int16 `json:"smoking_id" validate:"required"`
+	MarijuanaID int16 `json:"marijuana_id" validate:"required"`
+	DrugsID     int16 `json:"drugs_id" validate:"required"`
+}
+
+func (lr LifestyleRequest) Validate() error {
+	return validator.New().Struct(lr)
+}
+
 type LocationRequest struct {
 	Latitude  float64 `json:"latitude" validate:"required"`
 	Longitude float64 `json:"longitude" validate:"required"`

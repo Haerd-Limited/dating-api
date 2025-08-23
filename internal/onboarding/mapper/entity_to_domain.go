@@ -8,6 +8,40 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 )
 
+func MapPoliticalBeliefsToDomain(g []*entity.PoliticalBelief) []domain.PoliticalBelief {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.PoliticalBelief
+
+	for _, e := range g {
+		result = append(result, domain.PoliticalBelief{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
+func MapReligionsToDomain(g []*entity.Religion) []domain.Religion {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Religion
+
+	for _, e := range g {
+		result = append(result, domain.Religion{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
 func MapHabitsToDomain(g []*entity.Habit) []domain.Habit {
 	if g == nil {
 		return nil
@@ -94,18 +128,18 @@ func MapUserProfileToDomain(up *entity.UserProfile) *domain.UserProfile {
 			var lon, lat float64
 
 			if _, err := fmt.Sscanf(point, "%f %f", &lon, &lat); err == nil {
-				d.Latitude = &lat
-				d.Longitude = &lon
+				d.Latitude = lat
+				d.Longitude = lon
 			}
 		}
 	}
 
 	if up.City.Valid {
-		d.City = &up.City.String
+		d.City = up.City.String
 	}
 
 	if up.Country.Valid {
-		d.Country = &up.Country.String
+		d.Country = up.Country.String
 	}
 
 	// Single-select IDs
@@ -128,33 +162,27 @@ func MapUserProfileToDomain(up *entity.UserProfile) *domain.UserProfile {
 	}
 
 	if up.PoliticalBeliefID.Valid {
-		v := int32(up.PoliticalBeliefID.Int16)
-		d.PoliticalBeliefID = &v
+		d.PoliticalBeliefID = up.PoliticalBeliefID.Int16
 	}
 
 	if up.DrinkingID.Valid {
-		v := int32(up.DrinkingID.Int16)
-		d.DrinkingID = &v
+		d.DrinkingID = up.DrinkingID.Int16
 	}
 
 	if up.SmokingID.Valid {
-		v := int32(up.SmokingID.Int16)
-		d.SmokingID = &v
+		d.SmokingID = up.SmokingID.Int16
 	}
 
 	if up.MarijuanaID.Valid {
-		v := int32(up.MarijuanaID.Int16)
-		d.MarijuanaID = &v
+		d.MarijuanaID = up.MarijuanaID.Int16
 	}
 
 	if up.DrugsID.Valid {
-		v := int32(up.DrugsID.Int16)
-		d.DrugsID = &v
+		d.DrugsID = up.DrugsID.Int16
 	}
 
 	if up.ChildrenStatusID.Valid {
-		v := int32(up.ChildrenStatusID.Int16)
-		d.ChildrenStatusID = &v
+		d.ChildrenStatusID = up.ChildrenStatusID.Int16
 	}
 
 	if up.FamilyPlanID.Valid {
