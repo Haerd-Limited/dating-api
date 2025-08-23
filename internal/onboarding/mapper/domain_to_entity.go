@@ -3,7 +3,6 @@ package mapper
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/types"
@@ -46,29 +45,15 @@ func MapProfileToEntity(userID string, p *domain.UserProfile) (*entity.UserProfi
 		ent.University = null.StringFrom(*p.University)
 	}
 
-	// Dates: expect YYYY-MM-DD
-	if p.Birthdate != nil && *p.Birthdate != "" {
-		t, err := time.Parse("2006-01-02", *p.Birthdate)
-		if err != nil {
-			return nil, fmt.Errorf("invalid birthdate %q (expected YYYY-MM-DD): %w", *p.Birthdate, err)
-		}
-
-		ent.Birthdate = null.TimeFrom(t)
-	}
+	ent.Birthdate = null.TimeFrom(p.Birthdate)
 
 	// Scalars
-	if p.HeightCM != nil {
-		ent.HeightCM = null.Int16From(*p.HeightCM) // NOTE: HeightCm (lowercase m)
-	}
+	ent.HeightCM = null.Int16From(p.HeightCM)
 
 	// FKs (SMALLINT → int16)
-	if p.GenderID != nil {
-		ent.GenderID = null.Int16From(int16(*p.GenderID))
-	}
+	ent.GenderID = null.Int16From(p.GenderID)
 
-	if p.DatingIntentionID != nil {
-		ent.DatingIntentionID = null.Int16From(int16(*p.DatingIntentionID))
-	}
+	ent.DatingIntentionID = null.Int16From(p.DatingIntentionID)
 
 	if p.ReligionID != nil {
 		ent.ReligionID = null.Int16From(int16(*p.ReligionID))
@@ -122,7 +107,13 @@ func MapProfileToEntity(userID string, p *domain.UserProfile) (*entity.UserProfi
 
 	// NOTE: lat/lon → geo is handled in the repository with ST_MakePoint if you decide to pass them down.
 
-	// todo: sort out updating/inserting user's location/geo
+	// Location → Geo
+	if p.Latitude != nil && p.Longitude != nil {
+		ent.Geo = fmt.Sprintf("SRID=4326;POINT(%f %f)", *p.Longitude, *p.Latitude)
+	} else {
+		// fallback default to avoid PostGIS parse error
+		ent.Geo = "SRID=4326;POINT(0 0)"
+	}
 
 	return ent, nil
 }

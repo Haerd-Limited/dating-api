@@ -1,11 +1,11 @@
 package mappers
 
-type SimpleMessageResponse struct {
-	Message string `json:"message"`
+type SimpleErrorResponse struct {
+	Error string `json:"error"`
 }
 
-func ToSimpleMessageResponse(message string) *SimpleMessageResponse {
-	return &SimpleMessageResponse{
-		Message: message,
+func ToSimpleErrorResponse(errMsg string) *SimpleErrorResponse {
+	return &SimpleErrorResponse{
+		Error: errMsg,
 	}
 }

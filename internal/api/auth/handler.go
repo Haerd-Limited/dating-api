@@ -75,7 +75,7 @@ func (h *handler) Login() http.HandlerFunc {
 				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
 				return // don't write a response
 			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
 				return
 			default:
 				h.logger.Sugar().Errorw("Error logging in user", "error", err)
@@ -121,7 +121,7 @@ func (h *handler) Refresh() http.HandlerFunc {
 				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
 				return // don't write a response
 			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
 				return
 			default:
 				h.logger.Sugar().Errorw("Error refreshing tokens", "error", err)
@@ -152,7 +152,7 @@ func (h *handler) Logout() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleMessageResponse(
+				commonMappers.ToSimpleErrorResponse(
 					InvalidRefreshTokenMsg,
 				))
 
@@ -168,12 +168,12 @@ func (h *handler) Logout() http.HandlerFunc {
 				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
 				return // don't write a response
 			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
 				return
 			default:
 				h.logger.Sugar().Errorw("Error logging out", "error", err)
 				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, code, commonMappers.ToSimpleMessageResponse(
+				render.Json(w, code, commonMappers.ToSimpleErrorResponse(
 					msg,
 				))
 
@@ -181,7 +181,7 @@ func (h *handler) Logout() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Logged out successfully"))
+		render.Json(w, http.StatusOK, commonMappers.ToSimpleErrorResponse("Logged out successfully"))
 	}
 }
 

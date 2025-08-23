@@ -16,6 +16,7 @@ import (
 
 type Service interface {
 	Register(ctx context.Context, register domain.Register) (domain.RegisterResult, error)
+	Basics(ctx context.Context, basics domain.Basics) (domain.BasicsResult, error)
 }
 
 type onboardingService struct {
@@ -46,7 +47,7 @@ func (os *onboardingService) Register(ctx context.Context, register domain.Regis
 		PhoneNumber:    register.PhoneNumber,
 		FirstName:      register.FirstName,
 		LastName:       register.LastName,
-		OnboardingStep: string(register.OnboardingStep),
+		OnboardingStep: string(domain.OnboardingStepsBasics),
 	})
 	if err != nil {
 		return domain.RegisterResult{}, fmt.Errorf("failed to create user: %w", err)
@@ -70,10 +71,51 @@ func (os *onboardingService) Register(ctx context.Context, register domain.Regis
 	return domain.RegisterResult{
 		AccessToken:     tokens.AccessToken,
 		RefreshToken:    tokens.RefreshToken,
-		OnboardingSteps: register.OnboardingStep.GenerateOnboardingSteps(),
+		OnboardingSteps: domain.OnboardingStepsBasics.GenerateOnboardingSteps(),
 		Content: domain.RegisterContent{
 			DatingIntentions: mapper.MapDatingIntentionsToDomain(datingIntentionEntities),
 			Genders:          mapper.MapGendersToDomain(genderEntities),
 		},
+	}, nil
+}
+
+func (os *onboardingService) Basics(ctx context.Context, basics domain.Basics) (domain.BasicsResult, error) {
+	userProfileEntity, err := os.repo.GetUserProfileByUserID(ctx, basics.UserID)
+	if err != nil {
+		return domain.BasicsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+	}
+
+	userProfile := mapper.MapUserProfileToDomain(userProfileEntity)
+
+	// todo: add checks to see if these ID's even exists
+	userProfile.GenderID = basics.GenderID
+	userProfile.DatingIntentionID = basics.DatingIntentionID
+	userProfile.HeightCM = basics.HeightCm
+	userProfile.Birthdate = basics.Birthdate
+
+	UpdatedUserProfileEntity, err := mapper.MapProfileToEntity(userProfile.UserID, userProfile)
+	if err != nil {
+		return domain.BasicsResult{}, fmt.Errorf("failed to map user profile to entity: %w", err)
+	}
+
+	err = os.repo.UpdateUserProfile(ctx, UpdatedUserProfileEntity)
+	if err != nil {
+		return domain.BasicsResult{}, fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	userDomain, err := os.userService.GetUser(ctx, basics.UserID)
+	if err != nil {
+		return domain.BasicsResult{}, fmt.Errorf("failed to get user details: %w", err)
+	}
+
+	userDomain.OnboardingStep = string(domain.OnboardingStepsLocation)
+
+	err = os.userService.UpdateUser(ctx, userDomain)
+	if err != nil {
+		return domain.BasicsResult{}, fmt.Errorf("failed to update user onboarding step: %w", err)
+	}
+
+	return domain.BasicsResult{
+		OnboardingSteps: domain.OnboardingStepsLocation.GenerateOnboardingSteps(),
 	}, nil
 }

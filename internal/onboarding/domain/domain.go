@@ -1,11 +1,24 @@
 package domain
 
+import "time"
+
+type Basics struct {
+	UserID            string
+	Birthdate         time.Time
+	HeightCm          int16
+	GenderID          int16
+	DatingIntentionID int16
+}
+
+type BasicsResult struct {
+	OnboardingSteps
+}
+
 type Register struct {
-	Email          string
-	PhoneNumber    string
-	FirstName      string
-	LastName       *string
-	OnboardingStep Steps
+	Email       string
+	PhoneNumber string
+	FirstName   string
+	LastName    *string
 }
 type RegisterResult struct {
 	AccessToken  string
@@ -40,8 +53,9 @@ type DatingIntention struct {
 
 type UserProfile struct {
 	DisplayName *string
-	Birthdate   *string // keep string; service can parse to time.Time if needed
-	HeightCM    *int16
+	Birthdate   time.Time
+	HeightCM    int16
+	UserID      string
 
 	// Location
 	Latitude  *float64
@@ -50,8 +64,8 @@ type UserProfile struct {
 	Country   *string
 
 	// Single-selects
-	GenderID          *int32
-	DatingIntentionID *int32
+	GenderID          int16
+	DatingIntentionID int16
 	ReligionID        *int32
 	EducationLevelID  *int32
 	PoliticalBeliefID *int32
@@ -68,6 +82,9 @@ type UserProfile struct {
 	JobTitle    *string
 	University  *string
 	ProfileMeta *map[string]any
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Preferences struct {

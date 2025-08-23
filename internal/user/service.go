@@ -19,8 +19,9 @@ import (
 type Service interface {
 	CreateUser(ctx context.Context, user domain.User) (*string, error)
 	AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error)
-	GetUserDetails(ctx context.Context, id string) (*domain.User, error)
+	GetUser(ctx context.Context, id string) (*domain.User, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
+	UpdateUser(ctx context.Context, user *domain.User) error
 }
 
 type userService struct {
@@ -82,7 +83,7 @@ func (us *userService) AuthenticateUser(ctx context.Context, phoneNumber string)
 	return mapper.UserEntityToUserDomain(userEntity), nil
 }
 
-func (us *userService) GetUserDetails(ctx context.Context, id string) (*domain.User, error) {
+func (us *userService) GetUser(ctx context.Context, id string) (*domain.User, error) {
 	userEntity, err := us.userRepo.GetUserByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by id(%s): %w", id, err)
@@ -107,4 +108,8 @@ func (us *userService) GetUsersByIDs(ctx context.Context, ids []string) ([]*doma
 	}
 
 	return users, nil
+}
+
+func (us *userService) UpdateUser(ctx context.Context, user *domain.User) error {
+	return us.userRepo.UpdateUser(ctx, mapper.ToUserEntity(*user))
 }

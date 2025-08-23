@@ -74,7 +74,7 @@ func (mr *MockServiceMockRecorder) CreateUser(ctx, user any) *gomock.Call {
 // GetUserDetails mocks base method.
 func (m *MockService) GetUserDetails(ctx context.Context, id string) (*domain.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserDetails", ctx, id)
+	ret := m.ctrl.Call(m, "GetUser", ctx, id)
 	ret0, _ := ret[0].(*domain.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -83,7 +83,7 @@ func (m *MockService) GetUserDetails(ctx context.Context, id string) (*domain.Us
 // GetUserDetails indicates an expected call of GetUserDetails.
 func (mr *MockServiceMockRecorder) GetUserDetails(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserDetails", reflect.TypeOf((*MockService)(nil).GetUserDetails), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockService)(nil).GetUserDetails), ctx, id)
 }
 
 // GetUsersByIDs mocks base method.

@@ -3,10 +3,12 @@ package mapper
 import (
 	"errors"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 )
 
@@ -55,9 +57,23 @@ func MapRegisterRequestToDomain(request dto.RegisterRequest) (domain.Register, e
 		LastName:    &lastName,
 		PhoneNumber: normalizePhone(request.PhoneNumber),
 		Email:       strings.TrimSpace(request.Email),
-		// We after the user registers Basics will be their current/first step.
+		// After the user registers Basics will be their current/first step.
 		// Setting this will allow us to resume the application if they drop off after registration
-		OnboardingStep: domain.OnboardingStepsBasics,
+	}, nil
+}
+
+func MapBasicRequestToDomain(basic dto.BasicsRequest, userID string) (domain.Basics, error) {
+	dob, err := time.Parse("2006-01-02", basic.Birthdate)
+	if err != nil {
+		return domain.Basics{}, commonErrors.ErrInvalidDob
+	}
+
+	return domain.Basics{
+		UserID:            userID,
+		Birthdate:         dob,
+		HeightCm:          basic.HeightCm,
+		GenderID:          basic.GenderID,
+		DatingIntentionID: basic.DatingIntentionID,
 	}, nil
 }
 

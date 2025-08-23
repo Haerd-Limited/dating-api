@@ -13,6 +13,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
@@ -68,7 +69,7 @@ func (h *handler) Register() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleMessageResponse("email, phone_number and first_name are required fields"),
+				commonMappers.ToSimpleErrorResponse("email, phone_number and first_name are required fields"),
 			)
 
 			return
@@ -79,7 +80,7 @@ func (h *handler) Register() http.HandlerFunc {
 			h.logger.Sugar().Errorw("failed to map register request to register input", "error", err)
 			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 			render.Json(w, statusCode,
-				commonMappers.ToSimpleMessageResponse(errMsg),
+				commonMappers.ToSimpleErrorResponse(errMsg),
 			)
 
 			return
@@ -92,12 +93,12 @@ func (h *handler) Register() http.HandlerFunc {
 				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
 				return // no need to return a response. Client socket is closed.
 			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
 				return
 			default:
 				h.logger.Sugar().Errorw("Error registering user", "error", err)
 				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleMessageResponse(errMsg))
+				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 
 				return
 			}
@@ -109,6 +110,65 @@ func (h *handler) Register() http.HandlerFunc {
 
 func (h *handler) Basics() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			authHeader := r.Header.Get("Authorization")
+			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
+
+			render.Json(
+				w,
+				http.StatusUnauthorized,
+				commonMappers.ToSimpleErrorResponse(
+					messages.AuthenticationRequiredMsg,
+				))
+
+			return
+		}
+
+		var req dto.BasicsRequest
+
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate basics request body", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("all fields are required"),
+			)
+
+			return
+		}
+
+		basics, err := mapper.MapBasicRequestToDomain(req, userID)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to map basics request to domain", "error", err)
+			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+			render.Json(w, statusCode,
+				commonMappers.ToSimpleErrorResponse(errMsg),
+			)
+		}
+
+		result, err := h.onboardingService.Basics(ctx, basics)
+		if err != nil {
+			switch {
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // no need to return a response. Client socket is closed.
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error updating basics", "error", err)
+				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
+
+				return
+			}
+		}
+
+		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
 	}
 }
 

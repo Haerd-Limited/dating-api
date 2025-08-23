@@ -4,6 +4,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type BasicsRequest struct {
+	Birthdate         string `json:"birthdate" validate:"required"`
+	HeightCm          int16  `json:"height_cm" validate:"required"`
+	GenderID          int16  `json:"gender_id" validate:"required"`
+	DatingIntentionID int16  `json:"dating_intention_id" validate:"required"`
+}
+
+func (br BasicsRequest) Validate() error {
+	return validator.New().Struct(br)
+}
+
 type RegisterRequest struct {
 	Email       string  `json:"email" validate:"required,email"`
 	PhoneNumber string  `json:"phone_number" validate:"required"`

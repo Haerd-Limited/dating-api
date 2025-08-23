@@ -60,7 +60,7 @@ func main() {
 	}
 
 	// In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
-	cacheSize := 100 * 1024 * 1024
+	cacheSize := 100 * 1024 * 1024 // todo: use for intentions and stuff. no need to read db since never change
 	cache := freecache.NewCache(cacheSize)
 
 	debug.SetGCPercent(20)
