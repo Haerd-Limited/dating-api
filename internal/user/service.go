@@ -17,7 +17,7 @@ import (
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=user
 type Service interface {
-	CreateUser(ctx context.Context, user *domain.User) (*CreateUserResult, error)
+	CreateUser(ctx context.Context, user domain.User) (*string, error)
 	AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error)
 	GetUserDetails(ctx context.Context, id string) (*domain.User, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
@@ -44,23 +44,15 @@ func NewUserService(
 	}
 }
 
-type CreateUserResult struct {
-	UserID string
-}
-
 var (
 	ErrEmailAlreadyExists       = errors.New("email already exists")
 	ErrUserDetailsAlreadyExists = errors.New("user details already exists")
 	ErrInvalidCredentials       = errors.New("invalid credentials")
 )
 
-func (us *userService) CreateUser(ctx context.Context, user *domain.User) (*CreateUserResult, error) {
-	if user == nil {
-		return nil, errors.New("user details cannot be nil")
-	}
-
-	userID, err := us.userRepo.InsertUser(ctx, mapper.ToUserEntity(*user))
-	if err != nil {
+func (us *userService) CreateUser(ctx context.Context, user domain.User) (*string, error) {
+	userID, err := us.userRepo.InsertUser(ctx, mapper.ToUserEntity(user))
+	if err != nil { // todo: move to repo layer
 		// Check if the error is a unique constraint violation (email already exists)
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
@@ -75,9 +67,7 @@ func (us *userService) CreateUser(ctx context.Context, user *domain.User) (*Crea
 		return nil, err
 	}
 
-	return &CreateUserResult{
-		UserID: *userID,
-	}, nil
+	return userID, nil
 }
 
 // AuthenticateUser checks credentials and returns the user if valid, otherwise an error.

@@ -6,6 +6,7 @@ func Redacted(s string) string {
 	if len(s) <= 6 {
 		return "***"
 	}
+
 	return "***" + s[len(s)-6:]
 }
 

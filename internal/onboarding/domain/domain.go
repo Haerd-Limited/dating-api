@@ -1,19 +1,41 @@
 package domain
 
-type OnboardingUpdate struct {
-	UserID string
+type Register struct {
+	Email          string
+	PhoneNumber    string
+	FirstName      string
+	LastName       *string
+	OnboardingStep Steps
+}
+type RegisterResult struct {
+	AccessToken  string
+	RefreshToken string
+	OnboardingSteps
+	Content RegisterContent
+}
 
-	// Profile
-	UserProfile *UserProfile
+type OnboardingSteps struct {
+	PreviousStep Steps
+	CurrentStep  Steps
+	NextStep     Steps
+	Progress     float64
+	Steps        []Steps
+	TotalSteps   int
+}
 
-	Preferences *Preferences
+type RegisterContent struct {
+	DatingIntentions []DatingIntention
+	Genders          []Gender
+}
 
-	// Multi-selects (replace if provided)
-	LanguageIDs *[]int32
-	InterestIDs *[]int32
+type Gender struct {
+	ID    int16
+	Label string
+}
 
-	// Progress
-	BumpOnboardingStep *bool
+type DatingIntention struct {
+	ID    int16
+	Label string
 }
 
 type UserProfile struct {

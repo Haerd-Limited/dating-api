@@ -16,6 +16,6 @@ func UserEntityToUserDomain(user *entity.User) *domain.User {
 		PhoneNumber:    user.Phone.String,
 		FirstName:      user.FirstName,
 		LastName:       &user.LastName.String,
-		OnboardingStep: int(user.OnboardingStep),
+		OnboardingStep: user.OnboardingStep,
 	}
 }

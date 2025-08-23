@@ -896,7 +896,7 @@ func testPromptTypesSelect(t *testing.T) {
 }
 
 var (
-	promptTypeDBTypes = map[string]string{`ID`: `smallint`, `Key`: `text`, `Label`: `text`}
+	promptTypeDBTypes = map[string]string{`ID`: `smallint`, `Key`: `text`, `Label`: `text`, `Category`: `text`}
 	_                 = bytes.MinRead
 )
 

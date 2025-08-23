@@ -41,6 +41,21 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// GenerateAccessAndRefreshToken mocks base method.
+func (m *MockService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthTokensAndUserID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateAccessAndRefreshToken", ctx, userID)
+	ret0, _ := ret[0].(*domain.AuthTokensAndUserID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateAccessAndRefreshToken indicates an expected call of GenerateAccessAndRefreshToken.
+func (mr *MockServiceMockRecorder) GenerateAccessAndRefreshToken(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAccessAndRefreshToken", reflect.TypeOf((*MockService)(nil).GenerateAccessAndRefreshToken), ctx, userID)
+}
+
 // Login mocks base method.
 func (m *MockService) Login(ctx context.Context, loginInput domain.Login) (*domain.AuthTokensAndUserID, error) {
 	m.ctrl.T.Helper()
@@ -69,21 +84,6 @@ func (m *MockService) RefreshToken(ctx context.Context, refreshInput domain.Refr
 func (mr *MockServiceMockRecorder) RefreshToken(ctx, refreshInput any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockService)(nil).RefreshToken), ctx, refreshInput)
-}
-
-// Register mocks base method.
-func (m *MockService) Register(ctx context.Context, registerDetails *domain.Register) (*domain.AuthTokensAndUserID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Register", ctx, registerDetails)
-	ret0, _ := ret[0].(*domain.AuthTokensAndUserID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Register indicates an expected call of Register.
-func (mr *MockServiceMockRecorder) Register(ctx, registerDetails any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockService)(nil).Register), ctx, registerDetails)
 }
 
 // RevokeRefreshToken mocks base method.

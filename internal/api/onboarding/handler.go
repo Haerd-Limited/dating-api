@@ -3,16 +3,16 @@ package onboarding
 import (
 	standardcontext "context"
 	"errors"
-	"github.com/Haerd-Limited/dating-api/internal/onboarding/service"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"net/http"
 
 	"go.uber.org/zap"
+	"golang.org/x/net/context"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/user"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
@@ -22,20 +22,27 @@ import (
 )
 
 type Handler interface {
-	Patch() http.HandlerFunc
-	PatchVisibility() http.HandlerFunc
-	Complete() http.HandlerFunc
-	State() http.HandlerFunc
+	GetStep() http.HandlerFunc
+	Register() http.HandlerFunc
+	Basics() http.HandlerFunc
+	Location() http.HandlerFunc
+	Lifestyle() http.HandlerFunc
+	Beliefs() http.HandlerFunc
+	Background() http.HandlerFunc
+	WorkAndEducation() http.HandlerFunc
+	Languages() http.HandlerFunc
+	Photos() http.HandlerFunc
+	Prompts() http.HandlerFunc
 }
 
 type handler struct {
 	logger            *zap.Logger
-	onboardingService service.Service
+	onboardingService onboarding.Service
 }
 
 func NewOnboardingHandler(
 	logger *zap.Logger,
-	onboardingService service.Service,
+	onboardingService onboarding.Service,
 ) Handler {
 	return &handler{
 		logger:            logger,
@@ -43,79 +50,112 @@ func NewOnboardingHandler(
 	}
 }
 
-func (h *handler) Patch() http.HandlerFunc {
+func (h *handler) GetStep() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
+func (h *handler) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		userID, ok := context.UserIDFromContext(ctx)
-		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
+		var req dto.RegisterRequest
 
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleMessageResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
-			return
-		}
-
-		var req dto.UpdateOnboardingRequest
 		// Validates and decodes request
-		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate onboarding request body", "context", ctx, "error", err)
-
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate register request body", "error", err)
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleMessageResponse(
-					"invalid request body",
-				))
+				commonMappers.ToSimpleMessageResponse("email, phone_number and first_name are required fields"),
+			)
 
 			return
 		}
 
-		progress, err := h.onboardingService.Patch(ctx, mapper.ToDomain(userID, req))
+		registerDetails, err := mapper.MapRegisterRequestToDomain(req)
+		if err != nil {
+			h.logger.Sugar().Errorw("failed to map register request to register input", "error", err)
+			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+			render.Json(w, statusCode,
+				commonMappers.ToSimpleMessageResponse(errMsg),
+			)
+
+			return
+		}
+
+		result, err := h.onboardingService.Register(ctx, registerDetails)
 		if err != nil {
 			switch {
-			case errors.Is(err, standardcontext.Canceled):
+			case errors.Is(err, context.Canceled):
 				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // don't write a response
-			case errors.Is(err, standardcontext.DeadlineExceeded):
+				return // no need to return a response. Client socket is closed.
+			case errors.Is(err, context.DeadlineExceeded):
 				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
 				return
 			default:
-				h.logger.Sugar().Errorw("failed to patch onboarding", "context", ctx, "error", err)
-				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, code, commonMappers.ToSimpleMessageResponse(msg))
+				h.logger.Sugar().Errorw("Error registering user", "error", err)
+				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, statusCode, commonMappers.ToSimpleMessageResponse(errMsg))
+
 				return
 			}
 		}
 
-		render.Json(
-			w,
-			http.StatusOK,
-			mapper.ToOnboardingProgressResponse(progress),
-		)
+		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
 	}
 }
 
-func (h *handler) PatchVisibility() http.HandlerFunc {
+func (h *handler) Basics() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) Complete() http.HandlerFunc {
+func (h *handler) Location() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) State() http.HandlerFunc {
+func (h *handler) Lifestyle() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 	}
 }
+
+func (h *handler) Beliefs() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
+func (h *handler) Background() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
+func (h *handler) WorkAndEducation() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
+func (h *handler) Languages() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
+func (h *handler) Photos() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
+func (h *handler) Prompts() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
+const (
+	InvalidUsernameLengthMsg  = "Username must be between 3 and 20 characters long"
+	UsernameContainsSpacesMsg = "Username cannot contain spaces"
+)
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
@@ -135,8 +175,10 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, commonErrors.ErrInvalidGender):
 		return http.StatusBadRequest, messages.InvalidGenderMsg
-	case errors.Is(err, service.ErrInvalidAgePreference):
-		return http.StatusBadRequest, "Invalid age preference"
+	case errors.Is(err, mapper.ErrInvalidNameLength):
+		return http.StatusBadRequest, InvalidUsernameLengthMsg
+	case errors.Is(err, mapper.ErrNameContainsSpaces):
+		return http.StatusBadRequest, UsernameContainsSpacesMsg
 
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg

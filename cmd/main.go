@@ -74,14 +74,14 @@ func main() {
 
 	awsService := aws.NewAwsService(logger, s3Uploader)
 
-	onboardingRepo := onboardingstorage.NewOnboardingRepository(db)
-	onboardingService := onboarding.NewOnboardingService(logger, onboardingRepo)
-
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)
 
 	authRepo := authstorage.NewAuthRepository(db)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService)
+
+	onboardingRepo := onboardingstorage.NewOnboardingRepository(db)
+	onboardingService := onboarding.NewOnboardingService(logger, onboardingRepo, userService, authService)
 
 	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)
 	if err != nil {

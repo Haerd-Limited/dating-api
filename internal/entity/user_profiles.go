@@ -28,7 +28,7 @@ type UserProfile struct {
 	DisplayName       null.String `boil:"display_name" json:"display_name,omitempty" toml:"display_name" yaml:"display_name,omitempty"`
 	Birthdate         null.Time   `boil:"birthdate" json:"birthdate,omitempty" toml:"birthdate" yaml:"birthdate,omitempty"`
 	HeightCM          null.Int16  `boil:"height_cm" json:"height_cm,omitempty" toml:"height_cm" yaml:"height_cm,omitempty"`
-	Geo               string      `boil:"geo" json:"geo,omitempty" toml:"geo" yaml:"geo,omitempty"`
+	Geo               string      `boil:"geo" json:"geo" toml:"geo" yaml:"geo"`
 	City              null.String `boil:"city" json:"city,omitempty" toml:"city" yaml:"city,omitempty"`
 	Country           null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
 	GenderID          null.Int16  `boil:"gender_id" json:"gender_id,omitempty" toml:"gender_id" yaml:"gender_id,omitempty"`
@@ -163,9 +163,6 @@ var UserProfileTableColumns = struct {
 }
 
 // Generated where
-
-func (w whereHelperstring) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelperstring) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 type whereHelpernull_JSON struct{ field string }
 

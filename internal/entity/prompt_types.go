@@ -23,44 +23,51 @@ import (
 
 // PromptType is an object representing the database table.
 type PromptType struct {
-	ID    int16  `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Key   string `boil:"key" json:"key" toml:"key" yaml:"key"`
-	Label string `boil:"label" json:"label" toml:"label" yaml:"label"`
+	ID       int16  `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Key      string `boil:"key" json:"key" toml:"key" yaml:"key"`
+	Label    string `boil:"label" json:"label" toml:"label" yaml:"label"`
+	Category string `boil:"category" json:"category" toml:"category" yaml:"category"`
 
 	R *promptTypeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L promptTypeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var PromptTypeColumns = struct {
-	ID    string
-	Key   string
-	Label string
+	ID       string
+	Key      string
+	Label    string
+	Category string
 }{
-	ID:    "id",
-	Key:   "key",
-	Label: "label",
+	ID:       "id",
+	Key:      "key",
+	Label:    "label",
+	Category: "category",
 }
 
 var PromptTypeTableColumns = struct {
-	ID    string
-	Key   string
-	Label string
+	ID       string
+	Key      string
+	Label    string
+	Category string
 }{
-	ID:    "prompt_types.id",
-	Key:   "prompt_types.key",
-	Label: "prompt_types.label",
+	ID:       "prompt_types.id",
+	Key:      "prompt_types.key",
+	Label:    "prompt_types.label",
+	Category: "prompt_types.category",
 }
 
 // Generated where
 
 var PromptTypeWhere = struct {
-	ID    whereHelperint16
-	Key   whereHelperstring
-	Label whereHelperstring
+	ID       whereHelperint16
+	Key      whereHelperstring
+	Label    whereHelperstring
+	Category whereHelperstring
 }{
-	ID:    whereHelperint16{field: "\"prompt_types\".\"id\""},
-	Key:   whereHelperstring{field: "\"prompt_types\".\"key\""},
-	Label: whereHelperstring{field: "\"prompt_types\".\"label\""},
+	ID:       whereHelperint16{field: "\"prompt_types\".\"id\""},
+	Key:      whereHelperstring{field: "\"prompt_types\".\"key\""},
+	Label:    whereHelperstring{field: "\"prompt_types\".\"label\""},
+	Category: whereHelperstring{field: "\"prompt_types\".\"category\""},
 }
 
 // PromptTypeRels is where relationship names are stored.
@@ -100,8 +107,8 @@ func (r *promptTypeR) GetVoicePrompts() VoicePromptSlice {
 type promptTypeL struct{}
 
 var (
-	promptTypeAllColumns            = []string{"id", "key", "label"}
-	promptTypeColumnsWithoutDefault = []string{"key", "label"}
+	promptTypeAllColumns            = []string{"id", "key", "label", "category"}
+	promptTypeColumnsWithoutDefault = []string{"key", "label", "category"}
 	promptTypeColumnsWithDefault    = []string{"id"}
 	promptTypePrimaryKeyColumns     = []string{"id"}
 	promptTypeGeneratedColumns      = []string{}

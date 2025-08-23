@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 	"time"
 
 	"go.uber.org/zap"
@@ -14,16 +13,16 @@ import (
 	authStorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/user"
-	"github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/auth"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=auth
 type Service interface {
-	Register(ctx context.Context, registerDetails *authDomain.Register) (*authDomain.AuthTokensAndUserID, error)
 	Login(ctx context.Context, loginInput authDomain.Login) (*authDomain.AuthTokensAndUserID, error)
 	RefreshToken(ctx context.Context, refreshInput authDomain.Refresh) (*authDomain.AuthTokensAndUserID, error)
 	RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput authDomain.RevokeRefreshToken) error
+	GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*authDomain.AuthTokensAndUserID, error)
 }
 
 type authService struct {
@@ -55,36 +54,6 @@ var (
 	ErrRefreshTokenRevoked        = errors.New("refresh token has been revoked")
 	ErrRefreshTokenAlreadyRevoked = errors.New("refresh token already revoked")
 )
-
-func (as *authService) Register(ctx context.Context, registerDetails *authDomain.Register) (*authDomain.AuthTokensAndUserID, error) {
-	createUserResult, err := as.UserService.CreateUser(ctx, &domain.User{
-		Email:       registerDetails.Email,
-		PhoneNumber: registerDetails.PhoneNumber,
-		FirstName:   registerDetails.FirstName,
-		LastName:    registerDetails.LastName,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	accessToken, err := auth.GenerateAccessToken(createUserResult.UserID, []byte(as.jwtSecret))
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", createUserResult.UserID, err)
-	}
-
-	refreshToken := auth.GenerateRefreshToken(createUserResult.UserID)
-
-	err = as.AuthRepo.InsertRefreshToken(ctx, mapper.ToRefreshTokenEntity(refreshToken))
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert refresh token userID=%s: %w", refreshToken.UserID, err)
-	}
-
-	return &authDomain.AuthTokensAndUserID{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken.Token,
-		UserID:       createUserResult.UserID,
-	}, nil
-}
 
 func (as *authService) Login(ctx context.Context, loginDetails authDomain.Login) (*authDomain.AuthTokensAndUserID, error) {
 	userDetails, err := as.UserService.AuthenticateUser(ctx, utils.Redacted(loginDetails.PhoneNumber))
@@ -125,11 +94,11 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain
 		return nil, fmt.Errorf("failed to get refresh token refreshToken=%s: %w", utils.Redacted(refreshInput.RefreshToken), err)
 	}
 
-	if time.Now().After(refreshToken.ExpiresAt) { //todo: move to repository layer
+	if time.Now().After(refreshToken.ExpiresAt) { // todo: move to repository layer
 		return nil, ErrRefreshTokenExpired
 	}
 
-	if refreshToken.Revoked { //todo: move to repository layer
+	if refreshToken.Revoked { // todo: move to repository layer
 		return nil, ErrRefreshTokenRevoked
 	}
 
@@ -174,4 +143,24 @@ func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshToke
 	}
 
 	return nil
+}
+
+func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*authDomain.AuthTokensAndUserID, error) {
+	accessToken, err := auth.GenerateAccessToken(userID, []byte(as.jwtSecret))
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", userID, err)
+	}
+
+	refreshToken := auth.GenerateRefreshToken(userID)
+
+	err = as.AuthRepo.InsertRefreshToken(ctx, mapper.ToRefreshTokenEntity(refreshToken))
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert refresh token userID=%s: %w", refreshToken.UserID, err)
+	}
+
+	return &authDomain.AuthTokensAndUserID{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken.Token,
+		UserID:       userID,
+	}, nil
 }

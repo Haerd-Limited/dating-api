@@ -42,7 +42,7 @@ func New(
 		"/api/v1", func(r chi.Router) {
 			r.Route(
 				"/auth", func(r chi.Router) {
-					r.Post("/register", authHandler.Register())
+					// todo: make login return the user's step. frontend will check if step != COMPLETE. if so call GetStep
 					r.Post("/login", authHandler.Login())
 					r.Post("/refresh", authHandler.Refresh())
 					r.Post("/logout", authHandler.Logout())
@@ -51,13 +51,25 @@ func New(
 
 			// --- Protected (must be logged in)
 			r.Group(func(r chi.Router) {
-				r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
-
-				// Onboarding (single PATCH endpoint + helpers)
-				r.Patch("/onboarding", onboardingHandler.Patch())                      // partial update to profile + prefs
-				r.Patch("/onboarding/visibility", onboardingHandler.PatchVisibility()) // batch toggle visibility
-				r.Post("/onboarding/complete", onboardingHandler.Complete())           // validate & activate
-				r.Get("/onboarding/state", onboardingHandler.State())
+				r.Route(
+					"/onboarding", func(r chi.Router) {
+						r.Post("/register", onboardingHandler.Register())
+						// After the register endpoint, the user has an account and therefore must be authroised to complete the other steps
+						r.Group(func(r chi.Router) {
+							r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
+							r.Get("/step", onboardingHandler.GetStep())
+							r.Post("/basics", onboardingHandler.Basics())
+							r.Post("/location", onboardingHandler.Location())
+							r.Post("/lifestyle", onboardingHandler.Lifestyle())
+							r.Post("/beliefs", onboardingHandler.Beliefs())
+							r.Post("/background", onboardingHandler.Background())
+							r.Post("/word-and-education", onboardingHandler.WorkAndEducation())
+							r.Post("/languages", onboardingHandler.Languages())
+							r.Post("/photos", onboardingHandler.Photos())
+							r.Post("/prompts", onboardingHandler.Prompts())
+						})
+					},
+				)
 
 				// Media (used during onboarding & later)
 				/*

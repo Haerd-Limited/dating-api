@@ -73,7 +73,7 @@ CREATE TABLE political_beliefs (
 -- =========================
 -- Users & Profiles
 -- =========================
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
                        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                        email TEXT UNIQUE,
                        first_name TEXT NOT NULL,
@@ -100,7 +100,7 @@ END;
 $VL$;
 -- +goose StatementEnd
 
-CREATE TABLE user_profiles (
+CREATE TABLE IF NOT EXISTS user_profiles (
                                user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
 
                                display_name TEXT,
@@ -108,7 +108,7 @@ CREATE TABLE user_profiles (
                                height_cm SMALLINT,
 
     -- location
-                               geo GEOGRAPHY(Point, 4326),
+                                geo GEOGRAPHY(Point, 4326) NOT NULL DEFAULT 'SRID=4326;POINT(0 0)'::geography,
                                city TEXT,
                                country TEXT,
 
@@ -160,7 +160,7 @@ CREATE TABLE user_profile_visibility (
 -- =========================
 -- Preferences (what a user wants to see)
 -- =========================
-CREATE TABLE user_preferences (
+CREATE TABLE IF NOT EXISTS user_preferences (
                                   user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
 
                                   distance_km SMALLINT,

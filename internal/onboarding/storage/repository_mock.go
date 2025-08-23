@@ -10,7 +10,12 @@
 package storage
 
 import (
+	context "context"
+	reflect "reflect"
+
 	gomock "go.uber.org/mock/gomock"
+
+	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 )
 
 // MockOnboardingRepository is a mock of OnboardingRepository interface.
@@ -34,4 +39,18 @@ func NewMockOnboardingRepository(ctrl *gomock.Controller) *MockOnboardingReposit
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockOnboardingRepository) EXPECT() *MockOnboardingRepositoryMockRecorder {
 	return m.recorder
+}
+
+// PatchOnboardingTx mocks base method.
+func (m *MockOnboardingRepository) PatchOnboardingTx(ctx context.Context, userID string, profile *entity.UserProfile, prefs *entity.UserPreference, languageIDs, interestIDs *[]int32, bumpStep bool, latitude, longitude *float64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchOnboardingTx", ctx, userID, profile, prefs, languageIDs, interestIDs, bumpStep, latitude, longitude)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PatchOnboardingTx indicates an expected call of PatchOnboardingTx.
+func (mr *MockOnboardingRepositoryMockRecorder) PatchOnboardingTx(ctx, userID, profile, prefs, languageIDs, interestIDs, bumpStep, latitude, longitude any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchOnboardingTx", reflect.TypeOf((*MockOnboardingRepository)(nil).PatchOnboardingTx), ctx, userID, profile, prefs, languageIDs, interestIDs, bumpStep, latitude, longitude)
 }

@@ -55,13 +55,14 @@ func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*st
 	}
 
 	// 1) Insert user
-	if err := user.Insert(ctx, tx, boil.Infer()); err != nil {
+	err = user.Insert(ctx, tx, boil.Infer())
+	if err != nil {
 		return rollback(fmt.Errorf("failed inserting user entity: %w", err))
 	}
 
 	// If ID is DB-generated (DEFAULT gen_random_uuid()), make sure we have it loaded
 	if user.ID == "" {
-		if err := user.Reload(ctx, tx); err != nil {
+		if err = user.Reload(ctx, tx); err != nil {
 			return rollback(fmt.Errorf("reload user after insert: %w", err))
 		}
 	}
@@ -71,7 +72,9 @@ func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*st
 		UserID:      user.ID,
 		DisplayName: null.StringFrom(fmt.Sprintf("%s %s", user.FirstName, user.LastName.String)),
 	}
-	if err := profile.Insert(ctx, tx, boil.Infer()); err != nil {
+
+	err = profile.Insert(ctx, tx, boil.Infer())
+	if err != nil {
 		return rollback(fmt.Errorf("insert user_profile: %w", err))
 	}
 
@@ -79,12 +82,15 @@ func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*st
 	prefs := &entity.UserPreference{
 		UserID: user.ID,
 	}
-	if err := prefs.Insert(ctx, tx, boil.Infer()); err != nil {
+
+	err = prefs.Insert(ctx, tx, boil.Infer())
+	if err != nil {
 		return rollback(fmt.Errorf("insert user_preferences: %w", err))
 	}
 
 	// 4) Commit
-	if err := tx.Commit(); err != nil {
+	err = tx.Commit()
+	if err != nil {
 		return nil, fmt.Errorf("commit tx: %w", err)
 	}
 

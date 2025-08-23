@@ -7,6 +7,6 @@ type (
 		PhoneNumber    string
 		FirstName      string
 		LastName       *string
-		OnboardingStep int
+		OnboardingStep string
 	}
 )

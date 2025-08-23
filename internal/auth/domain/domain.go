@@ -11,12 +11,6 @@ type (
 		Token     string // secure random string
 		ExpiresAt time.Time
 	}
-	Register struct {
-		Email       string
-		PhoneNumber string
-		FirstName   string
-		LastName    *string
-	}
 
 	Login struct {
 		PhoneNumber string

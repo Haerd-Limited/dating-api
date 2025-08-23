@@ -9,9 +9,10 @@ import (
 
 func ToUserEntity(user domain.User) *entity.User {
 	return &entity.User{
-		Email:     null.StringFrom(user.Email),
-		FirstName: user.FirstName,
-		LastName:  null.StringFromPtr(user.LastName),
-		Phone:     null.StringFrom(user.PhoneNumber),
+		Email:          null.StringFrom(user.Email),
+		FirstName:      user.FirstName,
+		LastName:       null.StringFromPtr(user.LastName),
+		Phone:          null.StringFrom(user.PhoneNumber),
+		OnboardingStep: user.OnboardingStep,
 	}
 }

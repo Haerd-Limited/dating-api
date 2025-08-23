@@ -3,8 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"github.com/Haerd-Limited/dating-api/internal/auth/storage"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -12,7 +10,9 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/auth/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/auth/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/auth"
+	"github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
@@ -22,7 +22,6 @@ import (
 )
 
 type Handler interface {
-	Register() http.HandlerFunc
 	Login() http.HandlerFunc
 	Refresh() http.HandlerFunc
 	Logout() http.HandlerFunc
@@ -47,69 +46,6 @@ const (
 	InvalidLoginInputMsg   = "Please provide both your account's email and password."
 	InvalidRefreshTokenMsg = "Please provide your refresh token."
 )
-
-func (h *handler) Register() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		var req dto.RegisterRequest
-
-		// Validates and decodes request
-		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate register request body", "context", ctx, "error", err)
-
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-
-			render.Json(
-				w,
-				statusCode,
-				mapper.ToAuthResponse(
-					nil,
-					errMsg,
-				))
-
-			return
-		}
-
-		registerDetails, err := mapper.MapRegisterRequestToDomain(req)
-		if err != nil {
-			h.logger.Sugar().Errorw("failed to map register request to register input", "error", err)
-
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-
-			render.Json(w, statusCode,
-				mapper.ToAuthResponse(
-					nil,
-					errMsg,
-				),
-			)
-
-			return
-		}
-
-		result, err := h.authService.Register(ctx, registerDetails)
-		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // don't write a response
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleMessageResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error registering user", "error", err)
-				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, code, mapper.ToAuthResponse(
-					nil,
-					msg,
-				))
-				return
-			}
-		}
-
-		render.Json(w, http.StatusCreated, mapper.ToAuthResponse(result, "Registration successful"))
-	}
-}
 
 func (h *handler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +84,7 @@ func (h *handler) Login() http.HandlerFunc {
 					nil,
 					msg,
 				))
+
 				return
 			}
 		}
@@ -179,7 +116,7 @@ func (h *handler) Refresh() http.HandlerFunc {
 
 		result, err := h.authService.RefreshToken(ctx, mapper.MapRefreshRequestToDomain(req))
 		if err != nil {
-			switch { //todo: refactor this as it's repeated in all handlers
+			switch { // todo: refactor this as it's repeated in all handlers
 			case errors.Is(err, context.Canceled):
 				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
 				return // don't write a response
@@ -193,6 +130,7 @@ func (h *handler) Refresh() http.HandlerFunc {
 					nil,
 					msg,
 				))
+
 				return
 			}
 		}
@@ -225,8 +163,7 @@ func (h *handler) Logout() http.HandlerFunc {
 
 		err := h.authService.RevokeRefreshToken(ctx, logoutInput)
 		if err != nil {
-
-			switch { //todo: refactor this as it's repeated in all handlers
+			switch { // todo: refactor this as it's repeated in all handlers
 			case errors.Is(err, context.Canceled):
 				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
 				return // don't write a response
@@ -239,6 +176,7 @@ func (h *handler) Logout() http.HandlerFunc {
 				render.Json(w, code, commonMappers.ToSimpleMessageResponse(
 					msg,
 				))
+
 				return
 			}
 		}
@@ -248,12 +186,10 @@ func (h *handler) Logout() http.HandlerFunc {
 }
 
 const (
-	InvalidCredentialsMsg     = "Incorrect email or password. Please try again."
-	TokenRevokedOrExpiredMsg  = "Your refresh token has been revoked or expired"
-	InvalidEmailMsg           = "Please enter a valid email address."
-	MissingRequiredFieldMsg   = "Please fill in all required fields."
-	InvalidUsernameLengthMsg  = "Username must be between 3 and 20 characters long"
-	UsernameContainsSpacesMsg = "Username cannot contain spaces"
+	InvalidCredentialsMsg    = "Incorrect email or password. Please try again."
+	TokenRevokedOrExpiredMsg = "Your refresh token has been revoked or expired"
+	InvalidEmailMsg          = "Please enter a valid email address."
+	MissingRequiredFieldMsg  = "Please fill in all required fields."
 )
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
@@ -284,10 +220,6 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, InvalidEmailMsg
 	case errors.Is(err, validators.ErrMissingRequiredField):
 		return http.StatusBadRequest, MissingRequiredFieldMsg
-	case errors.Is(err, mapper.ErrInvalidNameLength):
-		return http.StatusBadRequest, InvalidUsernameLengthMsg
-	case errors.Is(err, mapper.ErrNameContainsSpaces):
-		return http.StatusBadRequest, UsernameContainsSpacesMsg
 
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg

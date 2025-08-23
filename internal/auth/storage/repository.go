@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/jmoiron/sqlx"
 
@@ -29,9 +30,7 @@ func NewAuthRepository(db *sqlx.DB) AuthRepository {
 	}
 }
 
-var (
-	ErrRefreshTokenNotFound = errors.New("refresh token not found")
-)
+var ErrRefreshTokenNotFound = errors.New("refresh token not found")
 
 func (r *authRepository) InsertRefreshToken(ctx context.Context, refreshToken *entity.RefreshToken) error {
 	if err := refreshToken.Insert(ctx, r.db, boil.Infer()); err != nil {
@@ -47,6 +46,7 @@ func (r *authRepository) GetRefreshToken(ctx context.Context, refreshToken strin
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrRefreshTokenNotFound
 		}
+
 		return nil, err
 	}
 
@@ -59,6 +59,7 @@ func (r *authRepository) RevokeRefreshToken(ctx context.Context, refreshTokenID 
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrRefreshTokenNotFound
 		}
+
 		return fmt.Errorf("repo auth select refresh token id=%s: %w", refreshTokenID, err)
 	}
 
@@ -68,6 +69,7 @@ func (r *authRepository) RevokeRefreshToken(ctx context.Context, refreshTokenID 
 	if err != nil {
 		return fmt.Errorf("repo auth update refresh token id=%s: %w", refreshTokenID, err)
 	}
+
 	if rows == 0 { // deleted between read & write, or WHERE didn’t match
 		return fmt.Errorf("repo auth update refresh token id=%s: %w", refreshTokenID, ErrRefreshTokenNotFound)
 	}

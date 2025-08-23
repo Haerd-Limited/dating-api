@@ -4,6 +4,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type RegisterRequest struct {
+	Email       string  `json:"email" validate:"required,email"`
+	PhoneNumber string  `json:"phone_number" validate:"required"`
+	FirstName   string  `json:"first_name" validate:"required"`
+	LastName    *string `json:"last_name"`
+}
+
+func (rr RegisterRequest) Validate() error {
+	return validator.New().Struct(rr)
+}
+
 type UpdateOnboardingRequest struct {
 	// Profile
 	DisplayName *string `json:"display_name,omitempty"`

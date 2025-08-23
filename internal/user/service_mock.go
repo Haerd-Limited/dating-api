@@ -57,10 +57,10 @@ func (mr *MockServiceMockRecorder) AuthenticateUser(ctx, phoneNumber any) *gomoc
 }
 
 // CreateUser mocks base method.
-func (m *MockService) CreateUser(ctx context.Context, user *domain.User) (*CreateUserResult, error) {
+func (m *MockService) CreateUser(ctx context.Context, user *domain.User) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, user)
-	ret0, _ := ret[0].(*CreateUserResult)
+	ret0, _ := ret[0].(*string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
