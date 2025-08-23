@@ -8,6 +8,40 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 )
 
+func MapEthnicityToDomain(g []*entity.Ethnicity) []domain.Ethnicity {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Ethnicity
+
+	for _, e := range g {
+		result = append(result, domain.Ethnicity{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
+func MapEducationlevelsToDomain(g []*entity.EducationLevel) []domain.EducationLevel {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.EducationLevel
+
+	for _, e := range g {
+		result = append(result, domain.EducationLevel{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
 func MapPoliticalBeliefsToDomain(g []*entity.PoliticalBelief) []domain.PoliticalBelief {
 	if g == nil {
 		return nil
@@ -152,13 +186,11 @@ func MapUserProfileToDomain(up *entity.UserProfile) *domain.UserProfile {
 	}
 
 	if up.ReligionID.Valid {
-		v := int32(up.ReligionID.Int16)
-		d.ReligionID = &v
+		d.ReligionID = up.ReligionID.Int16
 	}
 
 	if up.EducationLevelID.Valid {
-		v := int32(up.EducationLevelID.Int16)
-		d.EducationLevelID = &v
+		d.EducationLevelID = up.EducationLevelID.Int16
 	}
 
 	if up.PoliticalBeliefID.Valid {

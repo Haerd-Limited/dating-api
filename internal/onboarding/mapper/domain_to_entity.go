@@ -57,12 +57,12 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 
 	ent.DatingIntentionID = null.Int16From(p.DatingIntentionID)
 
-	if p.ReligionID != nil {
-		ent.ReligionID = null.Int16From(int16(*p.ReligionID))
+	if p.ReligionID != 0 {
+		ent.ReligionID = null.Int16From(p.ReligionID)
 	}
 
-	if p.EducationLevelID != nil {
-		ent.EducationLevelID = null.Int16From(int16(*p.EducationLevelID))
+	if p.EducationLevelID != 0 {
+		ent.EducationLevelID = null.Int16From(p.EducationLevelID)
 	}
 
 	if p.PoliticalBeliefID != 0 {

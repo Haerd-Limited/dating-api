@@ -17,6 +17,7 @@ const (
 	UserDetailsAlreadyExistsMsg = "An account with these details already exists."
 	UserNameAlreadyExistsMsg    = "Username already exists."
 	InvalidUUIDMsg              = "Invalid ID format. Must be a valid UUID."
+	InvalidIDMsg                = "Invalid ID provided"
 	AuthenticationRequiredMsg   = "Authentication required: please log in"
 	RequestTimeoutMsg           = "Request timed out"
 	RequestCancelledMsg         = "Request cancelled"

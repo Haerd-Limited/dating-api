@@ -10,6 +10,32 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
+type Beliefs struct {
+	UserID             string
+	PoliticalBeliefsID int16
+	ReligionID         int16
+}
+
+type BeliefsResult struct {
+	OnboardingSteps
+	Content BeliefsContent
+}
+
+type BeliefsContent struct {
+	EducationLevels []EducationLevel
+	Ethnicities     []Ethnicity
+}
+
+type Ethnicity struct {
+	ID    int16
+	Label string
+}
+
+type EducationLevel struct {
+	ID    int16
+	Label string
+}
+
 type Lifestyle struct {
 	UserID      string
 	DrinkingID  int16
@@ -116,8 +142,8 @@ type UserProfile struct {
 	// Single-selects
 	GenderID          int16
 	DatingIntentionID int16
-	ReligionID        *int32
-	EducationLevelID  *int32
+	ReligionID        int16
+	EducationLevelID  int16
 	PoliticalBeliefID int16
 	DrinkingID        int16
 	SmokingID         int16

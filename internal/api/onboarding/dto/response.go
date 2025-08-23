@@ -16,6 +16,21 @@ type OnboardingSteps struct {
 	TotalSteps   int      `json:"total_steps"`
 }
 
+type BeliefsContent struct {
+	EducationLevels []EducationLevel `json:"education_options"`
+	Ethnicities     []Ethnicity      `json:"ethnicity_options"`
+}
+
+type Ethnicity struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type EducationLevel struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
 type LifestyleContent struct {
 	Religions        []Religion        `json:"religion_options"`
 	PoliticalBeliefs []PoliticalBelief `json:"political_belief_options"`

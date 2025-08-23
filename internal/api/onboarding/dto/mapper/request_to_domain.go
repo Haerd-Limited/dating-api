@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"errors"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 	"strings"
 	"time"
 	"unicode"
@@ -9,7 +10,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 )
 
 const (
@@ -20,6 +20,7 @@ const (
 var (
 	ErrNameContainsSpaces = errors.New("name must not contain spaces")
 	ErrInvalidNameLength  = errors.New("name must be between 3 and 20 characters")
+	ErrInvalidID          = errors.New("id must be greater than 0")
 )
 
 func MapRegisterRequestToDomain(request dto.RegisterRequest) (domain.Register, error) {
@@ -68,6 +69,13 @@ func MapBasicRequestToDomain(req dto.BasicsRequest, userID string) (domain.Basic
 		return domain.Basics{}, commonErrors.ErrInvalidDob
 	}
 
+	if req.GenderID == 0 {
+		return domain.Basics{}, ErrInvalidID
+	}
+	if req.DatingIntentionID == 0 {
+		return domain.Basics{}, ErrInvalidID
+	}
+
 	return domain.Basics{
 		UserID:            userID,
 		Birthdate:         dob,
@@ -88,12 +96,40 @@ func MapLocationRequestToDomain(req dto.LocationRequest, userID string) (domain.
 }
 
 func MapLifestyleRequestToDomain(req dto.LifestyleRequest, userID string) (domain.Lifestyle, error) {
+	if req.DrinkingID == 0 {
+		return domain.Lifestyle{}, ErrInvalidID
+	}
+	if req.SmokingID == 0 {
+		return domain.Lifestyle{}, ErrInvalidID
+	}
+	if req.MarijuanaID == 0 {
+		return domain.Lifestyle{}, ErrInvalidID
+	}
+	if req.DrugsID == 0 {
+		return domain.Lifestyle{}, ErrInvalidID
+	}
+
 	return domain.Lifestyle{
 		UserID:      userID,
 		DrinkingID:  req.DrinkingID,
 		MarijuanaID: req.MarijuanaID,
 		SmokingID:   req.SmokingID,
 		DrugsID:     req.DrugsID,
+	}, nil
+}
+
+func MapBeliefsRequestToDomain(req dto.BeliefsRequest, userID string) (domain.Beliefs, error) {
+	if req.PoliticalBeliefID == 0 {
+		return domain.Beliefs{}, ErrInvalidID
+	}
+	if req.ReligionID == 0 {
+		return domain.Beliefs{}, ErrInvalidID
+	}
+
+	return domain.Beliefs{
+		UserID:             userID,
+		PoliticalBeliefsID: req.PoliticalBeliefID,
+		ReligionID:         req.ReligionID,
 	}, nil
 }
 

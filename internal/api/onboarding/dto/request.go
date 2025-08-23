@@ -4,6 +4,15 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type BeliefsRequest struct {
+	PoliticalBeliefID int16 `json:"political_belief_id" validate:"required"`
+	ReligionID        int16 `json:"religion_id" validate:"required"`
+}
+
+func (br BeliefsRequest) Validate() error {
+	return validator.New().Struct(br)
+}
+
 type LifestyleRequest struct {
 	DrinkingID  int16 `json:"drinking_id" validate:"required"`
 	SmokingID   int16 `json:"smoking_id" validate:"required"`

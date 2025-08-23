@@ -19,6 +19,7 @@ type Service interface {
 	Basics(ctx context.Context, basicDetails domain.Basics) (domain.BasicsResult, error)
 	Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error)
 	Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error)
+	Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error)
 }
 
 type onboardingService struct {
@@ -181,10 +182,66 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 	}, nil
 }
 
+func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error) {
+	userProfile, err := os.getUserProfile(ctx, beliefDetails.UserID)
+	if err != nil {
+		return domain.BeliefsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+	}
+
+	userProfile.ReligionID = beliefDetails.ReligionID
+	userProfile.PoliticalBeliefID = beliefDetails.PoliticalBeliefsID
+
+	err = os.updateUserProfile(ctx, userProfile)
+	if err != nil {
+		return domain.BeliefsResult{}, fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	educationLevels, err := os.getEducationLevels(ctx)
+	if err != nil {
+		return domain.BeliefsResult{}, fmt.Errorf("failed to get education levels: %w", err)
+	}
+
+	ethnicities, err := os.getEthnicities(ctx)
+	if err != nil {
+		return domain.BeliefsResult{}, fmt.Errorf("failed to get ethnicities: %w", err)
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, beliefDetails.UserID)
+	if err != nil {
+		return domain.BeliefsResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	return domain.BeliefsResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+		Content: domain.BeliefsContent{
+			EducationLevels: educationLevels,
+			Ethnicities:     ethnicities,
+		},
+	}, nil
+}
+
+func (os *onboardingService) getEducationLevels(ctx context.Context) ([]domain.EducationLevel, error) {
+	educationLevelEntities, err := os.repo.GetEducationLevels(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapEducationlevelsToDomain(educationLevelEntities), nil
+}
+
+func (os *onboardingService) getEthnicities(ctx context.Context) ([]domain.Ethnicity, error) {
+	ethnicityEntities, err := os.repo.GetEthnicities(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapEthnicityToDomain(ethnicityEntities), nil
+}
+
 func (os *onboardingService) getPoliticalBeliefs(ctx context.Context) ([]domain.PoliticalBelief, error) {
 	politicalBeliefsEntities, err := os.repo.GetPoliticalBeliefs(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get political beliefs: %w", err)
+		return nil, err
 	}
 
 	return mapper.MapPoliticalBeliefsToDomain(politicalBeliefsEntities), nil
@@ -193,7 +250,7 @@ func (os *onboardingService) getPoliticalBeliefs(ctx context.Context) ([]domain.
 func (os *onboardingService) getReligions(ctx context.Context) ([]domain.Religion, error) {
 	religionsEntities, err := os.repo.GetReligions(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get religions: %w", err)
+		return nil, err
 	}
 
 	return mapper.MapReligionsToDomain(religionsEntities), nil
@@ -202,7 +259,7 @@ func (os *onboardingService) getReligions(ctx context.Context) ([]domain.Religio
 func (os *onboardingService) getHabits(ctx context.Context) ([]domain.Habit, error) {
 	habitEntities, err := os.repo.GetHabits(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get habits: %w", err)
+		return nil, err
 	}
 
 	return mapper.MapHabitsToDomain(habitEntities), nil
