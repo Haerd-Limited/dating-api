@@ -3,6 +3,7 @@ package domain
 type Steps string
 
 const (
+	OnboardingStepsUnset            Steps = "UNSET"
 	OnboardingStepsNone             Steps = "NONE"
 	OnboardingStepsBasics           Steps = "BASICS"
 	OnboardingStepsLocation         Steps = "LOCATION"
@@ -53,6 +54,19 @@ func (s Steps) GenerateOnboardingSteps() OnboardingSteps {
 	onboardingSteps.Progress = (float64(currentIdx) / float64(len(OrderedSteps))) * 100.0
 
 	return onboardingSteps
+}
+
+func (s Steps) NextStep() Steps {
+	for i, step := range OrderedSteps {
+		if step == s {
+			if i+1 < len(OrderedSteps) {
+				return OrderedSteps[i+1]
+			} else {
+				return OnboardingStepsNone
+			}
+		}
+	}
+	return OnboardingStepsNone
 }
 
 var OrderedSteps = []Steps{

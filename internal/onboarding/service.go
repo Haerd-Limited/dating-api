@@ -80,6 +80,7 @@ func (os *onboardingService) Register(ctx context.Context, register domain.Regis
 }
 
 func (os *onboardingService) Basics(ctx context.Context, basics domain.Basics) (domain.BasicsResult, error) {
+	//todo:refactor into on function returning the domain. Then can be used by other endpoints
 	userProfileEntity, err := os.repo.GetUserProfileByUserID(ctx, basics.UserID)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -93,6 +94,7 @@ func (os *onboardingService) Basics(ctx context.Context, basics domain.Basics) (
 	userProfile.HeightCM = basics.HeightCm
 	userProfile.Birthdate = basics.Birthdate
 
+	//todo:refactor into on function taking the domain. Then can be used by other endpoints
 	UpdatedUserProfileEntity, err := mapper.MapProfileToEntity(userProfile.UserID, userProfile)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to map user profile to entity: %w", err)
@@ -103,19 +105,27 @@ func (os *onboardingService) Basics(ctx context.Context, basics domain.Basics) (
 		return domain.BasicsResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	userDomain, err := os.userService.GetUser(ctx, basics.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, basics.UserID)
 	if err != nil {
-		return domain.BasicsResult{}, fmt.Errorf("failed to get user details: %w", err)
-	}
-
-	userDomain.OnboardingStep = string(domain.OnboardingStepsLocation)
-
-	err = os.userService.UpdateUser(ctx, userDomain)
-	if err != nil {
-		return domain.BasicsResult{}, fmt.Errorf("failed to update user onboarding step: %w", err)
+		return domain.BasicsResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
 
 	return domain.BasicsResult{
-		OnboardingSteps: domain.OnboardingStepsLocation.GenerateOnboardingSteps(),
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
 	}, nil
+}
+
+func (os *onboardingService) bumpOnboardingStep(ctx context.Context, userID string) (domain.Steps, error) {
+	userDomain, err := os.userService.GetUser(ctx, userID)
+	if err != nil {
+		return domain.OnboardingStepsUnset, fmt.Errorf("failed to get user details: %w", err)
+	}
+
+	userDomain.OnboardingStep = string(domain.Steps(userDomain.OnboardingStep).NextStep())
+
+	err = os.userService.UpdateUser(ctx, userDomain)
+	if err != nil {
+		return domain.OnboardingStepsUnset, fmt.Errorf("failed to update user onboarding step: %w", err)
+	}
+	return domain.Steps(userDomain.OnboardingStep), nil
 }
