@@ -62,8 +62,8 @@ func MapRegisterRequestToDomain(request dto.RegisterRequest) (domain.Register, e
 	}, nil
 }
 
-func MapBasicRequestToDomain(basic dto.BasicsRequest, userID string) (domain.Basics, error) {
-	dob, err := time.Parse("2006-01-02", basic.Birthdate)
+func MapBasicRequestToDomain(req dto.BasicsRequest, userID string) (domain.Basics, error) {
+	dob, err := time.Parse("2006-01-02", req.Birthdate)
 	if err != nil {
 		return domain.Basics{}, commonErrors.ErrInvalidDob
 	}
@@ -71,9 +71,19 @@ func MapBasicRequestToDomain(basic dto.BasicsRequest, userID string) (domain.Bas
 	return domain.Basics{
 		UserID:            userID,
 		Birthdate:         dob,
-		HeightCm:          basic.HeightCm,
-		GenderID:          basic.GenderID,
-		DatingIntentionID: basic.DatingIntentionID,
+		HeightCm:          req.HeightCm,
+		GenderID:          req.GenderID,
+		DatingIntentionID: req.DatingIntentionID,
+	}, nil
+}
+
+func MapLocationRequestToDomain(req dto.LocationRequest, userID string) (domain.Location, error) {
+	return domain.Location{
+		UserID:    userID,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
+		City:      req.City,
+		Country:   req.Country,
 	}, nil
 }
 

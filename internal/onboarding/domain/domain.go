@@ -10,6 +10,28 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
+type Location struct {
+	UserID    string
+	Latitude  float64
+	Longitude float64
+	City      string
+	Country   string
+}
+
+type LocationResult struct {
+	OnboardingSteps
+	Content LocationContent
+}
+
+type LocationContent struct {
+	Habits []Habit
+}
+
+type Habit struct {
+	ID    int16
+	Label string
+}
+
 type BasicsResult struct {
 	OnboardingSteps
 }

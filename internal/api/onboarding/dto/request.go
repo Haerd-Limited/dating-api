@@ -4,6 +4,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type LocationRequest struct {
+	Latitude  float64 `json:"latitude" validate:"required"`
+	Longitude float64 `json:"longitude" validate:"required"`
+	City      string  `json:"home_town" validate:"required"`
+	Country   string  `json:"country" validate:"required"`
+}
+
+func (lr LocationRequest) Validate() error {
+	return validator.New().Struct(lr)
+}
+
 type BasicsRequest struct {
 	Birthdate         string `json:"birthdate" validate:"required"`
 	HeightCm          int16  `json:"height_cm" validate:"required"`

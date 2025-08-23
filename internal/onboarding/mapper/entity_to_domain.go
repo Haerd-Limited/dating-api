@@ -8,6 +8,23 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 )
 
+func MapHabitsToDomain(g []*entity.Habit) []domain.Habit {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Habit
+
+	for _, e := range g {
+		result = append(result, domain.Habit{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
 func MapGendersToDomain(g []*entity.Gender) []domain.Gender {
 	if g == nil {
 		return nil

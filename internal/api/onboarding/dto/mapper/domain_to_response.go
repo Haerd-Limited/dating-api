@@ -18,6 +18,11 @@ func ToOnboardingResponse(result any) dto.OnboardingResponse {
 		return dto.OnboardingResponse{
 			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
 		}
+	case domain.LocationResult:
+		return dto.OnboardingResponse{
+			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+			Content:         MapLocationContentToDto(v.Content),
+		}
 	default:
 		return dto.OnboardingResponse{}
 	}
@@ -37,6 +42,20 @@ func mapOnboardingStepsToDto(steps domain.OnboardingSteps) dto.OnboardingSteps {
 		Progress:     steps.Progress,
 		Steps:        stringSteps,
 		TotalSteps:   steps.TotalSteps,
+	}
+}
+
+func MapLocationContentToDto(content domain.LocationContent) dto.LocationContent {
+	var habits []dto.Habit
+	for _, habit := range content.Habits {
+		habits = append(habits, dto.Habit{
+			ID:    habit.ID,
+			Label: habit.Label,
+		})
+	}
+
+	return dto.LocationContent{
+		Habits: habits,
 	}
 }
 

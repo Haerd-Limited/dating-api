@@ -16,6 +16,15 @@ type OnboardingSteps struct {
 	TotalSteps   int      `json:"total_steps"`
 }
 
+type LocationContent struct {
+	Habits []Habit `json:"habit_options"`
+}
+
+type Habit struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
 type RegisterContent struct {
 	DatingIntentions []DatingIntention `json:"dating_intentions"`
 	Genders          []Gender          `json:"genders"`

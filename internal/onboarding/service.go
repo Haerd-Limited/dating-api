@@ -15,8 +15,9 @@ import (
 )
 
 type Service interface {
-	Register(ctx context.Context, register domain.Register) (domain.RegisterResult, error)
-	Basics(ctx context.Context, basics domain.Basics) (domain.BasicsResult, error)
+	Register(ctx context.Context, registerDetails domain.Register) (domain.RegisterResult, error)
+	Basics(ctx context.Context, basicDetails domain.Basics) (domain.BasicsResult, error)
+	Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error)
 }
 
 type onboardingService struct {
@@ -40,13 +41,13 @@ func NewOnboardingService(
 	}
 }
 
-func (os *onboardingService) Register(ctx context.Context, register domain.Register) (domain.RegisterResult, error) {
+func (os *onboardingService) Register(ctx context.Context, registerDetails domain.Register) (domain.RegisterResult, error) {
 	// Call user service and insert into user service
 	userID, err := os.userService.CreateUser(ctx, userdomain.User{
-		Email:          register.Email,
-		PhoneNumber:    register.PhoneNumber,
-		FirstName:      register.FirstName,
-		LastName:       register.LastName,
+		Email:          registerDetails.Email,
+		PhoneNumber:    registerDetails.PhoneNumber,
+		FirstName:      registerDetails.FirstName,
+		LastName:       registerDetails.LastName,
 		OnboardingStep: string(domain.OnboardingStepsBasics),
 	})
 	if err != nil {
@@ -79,33 +80,25 @@ func (os *onboardingService) Register(ctx context.Context, register domain.Regis
 	}, nil
 }
 
-func (os *onboardingService) Basics(ctx context.Context, basics domain.Basics) (domain.BasicsResult, error) {
-	//todo:refactor into on function returning the domain. Then can be used by other endpoints
-	userProfileEntity, err := os.repo.GetUserProfileByUserID(ctx, basics.UserID)
+// TODO: FIX hitting the same endpoint multiple times advancing steps
+func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Basics) (domain.BasicsResult, error) {
+	userProfile, err := os.getUserProfile(ctx, basicDetails.UserID)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
 	}
 
-	userProfile := mapper.MapUserProfileToDomain(userProfileEntity)
-
 	// todo: add checks to see if these ID's even exists
-	userProfile.GenderID = basics.GenderID
-	userProfile.DatingIntentionID = basics.DatingIntentionID
-	userProfile.HeightCM = basics.HeightCm
-	userProfile.Birthdate = basics.Birthdate
+	userProfile.GenderID = basicDetails.GenderID
+	userProfile.DatingIntentionID = basicDetails.DatingIntentionID
+	userProfile.HeightCM = basicDetails.HeightCm
+	userProfile.Birthdate = basicDetails.Birthdate
 
-	//todo:refactor into on function taking the domain. Then can be used by other endpoints
-	UpdatedUserProfileEntity, err := mapper.MapProfileToEntity(userProfile.UserID, userProfile)
-	if err != nil {
-		return domain.BasicsResult{}, fmt.Errorf("failed to map user profile to entity: %w", err)
-	}
-
-	err = os.repo.UpdateUserProfile(ctx, UpdatedUserProfileEntity)
+	err = os.updateUserProfile(ctx, userProfile)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, basics.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, basicDetails.UserID)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -113,6 +106,75 @@ func (os *onboardingService) Basics(ctx context.Context, basics domain.Basics) (
 	return domain.BasicsResult{
 		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
 	}, nil
+}
+
+func (os *onboardingService) Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error) {
+	userProfile, err := os.getUserProfile(ctx, locationDetails.UserID)
+	if err != nil {
+		return domain.LocationResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+	}
+
+	userProfile.City = &locationDetails.City
+	userProfile.Country = &locationDetails.Country
+	userProfile.Latitude = &locationDetails.Latitude
+	userProfile.Longitude = &locationDetails.Longitude
+
+	err = os.updateUserProfile(ctx, userProfile)
+	if err != nil {
+		return domain.LocationResult{}, fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, locationDetails.UserID)
+	if err != nil {
+		return domain.LocationResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	habits, err := os.GetHabits(ctx)
+	if err != nil {
+		return domain.LocationResult{}, err
+	}
+
+	return domain.LocationResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+		Content:         domain.LocationContent{Habits: habits},
+	}, nil
+}
+
+func (os *onboardingService) GetHabits(ctx context.Context) ([]domain.Habit, error) {
+	habitEntities, err := os.repo.GetHabits(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get habits: %w", err)
+	}
+
+	return mapper.MapHabitsToDomain(habitEntities), nil
+}
+
+func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile *domain.UserProfile) error {
+	updatedUserProfileEntity, err := mapper.MapProfileToEntity(userProfile)
+	if err != nil {
+		return fmt.Errorf("failed to map user profile to entity: %w", err)
+	}
+
+	os.logger.Info("updating user profile",
+		zap.Any("geo", updatedUserProfileEntity.Geo),
+		zap.Any("lat", userProfile.Latitude),
+		zap.Any("long", userProfile.Longitude),
+	)
+
+	err = os.repo.UpdateUserProfile(ctx, updatedUserProfileEntity)
+	if err != nil {
+		return fmt.Errorf("failed to update user profile: %w", err)
+	}
+	return nil
+}
+
+func (os *onboardingService) getUserProfile(ctx context.Context, userID string) (*domain.UserProfile, error) {
+	userProfileEntity, err := os.repo.GetUserProfileByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapUserProfileToDomain(userProfileEntity), nil
 }
 
 func (os *onboardingService) bumpOnboardingStep(ctx context.Context, userID string) (domain.Steps, error) {

@@ -11,13 +11,15 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 )
 
-func MapProfileToEntity(userID string, p *domain.UserProfile) (*entity.UserProfile, error) {
+func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 	if p == nil {
 		return nil, nil
 	}
 
-	ent := &entity.UserProfile{
-		UserID: userID,
+	ent := &entity.UserProfile{}
+
+	if p.UserID != "" {
+		ent.UserID = p.UserID
 	}
 
 	// Strings

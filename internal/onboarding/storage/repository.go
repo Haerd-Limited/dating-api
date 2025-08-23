@@ -11,6 +11,7 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type OnboardingRepository interface {
+	GetHabits(ctx context.Context) (entity.HabitSlice, error)
 	GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error)
 	GetGenders(ctx context.Context) (entity.GenderSlice, error)
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
@@ -25,6 +26,15 @@ func NewOnboardingRepository(db *sqlx.DB) OnboardingRepository {
 	return &onboardingRepository{
 		db: db,
 	}
+}
+
+func (or *onboardingRepository) GetHabits(ctx context.Context) (entity.HabitSlice, error) {
+	habits, err := entity.Habits().All(ctx, or.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return habits, nil
 }
 
 func (or *onboardingRepository) GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error) {
@@ -55,30 +65,7 @@ func (or *onboardingRepository) GetUserProfileByUserID(ctx context.Context, user
 }
 
 func (or *onboardingRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error {
-	_, err := userProfile.Update(ctx, or.db, boil.Whitelist(
-		entity.UserProfileColumns.DisplayName,
-		entity.UserProfileColumns.Birthdate,
-		entity.UserProfileColumns.HeightCM,
-		entity.UserProfileColumns.City,
-		entity.UserProfileColumns.Country,
-		entity.UserProfileColumns.GenderID,
-		entity.UserProfileColumns.DatingIntentionID,
-		entity.UserProfileColumns.ReligionID,
-		entity.UserProfileColumns.EducationLevelID,
-		entity.UserProfileColumns.PoliticalBeliefID,
-		entity.UserProfileColumns.DrinkingID,
-		entity.UserProfileColumns.SmokingID,
-		entity.UserProfileColumns.MarijuanaID,
-		entity.UserProfileColumns.DrugsID,
-		entity.UserProfileColumns.ChildrenStatusID,
-		entity.UserProfileColumns.FamilyPlanID,
-		entity.UserProfileColumns.EthnicityID,
-		entity.UserProfileColumns.Work,
-		entity.UserProfileColumns.JobTitle,
-		entity.UserProfileColumns.University,
-		entity.UserProfileColumns.ProfileMeta,
-		entity.UserProfileColumns.UpdatedAt,
-	))
+	_, err := userProfile.Update(ctx, or.db, boil.Infer())
 	if err != nil {
 		return err
 	}

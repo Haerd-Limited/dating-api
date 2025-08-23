@@ -66,6 +66,7 @@ func (s Steps) NextStep() Steps {
 			}
 		}
 	}
+
 	return OnboardingStepsNone
 }
 
