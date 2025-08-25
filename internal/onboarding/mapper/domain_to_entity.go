@@ -93,8 +93,8 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 		ent.FamilyPlanID = null.Int16From(int16(*p.FamilyPlanID))
 	}
 
-	if p.EthnicityID != nil {
-		ent.EthnicityID = null.Int16From(int16(*p.EthnicityID))
+	if p.EthnicityID != 0 {
+		ent.EthnicityID = null.Int16From(p.EthnicityID)
 	}
 
 	// JSONB: your entity expects []byte

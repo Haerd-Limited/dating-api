@@ -37,6 +37,7 @@ func (or *onboardingRepository) GetEducationLevels(ctx context.Context) (entity.
 	if err != nil {
 		return nil, err
 	}
+
 	return educationLevels, nil
 }
 
@@ -45,6 +46,7 @@ func (or *onboardingRepository) GetEthnicities(ctx context.Context) (entity.Ethn
 	if err != nil {
 		return nil, err
 	}
+
 	return ethnicities, nil
 }
 

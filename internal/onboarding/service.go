@@ -20,6 +20,7 @@ type Service interface {
 	Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error)
 	Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error)
 	Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error)
+	Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error)
 }
 
 type onboardingService struct {
@@ -217,6 +218,30 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 			EducationLevels: educationLevels,
 			Ethnicities:     ethnicities,
 		},
+	}, nil
+}
+
+func (os *onboardingService) Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error) {
+	userProfile, err := os.getUserProfile(ctx, backgroundDetails.UserID)
+	if err != nil {
+		return domain.BackgroundResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+	}
+
+	userProfile.EducationLevelID = backgroundDetails.EducationLevelID
+	userProfile.EthnicityID = backgroundDetails.EthnicityID
+
+	err = os.updateUserProfile(ctx, userProfile)
+	if err != nil {
+		return domain.BackgroundResult{}, fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, backgroundDetails.UserID)
+	if err != nil {
+		return domain.BackgroundResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	return domain.BackgroundResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
 	}, nil
 }
 

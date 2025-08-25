@@ -10,6 +10,16 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
+type Background struct {
+	UserID           string
+	EducationLevelID int16
+	EthnicityID      int16
+}
+
+type BackgroundResult struct {
+	OnboardingSteps
+}
+
 type Beliefs struct {
 	UserID             string
 	PoliticalBeliefsID int16
@@ -151,7 +161,7 @@ type UserProfile struct {
 	DrugsID           int16
 	ChildrenStatusID  int16
 	FamilyPlanID      *int32
-	EthnicityID       *int32
+	EthnicityID       int16
 
 	// Extra text fields in user_profiles
 	Work        *string

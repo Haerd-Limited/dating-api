@@ -118,6 +118,21 @@ func MapLifestyleRequestToDomain(req dto.LifestyleRequest, userID string) (domai
 	}, nil
 }
 
+func MapBackgroundRequestToDomain(req dto.BackgroundRequest, userID string) (domain.Background, error) {
+	if req.EducationLevelID == 0 {
+		return domain.Background{}, ErrInvalidID
+	}
+	if req.EthnicityID == 0 {
+		return domain.Background{}, ErrInvalidID
+	}
+
+	return domain.Background{
+		UserID:           userID,
+		EducationLevelID: req.EducationLevelID,
+		EthnicityID:      req.EthnicityID,
+	}, nil
+}
+
 func MapBeliefsRequestToDomain(req dto.BeliefsRequest, userID string) (domain.Beliefs, error) {
 	if req.PoliticalBeliefID == 0 {
 		return domain.Beliefs{}, ErrInvalidID

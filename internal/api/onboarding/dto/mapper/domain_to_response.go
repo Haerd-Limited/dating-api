@@ -33,6 +33,10 @@ func ToOnboardingResponse(result any) dto.OnboardingResponse {
 			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
 			Content:         MapBeliefsContentToDto(v.Content),
 		}
+	case domain.BackgroundResult:
+		return dto.OnboardingResponse{
+			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+		}
 	default:
 		return dto.OnboardingResponse{}
 	}

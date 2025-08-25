@@ -223,8 +223,7 @@ func MapUserProfileToDomain(up *entity.UserProfile) *domain.UserProfile {
 	}
 
 	if up.EthnicityID.Valid {
-		v := int32(up.EthnicityID.Int16)
-		d.EthnicityID = &v
+		d.EthnicityID = up.EthnicityID.Int16
 	}
 
 	// Extra text fields
