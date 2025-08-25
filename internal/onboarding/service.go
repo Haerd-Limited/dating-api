@@ -21,6 +21,7 @@ type Service interface {
 	Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error)
 	Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error)
 	Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error)
+	WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error)
 }
 
 type onboardingService struct {
@@ -243,6 +244,48 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 	return domain.BackgroundResult{
 		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
 	}, nil
+}
+
+func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error) {
+	userProfile, err := os.getUserProfile(ctx, waeDetails.UserID)
+	if err != nil {
+		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+	}
+
+	userProfile.Work = &waeDetails.Workplace
+	userProfile.JobTitle = &waeDetails.JobTitle
+	userProfile.University = &waeDetails.University
+
+	err = os.updateUserProfile(ctx, userProfile)
+	if err != nil {
+		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	languages, err := os.getLanguages(ctx)
+	if err != nil {
+		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to get languages: %w", err)
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, waeDetails.UserID)
+	if err != nil {
+		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	return domain.WorkAndEducationResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+		Content: domain.WorkAndEducationContent{
+			Languages: languages,
+		},
+	}, nil
+}
+
+func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Language, error) {
+	languageEntities, err := os.repo.GetLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapLanguagesToDomain(languageEntities), nil
 }
 
 func (os *onboardingService) getEducationLevels(ctx context.Context) ([]domain.EducationLevel, error) {

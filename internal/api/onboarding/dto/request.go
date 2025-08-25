@@ -4,6 +4,16 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type WorkAndEducation struct {
+	Workplace  string `json:"workplace"`
+	JobTitle   string `json:"job_title"`
+	University string `json:"university"`
+}
+
+func (wae WorkAndEducation) Validate() error {
+	return validator.New().Struct(wae)
+}
+
 type BackgroundRequest struct {
 	EducationLevelID int16 `json:"education_level_id" validate:"required"`
 	EthnicityID      int16 `json:"ethnicity_id" validate:"required"`

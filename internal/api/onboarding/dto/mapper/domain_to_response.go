@@ -37,6 +37,11 @@ func ToOnboardingResponse(result any) dto.OnboardingResponse {
 		return dto.OnboardingResponse{
 			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
 		}
+	case domain.WorkAndEducationResult:
+		return dto.OnboardingResponse{
+			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+			Content:         MapWorkAndEducationContentToDto(v.Content),
+		}
 	default:
 		return dto.OnboardingResponse{}
 	}
@@ -59,6 +64,19 @@ func mapOnboardingStepsToDto(steps domain.OnboardingSteps) dto.OnboardingSteps {
 	}
 }
 
+func MapWorkAndEducationContentToDto(content domain.WorkAndEducationContent) dto.WorkAndEducationContent {
+	var languages []dto.Language
+	for _, lang := range content.Languages {
+		languages = append(languages, dto.Language{
+			ID:    lang.ID,
+			Label: lang.Label,
+		})
+	}
+
+	return dto.WorkAndEducationContent{
+		Languages: languages,
+	}
+}
 func MapBeliefsContentToDto(content domain.BeliefsContent) dto.BeliefsContent {
 	var educationLevels []dto.EducationLevel
 	for _, level := range content.EducationLevels {

@@ -11,6 +11,7 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type OnboardingRepository interface {
+	GetLanguages(ctx context.Context) (entity.LanguageSlice, error)
 	GetEducationLevels(ctx context.Context) (entity.EducationLevelSlice, error)
 	GetEthnicities(ctx context.Context) (entity.EthnicitySlice, error)
 	GetReligions(ctx context.Context) (entity.ReligionSlice, error)
@@ -30,6 +31,15 @@ func NewOnboardingRepository(db *sqlx.DB) OnboardingRepository {
 	return &onboardingRepository{
 		db: db,
 	}
+}
+
+func (or *onboardingRepository) GetLanguages(ctx context.Context) (entity.LanguageSlice, error) {
+	languages, err := entity.Languages().All(ctx, or.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return languages, nil
 }
 
 func (or *onboardingRepository) GetEducationLevels(ctx context.Context) (entity.EducationLevelSlice, error) {

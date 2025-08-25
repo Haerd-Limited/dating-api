@@ -10,6 +10,26 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
+type WorkAndEducation struct {
+	UserID     string
+	Workplace  string
+	JobTitle   string
+	University string
+}
+type WorkAndEducationResult struct {
+	OnboardingSteps
+	Content WorkAndEducationContent
+}
+
+type WorkAndEducationContent struct {
+	Languages []Language
+}
+
+type Language struct {
+	ID    int16
+	Label string
+}
+
 type Background struct {
 	UserID           string
 	EducationLevelID int16
@@ -164,6 +184,8 @@ type UserProfile struct {
 	EthnicityID       int16
 
 	// Extra text fields in user_profiles
+
+	//Work the user's workplace
 	Work        *string
 	JobTitle    *string
 	University  *string
