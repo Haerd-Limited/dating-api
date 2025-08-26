@@ -63,7 +63,7 @@ func New(
 							r.Patch("/lifestyle", onboardingHandler.Lifestyle())
 							r.Patch("/beliefs", onboardingHandler.Beliefs())
 							r.Patch("/background", onboardingHandler.Background())
-							r.Patch("/word-and-education", onboardingHandler.WorkAndEducation())
+							r.Patch("/work-and-education", onboardingHandler.WorkAndEducation())
 							r.Post("/languages", onboardingHandler.Languages())
 							r.Post("/photos", onboardingHandler.Photos())
 							r.Post("/prompts", onboardingHandler.Prompts())
@@ -86,6 +86,7 @@ func New(
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {
 					r.Get("/", userHandler.MyProfile()) // full profile (with visibility flags)
+					//TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})
 			/*r.Route(

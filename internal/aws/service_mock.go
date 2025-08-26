@@ -18,7 +18,7 @@ import (
 	domain "github.com/Haerd-Limited/dating-api/internal/aws/domain"
 )
 
-// MockAWSService is a mock of AWSService interface.
+// MockAWSService is a mock of Service interface.
 type MockAWSService struct {
 	ctrl     *gomock.Controller
 	recorder *MockAWSServiceMockRecorder

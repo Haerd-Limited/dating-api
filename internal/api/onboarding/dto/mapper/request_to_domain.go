@@ -2,7 +2,6 @@ package mapper
 
 import (
 	"errors"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 	"strings"
 	"time"
 	"unicode"
@@ -10,6 +9,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 )
 
 const (
@@ -72,6 +72,7 @@ func MapBasicRequestToDomain(req dto.BasicsRequest, userID string) (domain.Basic
 	if req.GenderID == 0 {
 		return domain.Basics{}, ErrInvalidID
 	}
+
 	if req.DatingIntentionID == 0 {
 		return domain.Basics{}, ErrInvalidID
 	}
@@ -99,12 +100,15 @@ func MapLifestyleRequestToDomain(req dto.LifestyleRequest, userID string) (domai
 	if req.DrinkingID == 0 {
 		return domain.Lifestyle{}, ErrInvalidID
 	}
+
 	if req.SmokingID == 0 {
 		return domain.Lifestyle{}, ErrInvalidID
 	}
+
 	if req.MarijuanaID == 0 {
 		return domain.Lifestyle{}, ErrInvalidID
 	}
+
 	if req.DrugsID == 0 {
 		return domain.Lifestyle{}, ErrInvalidID
 	}
@@ -122,6 +126,7 @@ func MapBackgroundRequestToDomain(req dto.BackgroundRequest, userID string) (dom
 	if req.EducationLevelID == 0 {
 		return domain.Background{}, ErrInvalidID
 	}
+
 	if req.EthnicityID == 0 {
 		return domain.Background{}, ErrInvalidID
 	}
@@ -137,6 +142,7 @@ func MapBeliefsRequestToDomain(req dto.BeliefsRequest, userID string) (domain.Be
 	if req.PoliticalBeliefID == 0 {
 		return domain.Beliefs{}, ErrInvalidID
 	}
+
 	if req.ReligionID == 0 {
 		return domain.Beliefs{}, ErrInvalidID
 	}
@@ -148,7 +154,14 @@ func MapBeliefsRequestToDomain(req dto.BeliefsRequest, userID string) (domain.Be
 	}, nil
 }
 
-func MapWorkAndEducationRequestToDomain(req dto.WorkAndEducation, userID string) (domain.WorkAndEducation, error) {
+func MapLanguagesRequestToDomain(req dto.LanguagesRequest, userID string) (domain.Languages, error) {
+	return domain.Languages{
+		UserID:      userID,
+		LanguageIDs: req.LanguageIDs,
+	}, nil
+}
+
+func MapWorkAndEducationRequestToDomain(req dto.WorkAndEducationRequest, userID string) (domain.WorkAndEducation, error) {
 	return domain.WorkAndEducation{
 		UserID:     userID,
 		Workplace:  req.Workplace,

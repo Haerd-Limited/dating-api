@@ -3,10 +3,12 @@ package onboarding
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"
+	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
 	onboardingstorage "github.com/Haerd-Limited/dating-api/internal/onboarding/storage"
@@ -22,6 +24,7 @@ type Service interface {
 	Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error)
 	Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error)
 	WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error)
+	Languages(ctx context.Context, spokenLanguages domain.Languages) (domain.LanguagesResult, error)
 }
 
 type onboardingService struct {
@@ -29,6 +32,7 @@ type onboardingService struct {
 	repo        onboardingstorage.OnboardingRepository
 	userService user.Service
 	authService auth.Service
+	awsService  aws.Service
 }
 
 func NewOnboardingService(
@@ -36,12 +40,14 @@ func NewOnboardingService(
 	onboardingRepository onboardingstorage.OnboardingRepository,
 	userService user.Service,
 	authService auth.Service,
+	awsService aws.Service,
 ) Service {
 	return &onboardingService{
 		logger:      logger,
 		repo:        onboardingRepository,
 		userService: userService,
 		authService: authService,
+		awsService:  awsService,
 	}
 }
 
@@ -91,7 +97,6 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 		return domain.BasicsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
 	}
 
-	// todo: add checks to see if these ID's even exists
 	userProfile.GenderID = basicDetails.GenderID
 	userProfile.DatingIntentionID = basicDetails.DatingIntentionID
 	userProfile.HeightCM = basicDetails.HeightCm
@@ -184,6 +189,41 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 	}, nil
 }
 
+func (os *onboardingService) Languages(ctx context.Context, spokenLanguages domain.Languages) (domain.LanguagesResult, error) {
+	err := os.repo.InsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
+	if err != nil {
+		return domain.LanguagesResult{}, fmt.Errorf("failed to insert user spoken languages: %w", err)
+	}
+
+	// GET 6 presigned urls from amazon s3
+	urls, err := os.awsService.GenerateUploadURLs(ctx, spokenLanguages.UserID, 6, "image/jpeg", time.Duration(10)*time.Minute)
+	if err != nil {
+		return domain.LanguagesResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
+	}
+
+	var photoUploadUrls []domain.PhotoUploadUrl
+	for _, url := range urls {
+		photoUploadUrls = append(photoUploadUrls, domain.PhotoUploadUrl{
+			Key:       url.Key,
+			UploadUrl: url.URL,
+			Headers:   url.Headers,
+			MaxBytes:  5242880,
+		})
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, spokenLanguages.UserID)
+	if err != nil {
+		return domain.LanguagesResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	return domain.LanguagesResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+		Content: domain.LanguagesContent{
+			PhotoUploadUrls: photoUploadUrls,
+		},
+	}, nil
+}
+
 func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error) {
 	userProfile, err := os.getUserProfile(ctx, beliefDetails.UserID)
 	if err != nil {
@@ -261,7 +301,7 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	languages, err := os.getLanguages(ctx)
+	languages, err := os.getLanguages(ctx) // todo: seed languages table
 	if err != nil {
 		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to get languages: %w", err)
 	}

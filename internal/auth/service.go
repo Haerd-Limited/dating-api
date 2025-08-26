@@ -30,7 +30,7 @@ type authService struct {
 	jwtSecret   string
 	UserService user.Service
 	AuthRepo    authStorage.AuthRepository
-	awsService  aws.AWSService
+	awsService  aws.Service
 }
 
 func NewAuthService(
@@ -38,7 +38,7 @@ func NewAuthService(
 	jwtSecret string,
 	UserService user.Service,
 	AuthRepository authStorage.AuthRepository,
-	awsService aws.AWSService,
+	awsService aws.Service,
 ) Service {
 	return &authService{
 		logger:      logger,

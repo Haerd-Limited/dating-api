@@ -27,14 +27,14 @@ type Service interface {
 type userService struct {
 	logger     *zap.Logger
 	userRepo   storage.UserRepository
-	awsService aws.AWSService
+	awsService aws.Service
 	cache      *freecache.Cache
 }
 
 func NewUserService(
 	logger *zap.Logger,
 	userRepo storage.UserRepository,
-	awsService aws.AWSService,
+	awsService aws.Service,
 	cache *freecache.Cache,
 ) Service {
 	return &userService{

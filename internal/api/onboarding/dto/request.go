@@ -4,13 +4,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type WorkAndEducation struct {
+type LanguagesRequest struct {
+	LanguageIDs []int16 `json:"language_ids" validate:"required,dive,gt=0"` // todo: find out what this means
+}
+
+func (wae LanguagesRequest) Validate() error {
+	return validator.New().Struct(wae)
+}
+
+type WorkAndEducationRequest struct {
 	Workplace  string `json:"workplace"`
 	JobTitle   string `json:"job_title"`
 	University string `json:"university"`
 }
 
-func (wae WorkAndEducation) Validate() error {
+func (wae WorkAndEducationRequest) Validate() error {
 	return validator.New().Struct(wae)
 }
 

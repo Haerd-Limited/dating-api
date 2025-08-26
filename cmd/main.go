@@ -67,12 +67,17 @@ func main() {
 
 	// notificationRepo := notificationStorage.NewNotificationRepository(db)
 
+	s3Presigner, err := s3Storage.NewPresigner(ctx, cfg.AWSRegion, cfg.S3BucketName)
+	if err != nil {
+		logger.Sugar().Fatalf("failed to create S3 presigner: %v", err)
+	}
+
 	s3Uploader, err := s3Storage.NewS3Uploader(cfg.S3BucketName, cfg.AWSRegion)
 	if err != nil {
 		logger.Sugar().Fatalf("failed to create S3 uploader: %v", err)
 	}
 
-	awsService := aws.NewAwsService(logger, s3Uploader)
+	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner)
 
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)
@@ -81,7 +86,7 @@ func main() {
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService)
 
 	onboardingRepo := onboardingstorage.NewOnboardingRepository(db)
-	onboardingService := onboarding.NewOnboardingService(logger, onboardingRepo, userService, authService)
+	onboardingService := onboarding.NewOnboardingService(logger, onboardingRepo, userService, authService, awsService)
 
 	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)
 	if err != nil {

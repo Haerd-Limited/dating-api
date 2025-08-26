@@ -16,6 +16,17 @@ type OnboardingSteps struct {
 	TotalSteps   int      `json:"total_steps"`
 }
 
+type LanguagesContent struct {
+	PhotoUploadUrls []PhotoUploadUrl `json:"photo_upload_urls"`
+}
+
+type PhotoUploadUrl struct {
+	Key       string            `json:"key"`
+	UploadUrl string            `json:"upload_url"`
+	Headers   map[string]string `json:"headers"`
+	MaxBytes  int64             `json:"max_bytes"`
+}
+
 type WorkAndEducationContent struct {
 	Languages []Language `json:"languages"`
 }
