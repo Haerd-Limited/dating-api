@@ -86,7 +86,7 @@ func New(
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {
 					r.Get("/", userHandler.MyProfile()) // full profile (with visibility flags)
-					//TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
+					// TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})
 			/*r.Route(

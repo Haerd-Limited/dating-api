@@ -170,6 +170,23 @@ func MapWorkAndEducationRequestToDomain(req dto.WorkAndEducationRequest, userID 
 	}, nil
 }
 
+func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) (domain.UploadedPhotos, error) {
+	var photos []domain.Photo
+	//todo: check if position values are unique
+	//todo: ensure count is 6
+	for _, p := range req.UploadedPhotos {
+		photos = append(photos, domain.Photo{
+			URL:       p.URL,
+			Position:  p.Position,
+			IsPrimary: p.IsPrimary,
+		})
+	}
+	return domain.UploadedPhotos{
+		UserID: userID,
+		Photos: photos,
+	}, nil
+}
+
 // hasAnySpace returns true if s contains any Unicode whitespace character.
 func hasAnySpace(s string) bool {
 	return strings.IndexFunc(s, unicode.IsSpace) >= 0

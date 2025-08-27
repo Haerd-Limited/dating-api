@@ -11,6 +11,20 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 )
 
+func MapUploadedPhotosToEntity(uploadedPhotos domain.UploadedPhotos) []entity.Photo {
+	var out []entity.Photo
+	for _, p := range uploadedPhotos.Photos {
+		out = append(out, entity.Photo{
+			UserID:    null.StringFrom(uploadedPhotos.UserID),
+			URL:       p.URL,
+			Position:  null.Int16From(p.Position),
+			IsPrimary: p.IsPrimary,
+		})
+	}
+
+	return out
+}
+
 func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 	if p == nil {
 		return nil, nil

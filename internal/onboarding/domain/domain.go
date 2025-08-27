@@ -10,6 +10,34 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
+type PhotosResult struct {
+	OnboardingSteps
+	Content PhotosContent
+}
+
+type PhotosContent struct {
+	Prompts                []Prompt
+	VoicePromptsUploadUrls []UploadUrl
+}
+
+type Prompt struct {
+	ID       int16
+	Key      string
+	Label    string
+	Category string
+}
+
+type UploadedPhotos struct {
+	UserID string
+	Photos []Photo
+}
+
+type Photo struct {
+	URL       string
+	Position  int16
+	IsPrimary bool
+}
+
 type Languages struct {
 	UserID      string
 	LanguageIDs []int16
@@ -21,10 +49,10 @@ type LanguagesResult struct {
 }
 
 type LanguagesContent struct {
-	PhotoUploadUrls []PhotoUploadUrl
+	PhotoUploadUrls []UploadUrl
 }
 
-type PhotoUploadUrl struct {
+type UploadUrl struct {
 	Key       string
 	UploadUrl string
 	Headers   map[string]string

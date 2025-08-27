@@ -47,6 +47,11 @@ func ToOnboardingResponse(result any) dto.OnboardingResponse {
 			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
 			Content:         MapLanguagesContentToDto(v.Content),
 		}
+	case domain.PhotosResult:
+		return dto.OnboardingResponse{
+			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+			Content:         MapPhotosContentToDto(v.Content),
+		}
 	default:
 		return dto.OnboardingResponse{}
 	}
@@ -69,10 +74,37 @@ func mapOnboardingStepsToDto(steps domain.OnboardingSteps) dto.OnboardingSteps {
 	}
 }
 
+func MapPhotosContentToDto(content domain.PhotosContent) dto.PhotosContent {
+	var urls []dto.UploadUrl
+	for _, u := range content.VoicePromptsUploadUrls {
+		urls = append(urls, dto.UploadUrl{
+			Key:       u.Key,
+			UploadUrl: u.UploadUrl,
+			Headers:   u.Headers,
+			MaxBytes:  u.MaxBytes,
+		})
+	}
+
+	var prompts []dto.Prompt
+	for _, prompt := range content.Prompts {
+		prompts = append(prompts, dto.Prompt{
+			ID:       prompt.ID,
+			Label:    prompt.Label,
+			Key:      prompt.Key,
+			Category: prompt.Category,
+		})
+	}
+
+	return dto.PhotosContent{
+		VoicePromptsUploadUrls: urls,
+		Prompts:                prompts,
+	}
+}
+
 func MapLanguagesContentToDto(content domain.LanguagesContent) dto.LanguagesContent {
-	var urls []dto.PhotoUploadUrl
+	var urls []dto.UploadUrl
 	for _, u := range content.PhotoUploadUrls {
-		urls = append(urls, dto.PhotoUploadUrl{
+		urls = append(urls, dto.UploadUrl{
 			Key:       u.Key,
 			UploadUrl: u.UploadUrl,
 			Headers:   u.Headers,

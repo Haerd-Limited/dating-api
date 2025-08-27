@@ -25,6 +25,7 @@ type Service interface {
 	Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error)
 	WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error)
 	Languages(ctx context.Context, spokenLanguages domain.Languages) (domain.LanguagesResult, error)
+	Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.PhotosResult, error)
 }
 
 type onboardingService struct {
@@ -69,12 +70,12 @@ func (os *onboardingService) Register(ctx context.Context, registerDetails domai
 		return domain.RegisterResult{}, fmt.Errorf("failed to generate access and refresh tokens: %w", err)
 	}
 	// Get dating intentions and genders and populate Content
-	genderEntities, err := os.repo.GetGenders(ctx)
+	genders, err := os.getGenders(ctx)
 	if err != nil {
 		return domain.RegisterResult{}, fmt.Errorf("failed to get genders: %w", err)
 	}
 
-	datingIntentionEntities, err := os.repo.GetDatingIntentions(ctx)
+	datingIntentions, err := os.getDatingIntentions(ctx)
 	if err != nil {
 		return domain.RegisterResult{}, fmt.Errorf("failed to get dating intentions: %w", err)
 	}
@@ -84,8 +85,8 @@ func (os *onboardingService) Register(ctx context.Context, registerDetails domai
 		RefreshToken:    tokens.RefreshToken,
 		OnboardingSteps: domain.OnboardingStepsBasics.GenerateOnboardingSteps(),
 		Content: domain.RegisterContent{
-			DatingIntentions: mapper.MapDatingIntentionsToDomain(datingIntentionEntities),
-			Genders:          mapper.MapGendersToDomain(genderEntities),
+			DatingIntentions: datingIntentions,
+			Genders:          genders,
 		},
 	}, nil
 }
@@ -201,9 +202,9 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 		return domain.LanguagesResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
 	}
 
-	var photoUploadUrls []domain.PhotoUploadUrl
+	var photoUploadUrls []domain.UploadUrl
 	for _, url := range urls {
-		photoUploadUrls = append(photoUploadUrls, domain.PhotoUploadUrl{
+		photoUploadUrls = append(photoUploadUrls, domain.UploadUrl{
 			Key:       url.Key,
 			UploadUrl: url.URL,
 			Headers:   url.Headers,
@@ -319,6 +320,49 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 	}, nil
 }
 
+func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.PhotosResult, error) {
+	// insert photos into photos table
+	err := os.repo.InsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToEntity(uploadedPhotos))
+	if err != nil {
+		return domain.PhotosResult{}, fmt.Errorf("failed to insert user photos: %w", err)
+	}
+
+	// generate prompt urls.
+	urls, err := os.awsService.GenerateUploadURLs(ctx, uploadedPhotos.UserID, 6, "audio/m4a", time.Duration(10)*time.Minute)
+	if err != nil {
+		return domain.PhotosResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
+	}
+
+	var voicePromptUploadUrls []domain.UploadUrl
+	for _, url := range urls {
+		voicePromptUploadUrls = append(voicePromptUploadUrls, domain.UploadUrl{
+			Key:       url.Key,
+			UploadUrl: url.URL,
+			Headers:   url.Headers,
+			MaxBytes:  5242880,
+		})
+	}
+
+	// get prompts
+	prompts, err := os.getPrompts(ctx)
+	if err != nil {
+		return domain.PhotosResult{}, fmt.Errorf("failed to get prompts: %w", err)
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPhotos.UserID)
+	if err != nil {
+		return domain.PhotosResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	return domain.PhotosResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+		Content: domain.PhotosContent{
+			Prompts:                prompts,
+			VoicePromptsUploadUrls: voicePromptUploadUrls,
+		},
+	}, nil
+}
+
 func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Language, error) {
 	languageEntities, err := os.repo.GetLanguages(ctx)
 	if err != nil {
@@ -371,6 +415,33 @@ func (os *onboardingService) getHabits(ctx context.Context) ([]domain.Habit, err
 	}
 
 	return mapper.MapHabitsToDomain(habitEntities), nil
+}
+
+func (os *onboardingService) getGenders(ctx context.Context) ([]domain.Gender, error) {
+	genderEntities, err := os.repo.GetGenders(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapGendersToDomain(genderEntities), nil
+}
+
+func (os *onboardingService) getPrompts(ctx context.Context) ([]domain.Prompt, error) {
+	promptEntities, err := os.repo.GetPrompts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapPromptsToDomain(promptEntities), nil
+}
+
+func (os *onboardingService) getDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error) {
+	datingIntentionsEntities, err := os.repo.GetDatingIntentions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapDatingIntentionsToDomain(datingIntentionsEntities), nil
 }
 
 func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile *domain.UserProfile) error {

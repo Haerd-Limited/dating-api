@@ -4,6 +4,20 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type PhotosRequest struct {
+	UploadedPhotos []Photo `json:"uploaded_photos" validate:"required,dive"`
+}
+
+type Photo struct {
+	URL       string `json:"upload_url" validate:"required"`
+	Position  int16  `json:"position" validate:"required"`
+	IsPrimary bool   `json:"is_primary"`
+}
+
+func (pr PhotosRequest) Validate() error {
+	return validator.New().Struct(pr)
+}
+
 type LanguagesRequest struct {
 	LanguageIDs []int16 `json:"language_ids" validate:"required,dive,gt=0"` // todo: find out what this means
 }

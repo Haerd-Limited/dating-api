@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/jmoiron/sqlx"
 
@@ -14,6 +15,7 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type OnboardingRepository interface {
+	InsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
 	InsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	GetLanguages(ctx context.Context) (entity.LanguageSlice, error)
 	GetEducationLevels(ctx context.Context) (entity.EducationLevelSlice, error)
@@ -23,6 +25,7 @@ type OnboardingRepository interface {
 	GetHabits(ctx context.Context) (entity.HabitSlice, error)
 	GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error)
 	GetGenders(ctx context.Context) (entity.GenderSlice, error)
+	GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error)
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
 }
@@ -35,6 +38,84 @@ func NewOnboardingRepository(db *sqlx.DB) OnboardingRepository {
 	return &onboardingRepository{
 		db: db,
 	}
+}
+
+func (or *onboardingRepository) GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error) {
+	prompts, err := entity.PromptTypes().All(ctx, or.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return prompts, nil
+}
+
+func (or *onboardingRepository) InsertUserPhotos(
+	ctx context.Context,
+	userID string,
+	photos []entity.Photo,
+) (err error) {
+	tx, err := or.db.BeginTxx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
+	// Replace existing set for this user.
+	if _, err = tx.ExecContext(ctx, `DELETE FROM photos WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("delete existing photos: %w", err)
+	}
+
+	if len(photos) == 0 {
+		return nil // nothing else to do
+	}
+
+	// Normalize: userID, positions, and exactly one primary.
+	primarySeen := false
+
+	for i := range photos {
+		// Required URL check
+		if strings.TrimSpace(photos[i].URL) == "" {
+			return fmt.Errorf("photo[%d]: url is required", i)
+		}
+
+		// Assign user
+		photos[i].UserID = null.StringFrom(userID)
+
+		// Position: if not provided, make it 1-based index order
+		if !photos[i].Position.Valid {
+			photos[i].Position = null.Int16From(int16(i + 1))
+		}
+
+		// Primary handling: keep the first primary=true, demote subsequent ones
+		if photos[i].IsPrimary {
+			if primarySeen {
+				photos[i].IsPrimary = false
+			} else {
+				primarySeen = true
+			}
+		}
+	}
+
+	// If none were marked primary, promote the first one.
+	if !primarySeen {
+		photos[0].IsPrimary = true
+	}
+
+	// Insert all
+	for i := range photos {
+		if err = photos[i].Insert(ctx, tx, boil.Infer()); err != nil {
+			return fmt.Errorf("insert photo[%d]: %w", i, err)
+		}
+	}
+
+	return nil
 }
 
 func (or *onboardingRepository) InsertUserSpokenLanguages(

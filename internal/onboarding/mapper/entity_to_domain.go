@@ -110,6 +110,25 @@ func MapHabitsToDomain(g []*entity.Habit) []domain.Habit {
 	return result
 }
 
+func MapPromptsToDomain(g []*entity.PromptType) []domain.Prompt {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Prompt
+
+	for _, e := range g {
+		result = append(result, domain.Prompt{
+			ID:       e.ID,
+			Label:    e.Label,
+			Key:      e.Key,
+			Category: e.Category,
+		})
+	}
+
+	return result
+}
+
 func MapGendersToDomain(g []*entity.Gender) []domain.Gender {
 	if g == nil {
 		return nil

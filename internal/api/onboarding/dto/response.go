@@ -16,11 +16,23 @@ type OnboardingSteps struct {
 	TotalSteps   int      `json:"total_steps"`
 }
 
-type LanguagesContent struct {
-	PhotoUploadUrls []PhotoUploadUrl `json:"photo_upload_urls"`
+type PhotosContent struct {
+	Prompts                []Prompt    `json:"prompts"`
+	VoicePromptsUploadUrls []UploadUrl `json:"prompt_upload_urls"`
 }
 
-type PhotoUploadUrl struct {
+type Prompt struct {
+	ID       int16  `json:"id"`
+	Key      string `json:"key"`
+	Label    string `json:"label"`
+	Category string `json:"category"`
+}
+
+type LanguagesContent struct {
+	PhotoUploadUrls []UploadUrl `json:"photo_upload_urls"`
+}
+
+type UploadUrl struct {
 	Key       string            `json:"key"`
 	UploadUrl string            `json:"upload_url"`
 	Headers   map[string]string `json:"headers"`

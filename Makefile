@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  seed_languages sql
+	@cd ./migrations && goose create  seed_prompts sql
 .PHONY: migrate-create
 
 

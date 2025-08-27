@@ -99,6 +99,7 @@ func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count
 
 func extForContentType(ct string) string {
 	switch strings.ToLower(ct) {
+	// photo
 	case "image/jpeg", "image/jpg":
 		return "jpg"
 	case "image/png":
@@ -107,6 +108,19 @@ func extForContentType(ct string) string {
 		return "webp"
 	case "image/heic", "image/heif":
 		return "heic"
+		// audio
+	case "audio/mp4", "audio/m4a", "audio/x-m4a":
+		return "m4a"
+	case "audio/aac":
+		return "aac"
+	case "audio/mpeg", "audio/mp3":
+		return "mp3"
+	case "audio/wav", "audio/x-wav":
+		return "wav"
+	case "audio/webm":
+		return "webm"
+	case "audio/ogg", "audio/opus":
+		return "ogg"
 	}
 
 	return ""
