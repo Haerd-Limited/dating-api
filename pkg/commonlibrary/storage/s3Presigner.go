@@ -68,7 +68,12 @@ func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count
 	slots := make([]UploadSlot, 0, count)
 
 	for i := 0; i < count; i++ {
-		key := fmt.Sprintf("users/%s/photos/%s.%s", sanitize(userID), uuid.NewString(), ext)
+		var key string
+		if strings.Contains(contentType, "audio") {
+			key = fmt.Sprintf("users/%s/prompts/%s.%s", sanitize(userID), uuid.NewString(), ext)
+		} else {
+			key = fmt.Sprintf("users/%s/photos/%s.%s", sanitize(userID), uuid.NewString(), ext)
+		}
 
 		req := &s3.PutObjectInput{
 			Bucket:      aws.String(p.bucket),

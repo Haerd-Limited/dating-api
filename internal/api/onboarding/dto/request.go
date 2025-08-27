@@ -4,6 +4,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type PromptsRequest struct {
+	UploadedPrompts []VoicePrompt `json:"uploaded_prompts" validate:"required,dive"`
+}
+
+type VoicePrompt struct {
+	URL        string `json:"upload_url" validate:"required"`
+	PromptType int16  `json:"prompt_type" validate:"required"`
+	IsPrimary  bool   `json:"is_primary"`
+	Position   int16  `json:"position" validate:"required"`
+}
+
+func (pr PromptsRequest) Validate() error {
+	return validator.New().Struct(pr)
+}
+
 type PhotosRequest struct {
 	UploadedPhotos []Photo `json:"uploaded_photos" validate:"required,dive"`
 }

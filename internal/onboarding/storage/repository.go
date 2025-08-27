@@ -15,6 +15,7 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type OnboardingRepository interface {
+	InsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
 	InsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
 	InsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	GetLanguages(ctx context.Context) (entity.LanguageSlice, error)
@@ -47,6 +48,85 @@ func (or *onboardingRepository) GetPrompts(ctx context.Context) (entity.PromptTy
 	}
 
 	return prompts, nil
+}
+
+func (or *onboardingRepository) InsertUserPrompts(
+	ctx context.Context,
+	userID string,
+	prompts []entity.VoicePrompt,
+) (err error) {
+	tx, err := or.db.BeginTxx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
+	// Replace existing set for this user.
+	if _, err = tx.ExecContext(ctx, `DELETE FROM voice_prompts WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("delete existing voice_prompts: %w", err)
+	}
+
+	if len(prompts) == 0 {
+		return nil
+	}
+
+	// Normalize: userID, default positions, exactly one primary, validate basics.
+	primarySeen := false
+
+	for i := range prompts {
+		// user_id
+		prompts[i].UserID = null.StringFrom(userID)
+
+		// required: audio_url
+		if strings.TrimSpace(prompts[i].AudioURL) == "" {
+			return fmt.Errorf("prompt[%d]: audio_url is required", i)
+		}
+
+		// required: prompt_type (FK)
+		if !prompts[i].PromptType.Valid {
+			return fmt.Errorf("prompt[%d]: prompt_type is required", i)
+		}
+
+		// optional but sensible: non-negative duration
+		if prompts[i].DurationMS < 0 {
+			return fmt.Errorf("prompt[%d]: duration_ms cannot be negative", i)
+		}
+
+		// position defaults to 1-based index if not provided
+		if !prompts[i].Position.Valid {
+			prompts[i].Position = null.Int16From(int16(i + 1))
+		}
+
+		// ensure only one primary; keep the first, demote the rest
+		if prompts[i].IsPrimary {
+			if primarySeen {
+				prompts[i].IsPrimary = false
+			} else {
+				primarySeen = true
+			}
+		}
+	}
+
+	// If none were marked primary, promote the first one.
+	if !primarySeen {
+		prompts[0].IsPrimary = true
+	}
+
+	// Insert all
+	for i := range prompts {
+		if err = prompts[i].Insert(ctx, tx, boil.Infer()); err != nil {
+			return fmt.Errorf("insert voice_prompt[%d]: %w", i, err)
+		}
+	}
+
+	return nil
 }
 
 func (or *onboardingRepository) InsertUserPhotos(

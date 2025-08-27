@@ -52,6 +52,10 @@ func ToOnboardingResponse(result any) dto.OnboardingResponse {
 			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
 			Content:         MapPhotosContentToDto(v.Content),
 		}
+	case domain.PromptsResult:
+		return dto.OnboardingResponse{
+			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+		}
 	default:
 		return dto.OnboardingResponse{}
 	}

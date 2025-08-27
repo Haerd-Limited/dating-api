@@ -26,6 +26,7 @@ type Service interface {
 	WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error)
 	Languages(ctx context.Context, spokenLanguages domain.Languages) (domain.LanguagesResult, error)
 	Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.PhotosResult, error)
+	Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.PromptsResult, error)
 }
 
 type onboardingService struct {
@@ -321,7 +322,7 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 }
 
 func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.PhotosResult, error) {
-	// insert photos into photos table
+	// insert photos into user photos table
 	err := os.repo.InsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToEntity(uploadedPhotos))
 	if err != nil {
 		return domain.PhotosResult{}, fmt.Errorf("failed to insert user photos: %w", err)
@@ -360,6 +361,23 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 			Prompts:                prompts,
 			VoicePromptsUploadUrls: voicePromptUploadUrls,
 		},
+	}, nil
+}
+
+func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.PromptsResult, error) {
+	// insert prompts into user prompts table
+	err := os.repo.InsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToEntity(uploadedPrompts))
+	if err != nil {
+		return domain.PromptsResult{}, fmt.Errorf("failed to insert user prompts: %w", err)
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID)
+	if err != nil {
+		return domain.PromptsResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	return domain.PromptsResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
 	}, nil
 }
 

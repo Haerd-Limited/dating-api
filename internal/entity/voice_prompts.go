@@ -31,6 +31,8 @@ type VoicePrompt struct {
 	DurationMS int         `boil:"duration_ms" json:"duration_ms" toml:"duration_ms" yaml:"duration_ms"`
 	Transcript null.String `boil:"transcript" json:"transcript,omitempty" toml:"transcript" yaml:"transcript,omitempty"`
 	CreatedAt  time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	IsPrimary  bool        `boil:"is_primary" json:"is_primary" toml:"is_primary" yaml:"is_primary"`
+	Position   null.Int16  `boil:"position" json:"position,omitempty" toml:"position" yaml:"position,omitempty"`
 
 	R *voicePromptR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L voicePromptL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,6 +46,8 @@ var VoicePromptColumns = struct {
 	DurationMS string
 	Transcript string
 	CreatedAt  string
+	IsPrimary  string
+	Position   string
 }{
 	ID:         "id",
 	UserID:     "user_id",
@@ -52,6 +56,8 @@ var VoicePromptColumns = struct {
 	DurationMS: "duration_ms",
 	Transcript: "transcript",
 	CreatedAt:  "created_at",
+	IsPrimary:  "is_primary",
+	Position:   "position",
 }
 
 var VoicePromptTableColumns = struct {
@@ -62,6 +68,8 @@ var VoicePromptTableColumns = struct {
 	DurationMS string
 	Transcript string
 	CreatedAt  string
+	IsPrimary  string
+	Position   string
 }{
 	ID:         "voice_prompts.id",
 	UserID:     "voice_prompts.user_id",
@@ -70,6 +78,8 @@ var VoicePromptTableColumns = struct {
 	DurationMS: "voice_prompts.duration_ms",
 	Transcript: "voice_prompts.transcript",
 	CreatedAt:  "voice_prompts.created_at",
+	IsPrimary:  "voice_prompts.is_primary",
+	Position:   "voice_prompts.position",
 }
 
 // Generated where
@@ -82,6 +92,8 @@ var VoicePromptWhere = struct {
 	DurationMS whereHelperint
 	Transcript whereHelpernull_String
 	CreatedAt  whereHelpertime_Time
+	IsPrimary  whereHelperbool
+	Position   whereHelpernull_Int16
 }{
 	ID:         whereHelperint64{field: "\"voice_prompts\".\"id\""},
 	UserID:     whereHelpernull_String{field: "\"voice_prompts\".\"user_id\""},
@@ -90,6 +102,8 @@ var VoicePromptWhere = struct {
 	DurationMS: whereHelperint{field: "\"voice_prompts\".\"duration_ms\""},
 	Transcript: whereHelpernull_String{field: "\"voice_prompts\".\"transcript\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"voice_prompts\".\"created_at\""},
+	IsPrimary:  whereHelperbool{field: "\"voice_prompts\".\"is_primary\""},
+	Position:   whereHelpernull_Int16{field: "\"voice_prompts\".\"position\""},
 }
 
 // VoicePromptRels is where relationship names are stored.
@@ -148,9 +162,9 @@ func (r *voicePromptR) GetUser() *User {
 type voicePromptL struct{}
 
 var (
-	voicePromptAllColumns            = []string{"id", "user_id", "prompt_type", "audio_url", "duration_ms", "transcript", "created_at"}
+	voicePromptAllColumns            = []string{"id", "user_id", "prompt_type", "audio_url", "duration_ms", "transcript", "created_at", "is_primary", "position"}
 	voicePromptColumnsWithoutDefault = []string{"audio_url", "duration_ms"}
-	voicePromptColumnsWithDefault    = []string{"id", "user_id", "prompt_type", "transcript", "created_at"}
+	voicePromptColumnsWithDefault    = []string{"id", "user_id", "prompt_type", "transcript", "created_at", "is_primary", "position"}
 	voicePromptPrimaryKeyColumns     = []string{"id"}
 	voicePromptGeneratedColumns      = []string{}
 )

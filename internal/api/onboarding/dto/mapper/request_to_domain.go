@@ -187,6 +187,24 @@ func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) (domain.Uplo
 	}, nil
 }
 
+func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Prompts, error) {
+	var voicePrompts []domain.VoicePrompt
+	//todo: check if position values are unique
+	//todo: ensure count is min 4, max 6
+	for _, p := range req.UploadedPrompts {
+		voicePrompts = append(voicePrompts, domain.VoicePrompt{
+			URL:        p.URL,
+			Position:   p.Position,
+			IsPrimary:  p.IsPrimary,
+			PromptType: p.PromptType,
+		})
+	}
+	return domain.Prompts{
+		UserID:          userID,
+		UploadedPrompts: voicePrompts,
+	}, nil
+}
+
 // hasAnySpace returns true if s contains any Unicode whitespace character.
 func hasAnySpace(s string) bool {
 	return strings.IndexFunc(s, unicode.IsSpace) >= 0

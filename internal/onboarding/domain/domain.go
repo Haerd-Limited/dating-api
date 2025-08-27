@@ -10,6 +10,20 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
+type Prompts struct {
+	UploadedPrompts []VoicePrompt
+	UserID          string
+}
+type VoicePrompt struct {
+	URL        string
+	PromptType int16
+	IsPrimary  bool
+	Position   int16
+	DurationMs int
+}
+type PromptsResult struct {
+	OnboardingSteps
+}
 type PhotosResult struct {
 	OnboardingSteps
 	Content PhotosContent
