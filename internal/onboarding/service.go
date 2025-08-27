@@ -94,6 +94,7 @@ func (os *onboardingService) Register(ctx context.Context, registerDetails domai
 
 // TODO: FIX hitting the same endpoint multiple times advancing steps
 func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Basics) (domain.BasicsResult, error) {
+	const StepForBasics = domain.OnboardingStepsBasics
 	userProfile, err := os.getUserProfile(ctx, basicDetails.UserID)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -109,7 +110,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 		return domain.BasicsResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, basicDetails.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, basicDetails.UserID, StepForBasics)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -120,6 +121,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 }
 
 func (os *onboardingService) Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error) {
+	const StepForLocation = domain.OnboardingStepsLocation
 	userProfile, err := os.getUserProfile(ctx, locationDetails.UserID)
 	if err != nil {
 		return domain.LocationResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -140,7 +142,7 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 		return domain.LocationResult{}, err
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, locationDetails.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, locationDetails.UserID, StepForLocation)
 	if err != nil {
 		return domain.LocationResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -152,6 +154,7 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 }
 
 func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error) {
+	const StepForLifestyle = domain.OnboardingStepsLifestyle
 	userProfile, err := os.getUserProfile(ctx, lifestyleDetails.UserID)
 	if err != nil {
 		return domain.LifestyleResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -177,7 +180,7 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 		return domain.LifestyleResult{}, fmt.Errorf("failed to get political beliefs: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, lifestyleDetails.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, lifestyleDetails.UserID, StepForLifestyle)
 	if err != nil {
 		return domain.LifestyleResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -192,6 +195,7 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 }
 
 func (os *onboardingService) Languages(ctx context.Context, spokenLanguages domain.Languages) (domain.LanguagesResult, error) {
+	const StepForLanguages = domain.OnboardingStepsLanguages
 	err := os.repo.InsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
 	if err != nil {
 		return domain.LanguagesResult{}, fmt.Errorf("failed to insert user spoken languages: %w", err)
@@ -213,7 +217,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 		})
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, spokenLanguages.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, spokenLanguages.UserID, StepForLanguages)
 	if err != nil {
 		return domain.LanguagesResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -227,6 +231,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 }
 
 func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error) {
+	const StepForBeliefs = domain.OnboardingStepsBeliefs
 	userProfile, err := os.getUserProfile(ctx, beliefDetails.UserID)
 	if err != nil {
 		return domain.BeliefsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -250,7 +255,7 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 		return domain.BeliefsResult{}, fmt.Errorf("failed to get ethnicities: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, beliefDetails.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, beliefDetails.UserID, StepForBeliefs)
 	if err != nil {
 		return domain.BeliefsResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -265,6 +270,7 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 }
 
 func (os *onboardingService) Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error) {
+	const StepForBackground = domain.OnboardingStepsBackground
 	userProfile, err := os.getUserProfile(ctx, backgroundDetails.UserID)
 	if err != nil {
 		return domain.BackgroundResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -278,7 +284,7 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 		return domain.BackgroundResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, backgroundDetails.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, backgroundDetails.UserID, StepForBackground)
 	if err != nil {
 		return domain.BackgroundResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -289,6 +295,7 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 }
 
 func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error) {
+	const StepForWorkAndEducation = domain.OnboardingStepsWorkAndEducation
 	userProfile, err := os.getUserProfile(ctx, waeDetails.UserID)
 	if err != nil {
 		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -308,7 +315,7 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to get languages: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, waeDetails.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, waeDetails.UserID, StepForWorkAndEducation)
 	if err != nil {
 		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -322,6 +329,7 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 }
 
 func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.PhotosResult, error) {
+	const StepForPhotos = domain.OnboardingStepsPhotos
 	// insert photos into user photos table
 	err := os.repo.InsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToEntity(uploadedPhotos))
 	if err != nil {
@@ -350,7 +358,7 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 		return domain.PhotosResult{}, fmt.Errorf("failed to get prompts: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPhotos.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPhotos.UserID, StepForPhotos)
 	if err != nil {
 		return domain.PhotosResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -365,13 +373,14 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 }
 
 func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.PromptsResult, error) {
+	const StepForPrompts = domain.OnboardingStepsPrompts
 	// insert prompts into user prompts table
 	err := os.repo.InsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToEntity(uploadedPrompts))
 	if err != nil {
 		return domain.PromptsResult{}, fmt.Errorf("failed to insert user prompts: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID, StepForPrompts)
 	if err != nil {
 		return domain.PromptsResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
@@ -485,18 +494,30 @@ func (os *onboardingService) getUserProfile(ctx context.Context, userID string) 
 	return mapper.MapUserProfileToDomain(userProfileEntity), nil
 }
 
-func (os *onboardingService) bumpOnboardingStep(ctx context.Context, userID string) (domain.Steps, error) {
-	userDomain, err := os.userService.GetUser(ctx, userID)
+func (os *onboardingService) bumpOnboardingStep(
+	ctx context.Context,
+	userID string,
+	expected domain.Steps, // the step this endpoint owns
+) (domain.Steps, error) {
+
+	u, err := os.userService.GetUser(ctx, userID)
 	if err != nil {
-		return domain.OnboardingStepsUnset, fmt.Errorf("failed to get user details: %w", err)
+		return domain.OnboardingStepsUnset, fmt.Errorf("get user: %w", err)
 	}
 
-	userDomain.OnboardingStep = string(domain.Steps(userDomain.OnboardingStep).NextStep())
+	curr := domain.Steps(u.OnboardingStep)
 
-	err = os.userService.UpdateUser(ctx, userDomain)
-	if err != nil {
-		return domain.OnboardingStepsUnset, fmt.Errorf("failed to update user onboarding step: %w", err)
+	// 1) If we’re not exactly at the expected step, do NOT advance.
+	//    (Already advanced or out of order => no-op)
+	if curr != expected {
+		return curr, nil
 	}
 
-	return domain.Steps(userDomain.OnboardingStep), nil
+	next := expected.NextStep()
+	u.OnboardingStep = string(next)
+
+	if err := os.userService.UpdateUser(ctx, u); err != nil {
+		return domain.OnboardingStepsUnset, fmt.Errorf("update step: %w", err)
+	}
+	return next, nil
 }

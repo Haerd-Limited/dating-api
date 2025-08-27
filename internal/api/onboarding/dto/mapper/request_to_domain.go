@@ -172,8 +172,8 @@ func MapWorkAndEducationRequestToDomain(req dto.WorkAndEducationRequest, userID 
 
 func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) (domain.UploadedPhotos, error) {
 	var photos []domain.Photo
-	//todo: check if position values are unique
-	//todo: ensure count is 6
+	// todo: check if position values are unique
+	// todo: ensure count is 6
 	for _, p := range req.UploadedPhotos {
 		photos = append(photos, domain.Photo{
 			URL:       p.URL,
@@ -181,6 +181,7 @@ func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) (domain.Uplo
 			IsPrimary: p.IsPrimary,
 		})
 	}
+
 	return domain.UploadedPhotos{
 		UserID: userID,
 		Photos: photos,
@@ -189,8 +190,8 @@ func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) (domain.Uplo
 
 func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Prompts, error) {
 	var voicePrompts []domain.VoicePrompt
-	//todo: check if position values are unique
-	//todo: ensure count is min 4, max 6
+	// todo: check if position values are unique
+	// todo: ensure count is min 4, max 6
 	for _, p := range req.UploadedPrompts {
 		voicePrompts = append(voicePrompts, domain.VoicePrompt{
 			URL:        p.URL,
@@ -199,6 +200,7 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Pr
 			PromptType: p.PromptType,
 		})
 	}
+
 	return domain.Prompts{
 		UserID:          userID,
 		UploadedPrompts: voicePrompts,
