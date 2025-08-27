@@ -2,6 +2,7 @@ package onboarding
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -64,6 +65,10 @@ func NewOnboardingService(
 		awsService:  awsService,
 	}
 }
+
+var (
+	ErrIncorrectStepCalled = errors.New("incorrect step called")
+)
 
 func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID string) (any, error) {
 	u, err := os.userService.GetUser(ctx, userID)
@@ -268,6 +273,10 @@ func (os *onboardingService) Register(ctx context.Context, registerDetails domai
 func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Basics) (domain.BasicsResult, error) {
 	const StepForBasics = domain.OnboardingStepsBasics
 
+	if os.IncorrectStepCalled(ctx, basicDetails.UserID, StepForBasics) {
+		return domain.BasicsResult{}, ErrIncorrectStepCalled
+	}
+
 	userProfile, err := os.getUserProfile(ctx, basicDetails.UserID)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -295,6 +304,10 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 func (os *onboardingService) Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error) {
 	const StepForLocation = domain.OnboardingStepsLocation
+
+	if os.IncorrectStepCalled(ctx, locationDetails.UserID, StepForLocation) {
+		return domain.LocationResult{}, ErrIncorrectStepCalled
+	}
 
 	userProfile, err := os.getUserProfile(ctx, locationDetails.UserID)
 	if err != nil {
@@ -329,6 +342,10 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error) {
 	const StepForLifestyle = domain.OnboardingStepsLifestyle
+
+	if os.IncorrectStepCalled(ctx, lifestyleDetails.UserID, StepForLifestyle) {
+		return domain.LifestyleResult{}, ErrIncorrectStepCalled
+	}
 
 	userProfile, err := os.getUserProfile(ctx, lifestyleDetails.UserID)
 	if err != nil {
@@ -372,6 +389,10 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 func (os *onboardingService) Languages(ctx context.Context, spokenLanguages domain.Languages) (domain.LanguagesResult, error) {
 	const StepForLanguages = domain.OnboardingStepsLanguages
 
+	if os.IncorrectStepCalled(ctx, spokenLanguages.UserID, StepForLanguages) {
+		return domain.LanguagesResult{}, ErrIncorrectStepCalled
+	}
+
 	err := os.repo.InsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
 	if err != nil {
 		return domain.LanguagesResult{}, fmt.Errorf("failed to insert user spoken languages: %w", err)
@@ -408,6 +429,10 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 
 func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error) {
 	const StepForBeliefs = domain.OnboardingStepsBeliefs
+
+	if os.IncorrectStepCalled(ctx, beliefDetails.UserID, StepForBeliefs) {
+		return domain.BeliefsResult{}, ErrIncorrectStepCalled
+	}
 
 	userProfile, err := os.getUserProfile(ctx, beliefDetails.UserID)
 	if err != nil {
@@ -449,6 +474,10 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 func (os *onboardingService) Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error) {
 	const StepForBackground = domain.OnboardingStepsBackground
 
+	if os.IncorrectStepCalled(ctx, backgroundDetails.UserID, StepForBackground) {
+		return domain.BackgroundResult{}, ErrIncorrectStepCalled
+	}
+
 	userProfile, err := os.getUserProfile(ctx, backgroundDetails.UserID)
 	if err != nil {
 		return domain.BackgroundResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -474,6 +503,10 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 
 func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error) {
 	const StepForWorkAndEducation = domain.OnboardingStepsWorkAndEducation
+
+	if os.IncorrectStepCalled(ctx, waeDetails.UserID, StepForWorkAndEducation) {
+		return domain.WorkAndEducationResult{}, ErrIncorrectStepCalled
+	}
 
 	userProfile, err := os.getUserProfile(ctx, waeDetails.UserID)
 	if err != nil {
@@ -509,6 +542,10 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 
 func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.PhotosResult, error) {
 	const StepForPhotos = domain.OnboardingStepsPhotos
+
+	if os.IncorrectStepCalled(ctx, uploadedPhotos.UserID, StepForPhotos) {
+		return domain.PhotosResult{}, ErrIncorrectStepCalled
+	}
 	// insert photos into user photos table
 	err := os.repo.InsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToEntity(uploadedPhotos))
 	if err != nil {
@@ -553,6 +590,11 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 
 func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.PromptsResult, error) {
 	const StepForPrompts = domain.OnboardingStepsPrompts
+
+	if os.IncorrectStepCalled(ctx, uploadedPrompts.UserID, StepForPrompts) {
+		return domain.PromptsResult{}, ErrIncorrectStepCalled
+	}
+
 	// insert prompts into user prompts table
 	err := os.repo.InsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToEntity(uploadedPrompts))
 	if err != nil {
@@ -671,6 +713,16 @@ func (os *onboardingService) getUserProfile(ctx context.Context, userID string) 
 	}
 
 	return mapper.MapUserProfileToDomain(userProfileEntity), nil
+}
+
+func (os *onboardingService) IncorrectStepCalled(ctx context.Context, userID string, expectedCurrentStep domain.Steps) bool {
+	u, err := os.userService.GetUser(ctx, userID)
+	if err != nil {
+		return false
+	}
+	curr := domain.Steps(u.OnboardingStep)
+
+	return curr != expectedCurrentStep
 }
 
 func (os *onboardingService) bumpOnboardingStep(

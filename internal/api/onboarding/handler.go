@@ -755,6 +755,9 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return constants.StatusClientClosedRequest, messages.RequestCancelledMsg
 	case errors.Is(err, standardcontext.DeadlineExceeded):
 		return http.StatusRequestTimeout, messages.RequestTimeoutMsg
+
+	case errors.Is(err, onboarding.ErrIncorrectStepCalled):
+		return http.StatusBadRequest, "Incorrect step called"
 	case errors.Is(err, mapper.ErrInvalidID):
 		return http.StatusBadRequest, messages.InvalidIDMsg
 	case errors.Is(err, http.ErrNotMultipart):
