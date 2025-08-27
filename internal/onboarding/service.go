@@ -17,15 +17,27 @@ import (
 )
 
 type Service interface {
+	// GetUserCurrentStep retrieves the current onboarding step for a user based on their unique user ID. Returns a GetUserCurrentStepResult.
+	GetUserCurrentStep(ctx context.Context, userID string) (any, error)
+	// Register creates a new user based on the provided registration details and returns tokens and onboarding steps.
 	Register(ctx context.Context, registerDetails domain.Register) (domain.RegisterResult, error)
+	// Basics updates the user's basic details such as birthdate, height, gender, and dating intention, and returns onboarding steps.
 	Basics(ctx context.Context, basicDetails domain.Basics) (domain.BasicsResult, error)
+	// Location updates the user's location details and returns the result of the operation or an error if it fails.
 	Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error)
+	// Lifestyle updates the user's lifestyle preferences and returns the updated onboarding steps and lifestyle content.
 	Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error)
+	// Beliefs processes and updates the user's political and religious beliefs details during onboarding.
 	Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error)
+	// Background updates the user's background details and returns the result of the operation or an error if any occurs.
 	Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error)
+	// WorkAndEducation handles the onboarding step to update work and education data for a user.
 	WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error)
+	// Languages updates the user's spoken languages and returns the updated onboarding steps and language content.
 	Languages(ctx context.Context, spokenLanguages domain.Languages) (domain.LanguagesResult, error)
+	// Photos handles the processing and storage of uploaded photos for a user and updates their onboarding progress.
 	Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.PhotosResult, error)
+	// Prompts handles the submission of user-uploaded prompts and updates the onboarding process with the provided data.
 	Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.PromptsResult, error)
 }
 
@@ -50,6 +62,167 @@ func NewOnboardingService(
 		userService: userService,
 		authService: authService,
 		awsService:  awsService,
+	}
+}
+
+func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID string) (any, error) {
+	u, err := os.userService.GetUser(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by userID: %w", err)
+	}
+
+	currentStep := domain.Steps(u.OnboardingStep)
+
+	// each step should return the previous step's response since a user being on a step means they've not completed that step.
+	switch currentStep {
+	case domain.OnboardingStepsBasics:
+		genders, err := os.getGenders(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get genders: %w", err)
+		}
+
+		datingIntentions, err := os.getDatingIntentions(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get dating intentions: %w", err)
+		}
+
+		return domain.RegisterResult{
+			OnboardingSteps: domain.OnboardingStepsBasics.GenerateOnboardingSteps(),
+			Content: domain.RegisterContent{
+				DatingIntentions: datingIntentions,
+				Genders:          genders,
+			},
+		}, nil
+	case domain.OnboardingStepsLocation:
+		return domain.BasicsResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+		}, nil
+	case domain.OnboardingStepsLifestyle:
+		habits, err := os.getHabits(ctx)
+		if err != nil {
+			return domain.LocationResult{}, err
+		}
+
+		return domain.LocationResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+			Content:         domain.LocationContent{Habits: habits},
+		}, nil
+
+	case domain.OnboardingStepsBeliefs:
+		religions, err := os.getReligions(ctx)
+		if err != nil {
+			return domain.LifestyleResult{}, fmt.Errorf("failed to get religions: %w", err)
+		}
+
+		politicalBeliefs, err := os.getPoliticalBeliefs(ctx)
+		if err != nil {
+			return domain.LifestyleResult{}, fmt.Errorf("failed to get political beliefs: %w", err)
+		}
+
+		return domain.LifestyleResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+			Content: domain.LifestyleContent{
+				Religions:        religions,
+				PoliticalBeliefs: politicalBeliefs,
+			},
+		}, nil
+	case domain.OnboardingStepsBackground:
+		educationLevels, err := os.getEducationLevels(ctx)
+		if err != nil {
+			return domain.BeliefsResult{}, fmt.Errorf("failed to get education levels: %w", err)
+		}
+
+		ethnicities, err := os.getEthnicities(ctx)
+		if err != nil {
+			return domain.BeliefsResult{}, fmt.Errorf("failed to get ethnicities: %w", err)
+		}
+
+		return domain.BeliefsResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+			Content: domain.BeliefsContent{
+				EducationLevels: educationLevels,
+				Ethnicities:     ethnicities,
+			},
+		}, nil
+
+	case domain.OnboardingStepsWorkAndEducation:
+		return domain.BackgroundResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+		}, nil
+	case domain.OnboardingStepsLanguages:
+		languages, err := os.getLanguages(ctx)
+		if err != nil {
+			return domain.WorkAndEducationResult{}, fmt.Errorf("failed to get languages: %w", err)
+		}
+
+		return domain.WorkAndEducationResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+			Content: domain.WorkAndEducationContent{
+				Languages: languages,
+			},
+		}, nil
+
+	case domain.OnboardingStepsPhotos:
+		// GET 6 presigned urls from amazon s3
+		urls, err := os.awsService.GenerateUploadURLs(ctx, userID, 6, "image/jpeg", time.Duration(10)*time.Minute)
+		if err != nil {
+			return domain.LanguagesResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
+		}
+
+		var photoUploadUrls []domain.UploadUrl
+		for _, url := range urls {
+			photoUploadUrls = append(photoUploadUrls, domain.UploadUrl{
+				Key:       url.Key,
+				UploadUrl: url.URL,
+				Headers:   url.Headers,
+				MaxBytes:  5242880,
+			})
+		}
+
+		return domain.LanguagesResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+			Content: domain.LanguagesContent{
+				PhotoUploadUrls: photoUploadUrls,
+			},
+		}, nil
+
+	case domain.OnboardingStepsPrompts:
+		// generate prompt urls.
+		urls, err := os.awsService.GenerateUploadURLs(ctx, userID, 6, "audio/m4a", time.Duration(10)*time.Minute)
+		if err != nil {
+			return domain.PhotosResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
+		}
+
+		var voicePromptUploadUrls []domain.UploadUrl
+		for _, url := range urls {
+			voicePromptUploadUrls = append(voicePromptUploadUrls, domain.UploadUrl{
+				Key:       url.Key,
+				UploadUrl: url.URL,
+				Headers:   url.Headers,
+				MaxBytes:  5242880,
+			})
+		}
+
+		// get prompts
+		prompts, err := os.getPrompts(ctx)
+		if err != nil {
+			return domain.PhotosResult{}, fmt.Errorf("failed to get prompts: %w", err)
+		}
+
+		return domain.PhotosResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+			Content: domain.PhotosContent{
+				Prompts:                prompts,
+				VoicePromptsUploadUrls: voicePromptUploadUrls,
+			},
+		}, nil
+
+	case domain.OnboardingStepsComplete:
+		return domain.PromptsResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown onboarding step: %s", currentStep)
 	}
 }
 
@@ -92,9 +265,9 @@ func (os *onboardingService) Register(ctx context.Context, registerDetails domai
 	}, nil
 }
 
-// TODO: FIX hitting the same endpoint multiple times advancing steps
 func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Basics) (domain.BasicsResult, error) {
 	const StepForBasics = domain.OnboardingStepsBasics
+
 	userProfile, err := os.getUserProfile(ctx, basicDetails.UserID)
 	if err != nil {
 		return domain.BasicsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -122,6 +295,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 func (os *onboardingService) Location(ctx context.Context, locationDetails domain.Location) (domain.LocationResult, error) {
 	const StepForLocation = domain.OnboardingStepsLocation
+
 	userProfile, err := os.getUserProfile(ctx, locationDetails.UserID)
 	if err != nil {
 		return domain.LocationResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -155,6 +329,7 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails domain.Lifestyle) (domain.LifestyleResult, error) {
 	const StepForLifestyle = domain.OnboardingStepsLifestyle
+
 	userProfile, err := os.getUserProfile(ctx, lifestyleDetails.UserID)
 	if err != nil {
 		return domain.LifestyleResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -196,6 +371,7 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 
 func (os *onboardingService) Languages(ctx context.Context, spokenLanguages domain.Languages) (domain.LanguagesResult, error) {
 	const StepForLanguages = domain.OnboardingStepsLanguages
+
 	err := os.repo.InsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
 	if err != nil {
 		return domain.LanguagesResult{}, fmt.Errorf("failed to insert user spoken languages: %w", err)
@@ -232,6 +408,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 
 func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.Beliefs) (domain.BeliefsResult, error) {
 	const StepForBeliefs = domain.OnboardingStepsBeliefs
+
 	userProfile, err := os.getUserProfile(ctx, beliefDetails.UserID)
 	if err != nil {
 		return domain.BeliefsResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -271,6 +448,7 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 
 func (os *onboardingService) Background(ctx context.Context, backgroundDetails domain.Background) (domain.BackgroundResult, error) {
 	const StepForBackground = domain.OnboardingStepsBackground
+
 	userProfile, err := os.getUserProfile(ctx, backgroundDetails.UserID)
 	if err != nil {
 		return domain.BackgroundResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -296,6 +474,7 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 
 func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails domain.WorkAndEducation) (domain.WorkAndEducationResult, error) {
 	const StepForWorkAndEducation = domain.OnboardingStepsWorkAndEducation
+
 	userProfile, err := os.getUserProfile(ctx, waeDetails.UserID)
 	if err != nil {
 		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -310,7 +489,7 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	languages, err := os.getLanguages(ctx) // todo: seed languages table
+	languages, err := os.getLanguages(ctx)
 	if err != nil {
 		return domain.WorkAndEducationResult{}, fmt.Errorf("failed to get languages: %w", err)
 	}
@@ -499,7 +678,6 @@ func (os *onboardingService) bumpOnboardingStep(
 	userID string,
 	expected domain.Steps, // the step this endpoint owns
 ) (domain.Steps, error) {
-
 	u, err := os.userService.GetUser(ctx, userID)
 	if err != nil {
 		return domain.OnboardingStepsUnset, fmt.Errorf("get user: %w", err)
@@ -519,5 +697,6 @@ func (os *onboardingService) bumpOnboardingStep(
 	if err := os.userService.UpdateUser(ctx, u); err != nil {
 		return domain.OnboardingStepsUnset, fmt.Errorf("update step: %w", err)
 	}
+
 	return next, nil
 }

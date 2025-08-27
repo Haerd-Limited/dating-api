@@ -2,14 +2,6 @@ package domain
 
 import "time"
 
-type Basics struct {
-	UserID            string
-	Birthdate         time.Time
-	HeightCm          int16
-	GenderID          int16
-	DatingIntentionID int16
-}
-
 type Prompts struct {
 	UploadedPrompts []VoicePrompt
 	UserID          string
@@ -177,6 +169,14 @@ type LocationContent struct {
 type Habit struct {
 	ID    int16
 	Label string
+}
+
+type Basics struct {
+	UserID            string
+	Birthdate         time.Time
+	HeightCm          int16
+	GenderID          int16
+	DatingIntentionID int16
 }
 
 type BasicsResult struct {
