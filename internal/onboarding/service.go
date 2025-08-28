@@ -243,11 +243,7 @@ func (os *onboardingService) Register(ctx context.Context, registerDetails domai
 	if err != nil {
 		return domain.RegisterResult{}, fmt.Errorf("failed to create user: %w", err)
 	}
-	// generate and store access and refresh tokens
-	tokens, err := os.authService.GenerateAccessAndRefreshToken(ctx, *userID)
-	if err != nil {
-		return domain.RegisterResult{}, fmt.Errorf("failed to generate access and refresh tokens: %w", err)
-	}
+
 	// Get dating intentions and genders and populate Content
 	genders, err := os.getGenders(ctx)
 	if err != nil {
@@ -257,6 +253,12 @@ func (os *onboardingService) Register(ctx context.Context, registerDetails domai
 	datingIntentions, err := os.getDatingIntentions(ctx)
 	if err != nil {
 		return domain.RegisterResult{}, fmt.Errorf("failed to get dating intentions: %w", err)
+	}
+
+	// generate and store access and refresh tokens
+	tokens, err := os.authService.GenerateAccessAndRefreshToken(ctx, *userID)
+	if err != nil {
+		return domain.RegisterResult{}, fmt.Errorf("failed to generate access and refresh tokens: %w", err)
 	}
 
 	return domain.RegisterResult{
