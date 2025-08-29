@@ -5,56 +5,48 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 )
 
-func ToOnboardingResponse(result any) dto.OnboardingResponse {
-	switch v := result.(type) {
-	case domain.RegisterResult:
+func ToOnboardingResponse(result domain.StepResult) dto.OnboardingResponse {
+	switch v := result.Content.(type) {
+	case domain.RegisterContent:
 		return dto.OnboardingResponse{
-			AccessToken:     &v.AccessToken,
-			RefreshToken:    &v.RefreshToken,
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
-			Content:         MapRegisterContentToDto(v.Content),
+			AccessToken:     result.AccessToken,
+			RefreshToken:    result.RefreshToken,
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         MapRegisterContentToDto(v),
 		}
-	case domain.BasicsResult:
+	case domain.LocationContent:
 		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         MapLocationContentToDto(v),
 		}
-	case domain.LocationResult:
+	case domain.LifestyleContent:
 		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
-			Content:         MapLocationContentToDto(v.Content),
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         MapLifestyleContentToDto(v),
 		}
-	case domain.LifestyleResult:
+	case domain.BeliefsContent:
 		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
-			Content:         MapLifestyleContentToDto(v.Content),
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         MapBeliefsContentToDto(v),
 		}
-	case domain.BeliefsResult:
+	case domain.WorkAndEducationContent:
 		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
-			Content:         MapBeliefsContentToDto(v.Content),
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         MapWorkAndEducationContentToDto(v),
 		}
-	case domain.BackgroundResult:
+	case domain.LanguagesContent:
 		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         MapLanguagesContentToDto(v),
 		}
-	case domain.WorkAndEducationResult:
+	case domain.PhotosContent:
 		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
-			Content:         MapWorkAndEducationContentToDto(v.Content),
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         MapPhotosContentToDto(v),
 		}
-	case domain.LanguagesResult:
+	case nil: //for background,prompts and basics steps that don't populate content
 		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
-			Content:         MapLanguagesContentToDto(v.Content),
-		}
-	case domain.PhotosResult:
-		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
-			Content:         MapPhotosContentToDto(v.Content),
-		}
-	case domain.PromptsResult:
-		return dto.OnboardingResponse{
-			OnboardingSteps: mapOnboardingStepsToDto(v.OnboardingSteps),
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
 		}
 	default:
 		return dto.OnboardingResponse{}

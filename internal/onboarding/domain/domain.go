@@ -6,6 +6,14 @@ type Prompts struct {
 	UploadedPrompts []VoicePrompt
 	UserID          string
 }
+
+type StepResult struct {
+	AccessToken  *string
+	RefreshToken *string
+	OnboardingSteps
+	Content any
+}
+
 type VoicePrompt struct {
 	URL        string
 	PromptType int16
@@ -13,14 +21,6 @@ type VoicePrompt struct {
 	Position   int16
 	DurationMs int
 }
-type PromptsResult struct {
-	OnboardingSteps
-}
-type PhotosResult struct {
-	OnboardingSteps
-	Content PhotosContent
-}
-
 type PhotosContent struct {
 	Prompts                []Prompt
 	VoicePromptsUploadUrls []UploadUrl
@@ -49,11 +49,6 @@ type Languages struct {
 	LanguageIDs []int16
 }
 
-type LanguagesResult struct {
-	OnboardingSteps
-	Content LanguagesContent
-}
-
 type LanguagesContent struct {
 	PhotoUploadUrls []UploadUrl
 }
@@ -71,10 +66,6 @@ type WorkAndEducation struct {
 	JobTitle   string
 	University string
 }
-type WorkAndEducationResult struct {
-	OnboardingSteps
-	Content WorkAndEducationContent
-}
 
 type WorkAndEducationContent struct {
 	Languages []Language
@@ -91,19 +82,10 @@ type Background struct {
 	EthnicityID      int16
 }
 
-type BackgroundResult struct {
-	OnboardingSteps
-}
-
 type Beliefs struct {
 	UserID             string
 	PoliticalBeliefsID int16
 	ReligionID         int16
-}
-
-type BeliefsResult struct {
-	OnboardingSteps
-	Content BeliefsContent
 }
 
 type BeliefsContent struct {
@@ -129,11 +111,6 @@ type Lifestyle struct {
 	DrugsID     int16
 }
 
-type LifestyleResult struct {
-	OnboardingSteps
-	Content LifestyleContent
-}
-
 type LifestyleContent struct {
 	Religions        []Religion
 	PoliticalBeliefs []PoliticalBelief
@@ -157,11 +134,6 @@ type Location struct {
 	Country   string
 }
 
-type LocationResult struct {
-	OnboardingSteps
-	Content LocationContent
-}
-
 type LocationContent struct {
 	Habits []Habit
 }
@@ -179,21 +151,11 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
-type BasicsResult struct {
-	OnboardingSteps
-}
-
 type Register struct {
 	Email       string
 	PhoneNumber string
 	FirstName   string
 	LastName    *string
-}
-type RegisterResult struct {
-	AccessToken  string
-	RefreshToken string
-	OnboardingSteps
-	Content RegisterContent
 }
 
 type OnboardingSteps struct {
