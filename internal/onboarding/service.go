@@ -42,6 +42,15 @@ type Service interface {
 	Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.StepResult, error)
 }
 
+const (
+	maxUploadCountPhotos  = 6
+	maxUploadCountPrompts = 6
+	maxUploadBytes        = 5 << 20 // 5 MiB
+	presignTTL            = 10 * time.Minute
+	mimeJPEG              = "image/jpeg"
+	mimeM4A               = "audio/mp4" // m4a is an MP4 container; "audio/m4a" also seen but "audio/mp4" is safer
+)
+
 type onboardingService struct {
 	logger      *zap.Logger
 	repo        onboardingstorage.OnboardingRepository
@@ -167,7 +176,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 
 	case domain.OnboardingStepsPhotos:
 		// GET 6 presigned urls from amazon s3
-		urls, err := os.awsService.GenerateUploadURLs(ctx, userID, 6, "image/jpeg", time.Duration(10)*time.Minute)
+		urls, err := os.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPhotos, mimeJPEG, presignTTL)
 		if err != nil {
 			return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
 		}
@@ -178,7 +187,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 				Key:       url.Key,
 				UploadUrl: url.URL,
 				Headers:   url.Headers,
-				MaxBytes:  5242880,
+				MaxBytes:  maxUploadBytes,
 			})
 		}
 
@@ -191,7 +200,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 
 	case domain.OnboardingStepsPrompts:
 		// generate prompt urls.
-		urls, err := os.awsService.GenerateUploadURLs(ctx, userID, 6, "audio/m4a", time.Duration(10)*time.Minute)
+		urls, err := os.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPrompts, mimeM4A, presignTTL)
 		if err != nil {
 			return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
 		}
@@ -202,7 +211,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 				Key:       url.Key,
 				UploadUrl: url.URL,
 				Headers:   url.Headers,
-				MaxBytes:  5242880,
+				MaxBytes:  maxUploadBytes,
 			})
 		}
 
@@ -403,7 +412,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 	}
 
 	// GET 6 presigned urls from amazon s3
-	urls, err := os.awsService.GenerateUploadURLs(ctx, spokenLanguages.UserID, 6, "image/jpeg", time.Duration(10)*time.Minute)
+	urls, err := os.awsService.GenerateUploadURLs(ctx, spokenLanguages.UserID, maxUploadCountPhotos, mimeJPEG, presignTTL)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
 	}
@@ -562,7 +571,7 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	}
 
 	// generate prompt urls.
-	urls, err := os.awsService.GenerateUploadURLs(ctx, uploadedPhotos.UserID, 6, "audio/m4a", time.Duration(10)*time.Minute)
+	urls, err := os.awsService.GenerateUploadURLs(ctx, uploadedPhotos.UserID, maxUploadCountPrompts, mimeM4A, time.Duration(10)*time.Minute)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
 	}
@@ -573,7 +582,7 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 			Key:       url.Key,
 			UploadUrl: url.URL,
 			Headers:   url.Headers,
-			MaxBytes:  5242880,
+			MaxBytes:  maxUploadBytes,
 		})
 	}
 
