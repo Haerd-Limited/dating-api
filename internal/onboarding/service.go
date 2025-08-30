@@ -734,8 +734,8 @@ func (os *onboardingService) getUserProfile(ctx context.Context, userID string) 
 	return mapper.MapUserProfileToDomain(userProfileEntity), nil
 }
 
-func (s *onboardingService) ensureStep(ctx context.Context, userID string, expected domain.Steps) error {
-	u, err := s.userService.GetUser(ctx, userID)
+func (os *onboardingService) ensureStep(ctx context.Context, userID string, expected domain.Steps) error {
+	u, err := os.userService.GetUser(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
