@@ -12,6 +12,7 @@ package storage
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 
@@ -41,6 +42,66 @@ func (m *MockAuthRepository) EXPECT() *MockAuthRepositoryMockRecorder {
 	return m.recorder
 }
 
+// ConsumeVerificationCode mocks base method.
+func (m *MockAuthRepository) ConsumeVerificationCode(ctx context.Context, id int64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConsumeVerificationCode", ctx, id)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ConsumeVerificationCode indicates an expected call of ConsumeVerificationCode.
+func (mr *MockAuthRepositoryMockRecorder) ConsumeVerificationCode(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeVerificationCode", reflect.TypeOf((*MockAuthRepository)(nil).ConsumeVerificationCode), ctx, id)
+}
+
+// CountRecentSends mocks base method.
+func (m *MockAuthRepository) CountRecentSends(ctx context.Context, channel, identifier, purpose string, since time.Time) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountRecentSends", ctx, channel, identifier, purpose, since)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountRecentSends indicates an expected call of CountRecentSends.
+func (mr *MockAuthRepositoryMockRecorder) CountRecentSends(ctx, channel, identifier, purpose, since any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountRecentSends", reflect.TypeOf((*MockAuthRepository)(nil).CountRecentSends), ctx, channel, identifier, purpose, since)
+}
+
+// CountRecentSendsByIP mocks base method.
+func (m *MockAuthRepository) CountRecentSendsByIP(ctx context.Context, ip string, since time.Time) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountRecentSendsByIP", ctx, ip, since)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountRecentSendsByIP indicates an expected call of CountRecentSendsByIP.
+func (mr *MockAuthRepositoryMockRecorder) CountRecentSendsByIP(ctx, ip, since any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountRecentSendsByIP", reflect.TypeOf((*MockAuthRepository)(nil).CountRecentSendsByIP), ctx, ip, since)
+}
+
+// FindActiveVerificationCode mocks base method.
+func (m *MockAuthRepository) FindActiveVerificationCode(ctx context.Context, channel, identifier, purpose string) (*entity.VerificationCode, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindActiveVerificationCode", ctx, channel, identifier, purpose)
+	ret0, _ := ret[0].(*entity.VerificationCode)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindActiveVerificationCode indicates an expected call of FindActiveVerificationCode.
+func (mr *MockAuthRepositoryMockRecorder) FindActiveVerificationCode(ctx, channel, identifier, purpose any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindActiveVerificationCode", reflect.TypeOf((*MockAuthRepository)(nil).FindActiveVerificationCode), ctx, channel, identifier, purpose)
+}
+
 // GetRefreshToken mocks base method.
 func (m *MockAuthRepository) GetRefreshToken(ctx context.Context, refreshToken string) (*entity.RefreshToken, error) {
 	m.ctrl.T.Helper()
@@ -56,6 +117,20 @@ func (mr *MockAuthRepositoryMockRecorder) GetRefreshToken(ctx, refreshToken any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRefreshToken", reflect.TypeOf((*MockAuthRepository)(nil).GetRefreshToken), ctx, refreshToken)
 }
 
+// IncrementAttempts mocks base method.
+func (m *MockAuthRepository) IncrementAttempts(ctx context.Context, id int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrementAttempts", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IncrementAttempts indicates an expected call of IncrementAttempts.
+func (mr *MockAuthRepositoryMockRecorder) IncrementAttempts(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementAttempts", reflect.TypeOf((*MockAuthRepository)(nil).IncrementAttempts), ctx, id)
+}
+
 // InsertRefreshToken mocks base method.
 func (m *MockAuthRepository) InsertRefreshToken(ctx context.Context, refreshToken *entity.RefreshToken) error {
 	m.ctrl.T.Helper()
@@ -68,6 +143,20 @@ func (m *MockAuthRepository) InsertRefreshToken(ctx context.Context, refreshToke
 func (mr *MockAuthRepositoryMockRecorder) InsertRefreshToken(ctx, refreshToken any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertRefreshToken", reflect.TypeOf((*MockAuthRepository)(nil).InsertRefreshToken), ctx, refreshToken)
+}
+
+// InsertVerificationCode mocks base method.
+func (m *MockAuthRepository) InsertVerificationCode(ctx context.Context, vc *entity.VerificationCode) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertVerificationCode", ctx, vc)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertVerificationCode indicates an expected call of InsertVerificationCode.
+func (mr *MockAuthRepositoryMockRecorder) InsertVerificationCode(ctx, vc any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertVerificationCode", reflect.TypeOf((*MockAuthRepository)(nil).InsertVerificationCode), ctx, vc)
 }
 
 // RevokeAllRefreshTokens mocks base method.

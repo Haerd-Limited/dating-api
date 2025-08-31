@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"time"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
@@ -23,6 +23,9 @@ type AuthRepository interface {
 	CountRecentSends(ctx context.Context, channel, identifier, purpose string, since time.Time) (int, error)
 	CountRecentSendsByIP(ctx context.Context, ip string, since time.Time) (int, error)
 	InsertVerificationCode(ctx context.Context, vc *entity.VerificationCode) error
+	FindActiveVerificationCode(ctx context.Context, channel, identifier, purpose string) (*entity.VerificationCode, error)
+	IncrementAttempts(ctx context.Context, id int64) error
+	ConsumeVerificationCode(ctx context.Context, id int64) (bool, error) // true if consumed
 }
 
 type authRepository struct {
@@ -37,6 +40,49 @@ func NewAuthRepository(db *sqlx.DB) AuthRepository {
 
 var ErrRefreshTokenNotFound = errors.New("refresh token not found")
 
+func (r *authRepository) FindActiveVerificationCode(ctx context.Context, channel, identifier, purpose string) (*entity.VerificationCode, error) {
+	return entity.VerificationCodes(
+		entity.VerificationCodeWhere.Channel.EQ(channel),
+		entity.VerificationCodeWhere.Identifier.EQ(identifier),
+		entity.VerificationCodeWhere.Purpose.EQ(purpose),
+		entity.VerificationCodeWhere.ConsumedAt.IsNull(),
+		qm.Where("expires_at > now()"),
+		qm.OrderBy("created_at DESC"),
+		qm.Limit(1),
+	).One(ctx, r.db)
+}
+
+func (r *authRepository) IncrementAttempts(ctx context.Context, id int64) error {
+	vc, err := entity.VerificationCodes(entity.VerificationCodeWhere.ID.EQ(id)).One(ctx, r.db)
+	if err != nil {
+		return fmt.Errorf("failed to find verification code: %w", err)
+	}
+
+	vc.Attempts = vc.Attempts + 1
+
+	_, err = vc.Update(ctx, r.db, boil.Whitelist("attempts"))
+	if err != nil {
+		return fmt.Errorf("failed to update verification code: %w", err)
+	}
+
+	return err
+}
+
+func (r *authRepository) ConsumeVerificationCode(ctx context.Context, id int64) (bool, error) {
+	res, err := r.db.ExecContext(ctx, `
+		UPDATE verification_codes
+		   SET consumed_at = now()
+		 WHERE id = $1 AND consumed_at IS NULL AND expires_at > now()
+	`, id)
+	if err != nil {
+		return false, err
+	}
+
+	n, _ := res.RowsAffected()
+
+	return n == 1, nil
+}
+
 func (r *authRepository) CountRecentSends(ctx context.Context, channel, identifier, purpose string, since time.Time) (int, error) {
 	count, err := entity.VerificationCodes(
 		entity.VerificationCodeWhere.Channel.EQ(channel),
@@ -47,6 +93,7 @@ func (r *authRepository) CountRecentSends(ctx context.Context, channel, identifi
 	if err != nil {
 		return 0, err
 	}
+
 	return int(count), err
 }
 
@@ -57,6 +104,7 @@ func (r *authRepository) CountRecentSendsByIP(ctx context.Context, ip string, si
 	if err != nil {
 		return 0, err
 	}
+
 	return int(count), nil
 }
 
@@ -65,6 +113,7 @@ func (r *authRepository) InsertVerificationCode(ctx context.Context, vc *entity.
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

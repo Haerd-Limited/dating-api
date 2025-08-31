@@ -17,165 +17,10 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/auth/dto"
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	"github.com/Haerd-Limited/dating-api/internal/auth/domain"
-	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 )
 
 // todo: update tests to follow Andres advice
-
-func TestLoginHandler(t *testing.T) {
-	ctrl := gomock.NewController(t)
-
-	mockLog := zaptest.NewLogger(t)
-
-	testCases := []struct {
-		name  string
-		ctx   func(ctx context.Context) context.Context
-		input dto.LoginRequest
-		mock  func(
-			mockService *auth.MockService,
-		)
-		wantStatus int
-		wantBody   any
-	}{
-		{
-			name:       "successful login",
-			wantStatus: http.StatusOK,
-			wantBody: map[string]interface{}{
-				"message":       "Login successful",
-				"access_token":  "testAccessToken",
-				"refresh_token": "testRefreshToken",
-				"user_details": map[string]interface{}{
-					"username":  "lionellegendz",
-					"email":     "lionel@gmail.com",
-					"full_name": "lionel wilson",
-				},
-			},
-			input: dto.LoginRequest{
-				PhoneNumber: "+44 7957662563",
-			},
-			ctx: func(ctx context.Context) context.Context {
-				return context.Background()
-			},
-			mock: func(
-				mockService *auth.MockService,
-			) {
-				mockService.EXPECT().Login(gomock.Any(), gomock.Any()).Return(
-					&domain.AuthTokensAndUserID{
-						RefreshToken: "testRefreshToken",
-						AccessToken:  "testAccessToken",
-						UserID:       "anID",
-					},
-					nil,
-				)
-			},
-		},
-		{
-			name:       "email or password missing",
-			wantStatus: http.StatusBadRequest,
-			wantBody: map[string]interface{}{
-				"message": InvalidLoginInputMsg,
-			},
-			input: dto.LoginRequest{
-				PhoneNumber: "+44 7958552448",
-			},
-			ctx: func(ctx context.Context) context.Context {
-				return context.Background()
-			},
-			mock: func(
-				mockService *auth.MockService,
-			) {
-			},
-		},
-		{
-			name:       "a service error",
-			wantStatus: http.StatusInternalServerError,
-			wantBody: map[string]interface{}{
-				"message": messages.InternalServerErrorMsg,
-			},
-			input: dto.LoginRequest{
-				PhoneNumber: "+44 7924773928",
-			},
-			ctx: func(ctx context.Context) context.Context {
-				return context.Background()
-			},
-			mock: func(
-				mockService *auth.MockService,
-			) {
-				mockService.EXPECT().Login(gomock.Any(), gomock.Any()).Return(
-					nil,
-					assert.AnError,
-				)
-			},
-		},
-		{
-			name:       "incorrect email or password",
-			wantStatus: http.StatusBadRequest,
-			wantBody: map[string]interface{}{
-				"message": InvalidCredentialsMsg,
-			},
-			input: dto.LoginRequest{
-				PhoneNumber: "+44 7924773928",
-			},
-			ctx: func(ctx context.Context) context.Context {
-				return context.Background()
-			},
-			mock: func(
-				mockService *auth.MockService,
-			) {
-				mockService.EXPECT().Login(gomock.Any(), gomock.Any()).Return(
-					nil,
-					user.ErrInvalidCredentials,
-				)
-			},
-		},
-	}
-	// Run your test cases
-	for _, tc := range testCases {
-		t.Run(
-			tc.name, func(t *testing.T) {
-				mockService := auth.NewMockService(ctrl)
-
-				tc.mock(mockService)
-
-				body, err := json.Marshal(tc.input)
-				require.NoError(t, err)
-
-				rctx := chi.NewRouteContext()
-
-				req, err := http.NewRequestWithContext(
-					context.WithValue(tc.ctx(context.Background()), chi.RouteCtxKey, rctx),
-					http.MethodPost,
-					"/api/v1/auth/login",
-					bytes.NewReader(body),
-				)
-				require.NoError(t, err)
-
-				recorder := httptest.NewRecorder()
-				h := NewAuthHandler(mockLog, mockService)
-				h.Login().ServeHTTP(recorder, req)
-
-				expected, err := json.Marshal(tc.wantBody)
-				require.NoError(t, err)
-
-				assert.Equal(t, tc.wantStatus, recorder.Code)
-
-				var actual map[string]interface{}
-				err = json.Unmarshal(recorder.Body.Bytes(), &actual)
-				require.NoError(t, err)
-
-				var expectedJSON map[string]interface{}
-				err = json.Unmarshal(expected, &expectedJSON)
-				require.NoError(t, err)
-
-				assert.Equal(t, expectedJSON, actual)
-
-				satisfied := ctrl.Satisfied()
-				require.True(t, satisfied, "mock expectations were not satisfied")
-			},
-		)
-	}
-}
 
 func TestRefreshHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -210,7 +55,7 @@ func TestRefreshHandler(t *testing.T) {
 				mockService *auth.MockService,
 			) {
 				mockService.EXPECT().RefreshToken(gomock.Any(), gomock.Any()).Return(
-					&domain.AuthTokensAndUserID{
+					&domain.AuthResult{
 						RefreshToken: "newRefreshToken",
 						AccessToken:  "newAccessToken",
 					},

@@ -739,9 +739,11 @@ func (os *onboardingService) ensureStep(ctx context.Context, userID string, expe
 	if err != nil {
 		return fmt.Errorf("failed to get user: %w", err)
 	}
+
 	if domain.Steps(u.OnboardingStep) != expected {
 		return ErrIncorrectStepCalled
 	}
+
 	return nil
 }
 

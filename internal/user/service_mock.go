@@ -57,7 +57,7 @@ func (mr *MockServiceMockRecorder) AuthenticateUser(ctx, phoneNumber any) *gomoc
 }
 
 // CreateUser mocks base method.
-func (m *MockService) CreateUser(ctx context.Context, user *domain.User) (*string, error) {
+func (m *MockService) CreateUser(ctx context.Context, user domain.User) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, user)
 	ret0, _ := ret[0].(*string)
@@ -71,8 +71,8 @@ func (mr *MockServiceMockRecorder) CreateUser(ctx, user any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockService)(nil).CreateUser), ctx, user)
 }
 
-// GetUserDetails mocks base method.
-func (m *MockService) GetUserDetails(ctx context.Context, id string) (*domain.User, error) {
+// GetUser mocks base method.
+func (m *MockService) GetUser(ctx context.Context, id string) (*domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUser", ctx, id)
 	ret0, _ := ret[0].(*domain.User)
@@ -80,10 +80,10 @@ func (m *MockService) GetUserDetails(ctx context.Context, id string) (*domain.Us
 	return ret0, ret1
 }
 
-// GetUserDetails indicates an expected call of GetUserDetails.
-func (mr *MockServiceMockRecorder) GetUserDetails(ctx, id any) *gomock.Call {
+// GetUser indicates an expected call of GetUser.
+func (mr *MockServiceMockRecorder) GetUser(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockService)(nil).GetUserDetails), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockService)(nil).GetUser), ctx, id)
 }
 
 // GetUsersByIDs mocks base method.
@@ -99,4 +99,33 @@ func (m *MockService) GetUsersByIDs(ctx context.Context, ids []string) ([]*domai
 func (mr *MockServiceMockRecorder) GetUsersByIDs(ctx, ids any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersByIDs", reflect.TypeOf((*MockService)(nil).GetUsersByIDs), ctx, ids)
+}
+
+// UpdateUser mocks base method.
+func (m *MockService) UpdateUser(ctx context.Context, user *domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUser", ctx, user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUser indicates an expected call of UpdateUser.
+func (mr *MockServiceMockRecorder) UpdateUser(ctx, user any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockService)(nil).UpdateUser), ctx, user)
+}
+
+// UserExistsByIdentifier mocks base method.
+func (m *MockService) UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserExistsByIdentifier", ctx, channel, identifier)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserExistsByIdentifier indicates an expected call of UserExistsByIdentifier.
+func (mr *MockServiceMockRecorder) UserExistsByIdentifier(ctx, channel, identifier any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserExistsByIdentifier", reflect.TypeOf((*MockService)(nil).UserExistsByIdentifier), ctx, channel, identifier)
 }

@@ -43,8 +43,8 @@ func New(
 			r.Route(
 				"/auth", func(r chi.Router) {
 					// todo: make login return the user's step. frontend will check if step != COMPLETE. if so call GetStep
-					r.Post("/login", authHandler.Login())
 					r.Post("/request-code", authHandler.RequestCode())
+					r.Post("/verify-code", authHandler.VerifyCode())
 
 					r.Post("/refresh", authHandler.Refresh())
 					r.Post("/logout", authHandler.Logout())

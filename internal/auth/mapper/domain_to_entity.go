@@ -1,9 +1,10 @@
 package mapper
 
 import (
+	"github.com/aarondl/null/v8"
+
 	"github.com/Haerd-Limited/dating-api/internal/auth/domain"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
-	"github.com/aarondl/null/v8"
 )
 
 func ToRefreshTokenEntity(refreshToken *domain.RefreshToken) *entity.RefreshToken {

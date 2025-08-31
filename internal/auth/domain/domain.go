@@ -3,6 +3,8 @@ package domain
 import (
 	"net"
 	"time"
+
+	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 )
 
 type (
@@ -18,6 +20,15 @@ type (
 		Email   *string
 		Phone   *string
 		Purpose string
+		IP      string
+	}
+
+	VerifyCode struct {
+		Channel string // "sms" | "email"
+		Email   *string
+		Phone   *string
+		Purpose string // "login" | "register" | "login_or_signup"
+		Code    string // 6 digits
 		IP      string
 	}
 
@@ -42,9 +53,13 @@ type (
 	RevokeRefreshToken struct {
 		RefreshToken string
 	}
-	AuthTokensAndUserID struct {
-		UserID       string
+	AuthResult struct {
 		RefreshToken string
 		AccessToken  string
+		User         *User
+	}
+	User struct {
+		ID             string
+		OnboardingStep domain.Steps
 	}
 )

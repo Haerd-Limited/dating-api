@@ -122,8 +122,9 @@ func (us *userService) UserExistsByIdentifier(ctx context.Context, channel, iden
 		if err != nil {
 			return false, err
 		}
+
 		return user != nil, nil
-		//todo: implement email
+		// todo: implement email
 	default:
 		return false, fmt.Errorf("unsupported channel: %s", channel)
 	}

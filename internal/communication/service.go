@@ -2,6 +2,7 @@ package communication
 
 import (
 	"fmt"
+
 	"github.com/twilio/twilio-go"
 	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
 )
@@ -25,6 +26,7 @@ func NewService(
 		Username: TwilioAccountSID,
 		Password: TwilioAuthToken,
 	})
+
 	return &service{
 		client:     client,
 		fromNumber: TwilioFromNumber,
@@ -35,6 +37,7 @@ func (s *service) SendEmailOTP(to, code string) error {
 	// TODO: integrate SES/SendGrid/etc
 	return nil
 }
+
 func (s *service) SendSMSOTP(toNumber, code string) error {
 	params := &twilioApi.CreateMessageParams{}
 	params.SetTo(toNumber)

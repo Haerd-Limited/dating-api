@@ -42,10 +42,10 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // GenerateAccessAndRefreshToken mocks base method.
-func (m *MockService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthTokensAndUserID, error) {
+func (m *MockService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GenerateAccessAndRefreshToken", ctx, userID)
-	ret0, _ := ret[0].(*domain.AuthTokensAndUserID)
+	ret0, _ := ret[0].(*domain.AuthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,26 +56,11 @@ func (mr *MockServiceMockRecorder) GenerateAccessAndRefreshToken(ctx, userID any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAccessAndRefreshToken", reflect.TypeOf((*MockService)(nil).GenerateAccessAndRefreshToken), ctx, userID)
 }
 
-// Login mocks base method.
-func (m *MockService) Login(ctx context.Context, loginInput domain.Login) (*domain.AuthTokensAndUserID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", ctx, loginInput)
-	ret0, _ := ret[0].(*domain.AuthTokensAndUserID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Login indicates an expected call of Login.
-func (mr *MockServiceMockRecorder) Login(ctx, loginInput any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockService)(nil).Login), ctx, loginInput)
-}
-
 // RefreshToken mocks base method.
-func (m *MockService) RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthTokensAndUserID, error) {
+func (m *MockService) RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RefreshToken", ctx, refreshInput)
-	ret0, _ := ret[0].(*domain.AuthTokensAndUserID)
+	ret0, _ := ret[0].(*domain.AuthResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -84,6 +69,21 @@ func (m *MockService) RefreshToken(ctx context.Context, refreshInput domain.Refr
 func (mr *MockServiceMockRecorder) RefreshToken(ctx, refreshInput any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockService)(nil).RefreshToken), ctx, refreshInput)
+}
+
+// RequestCode mocks base method.
+func (m *MockService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RequestCode", ctx, requestCodeDetails)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RequestCode indicates an expected call of RequestCode.
+func (mr *MockServiceMockRecorder) RequestCode(ctx, requestCodeDetails any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestCode", reflect.TypeOf((*MockService)(nil).RequestCode), ctx, requestCodeDetails)
 }
 
 // RevokeRefreshToken mocks base method.
@@ -98,4 +98,19 @@ func (m *MockService) RevokeRefreshToken(ctx context.Context, revokeRefreshToken
 func (mr *MockServiceMockRecorder) RevokeRefreshToken(ctx, revokeRefreshTokenInput any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeRefreshToken", reflect.TypeOf((*MockService)(nil).RevokeRefreshToken), ctx, revokeRefreshTokenInput)
+}
+
+// VerifyCode mocks base method.
+func (m *MockService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*domain.AuthResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VerifyCode", ctx, in)
+	ret0, _ := ret[0].(*domain.AuthResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VerifyCode indicates an expected call of VerifyCode.
+func (mr *MockServiceMockRecorder) VerifyCode(ctx, in any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyCode", reflect.TypeOf((*MockService)(nil).VerifyCode), ctx, in)
 }

@@ -24,7 +24,7 @@ import (
 )
 
 type Handler interface {
-	Login() http.HandlerFunc
+	VerifyCode() http.HandlerFunc
 	RequestCode() http.HandlerFunc
 	Refresh() http.HandlerFunc
 	Logout() http.HandlerFunc
@@ -46,7 +46,7 @@ func NewAuthHandler(
 }
 
 const (
-	InvalidLoginInputMsg   = "Please provide both your account's email and password."
+	InvalidBodyMsg         = "invalid body"
 	InvalidRefreshTokenMsg = "Please provide your refresh token."
 )
 
@@ -65,7 +65,7 @@ func (h *handler) RequestCode() http.HandlerFunc {
 				http.StatusBadRequest,
 				mapper.ToAuthResponse(
 					nil,
-					InvalidLoginInputMsg,
+					InvalidBodyMsg,
 				))
 
 			return
@@ -84,8 +84,7 @@ func (h *handler) RequestCode() http.HandlerFunc {
 				return
 			default:
 				// Anti-enumeration: still 200 OK, but log server-side
-				h.logger.Warn("request-code failed", zap.Error(err))
-
+				h.logger.Warn("failed to request code", zap.Error(err))
 			}
 		}
 
@@ -93,28 +92,30 @@ func (h *handler) RequestCode() http.HandlerFunc {
 	}
 }
 
-func (h *handler) Login() http.HandlerFunc {
+func (h *handler) VerifyCode() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		var req dto.LoginRequest
+		var req dto.VerifyCodeRequest
 
 		// Validates and decodes request
 		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
-			h.logger.Sugar().Errorw("failed to decode and validate login request body", "context", ctx, "error", err)
+			h.logger.Sugar().Errorw("failed to decode and validate verify code request body", "context", ctx, "error", err)
 
 			render.Json(
 				w,
 				http.StatusBadRequest,
 				mapper.ToAuthResponse(
 					nil,
-					InvalidLoginInputMsg,
+					InvalidBodyMsg,
 				))
 
 			return
 		}
 
-		userCredentials, err := h.authService.Login(ctx, mapper.MapLoginRequestToDomain(req))
+		ip := requestIP(r)
+
+		result, err := h.authService.VerifyCode(ctx, mapper.ToVerifyDomain(req, ip))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -124,18 +125,12 @@ func (h *handler) Login() http.HandlerFunc {
 				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
 				return
 			default:
-				h.logger.Sugar().Errorw("Error logging in user", "error", err)
-				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, code, mapper.ToAuthResponse(
-					nil,
-					msg,
-				))
-
-				return
+				// Anti-enumeration: still 200 OK, but log server-side
+				h.logger.Warn("failed to verify code", zap.Error(err))
 			}
 		}
 
-		render.Json(w, http.StatusOK, mapper.ToAuthResponse(userCredentials, "Login successful"))
+		render.Json(w, http.StatusOK, mapper.ToAuthResponse(result, "Code verified successfully"))
 	}
 }
 
@@ -238,10 +233,12 @@ func requestIP(r *http.Request) string {
 		parts := strings.Split(xff, ",")
 		return strings.TrimSpace(parts[0])
 	}
+
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil { // if it's not host:port, fall back
 		host = r.RemoteAddr
 	}
+
 	return strings.Trim(host, "[]") // remove IPv6 brackets
 }
 

@@ -5,7 +5,7 @@ import (
 	authDomain "github.com/Haerd-Limited/dating-api/internal/auth/domain"
 )
 
-func ToAuthResponse(authResult *authDomain.AuthTokensAndUserID, message string) *dto.AuthResponse {
+func ToAuthResponse(authResult *authDomain.AuthResult, message string) *dto.AuthResponse {
 	if authResult == nil {
 		return &dto.AuthResponse{
 			Message: message,
@@ -16,7 +16,10 @@ func ToAuthResponse(authResult *authDomain.AuthTokensAndUserID, message string) 
 		Message:      message,
 		AccessToken:  authResult.AccessToken,
 		RefreshToken: authResult.RefreshToken,
-		UserID:       authResult.UserID,
+		User: &dto.User{
+			ID:             authResult.User.ID,
+			OnboardingStep: string(authResult.User.OnboardingStep),
+		},
 	}
 }
 

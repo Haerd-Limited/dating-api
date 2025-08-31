@@ -44,7 +44,7 @@ func ToOnboardingResponse(result domain.StepResult) dto.OnboardingResponse {
 			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
 			Content:         MapPhotosContentToDto(v),
 		}
-	case nil: //for background,prompts and basics steps that don't populate content
+	case nil: // for background,prompts and basics steps that don't populate content
 		return dto.OnboardingResponse{
 			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
 		}

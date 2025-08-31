@@ -8,6 +8,18 @@ type LoginRequest struct {
 	PhoneNumber string `json:"phone_number" validate:"required"`
 }
 
+type VerifyCodeRequest struct {
+	Channel string  `json:"channel" validate:"required,oneof=sms email"`
+	Email   *string `json:"email,omitempty"`
+	Phone   *string `json:"phone,omitempty"`
+	Purpose string  `json:"purpose,omitempty"`
+	Code    string  `json:"code" validate:"required,len=6,numeric"`
+}
+
+func (vcr VerifyCodeRequest) Validate() error {
+	return validator.New().Struct(vcr)
+}
+
 type RequestCodeRequest struct {
 	Channel string  `json:"channel" validate:"required,oneof=email sms"`
 	Email   *string `json:"email,omitempty" validate:"omitempty,email"`

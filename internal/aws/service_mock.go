@@ -12,37 +12,39 @@ package aws
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 
 	domain "github.com/Haerd-Limited/dating-api/internal/aws/domain"
+	storage "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/storage"
 )
 
-// MockAWSService is a mock of Service interface.
-type MockAWSService struct {
+// MockService is a mock of Service interface.
+type MockService struct {
 	ctrl     *gomock.Controller
-	recorder *MockAWSServiceMockRecorder
+	recorder *MockServiceMockRecorder
 }
 
-// MockAWSServiceMockRecorder is the mock recorder for MockAWSService.
-type MockAWSServiceMockRecorder struct {
-	mock *MockAWSService
+// MockServiceMockRecorder is the mock recorder for MockService.
+type MockServiceMockRecorder struct {
+	mock *MockService
 }
 
-// NewMockAWSService creates a new mock instance.
-func NewMockAWSService(ctrl *gomock.Controller) *MockAWSService {
-	mock := &MockAWSService{ctrl: ctrl}
-	mock.recorder = &MockAWSServiceMockRecorder{mock}
+// NewMockService creates a new mock instance.
+func NewMockService(ctrl *gomock.Controller) *MockService {
+	mock := &MockService{ctrl: ctrl}
+	mock.recorder = &MockServiceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAWSService) EXPECT() *MockAWSServiceMockRecorder {
+func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
 // DeleteFile mocks base method.
-func (m *MockAWSService) DeleteFile(ctx context.Context, fileURL string) error {
+func (m *MockService) DeleteFile(ctx context.Context, fileURL string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteFile", ctx, fileURL)
 	ret0, _ := ret[0].(error)
@@ -50,13 +52,28 @@ func (m *MockAWSService) DeleteFile(ctx context.Context, fileURL string) error {
 }
 
 // DeleteFile indicates an expected call of DeleteFile.
-func (mr *MockAWSServiceMockRecorder) DeleteFile(ctx, fileURL any) *gomock.Call {
+func (mr *MockServiceMockRecorder) DeleteFile(ctx, fileURL any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockAWSService)(nil).DeleteFile), ctx, fileURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockService)(nil).DeleteFile), ctx, fileURL)
+}
+
+// GenerateUploadURLs mocks base method.
+func (m *MockService) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration) ([]storage.UploadSlot, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateUploadURLs", ctx, userID, count, contentType, ttl)
+	ret0, _ := ret[0].([]storage.UploadSlot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateUploadURLs indicates an expected call of GenerateUploadURLs.
+func (mr *MockServiceMockRecorder) GenerateUploadURLs(ctx, userID, count, contentType, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateUploadURLs", reflect.TypeOf((*MockService)(nil).GenerateUploadURLs), ctx, userID, count, contentType, ttl)
 }
 
 // UploadImage mocks base method.
-func (m *MockAWSService) UploadImage(ctx context.Context, input domain.ImageUpload) (*string, error) {
+func (m *MockService) UploadImage(ctx context.Context, input domain.ImageUpload) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UploadImage", ctx, input)
 	ret0, _ := ret[0].(*string)
@@ -65,13 +82,13 @@ func (m *MockAWSService) UploadImage(ctx context.Context, input domain.ImageUplo
 }
 
 // UploadImage indicates an expected call of UploadImage.
-func (mr *MockAWSServiceMockRecorder) UploadImage(ctx, input any) *gomock.Call {
+func (mr *MockServiceMockRecorder) UploadImage(ctx, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImage", reflect.TypeOf((*MockAWSService)(nil).UploadImage), ctx, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImage", reflect.TypeOf((*MockService)(nil).UploadImage), ctx, input)
 }
 
 // UploadVoiceNote mocks base method.
-func (m *MockAWSService) UploadVoiceNote(ctx context.Context, input domain.VoiceNoteUpload) (*string, error) {
+func (m *MockService) UploadVoiceNote(ctx context.Context, input domain.VoiceNoteUpload) (*string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UploadVoiceNote", ctx, input)
 	ret0, _ := ret[0].(*string)
@@ -80,7 +97,7 @@ func (m *MockAWSService) UploadVoiceNote(ctx context.Context, input domain.Voice
 }
 
 // UploadVoiceNote indicates an expected call of UploadVoiceNote.
-func (mr *MockAWSServiceMockRecorder) UploadVoiceNote(ctx, input any) *gomock.Call {
+func (mr *MockServiceMockRecorder) UploadVoiceNote(ctx, input any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadVoiceNote", reflect.TypeOf((*MockAWSService)(nil).UploadVoiceNote), ctx, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadVoiceNote", reflect.TypeOf((*MockService)(nil).UploadVoiceNote), ctx, input)
 }

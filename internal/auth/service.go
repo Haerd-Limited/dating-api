@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"net"
 	"regexp"
 	"strings"
@@ -20,18 +19,21 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/auth/mapper"
 	authStorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
+	"github.com/Haerd-Limited/dating-api/internal/communication"
+	domain2 "github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/user"
+	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/auth"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=auth
 type Service interface {
+	VerifyCode(ctx context.Context, in domain.VerifyCode) (*domain.AuthResult, error)
 	RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error)
-	Login(ctx context.Context, loginDetails domain.Login) (*domain.AuthTokensAndUserID, error)
-	RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthTokensAndUserID, error)
+	RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthResult, error)
 	RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput domain.RevokeRefreshToken) error
-	GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthTokensAndUserID, error)
+	GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthResult, error)
 }
 
 type authService struct {
@@ -73,21 +75,94 @@ var (
 	ErrRefreshTokenAlreadyRevoked = errors.New("refresh token already revoked")
 )
 
+func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*domain.AuthResult, error) {
+	identifier, err := as.normalizeIdentifier(in.Channel, in.Email, in.Phone)
+	if err != nil {
+		return nil, fmt.Errorf("invalid identifier: %w", err)
+	}
+
+	purpose := strings.ToLower(in.Purpose)
+
+	// 1) Find latest active code
+	rec, err := as.AuthRepo.FindActiveVerificationCode(ctx, in.Channel, identifier, purpose)
+	if err != nil {
+		// do not reveal which part failed
+		return nil, fmt.Errorf("failed to find active code channel=%s identifier=%s purpose=%s: %w",
+			in.Channel, identifier, purpose, err)
+	}
+
+	if rec.Attempts >= rec.MaxAttempts {
+		return nil, errors.New("too many attempts")
+	}
+
+	// 2) Compare HMAC
+	expected := as.hmac(in.Code, identifier, purpose)
+	if !hmac.Equal([]byte(expected), []byte(rec.CodeHash)) {
+		_ = as.AuthRepo.IncrementAttempts(ctx, rec.ID)
+		return nil, errors.New("invalid or expired code")
+	}
+
+	// 3) Consume single-use
+	ok, err := as.AuthRepo.ConsumeVerificationCode(ctx, rec.ID)
+	if err != nil || !ok {
+		return nil, errors.New("invalid or expired code")
+	}
+
+	// 4) Resolve user (create on register / login_or_signup)
+	exists, err := as.UserService.UserExistsByIdentifier(ctx, in.Channel, identifier)
+	if err != nil {
+		return nil, fmt.Errorf("user lookup failed: %w", err)
+	}
+
+	var userDetails *userdomain.User
+
+	switch purpose {
+	case "login":
+		if !exists {
+			return nil, errors.New("invalid or expired code")
+		}
+
+		userDetails, err = as.UserService.AuthenticateUser(ctx, identifier)
+		if err != nil {
+			return nil, fmt.Errorf("auth user: %w", err)
+		}
+	default:
+		return nil, fmt.Errorf("unknown purpose: %s", purpose)
+	}
+
+	toks, err := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
+	if err != nil {
+		return nil, fmt.Errorf("issue tokens: %w", err)
+	}
+
+	return &domain.AuthResult{
+		RefreshToken: toks.RefreshToken,
+		AccessToken:  toks.AccessToken,
+		User: &domain.User{
+			ID:             userDetails.ID,
+			OnboardingStep: domain2.Steps(userDetails.OnboardingStep),
+		},
+	}, nil
+}
+
 func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error) {
 	identifier, err := as.normalizeIdentifier(requestCodeDetails.Channel, requestCodeDetails.Email, requestCodeDetails.Phone)
 	if err != nil {
 		return "", fmt.Errorf("failed to normalize identifier: %w", err)
 	}
+
 	mask := maskIdentifier(requestCodeDetails.Channel, identifier)
 	purpose := strings.ToLower(requestCodeDetails.Purpose)
 
 	// Rate limits (per identifier + per IP), but do not leak to client
 	window := time.Now().Add(-1 * time.Hour)
+
 	n1, _ := as.AuthRepo.CountRecentSends(ctx, requestCodeDetails.Channel, identifier, purpose, window)
 	if n1 >= as.perIDPerHour {
 		// pretend success
 		return mask, fmt.Errorf("rate limit exceeded")
 	}
+
 	n2, _ := as.AuthRepo.CountRecentSendsByIP(ctx, clientIP(requestCodeDetails.IP), window)
 	if n2 >= as.perIPPerHour {
 		return mask, fmt.Errorf("rate limit exceeded")
@@ -100,6 +175,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	}
 
 	shouldSend := false
+
 	switch purpose {
 	case "login":
 		shouldSend = exists
@@ -144,52 +220,23 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 
 	// Deliver
 	var sendErr error
+
 	switch requestCodeDetails.Channel {
 	case "email":
 		sendErr = as.communicationService.SendEmailOTP(identifier, code)
 	case "sms":
 		sendErr = as.communicationService.SendSMSOTP(identifier, code)
 	}
+
 	if sendErr != nil {
 		return mask, fmt.Errorf("failed to send verification code channel=%s identifier=%s: %w",
 			requestCodeDetails.Channel, identifier, sendErr)
 	}
 
 	return mask, nil
-
-}
-func (as *authService) Login(ctx context.Context, loginDetails domain.Login) (*domain.AuthTokensAndUserID, error) {
-	userDetails, err := as.UserService.AuthenticateUser(ctx, loginDetails.PhoneNumber)
-	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate user phone=%s: %w", utils.Redacted(loginDetails.PhoneNumber), err)
-	}
-
-	// Revoke/delete other user associated refresh tokens
-	err = as.AuthRepo.RevokeAllRefreshTokens(ctx, userDetails.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to revoke all refresh tokens userID=%s: %w", userDetails.ID, err)
-	}
-
-	accessToken, err := auth.GenerateAccessToken(userDetails.ID, []byte(as.jwtSecret))
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", userDetails.ID, err)
-	}
-
-	refreshToken := auth.GenerateRefreshToken(userDetails.ID)
-
-	err = as.AuthRepo.InsertRefreshToken(ctx, mapper.ToRefreshTokenEntity(refreshToken))
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert refresh token userID=%s token=%s: %w", refreshToken.UserID, utils.Redacted(refreshToken.Token), err)
-	}
-
-	return &domain.AuthTokensAndUserID{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken.Token,
-		UserID:       userDetails.ID,
-	}, nil
 }
 
-func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthTokensAndUserID, error) {
+func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthResult, error) {
 	refreshToken, err := as.AuthRepo.GetRefreshToken(ctx, refreshInput.RefreshToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get refresh token refreshToken=%s: %w", utils.Redacted(refreshInput.RefreshToken), err)
@@ -222,7 +269,7 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Ref
 		return nil, fmt.Errorf("failed to store new refresh token userID=%s: %w", refreshToken.UserID, err)
 	}
 
-	return &domain.AuthTokensAndUserID{
+	return &domain.AuthResult{
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken.Token,
 	}, nil
@@ -246,7 +293,7 @@ func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshToke
 	return nil
 }
 
-func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthTokensAndUserID, error) {
+func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthResult, error) {
 	accessToken, err := auth.GenerateAccessToken(userID, []byte(as.jwtSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", userID, err)
@@ -259,10 +306,9 @@ func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID
 		return nil, fmt.Errorf("failed to insert refresh token userID=%s: %w", refreshToken.UserID, err)
 	}
 
-	return &domain.AuthTokensAndUserID{
+	return &domain.AuthResult{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken.Token,
-		UserID:       userID,
 	}, nil
 }
 
@@ -272,22 +318,26 @@ func (as *authService) normalizeIdentifier(channel string, email *string, phone 
 		if email == nil || *email == "" {
 			return "", errors.New("email required")
 		}
+
 		e := strings.TrimSpace(strings.ToLower(*email))
 		// cheap sanity
 		if !strings.Contains(e, "@") {
 			return "", errors.New("invalid email")
 		}
+
 		return e, nil
 	case "sms":
 		if phone == nil || *phone == "" {
 			return "", errors.New("phone required")
 		}
+
 		p := strings.TrimSpace(*phone)
 		// quick E.164 check
 		ok, _ := regexp.MatchString(`^\+[1-9]\d{6,14}$`, p)
 		if !ok {
 			return "", errors.New("invalid phone (E.164)")
 		}
+
 		return p, nil
 	default:
 		return "", errors.New("invalid channel")
@@ -295,12 +345,13 @@ func (as *authService) normalizeIdentifier(channel string, email *string, phone 
 }
 
 func (as *authService) hmac(code, identifier, purpose string) string {
-	m := hmac.New(sha256.New, []byte(as.jwtSecret)) //todo: replace with signing secret and add to env file
+	m := hmac.New(sha256.New, []byte(as.jwtSecret)) // todo: replace with signing secret and add to env file
 	m.Write([]byte(identifier))
 	m.Write([]byte{0})
 	m.Write([]byte(purpose))
 	m.Write([]byte{0})
 	m.Write([]byte(code))
+
 	return hex.EncodeToString(m.Sum(nil))
 }
 
@@ -310,18 +361,21 @@ func maskIdentifier(channel, id string) string {
 		if len(parts) != 2 {
 			return "***"
 		}
+
 		local := parts[0]
 		if len(local) > 1 {
 			local = local[:1] + strings.Repeat("*", len(local)-1)
 		} else {
 			local = "*"
 		}
+
 		return local + "@" + parts[1]
 	}
 	// phone: keep country code and last 2
 	if len(id) > 4 {
 		return id[:3] + strings.Repeat("*", len(id)-5) + id[len(id)-2:]
 	}
+
 	return "***"
 }
 
@@ -330,9 +384,11 @@ func clientIP(raw string) string {
 	if idx := strings.IndexByte(raw, ','); idx > 0 {
 		raw = raw[:idx]
 	}
+
 	if idx := strings.LastIndexByte(raw, ':'); idx > 0 {
 		return raw[:idx]
 	}
+
 	return raw
 }
 
@@ -343,6 +399,7 @@ func RandomDigits(n int) (string, error) {
 	}
 
 	const digits = "0123456789"
+
 	b := make([]byte, n)
 
 	_, err := rand.Read(b)
