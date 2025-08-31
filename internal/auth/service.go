@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -117,7 +118,10 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	}
 
 	// Generate a 6-digit numeric code
-	code := randomDigits(6)
+	code, err := RandomDigits(6)
+	if err != nil {
+		return mask, fmt.Errorf("failed to generate code: %w", err)
+	}
 
 	// Hash the code (never store plaintext)
 	hash := as.hmac(code, identifier, purpose)
@@ -332,14 +336,23 @@ func clientIP(raw string) string {
 	return raw
 }
 
-// swap with crypto/rand production version
-func randomDigits(n int) string {
+// RandomDigits generates a string with n random digits (0–9).
+func RandomDigits(n int) (string, error) {
+	if n <= 0 {
+		return "", fmt.Errorf("n must be > 0")
+	}
+
 	const digits = "0123456789"
 	b := make([]byte, n)
-	// NOTE: use crypto/rand for production; showing math/rand for brevity
-	for i := range b {
-		b[i] = digits[time.Now().UnixNano()%10]
-		time.Sleep(time.Nanosecond) // avoid same nano in tight loop (demo only)
+
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random digits: %w", err)
 	}
-	return string(b)
+
+	for i := 0; i < n; i++ {
+		b[i] = digits[int(b[i])%10]
+	}
+
+	return string(b), nil
 }
