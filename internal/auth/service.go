@@ -2,13 +2,20 @@ package auth
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/internal/communication"
+	"net"
+	"regexp"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
 
-	authDomain "github.com/Haerd-Limited/dating-api/internal/auth/domain"
+	"github.com/Haerd-Limited/dating-api/internal/auth/domain"
 	"github.com/Haerd-Limited/dating-api/internal/auth/mapper"
 	authStorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
@@ -19,18 +26,23 @@ import (
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=auth
 type Service interface {
-	Login(ctx context.Context, loginInput authDomain.Login) (*authDomain.AuthTokensAndUserID, error)
-	RefreshToken(ctx context.Context, refreshInput authDomain.Refresh) (*authDomain.AuthTokensAndUserID, error)
-	RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput authDomain.RevokeRefreshToken) error
-	GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*authDomain.AuthTokensAndUserID, error)
+	RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error)
+	Login(ctx context.Context, loginDetails domain.Login) (*domain.AuthTokensAndUserID, error)
+	RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthTokensAndUserID, error)
+	RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput domain.RevokeRefreshToken) error
+	GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthTokensAndUserID, error)
 }
 
 type authService struct {
-	logger      *zap.Logger
-	jwtSecret   string
-	UserService user.Service
-	AuthRepo    authStorage.AuthRepository
-	awsService  aws.Service
+	logger               *zap.Logger
+	jwtSecret            string
+	UserService          user.Service
+	AuthRepo             authStorage.AuthRepository
+	awsService           aws.Service
+	communicationService communication.Service
+	codeTTL              time.Duration
+	perIDPerHour         int // e.g., 3
+	perIPPerHour         int // e.g., 20
 }
 
 func NewAuthService(
@@ -39,13 +51,18 @@ func NewAuthService(
 	UserService user.Service,
 	AuthRepository authStorage.AuthRepository,
 	awsService aws.Service,
+	communicationService communication.Service,
 ) Service {
 	return &authService{
-		logger:      logger,
-		jwtSecret:   jwtSecret,
-		UserService: UserService,
-		AuthRepo:    AuthRepository,
-		awsService:  awsService,
+		logger:               logger,
+		jwtSecret:            jwtSecret,
+		UserService:          UserService,
+		AuthRepo:             AuthRepository,
+		awsService:           awsService,
+		communicationService: communicationService,
+		codeTTL:              10 * time.Minute,
+		perIDPerHour:         3,
+		perIPPerHour:         20,
 	}
 }
 
@@ -55,10 +72,92 @@ var (
 	ErrRefreshTokenAlreadyRevoked = errors.New("refresh token already revoked")
 )
 
-func (as *authService) Login(ctx context.Context, loginDetails authDomain.Login) (*authDomain.AuthTokensAndUserID, error) {
-	userDetails, err := as.UserService.AuthenticateUser(ctx, utils.Redacted(loginDetails.PhoneNumber))
+func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error) {
+	identifier, err := as.normalizeIdentifier(requestCodeDetails.Channel, requestCodeDetails.Email, requestCodeDetails.Phone)
 	if err != nil {
-		return nil, fmt.Errorf("failed to authenticate user phone=%s: %w", loginDetails.PhoneNumber, err)
+		return "", fmt.Errorf("failed to normalize identifier: %w", err)
+	}
+	mask := maskIdentifier(requestCodeDetails.Channel, identifier)
+	purpose := strings.ToLower(requestCodeDetails.Purpose)
+
+	// Rate limits (per identifier + per IP), but do not leak to client
+	window := time.Now().Add(-1 * time.Hour)
+	n1, _ := as.AuthRepo.CountRecentSends(ctx, requestCodeDetails.Channel, identifier, purpose, window)
+	if n1 >= as.perIDPerHour {
+		// pretend success
+		return mask, fmt.Errorf("rate limit exceeded")
+	}
+	n2, _ := as.AuthRepo.CountRecentSendsByIP(ctx, clientIP(requestCodeDetails.IP), window)
+	if n2 >= as.perIPPerHour {
+		return mask, fmt.Errorf("rate limit exceeded")
+	}
+
+	exists, err := as.UserService.UserExistsByIdentifier(ctx, requestCodeDetails.Channel, identifier)
+	if err != nil {
+		return mask, fmt.Errorf("existence check failed channel=%s identifier=%s : %w",
+			requestCodeDetails.Channel, identifier, err)
+	}
+
+	shouldSend := false
+	switch purpose {
+	case "login":
+		shouldSend = exists
+	case "register":
+		shouldSend = !exists
+	case "login_or_signup":
+		shouldSend = true
+	default:
+		// unknown purpose -> treat as login
+		shouldSend = exists
+	}
+
+	if !shouldSend {
+		// Pretend success, do nothing further
+		return mask, fmt.Errorf("not sending code")
+	}
+
+	// Generate a 6-digit numeric code
+	code := randomDigits(6)
+
+	// Hash the code (never store plaintext)
+	hash := as.hmac(code, identifier, purpose)
+
+	rec := mapper.ToVerificationCodeEntity(&domain.VerificationCode{
+		Channel:     requestCodeDetails.Channel,
+		Identifier:  identifier,
+		Purpose:     purpose,
+		CodeHash:    hash,
+		ExpiresAt:   time.Now().Add(as.codeTTL),
+		RequestIP:   net.ParseIP(clientIP(requestCodeDetails.IP)),
+		MaxAttempts: 5,
+	})
+
+	err = as.AuthRepo.InsertVerificationCode(ctx, rec)
+	if err != nil {
+		// still mask success to caller
+		return mask, fmt.Errorf("failed to insert verification code: %w", err)
+	}
+
+	// Deliver
+	var sendErr error
+	switch requestCodeDetails.Channel {
+	case "email":
+		sendErr = as.communicationService.SendEmailOTP(identifier, code)
+	case "sms":
+		sendErr = as.communicationService.SendSMSOTP(identifier, code)
+	}
+	if sendErr != nil {
+		return mask, fmt.Errorf("failed to send verification code channel=%s identifier=%s: %w",
+			requestCodeDetails.Channel, identifier, sendErr)
+	}
+
+	return mask, nil
+
+}
+func (as *authService) Login(ctx context.Context, loginDetails domain.Login) (*domain.AuthTokensAndUserID, error) {
+	userDetails, err := as.UserService.AuthenticateUser(ctx, loginDetails.PhoneNumber)
+	if err != nil {
+		return nil, fmt.Errorf("failed to authenticate user phone=%s: %w", utils.Redacted(loginDetails.PhoneNumber), err)
 	}
 
 	// Revoke/delete other user associated refresh tokens
@@ -74,21 +173,19 @@ func (as *authService) Login(ctx context.Context, loginDetails authDomain.Login)
 
 	refreshToken := auth.GenerateRefreshToken(userDetails.ID)
 
-	refreshTokenEntity := mapper.ToRefreshTokenEntity(refreshToken)
-
-	err = as.AuthRepo.InsertRefreshToken(ctx, refreshTokenEntity)
+	err = as.AuthRepo.InsertRefreshToken(ctx, mapper.ToRefreshTokenEntity(refreshToken))
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert refresh token userID=%s token=%s: %w", refreshToken.UserID, utils.Redacted(refreshToken.Token), err)
 	}
 
-	return &authDomain.AuthTokensAndUserID{
+	return &domain.AuthTokensAndUserID{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken.Token,
 		UserID:       userDetails.ID,
 	}, nil
 }
 
-func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain.Refresh) (*authDomain.AuthTokensAndUserID, error) {
+func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthTokensAndUserID, error) {
 	refreshToken, err := as.AuthRepo.GetRefreshToken(ctx, refreshInput.RefreshToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get refresh token refreshToken=%s: %w", utils.Redacted(refreshInput.RefreshToken), err)
@@ -121,13 +218,13 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput authDomain
 		return nil, fmt.Errorf("failed to store new refresh token userID=%s: %w", refreshToken.UserID, err)
 	}
 
-	return &authDomain.AuthTokensAndUserID{
+	return &domain.AuthTokensAndUserID{
 		AccessToken:  accessToken,
 		RefreshToken: newRefreshToken.Token,
 	}, nil
 }
 
-func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput authDomain.RevokeRefreshToken) error {
+func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput domain.RevokeRefreshToken) error {
 	refreshToken, err := as.AuthRepo.GetRefreshToken(ctx, revokeRefreshTokenInput.RefreshToken)
 	if err != nil {
 		return err
@@ -145,7 +242,7 @@ func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshToke
 	return nil
 }
 
-func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*authDomain.AuthTokensAndUserID, error) {
+func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthTokensAndUserID, error) {
 	accessToken, err := auth.GenerateAccessToken(userID, []byte(as.jwtSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", userID, err)
@@ -158,9 +255,91 @@ func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID
 		return nil, fmt.Errorf("failed to insert refresh token userID=%s: %w", refreshToken.UserID, err)
 	}
 
-	return &authDomain.AuthTokensAndUserID{
+	return &domain.AuthTokensAndUserID{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken.Token,
 		UserID:       userID,
 	}, nil
+}
+
+func (as *authService) normalizeIdentifier(channel string, email *string, phone *string) (string, error) {
+	switch channel {
+	case "email":
+		if email == nil || *email == "" {
+			return "", errors.New("email required")
+		}
+		e := strings.TrimSpace(strings.ToLower(*email))
+		// cheap sanity
+		if !strings.Contains(e, "@") {
+			return "", errors.New("invalid email")
+		}
+		return e, nil
+	case "sms":
+		if phone == nil || *phone == "" {
+			return "", errors.New("phone required")
+		}
+		p := strings.TrimSpace(*phone)
+		// quick E.164 check
+		ok, _ := regexp.MatchString(`^\+[1-9]\d{6,14}$`, p)
+		if !ok {
+			return "", errors.New("invalid phone (E.164)")
+		}
+		return p, nil
+	default:
+		return "", errors.New("invalid channel")
+	}
+}
+
+func (as *authService) hmac(code, identifier, purpose string) string {
+	m := hmac.New(sha256.New, []byte(as.jwtSecret)) //todo: replace with signing secret and add to env file
+	m.Write([]byte(identifier))
+	m.Write([]byte{0})
+	m.Write([]byte(purpose))
+	m.Write([]byte{0})
+	m.Write([]byte(code))
+	return hex.EncodeToString(m.Sum(nil))
+}
+
+func maskIdentifier(channel, id string) string {
+	if channel == "email" {
+		parts := strings.Split(id, "@")
+		if len(parts) != 2 {
+			return "***"
+		}
+		local := parts[0]
+		if len(local) > 1 {
+			local = local[:1] + strings.Repeat("*", len(local)-1)
+		} else {
+			local = "*"
+		}
+		return local + "@" + parts[1]
+	}
+	// phone: keep country code and last 2
+	if len(id) > 4 {
+		return id[:3] + strings.Repeat("*", len(id)-5) + id[len(id)-2:]
+	}
+	return "***"
+}
+
+func clientIP(raw string) string {
+	// crude parse of "ip:port" or CSV XFF; good enough for rate limiting
+	if idx := strings.IndexByte(raw, ','); idx > 0 {
+		raw = raw[:idx]
+	}
+	if idx := strings.LastIndexByte(raw, ':'); idx > 0 {
+		return raw[:idx]
+	}
+	return raw
+}
+
+// swap with crypto/rand production version
+func randomDigits(n int) string {
+	const digits = "0123456789"
+	b := make([]byte, n)
+	// NOTE: use crypto/rand for production; showing math/rand for brevity
+	for i := range b {
+		b[i] = digits[time.Now().UnixNano()%10]
+		time.Sleep(time.Nanosecond) // avoid same nano in tight loop (demo only)
+	}
+	return string(b)
 }

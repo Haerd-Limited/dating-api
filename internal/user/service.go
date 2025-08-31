@@ -22,6 +22,7 @@ type Service interface {
 	GetUser(ctx context.Context, id string) (*domain.User, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
+	UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error)
 }
 
 type userService struct {
@@ -112,4 +113,18 @@ func (us *userService) GetUsersByIDs(ctx context.Context, ids []string) ([]*doma
 
 func (us *userService) UpdateUser(ctx context.Context, user *domain.User) error {
 	return us.userRepo.UpdateUser(ctx, mapper.ToUserEntity(*user))
+}
+
+func (us *userService) UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error) {
+	switch channel {
+	case "sms":
+		user, err := us.userRepo.GetByPhoneNumber(ctx, identifier)
+		if err != nil {
+			return false, err
+		}
+		return user != nil, nil
+		//todo: implement email
+	default:
+		return false, fmt.Errorf("unsupported channel: %s", channel)
+	}
 }

@@ -23,6 +23,7 @@ import (
 
 type Handler interface {
 	Login() http.HandlerFunc
+	RequestCode() http.HandlerFunc
 	Refresh() http.HandlerFunc
 	Logout() http.HandlerFunc
 }
@@ -46,6 +47,52 @@ const (
 	InvalidLoginInputMsg   = "Please provide both your account's email and password."
 	InvalidRefreshTokenMsg = "Please provide your refresh token."
 )
+
+func (h *handler) RequestCode() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		var req dto.RequestCodeRequest
+
+		// Validates and decodes request
+		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
+			h.logger.Sugar().Errorw("failed to decode and validate request code request body", "context", ctx, "error", err)
+
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				mapper.ToAuthResponse(
+					nil,
+					InvalidLoginInputMsg,
+				))
+
+			return
+		}
+
+		ip := r.Header.Get("X-Forwarded-For")
+		if ip == "" {
+			ip = r.RemoteAddr
+		}
+
+		sentTo, err := h.authService.RequestCode(ctx, mapper.MapRequestCodeRequestToDomain(req, ip))
+		if err != nil {
+			switch {
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // don't write a response
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
+				return
+			default:
+				// Anti-enumeration: still 200 OK, but log server-side
+				h.logger.Warn("request-code failed", zap.Error(err))
+
+			}
+		}
+
+		render.Json(w, http.StatusOK, mapper.ToRequestCodeResponse(sentTo))
+	}
+}
 
 func (h *handler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

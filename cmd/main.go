@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"log"
 	"net/http"
 	"os"
@@ -82,8 +83,14 @@ func main() {
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)
 
+	communicationService := communication.NewService(
+		cfg.TwilioAccountSID,
+		cfg.TwilioAuthToken,
+		cfg.TwilioNumber,
+	)
+
 	authRepo := authstorage.NewAuthRepository(db)
-	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService)
+	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService)
 
 	onboardingRepo := onboardingstorage.NewOnboardingRepository(db)
 	onboardingService := onboarding.NewOnboardingService(logger, onboardingRepo, userService, authService, awsService)

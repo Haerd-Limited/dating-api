@@ -35,6 +35,7 @@ func TestParent(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilities)
 	t.Run("UserProfiles", testUserProfiles)
 	t.Run("Users", testUsers)
+	t.Run("VerificationCodes", testVerificationCodes)
 	t.Run("VoicePrompts", testVoicePrompts)
 }
 
@@ -62,6 +63,7 @@ func TestDelete(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesDelete)
 	t.Run("UserProfiles", testUserProfilesDelete)
 	t.Run("Users", testUsersDelete)
+	t.Run("VerificationCodes", testVerificationCodesDelete)
 	t.Run("VoicePrompts", testVoicePromptsDelete)
 }
 
@@ -89,6 +91,7 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesQueryDeleteAll)
 	t.Run("UserProfiles", testUserProfilesQueryDeleteAll)
 	t.Run("Users", testUsersQueryDeleteAll)
+	t.Run("VerificationCodes", testVerificationCodesQueryDeleteAll)
 	t.Run("VoicePrompts", testVoicePromptsQueryDeleteAll)
 }
 
@@ -116,6 +119,7 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesSliceDeleteAll)
 	t.Run("UserProfiles", testUserProfilesSliceDeleteAll)
 	t.Run("Users", testUsersSliceDeleteAll)
+	t.Run("VerificationCodes", testVerificationCodesSliceDeleteAll)
 	t.Run("VoicePrompts", testVoicePromptsSliceDeleteAll)
 }
 
@@ -143,6 +147,7 @@ func TestExists(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesExists)
 	t.Run("UserProfiles", testUserProfilesExists)
 	t.Run("Users", testUsersExists)
+	t.Run("VerificationCodes", testVerificationCodesExists)
 	t.Run("VoicePrompts", testVoicePromptsExists)
 }
 
@@ -170,6 +175,7 @@ func TestFind(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesFind)
 	t.Run("UserProfiles", testUserProfilesFind)
 	t.Run("Users", testUsersFind)
+	t.Run("VerificationCodes", testVerificationCodesFind)
 	t.Run("VoicePrompts", testVoicePromptsFind)
 }
 
@@ -197,6 +203,7 @@ func TestBind(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesBind)
 	t.Run("UserProfiles", testUserProfilesBind)
 	t.Run("Users", testUsersBind)
+	t.Run("VerificationCodes", testVerificationCodesBind)
 	t.Run("VoicePrompts", testVoicePromptsBind)
 }
 
@@ -224,6 +231,7 @@ func TestOne(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesOne)
 	t.Run("UserProfiles", testUserProfilesOne)
 	t.Run("Users", testUsersOne)
+	t.Run("VerificationCodes", testVerificationCodesOne)
 	t.Run("VoicePrompts", testVoicePromptsOne)
 }
 
@@ -251,6 +259,7 @@ func TestAll(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesAll)
 	t.Run("UserProfiles", testUserProfilesAll)
 	t.Run("Users", testUsersAll)
+	t.Run("VerificationCodes", testVerificationCodesAll)
 	t.Run("VoicePrompts", testVoicePromptsAll)
 }
 
@@ -278,6 +287,7 @@ func TestCount(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesCount)
 	t.Run("UserProfiles", testUserProfilesCount)
 	t.Run("Users", testUsersCount)
+	t.Run("VerificationCodes", testVerificationCodesCount)
 	t.Run("VoicePrompts", testVoicePromptsCount)
 }
 
@@ -305,6 +315,7 @@ func TestHooks(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesHooks)
 	t.Run("UserProfiles", testUserProfilesHooks)
 	t.Run("Users", testUsersHooks)
+	t.Run("VerificationCodes", testVerificationCodesHooks)
 	t.Run("VoicePrompts", testVoicePromptsHooks)
 }
 
@@ -355,6 +366,8 @@ func TestInsert(t *testing.T) {
 	t.Run("UserProfiles", testUserProfilesInsertWhitelist)
 	t.Run("Users", testUsersInsert)
 	t.Run("Users", testUsersInsertWhitelist)
+	t.Run("VerificationCodes", testVerificationCodesInsert)
+	t.Run("VerificationCodes", testVerificationCodesInsertWhitelist)
 	t.Run("VoicePrompts", testVoicePromptsInsert)
 	t.Run("VoicePrompts", testVoicePromptsInsertWhitelist)
 }
@@ -383,6 +396,7 @@ func TestReload(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesReload)
 	t.Run("UserProfiles", testUserProfilesReload)
 	t.Run("Users", testUsersReload)
+	t.Run("VerificationCodes", testVerificationCodesReload)
 	t.Run("VoicePrompts", testVoicePromptsReload)
 }
 
@@ -410,6 +424,7 @@ func TestReloadAll(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesReloadAll)
 	t.Run("UserProfiles", testUserProfilesReloadAll)
 	t.Run("Users", testUsersReloadAll)
+	t.Run("VerificationCodes", testVerificationCodesReloadAll)
 	t.Run("VoicePrompts", testVoicePromptsReloadAll)
 }
 
@@ -437,6 +452,7 @@ func TestSelect(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesSelect)
 	t.Run("UserProfiles", testUserProfilesSelect)
 	t.Run("Users", testUsersSelect)
+	t.Run("VerificationCodes", testVerificationCodesSelect)
 	t.Run("VoicePrompts", testVoicePromptsSelect)
 }
 
@@ -464,6 +480,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesUpdate)
 	t.Run("UserProfiles", testUserProfilesUpdate)
 	t.Run("Users", testUsersUpdate)
+	t.Run("VerificationCodes", testVerificationCodesUpdate)
 	t.Run("VoicePrompts", testVoicePromptsUpdate)
 }
 
@@ -491,5 +508,6 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesSliceUpdateAll)
 	t.Run("UserProfiles", testUserProfilesSliceUpdateAll)
 	t.Run("Users", testUsersSliceUpdateAll)
+	t.Run("VerificationCodes", testVerificationCodesSliceUpdateAll)
 	t.Run("VoicePrompts", testVoicePromptsSliceUpdateAll)
 }

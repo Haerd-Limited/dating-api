@@ -19,3 +19,9 @@ func ToAuthResponse(authResult *authDomain.AuthTokensAndUserID, message string) 
 		UserID:       authResult.UserID,
 	}
 }
+
+func ToRequestCodeResponse(sentTo string) dto.RequestCodeResponse {
+	return dto.RequestCodeResponse{
+		SentTo: sentTo,
+	}
+}

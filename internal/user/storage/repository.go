@@ -101,7 +101,7 @@ func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*st
 func (r *userRepository) GetByPhoneNumber(ctx context.Context, number string) (*entity.User, error) {
 	user, err := entity.Users(entity.UserWhere.Phone.EQ(null.StringFrom(number))).One(ctx, r.db)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user by phone number %s: %w", number, err)
+		return nil, err
 	}
 
 	return user, nil

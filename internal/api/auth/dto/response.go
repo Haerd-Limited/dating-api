@@ -6,3 +6,8 @@ type AuthResponse struct { // TOdo: uniffy with register response and mapper
 	RefreshToken string `json:"refresh_token,omitempty"`
 	UserID       string `json:"user_id,omitempty"`
 }
+
+type RequestCodeResponse struct {
+	// Return generic OK to avoid user enumeration, plus optional masking hint
+	SentTo string `json:"sent_to"` // e.g., "e***@example.com" or "+44******123"
+}
