@@ -3,7 +3,9 @@ package auth
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
+	"strings"
 
 	"go.uber.org/zap"
 
@@ -69,10 +71,7 @@ func (h *handler) RequestCode() http.HandlerFunc {
 			return
 		}
 
-		ip := r.Header.Get("X-Forwarded-For")
-		if ip == "" {
-			ip = r.RemoteAddr
-		}
+		ip := requestIP(r)
 
 		sentTo, err := h.authService.RequestCode(ctx, mapper.MapRequestCodeRequestToDomain(req, ip))
 		if err != nil {
@@ -230,6 +229,20 @@ func (h *handler) Logout() http.HandlerFunc {
 
 		render.Json(w, http.StatusOK, commonMappers.ToSimpleErrorResponse("Logged out successfully"))
 	}
+}
+
+// prefer header, then remote addr; strip port & brackets; take the first XFF hop
+func requestIP(r *http.Request) string {
+	xff := r.Header.Get("X-Forwarded-For")
+	if xff != "" {
+		parts := strings.Split(xff, ",")
+		return strings.TrimSpace(parts[0])
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil { // if it's not host:port, fall back
+		host = r.RemoteAddr
+	}
+	return strings.Trim(host, "[]") // remove IPv6 brackets
 }
 
 const (

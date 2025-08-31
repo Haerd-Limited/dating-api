@@ -24,13 +24,20 @@ func ToVerificationCodeEntity(vc *domain.VerificationCode) *entity.VerificationC
 		return nil
 	}
 
-	return &entity.VerificationCode{
+	e := &entity.VerificationCode{
 		Channel:     vc.Channel,
 		Identifier:  vc.Identifier,
 		Purpose:     vc.Purpose,
 		CodeHash:    vc.CodeHash,
 		ExpiresAt:   vc.ExpiresAt,
 		MaxAttempts: vc.MaxAttempts,
-		RequestIP:   null.StringFrom(vc.RequestIP.String()),
 	}
+
+	if vc.RequestIP != nil {
+		e.RequestIP = null.StringFrom(vc.RequestIP.String())
+	} else {
+		e.RequestIP = null.String{} // represents SQL NULL
+	}
+
+	return e
 }
