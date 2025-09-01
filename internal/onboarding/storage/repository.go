@@ -8,6 +8,8 @@ import (
 
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
+	"github.com/friendsofgo/errors"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
@@ -15,6 +17,8 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type OnboardingRepository interface {
+	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
+	UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error
 	InsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
 	InsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
 	InsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
@@ -39,6 +43,33 @@ func NewOnboardingRepository(db *sqlx.DB) OnboardingRepository {
 	return &onboardingRepository{
 		db: db,
 	}
+}
+
+func (or *onboardingRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error {
+	err := theme.Upsert(ctx, or.db, true, []string{"user_id"},
+		boil.Whitelist("base_hex", "palette", "updated_at"),
+		boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (or *onboardingRepository) GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error) {
+	ut, err := entity.UserThemes(
+		entity.UserThemeWhere.UserID.EQ(userID),
+		qm.Limit(1),
+	).One(ctx, or.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to fetch user theme: %w", err)
+	}
+
+	return ut, nil
 }
 
 func (or *onboardingRepository) GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error) {

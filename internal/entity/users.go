@@ -103,6 +103,7 @@ var UserWhere = struct {
 var UserRels = struct {
 	UserPreference          string
 	UserProfile             string
+	UserTheme               string
 	DeviceTokens            string
 	UserAMatches            string
 	UserBMatches            string
@@ -116,6 +117,7 @@ var UserRels = struct {
 }{
 	UserPreference:          "UserPreference",
 	UserProfile:             "UserProfile",
+	UserTheme:               "UserTheme",
 	DeviceTokens:            "DeviceTokens",
 	UserAMatches:            "UserAMatches",
 	UserBMatches:            "UserBMatches",
@@ -132,6 +134,7 @@ var UserRels = struct {
 type userR struct {
 	UserPreference          *UserPreference            `boil:"UserPreference" json:"UserPreference" toml:"UserPreference" yaml:"UserPreference"`
 	UserProfile             *UserProfile               `boil:"UserProfile" json:"UserProfile" toml:"UserProfile" yaml:"UserProfile"`
+	UserTheme               *UserTheme                 `boil:"UserTheme" json:"UserTheme" toml:"UserTheme" yaml:"UserTheme"`
 	DeviceTokens            DeviceTokenSlice           `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
 	UserAMatches            MatchSlice                 `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
 	UserBMatches            MatchSlice                 `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
@@ -179,6 +182,22 @@ func (r *userR) GetUserProfile() *UserProfile {
 	}
 
 	return r.UserProfile
+}
+
+func (o *User) GetUserTheme() *UserTheme {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetUserTheme()
+}
+
+func (r *userR) GetUserTheme() *UserTheme {
+	if r == nil {
+		return nil
+	}
+
+	return r.UserTheme
 }
 
 func (o *User) GetDeviceTokens() DeviceTokenSlice {
@@ -679,6 +698,17 @@ func (o *User) UserProfile(mods ...qm.QueryMod) userProfileQuery {
 	return UserProfiles(queryMods...)
 }
 
+// UserTheme pointed to by the foreign key.
+func (o *User) UserTheme(mods ...qm.QueryMod) userThemeQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"user_id\" = ?", o.ID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return UserThemes(queryMods...)
+}
+
 // DeviceTokens retrieves all the device_token's DeviceTokens with an executor.
 func (o *User) DeviceTokens(mods ...qm.QueryMod) deviceTokenQuery {
 	var queryMods []qm.QueryMod
@@ -1045,6 +1075,123 @@ func (userL) LoadUserProfile(ctx context.Context, e boil.ContextExecutor, singul
 				local.R.UserProfile = foreign
 				if foreign.R == nil {
 					foreign.R = &userProfileR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadUserTheme allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (userL) LoadUserTheme(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_theme`),
+		qm.WhereIn(`user_theme.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load UserTheme")
+	}
+
+	var resultSlice []*UserTheme
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice UserTheme")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for user_theme")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_theme")
+	}
+
+	if len(userThemeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.UserTheme = foreign
+		if foreign.R == nil {
+			foreign.R = &userThemeR{}
+		}
+		foreign.R.User = object
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.UserID {
+				local.R.UserTheme = foreign
+				if foreign.R == nil {
+					foreign.R = &userThemeR{}
 				}
 				foreign.R.User = local
 				break
@@ -2311,6 +2458,56 @@ func (o *User) SetUserProfile(ctx context.Context, exec boil.ContextExecutor, in
 
 	if related.R == nil {
 		related.R = &userProfileR{
+			User: o,
+		}
+	} else {
+		related.R.User = o
+	}
+	return nil
+}
+
+// SetUserTheme of the user to the related item.
+// Sets o.R.UserTheme to related.
+// Adds o to related.R.User.
+func (o *User) SetUserTheme(ctx context.Context, exec boil.ContextExecutor, insert bool, related *UserTheme) error {
+	var err error
+
+	if insert {
+		related.UserID = o.ID
+
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE \"user_theme\" SET %s WHERE %s",
+			strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+			strmangle.WhereClause("\"", "\"", 2, userThemePrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.UserID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.UserID = o.ID
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			UserTheme: related,
+		}
+	} else {
+		o.R.UserTheme = related
+	}
+
+	if related.R == nil {
+		related.R = &userThemeR{
 			User: o,
 		}
 	} else {

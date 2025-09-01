@@ -30,6 +30,7 @@ func TestToOne(t *testing.T) {
 	t.Run("UserProfileToReligionUsingReligion", testUserProfileToOneReligionUsingReligion)
 	t.Run("UserProfileToHabitUsingSmoking", testUserProfileToOneHabitUsingSmoking)
 	t.Run("UserProfileToUserUsingUser", testUserProfileToOneUserUsingUser)
+	t.Run("UserThemeToUserUsingUser", testUserThemeToOneUserUsingUser)
 	t.Run("VoicePromptToPromptTypeUsingVoicePromptPromptType", testVoicePromptToOnePromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingUser", testVoicePromptToOneUserUsingUser)
 }
@@ -39,6 +40,7 @@ func TestToOne(t *testing.T) {
 func TestOneToOne(t *testing.T) {
 	t.Run("UserToUserPreferenceUsingUserPreference", testUserOneToOneUserPreferenceUsingUserPreference)
 	t.Run("UserToUserProfileUsingUserProfile", testUserOneToOneUserProfileUsingUserProfile)
+	t.Run("UserToUserThemeUsingUserTheme", testUserOneToOneUserThemeUsingUserTheme)
 }
 
 // TestToMany tests cannot be run in parallel
@@ -97,6 +99,7 @@ func TestToOneSet(t *testing.T) {
 	t.Run("UserProfileToReligionUsingUserProfiles", testUserProfileToOneSetOpReligionUsingReligion)
 	t.Run("UserProfileToHabitUsingSmokingUserProfiles", testUserProfileToOneSetOpHabitUsingSmoking)
 	t.Run("UserProfileToUserUsingUserProfile", testUserProfileToOneSetOpUserUsingUser)
+	t.Run("UserThemeToUserUsingUserTheme", testUserThemeToOneSetOpUserUsingUser)
 	t.Run("VoicePromptToPromptTypeUsingVoicePrompts", testVoicePromptToOneSetOpPromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingVoicePrompts", testVoicePromptToOneSetOpUserUsingUser)
 }
@@ -126,6 +129,7 @@ func TestToOneRemove(t *testing.T) {
 func TestOneToOneSet(t *testing.T) {
 	t.Run("UserToUserPreferenceUsingUserPreference", testUserOneToOneSetOpUserPreferenceUsingUserPreference)
 	t.Run("UserToUserProfileUsingUserProfile", testUserOneToOneSetOpUserProfileUsingUserProfile)
+	t.Run("UserToUserThemeUsingUserTheme", testUserOneToOneSetOpUserThemeUsingUserTheme)
 }
 
 // TestOneToOneRemove tests cannot be run in parallel

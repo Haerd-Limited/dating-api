@@ -204,6 +204,7 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Pr
 	return domain.Prompts{
 		UserID:          userID,
 		UploadedPrompts: voicePrompts,
+		BaseHex:         req.ProfileColour,
 	}, nil
 }
 

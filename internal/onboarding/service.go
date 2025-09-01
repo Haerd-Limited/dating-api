@@ -2,6 +2,7 @@ package onboarding
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -10,11 +11,13 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
+	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
 	onboardingstorage "github.com/Haerd-Limited/dating-api/internal/onboarding/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
 )
 
 type Service interface {
@@ -618,6 +621,26 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 	err = os.repo.InsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToEntity(uploadedPrompts))
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to insert user prompts: %w", err)
+	}
+
+	// generate colours
+	palette, err := theme.GeneratePalette9(uploadedPrompts.BaseHex)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to generate palette: %w", err)
+	}
+
+	palJSON, err := json.Marshal(palette)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to marshal palette: %w", err)
+	}
+	// store colours.
+	err = os.repo.UpsertUserTheme(ctx, entity.UserTheme{
+		UserID:  uploadedPrompts.UserID,
+		BaseHex: uploadedPrompts.BaseHex,
+		Palette: palJSON,
+	})
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to upsert user theme: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID, StepForPrompts)

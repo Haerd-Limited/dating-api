@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  create_verification_codes sql
+	@cd ./migrations && goose create  create_themes_table sql
 .PHONY: migrate-create
 
 

@@ -28,6 +28,7 @@ var TableNames = struct {
 	UserPreferences       string
 	UserProfileVisibility string
 	UserProfiles          string
+	UserTheme             string
 	Users                 string
 	VerificationCodes     string
 	VoicePrompts          string
@@ -56,6 +57,7 @@ var TableNames = struct {
 	UserPreferences:       "user_preferences",
 	UserProfileVisibility: "user_profile_visibility",
 	UserProfiles:          "user_profiles",
+	UserTheme:             "user_theme",
 	Users:                 "users",
 	VerificationCodes:     "verification_codes",
 	VoicePrompts:          "voice_prompts",

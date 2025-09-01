@@ -5,6 +5,7 @@ import "time"
 type Prompts struct {
 	UploadedPrompts []VoicePrompt
 	UserID          string
+	BaseHex         string
 }
 
 type StepResult struct {

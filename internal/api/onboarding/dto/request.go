@@ -5,6 +5,7 @@ import (
 )
 
 type PromptsRequest struct {
+	ProfileColour   string        `json:"profile_colour" validate:"required"`
 	UploadedPrompts []VoicePrompt `json:"uploaded_prompts" validate:"required,dive"`
 }
 
