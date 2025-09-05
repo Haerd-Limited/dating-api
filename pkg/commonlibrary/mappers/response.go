@@ -9,3 +9,13 @@ func ToSimpleErrorResponse(errMsg string) *SimpleErrorResponse {
 		Error: errMsg,
 	}
 }
+
+type SimpleMessageResponse struct {
+	Message string `json:"message"`
+}
+
+func ToSimpleMessageResponse(msg string) *SimpleMessageResponse {
+	return &SimpleMessageResponse{
+		Message: msg,
+	}
+}

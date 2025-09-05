@@ -222,7 +222,7 @@ func (h *handler) Logout() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusOK, commonMappers.ToSimpleErrorResponse("Logged out successfully"))
+		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Logged out successfully"))
 	}
 }
 
