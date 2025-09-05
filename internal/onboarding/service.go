@@ -426,7 +426,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 			Key:       url.Key,
 			UploadUrl: url.URL,
 			Headers:   url.Headers,
-			MaxBytes:  5242880,
+			MaxBytes:  maxUploadBytes,
 		})
 	}
 
@@ -757,6 +757,7 @@ func (os *onboardingService) getUserProfile(ctx context.Context, userID string) 
 	return mapper.MapUserProfileToDomain(userProfileEntity), nil
 }
 
+// ensureStep makes sure that the step being called is the correct step to complete for the provided user. This prevents user's skipping steps in the onboarding process.
 func (os *onboardingService) ensureStep(ctx context.Context, userID string, expected domain.Steps) error {
 	u, err := os.userService.GetUser(ctx, userID)
 	if err != nil {
