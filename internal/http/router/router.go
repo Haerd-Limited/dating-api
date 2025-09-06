@@ -13,6 +13,7 @@ import (
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
+	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internaluser "github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
@@ -23,6 +24,7 @@ func New(
 	authService internalauth.Service,
 	userService internaluser.Service,
 	onboardingService internalonboarding.Service,
+	profileService internalprofile.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -32,7 +34,7 @@ func New(
 	router.Use(middleware.Recoverer) // recovers from panics
 
 	authHandler := auth.NewAuthHandler(logger, authService)
-	userHandler := user.NewUserHandler(logger, userService)
+	userHandler := user.NewUserHandler(logger, userService, profileService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
@@ -85,6 +87,7 @@ func New(
 
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {
+					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", userHandler.MyProfile()) // full profile (with visibility flags)
 					// TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
 				})

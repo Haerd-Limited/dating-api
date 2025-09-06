@@ -22,8 +22,10 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"github.com/Haerd-Limited/dating-api/internal/config"
 	"github.com/Haerd-Limited/dating-api/internal/http/router"
+	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
-	onboardingstorage "github.com/Haerd-Limited/dating-api/internal/onboarding/storage"
+	"github.com/Haerd-Limited/dating-api/internal/profile"
+	storage2 "github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commondb "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/db"
@@ -80,6 +82,11 @@ func main() {
 
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner)
 
+	lookupRepo := lookupstorage.NewLookupRepository(db)
+
+	profileRepo := storage2.NewProfileRepository(db)
+	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo)
+
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)
 
@@ -92,8 +99,7 @@ func main() {
 	authRepo := authstorage.NewAuthRepository(db)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService)
 
-	onboardingRepo := onboardingstorage.NewOnboardingRepository(db)
-	onboardingService := onboarding.NewOnboardingService(logger, onboardingRepo, userService, authService, awsService)
+	onboardingService := onboarding.NewOnboardingService(logger, profileRepo, userService, authService, awsService, lookupRepo)
 
 	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)
 	if err != nil {
@@ -106,6 +112,7 @@ func main() {
 		authService,
 		userService,
 		onboardingService,
+		profileService,
 	)
 
 	// Start server with context

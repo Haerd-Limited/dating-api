@@ -1,49 +1,93 @@
 package dto
 
-import "time"
-
-type GetFollowingResponse struct {
-	Message   string         `json:"message"`
-	Following []*UserDetails `json:"following,omitempty"`
-}
-
-type UpdateUserProfileResponse struct {
-	Message     string       `json:"message"`
-	UserDetails *UserDetails `json:"user_details,omitempty"`
-}
-
-type GetFollowersResponse struct {
-	Message   string         `json:"message"`
-	Followers []*UserDetails `json:"followers,omitempty"`
-}
-
 type GetProfileResponse struct {
-	Message string       `json:"message"`
-	Profile *UserProfile `json:"profile,omitempty"`
+	Profile Profile `json:"profile"`
 }
 
-type UserProfile struct {
-	ID             string     `json:"id"`
-	Username       string     `json:"username"`
-	FullName       string     `json:"full_name"`
-	Bio            *string    `json:"bio,omitempty"`
-	Gender         *string    `json:"gender,omitempty"`
-	DateOfBirth    *time.Time `json:"date_of_birth,omitempty"`
-	FollowerCount  int        `json:"follower_count"`
-	FollowingCount int        `json:"following_count"`
-	IsFollowing    bool       `json:"is_following"`
-	PostCount      int        `json:"post_count"`
-	CreatedAt      time.Time  `json:"created_at"`
-	ProfilePicURL  *string    `json:"profile_pic_url,omitempty"`
+type Profile struct {
+	DisplayName *string `json:"display_name,omitempty"`
+	Birthdate   string  `json:"birthdate"`
+	Age         int     `json:"age"`
+	HeightCM    int16   `json:"height_cm"`
+	UserID      string  `json:"user_id"`
+
+	// Location
+	Latitude  float64 `json:"latitude,omitempty"`
+	Longitude float64 `json:"longitude,omitempty"`
+	City      string  `json:"home_town,omitempty"`
+	Country   string  `json:"country,omitempty"`
+
+	Gender          Gender          `json:"gender,omitempty"`
+	DatingIntention DatingIntention `json:"dating_intention"`
+	Religion        Religion        `json:"religion"`
+	EducationLevel  EducationLevel  `json:"education_level"`
+	PoliticalBelief PoliticalBelief `json:"political_belief"`
+	Drinking        Habit           `json:"drinking"`
+	Smoking         Habit           `json:"smoking"`
+	Marijuana       Habit           `json:"marijuana"`
+	Drugs           Habit           `json:"drugs"`
+	ChildrenStatus  *Status         `json:"children_status,omitempty"`
+	FamilyPlan      *Status         `json:"family_plan,omitempty"`
+	Ethnicity       Ethnicity       `json:"ethnicity"`
+	SpokenLanguages []Language      `json:"spoken_languages"`
+
+	Work       *string `json:"work,omitempty"`
+	JobTitle   *string `json:"job_title,omitempty"`
+	University *string `json:"university,omitempty"`
+
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
-type UserDetails struct {
-	ID            *string    `json:"id,omitempty"`
-	Username      *string    `json:"username,omitempty"`
-	Email         *string    `json:"email,omitempty"`
-	FullName      *string    `json:"full_name,omitempty"`
-	Bio           *string    `json:"bio,omitempty"`
-	Gender        *string    `json:"gender,omitempty"`
-	DateOfBirth   *time.Time `json:"date_of_birth,omitempty"`
-	ProfilePicURL *string    `json:"profile_pic_url,omitempty"`
+type Status struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+	Key   string `json:"key"`
+}
+
+type Prompt struct {
+	ID       int16  `json:"id"`
+	Key      string `json:"key"`
+	Label    string `json:"label"`
+	Category string `json:"category"`
+}
+
+type Language struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type Ethnicity struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type EducationLevel struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type Religion struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type PoliticalBelief struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type Gender struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type DatingIntention struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type Habit struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
 }

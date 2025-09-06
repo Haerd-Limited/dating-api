@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -23,8 +24,9 @@ import (
 
 // FamilyPlan is an object representing the database table.
 type FamilyPlan struct {
-	ID    int16  `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Label string `boil:"label" json:"label" toml:"label" yaml:"label"`
+	ID    int16       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Label string      `boil:"label" json:"label" toml:"label" yaml:"label"`
+	Key   null.String `boil:"key" json:"key,omitempty" toml:"key" yaml:"key,omitempty"`
 
 	R *familyPlanR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L familyPlanL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -33,27 +35,89 @@ type FamilyPlan struct {
 var FamilyPlanColumns = struct {
 	ID    string
 	Label string
+	Key   string
 }{
 	ID:    "id",
 	Label: "label",
+	Key:   "key",
 }
 
 var FamilyPlanTableColumns = struct {
 	ID    string
 	Label string
+	Key   string
 }{
 	ID:    "family_plans.id",
 	Label: "family_plans.label",
+	Key:   "family_plans.key",
 }
 
 // Generated where
 
+type whereHelpernull_String struct{ field string }
+
+func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_String) LIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" LIKE ?", x)
+}
+func (w whereHelpernull_String) NLIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT LIKE ?", x)
+}
+func (w whereHelpernull_String) ILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" ILIKE ?", x)
+}
+func (w whereHelpernull_String) NILIKE(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT ILIKE ?", x)
+}
+func (w whereHelpernull_String) SIMILAR(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" SIMILAR TO ?", x)
+}
+func (w whereHelpernull_String) NSIMILAR(x null.String) qm.QueryMod {
+	return qm.Where(w.field+" NOT SIMILAR TO ?", x)
+}
+func (w whereHelpernull_String) IN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_String) NIN(slice []string) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var FamilyPlanWhere = struct {
 	ID    whereHelperint16
 	Label whereHelperstring
+	Key   whereHelpernull_String
 }{
 	ID:    whereHelperint16{field: "\"family_plans\".\"id\""},
 	Label: whereHelperstring{field: "\"family_plans\".\"label\""},
+	Key:   whereHelpernull_String{field: "\"family_plans\".\"key\""},
 }
 
 // FamilyPlanRels is where relationship names are stored.
@@ -93,9 +157,9 @@ func (r *familyPlanR) GetUserProfiles() UserProfileSlice {
 type familyPlanL struct{}
 
 var (
-	familyPlanAllColumns            = []string{"id", "label"}
+	familyPlanAllColumns            = []string{"id", "label", "key"}
 	familyPlanColumnsWithoutDefault = []string{"label"}
-	familyPlanColumnsWithDefault    = []string{"id"}
+	familyPlanColumnsWithDefault    = []string{"id", "key"}
 	familyPlanPrimaryKeyColumns     = []string{"id"}
 	familyPlanGeneratedColumns      = []string{}
 )

@@ -896,7 +896,7 @@ func testFamilyPlansSelect(t *testing.T) {
 }
 
 var (
-	familyPlanDBTypes = map[string]string{`ID`: `smallint`, `Label`: `text`}
+	familyPlanDBTypes = map[string]string{`ID`: `smallint`, `Label`: `text`, `Key`: `text`}
 	_                 = bytes.MinRead
 )
 

@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -23,8 +24,9 @@ import (
 
 // FamilyStatus is an object representing the database table.
 type FamilyStatus struct {
-	ID    int16  `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Label string `boil:"label" json:"label" toml:"label" yaml:"label"`
+	ID    int16       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Label string      `boil:"label" json:"label" toml:"label" yaml:"label"`
+	Key   null.String `boil:"key" json:"key,omitempty" toml:"key" yaml:"key,omitempty"`
 
 	R *familyStatusR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L familyStatusL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -33,17 +35,21 @@ type FamilyStatus struct {
 var FamilyStatusColumns = struct {
 	ID    string
 	Label string
+	Key   string
 }{
 	ID:    "id",
 	Label: "label",
+	Key:   "key",
 }
 
 var FamilyStatusTableColumns = struct {
 	ID    string
 	Label string
+	Key   string
 }{
 	ID:    "family_statuses.id",
 	Label: "family_statuses.label",
+	Key:   "family_statuses.key",
 }
 
 // Generated where
@@ -51,9 +57,11 @@ var FamilyStatusTableColumns = struct {
 var FamilyStatusWhere = struct {
 	ID    whereHelperint16
 	Label whereHelperstring
+	Key   whereHelpernull_String
 }{
 	ID:    whereHelperint16{field: "\"family_statuses\".\"id\""},
 	Label: whereHelperstring{field: "\"family_statuses\".\"label\""},
+	Key:   whereHelpernull_String{field: "\"family_statuses\".\"key\""},
 }
 
 // FamilyStatusRels is where relationship names are stored.
@@ -93,9 +101,9 @@ func (r *familyStatusR) GetChildrenStatusUserProfiles() UserProfileSlice {
 type familyStatusL struct{}
 
 var (
-	familyStatusAllColumns            = []string{"id", "label"}
+	familyStatusAllColumns            = []string{"id", "label", "key"}
 	familyStatusColumnsWithoutDefault = []string{"label"}
-	familyStatusColumnsWithDefault    = []string{"id"}
+	familyStatusColumnsWithDefault    = []string{"id", "key"}
 	familyStatusPrimaryKeyColumns     = []string{"id"}
 	familyStatusGeneratedColumns      = []string{}
 )

@@ -72,7 +72,7 @@ func (h *handler) GetStep() http.HandlerFunc {
 
 		result, err := h.onboardingService.GetUserCurrentStep(ctx, userID)
 		if err != nil {
-			switch {
+			switch { // todo: refactor and move to common library
 			case errors.Is(err, context.Canceled):
 				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
 				return // no need to return a response. Client socket is closed.

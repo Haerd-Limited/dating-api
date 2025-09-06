@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  create_themes_table sql
+	@cd ./migrations && goose create  seed_family_tables sql
 .PHONY: migrate-create
 
 

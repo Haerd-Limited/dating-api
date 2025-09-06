@@ -16,37 +16,29 @@ import (
 )
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
-type OnboardingRepository interface {
+type ProfileRepository interface {
 	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
 	UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error
 	InsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
 	InsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
 	InsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
-	GetLanguages(ctx context.Context) (entity.LanguageSlice, error)
-	GetEducationLevels(ctx context.Context) (entity.EducationLevelSlice, error)
-	GetEthnicities(ctx context.Context) (entity.EthnicitySlice, error)
-	GetReligions(ctx context.Context) (entity.ReligionSlice, error)
-	GetPoliticalBeliefs(ctx context.Context) (entity.PoliticalBeliefSlice, error)
-	GetHabits(ctx context.Context) (entity.HabitSlice, error)
-	GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error)
-	GetGenders(ctx context.Context) (entity.GenderSlice, error)
-	GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error)
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
+	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
 }
 
-type onboardingRepository struct {
+type profileRepository struct {
 	db *sqlx.DB
 }
 
-func NewOnboardingRepository(db *sqlx.DB) OnboardingRepository {
-	return &onboardingRepository{
+func NewProfileRepository(db *sqlx.DB) ProfileRepository {
+	return &profileRepository{
 		db: db,
 	}
 }
 
-func (or *onboardingRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error {
-	err := theme.Upsert(ctx, or.db, true, []string{"user_id"},
+func (pr *profileRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error {
+	err := theme.Upsert(ctx, pr.db, true, []string{"user_id"},
 		boil.Whitelist("base_hex", "palette", "updated_at"),
 		boil.Infer())
 	if err != nil {
@@ -56,11 +48,11 @@ func (or *onboardingRepository) UpsertUserTheme(ctx context.Context, theme entit
 	return nil
 }
 
-func (or *onboardingRepository) GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error) {
+func (pr *profileRepository) GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error) {
 	ut, err := entity.UserThemes(
 		entity.UserThemeWhere.UserID.EQ(userID),
 		qm.Limit(1),
-	).One(ctx, or.db)
+	).One(ctx, pr.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -72,8 +64,8 @@ func (or *onboardingRepository) GetUserTheme(ctx context.Context, userID string)
 	return ut, nil
 }
 
-func (or *onboardingRepository) GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error) {
-	prompts, err := entity.PromptTypes().All(ctx, or.db)
+func (pr *profileRepository) GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error) {
+	prompts, err := entity.PromptTypes().All(ctx, pr.db)
 	if err != nil {
 		return nil, err
 	}
@@ -81,12 +73,12 @@ func (or *onboardingRepository) GetPrompts(ctx context.Context) (entity.PromptTy
 	return prompts, nil
 }
 
-func (or *onboardingRepository) InsertUserPrompts(
+func (pr *profileRepository) InsertUserPrompts(
 	ctx context.Context,
 	userID string,
 	prompts []entity.VoicePrompt,
 ) (err error) {
-	tx, err := or.db.BeginTxx(ctx, &sql.TxOptions{})
+	tx, err := pr.db.BeginTxx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
@@ -160,12 +152,12 @@ func (or *onboardingRepository) InsertUserPrompts(
 	return nil
 }
 
-func (or *onboardingRepository) InsertUserPhotos(
+func (pr *profileRepository) InsertUserPhotos(
 	ctx context.Context,
 	userID string,
 	photos []entity.Photo,
 ) (err error) {
-	tx, err := or.db.BeginTxx(ctx, &sql.TxOptions{})
+	tx, err := pr.db.BeginTxx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
@@ -229,12 +221,12 @@ func (or *onboardingRepository) InsertUserPhotos(
 	return nil
 }
 
-func (or *onboardingRepository) InsertUserSpokenLanguages(
+func (pr *profileRepository) InsertUserSpokenLanguages(
 	ctx context.Context,
 	userID string,
 	languages []int16,
 ) (err error) {
-	tx, err := or.db.BeginTxx(ctx, &sql.TxOptions{})
+	tx, err := pr.db.BeginTxx(ctx, &sql.TxOptions{})
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
@@ -302,80 +294,8 @@ func (or *onboardingRepository) InsertUserSpokenLanguages(
 	return nil
 }
 
-func (or *onboardingRepository) GetLanguages(ctx context.Context) (entity.LanguageSlice, error) {
-	languages, err := entity.Languages().All(ctx, or.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return languages, nil
-}
-
-func (or *onboardingRepository) GetEducationLevels(ctx context.Context) (entity.EducationLevelSlice, error) {
-	educationLevels, err := entity.EducationLevels().All(ctx, or.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return educationLevels, nil
-}
-
-func (or *onboardingRepository) GetEthnicities(ctx context.Context) (entity.EthnicitySlice, error) {
-	ethnicities, err := entity.Ethnicities().All(ctx, or.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return ethnicities, nil
-}
-
-func (or *onboardingRepository) GetReligions(ctx context.Context) (entity.ReligionSlice, error) {
-	religions, err := entity.Religions().All(ctx, or.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return religions, nil
-}
-
-func (or *onboardingRepository) GetPoliticalBeliefs(ctx context.Context) (entity.PoliticalBeliefSlice, error) {
-	politicalBeliefs, err := entity.PoliticalBeliefs().All(ctx, or.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return politicalBeliefs, nil
-}
-
-func (or *onboardingRepository) GetHabits(ctx context.Context) (entity.HabitSlice, error) {
-	habits, err := entity.Habits().All(ctx, or.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return habits, nil
-}
-
-func (or *onboardingRepository) GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error) {
-	di, err := entity.DatingIntentions().All(ctx, or.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return di, nil
-}
-
-func (or *onboardingRepository) GetGenders(ctx context.Context) (entity.GenderSlice, error) {
-	genders, err := entity.Genders().All(ctx, or.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return genders, nil
-}
-
-func (or *onboardingRepository) GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error) {
-	userProfile, err := entity.UserProfiles(entity.UserProfileWhere.UserID.EQ(userID)).One(ctx, or.db)
+func (pr *profileRepository) GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error) {
+	userProfile, err := entity.UserProfiles(entity.UserProfileWhere.UserID.EQ(userID)).One(ctx, pr.db)
 	if err != nil {
 		return nil, err
 	}
@@ -383,11 +303,34 @@ func (or *onboardingRepository) GetUserProfileByUserID(ctx context.Context, user
 	return userProfile, nil
 }
 
-func (or *onboardingRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error {
-	_, err := userProfile.Update(ctx, or.db, boil.Infer())
+func (pr *profileRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error {
+	_, err := userProfile.Update(ctx, pr.db, boil.Infer())
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (pr *profileRepository) GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error) {
+	// Load the user
+	u, err := entity.Users(
+		entity.UserWhere.ID.EQ(userID),
+		qm.Load(entity.UserRels.Languages),
+	).One(ctx, pr.db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load user: %w", err)
+	}
+
+	// Extract the IDs
+	if u.R == nil || u.R.Languages == nil {
+		return []int16{}, nil
+	}
+
+	ids := make([]int16, len(u.R.Languages))
+	for i, lang := range u.R.Languages {
+		ids[i] = lang.ID
+	}
+
+	return ids, nil
 }

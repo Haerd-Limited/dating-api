@@ -12,9 +12,10 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
+	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
-	onboardingstorage "github.com/Haerd-Limited/dating-api/internal/onboarding/storage"
+	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
@@ -56,18 +57,20 @@ const (
 
 type onboardingService struct {
 	logger      *zap.Logger
-	repo        onboardingstorage.OnboardingRepository
+	repo        storage.ProfileRepository
 	userService user.Service
 	authService auth.Service
 	awsService  aws.Service
+	lookupRepo  lookupstorage.LookupRepository
 }
 
 func NewOnboardingService(
 	logger *zap.Logger,
-	onboardingRepository onboardingstorage.OnboardingRepository,
+	onboardingRepository storage.ProfileRepository,
 	userService user.Service,
 	authService auth.Service,
 	awsService aws.Service,
+	lookupRepo lookupstorage.LookupRepository,
 ) Service {
 	return &onboardingService{
 		logger:      logger,
@@ -75,6 +78,7 @@ func NewOnboardingService(
 		userService: userService,
 		authService: authService,
 		awsService:  awsService,
+		lookupRepo:  lookupRepo,
 	}
 }
 
@@ -654,7 +658,7 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 }
 
 func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Language, error) {
-	languageEntities, err := os.repo.GetLanguages(ctx)
+	languageEntities, err := os.lookupRepo.GetLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -663,7 +667,7 @@ func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Languag
 }
 
 func (os *onboardingService) getEducationLevels(ctx context.Context) ([]domain.EducationLevel, error) {
-	educationLevelEntities, err := os.repo.GetEducationLevels(ctx)
+	educationLevelEntities, err := os.lookupRepo.GetEducationLevels(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -672,7 +676,7 @@ func (os *onboardingService) getEducationLevels(ctx context.Context) ([]domain.E
 }
 
 func (os *onboardingService) getEthnicities(ctx context.Context) ([]domain.Ethnicity, error) {
-	ethnicityEntities, err := os.repo.GetEthnicities(ctx)
+	ethnicityEntities, err := os.lookupRepo.GetEthnicities(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -681,7 +685,7 @@ func (os *onboardingService) getEthnicities(ctx context.Context) ([]domain.Ethni
 }
 
 func (os *onboardingService) getPoliticalBeliefs(ctx context.Context) ([]domain.PoliticalBelief, error) {
-	politicalBeliefsEntities, err := os.repo.GetPoliticalBeliefs(ctx)
+	politicalBeliefsEntities, err := os.lookupRepo.GetPoliticalBeliefs(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -690,7 +694,7 @@ func (os *onboardingService) getPoliticalBeliefs(ctx context.Context) ([]domain.
 }
 
 func (os *onboardingService) getReligions(ctx context.Context) ([]domain.Religion, error) {
-	religionsEntities, err := os.repo.GetReligions(ctx)
+	religionsEntities, err := os.lookupRepo.GetReligions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -699,7 +703,7 @@ func (os *onboardingService) getReligions(ctx context.Context) ([]domain.Religio
 }
 
 func (os *onboardingService) getHabits(ctx context.Context) ([]domain.Habit, error) {
-	habitEntities, err := os.repo.GetHabits(ctx)
+	habitEntities, err := os.lookupRepo.GetHabits(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -708,7 +712,7 @@ func (os *onboardingService) getHabits(ctx context.Context) ([]domain.Habit, err
 }
 
 func (os *onboardingService) getGenders(ctx context.Context) ([]domain.Gender, error) {
-	genderEntities, err := os.repo.GetGenders(ctx)
+	genderEntities, err := os.lookupRepo.GetGenders(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -717,7 +721,7 @@ func (os *onboardingService) getGenders(ctx context.Context) ([]domain.Gender, e
 }
 
 func (os *onboardingService) getPrompts(ctx context.Context) ([]domain.Prompt, error) {
-	promptEntities, err := os.repo.GetPrompts(ctx)
+	promptEntities, err := os.lookupRepo.GetPrompts(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -726,7 +730,7 @@ func (os *onboardingService) getPrompts(ctx context.Context) ([]domain.Prompt, e
 }
 
 func (os *onboardingService) getDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error) {
-	datingIntentionsEntities, err := os.repo.GetDatingIntentions(ctx)
+	datingIntentionsEntities, err := os.lookupRepo.GetDatingIntentions(ctx)
 	if err != nil {
 		return nil, err
 	}

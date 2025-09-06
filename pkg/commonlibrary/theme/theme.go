@@ -14,9 +14,11 @@ func mustClamp01(x float64) float64 {
 	if x < 0 {
 		return 0
 	}
+
 	if x > 1 {
 		return 1
 	}
+
 	return x
 }
 
@@ -25,16 +27,19 @@ func hexToRGB(hex string) (r, g, b float64, err error) {
 	if m == nil {
 		return 0, 0, 0, fmt.Errorf("invalid hex")
 	}
+
 	s := strings.ToLower(m[1])
 
 	rv, err := strconv.ParseUint(s[0:2], 16, 8)
 	if err != nil {
 		return 0, 0, 0, err
 	}
+
 	gv, err := strconv.ParseUint(s[2:4], 16, 8)
 	if err != nil {
 		return 0, 0, 0, err
 	}
+
 	bv, err := strconv.ParseUint(s[4:6], 16, 8)
 	if err != nil {
 		return 0, 0, 0, err
@@ -47,6 +52,7 @@ func rgbToHex(r, g, b float64) string {
 	r = math.Round(mustClamp01(r) * 255.0)
 	g = math.Round(mustClamp01(g) * 255.0)
 	b = math.Round(mustClamp01(b) * 255.0)
+
 	return fmt.Sprintf("#%02x%02x%02x", int(r), int(g), int(b))
 }
 
@@ -55,15 +61,18 @@ func rgbToHsl(r, g, b float64) (h, s, l float64) {
 	maxVal := math.Max(r, math.Max(g, b))
 	minVal := math.Min(r, math.Min(g, b))
 	l = (maxVal + minVal) / 2
+
 	if maxVal == minVal {
 		return 0, 0, l
 	}
+
 	d := maxVal - minVal
 	if l > 0.5 {
 		s = d / (2 - maxVal - minVal)
 	} else {
 		s = d / (maxVal + minVal)
 	}
+
 	switch maxVal {
 	case r:
 		h = (g - b) / d
@@ -75,12 +84,14 @@ func rgbToHsl(r, g, b float64) (h, s, l float64) {
 	default:
 		h = (r-g)/d + 4
 	}
+
 	h *= 60
 	// normalize
 	h = math.Mod(h, 360)
 	if h < 0 {
 		h += 360
 	}
+
 	return
 }
 
@@ -90,11 +101,13 @@ func hslToRgb(h, s, l float64) (r, g, b float64) {
 	if h < 0 {
 		h += 360
 	}
+
 	c := (1 - math.Abs(2*l-1)) * s
 	x := c * (1 - math.Abs(math.Mod(h/60.0, 2)-1))
 	m := l - c/2
 
 	var rp, gp, bp float64
+
 	switch {
 	case h < 60:
 		rp, gp, bp = c, x, 0
@@ -109,6 +122,7 @@ func hslToRgb(h, s, l float64) (r, g, b float64) {
 	default:
 		rp, gp, bp = c, 0, x
 	}
+
 	return rp + m, gp + m, bp + m
 }
 
@@ -118,12 +132,14 @@ func GeneratePalette9(baseHex string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	h, s, l := rgbToHsl(r, g, b)
 
 	// Relative lightness deltas around base (tweak to taste)
 	deltas := []float64{+0.35, +0.25, +0.15, +0.05, 0, -0.07, -0.15, -0.25, -0.35}
 
 	out := make([]string, len(deltas))
+
 	for i, dL := range deltas {
 		L := mustClamp01(l + dL)
 
@@ -143,5 +159,6 @@ func GeneratePalette9(baseHex string) ([]string, error) {
 
 	// Guarantee exact base at index 4 (avoids FP drift)
 	out[4] = rgbToHex(r, g, b)
+
 	return out, nil
 }
