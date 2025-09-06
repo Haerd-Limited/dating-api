@@ -31,6 +31,7 @@ type Profile struct {
 	Ethnicity       Ethnicity       `json:"ethnicity"`
 	SpokenLanguages []Language      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt   `json:"voice_prompts"`
+	Photos          []Photo         `json:"photos"`
 
 	Work       *string `json:"work,omitempty"`
 	JobTitle   *string `json:"job_title,omitempty"`
@@ -38,6 +39,12 @@ type Profile struct {
 
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+}
+
+type Photo struct {
+	URL       string `json:"url"`
+	IsPrimary bool   `json:"is_primary"`
+	Position  int16  `json:"position"`
 }
 
 type VoicePrompt struct {

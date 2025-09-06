@@ -141,7 +141,31 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user voice prompts: %w", err)
 	}
 
+	result.Photos, err = s.getUserPhotos(ctx, userID)
+	if err != nil {
+		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user photos: %w", err)
+	}
+
 	return result, nil
+}
+
+func (s *service) getUserPhotos(ctx context.Context, userID string) ([]domain.Photo, error) {
+	photos, err := s.profileRepo.GetUserPhotos(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user photos: %w", err)
+	}
+
+	var photosList []domain.Photo
+
+	for _, photo := range photos {
+		photosList = append(photosList, domain.Photo{
+			URL:       photo.URL,
+			IsPrimary: photo.IsPrimary,
+			Position:  photo.Position.Int16,
+		})
+	}
+
+	return photosList, nil
 }
 
 func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]domain.VoicePrompt, error) {

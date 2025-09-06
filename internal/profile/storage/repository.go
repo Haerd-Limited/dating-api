@@ -26,6 +26,7 @@ type ProfileRepository interface {
 	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
 	GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error)
+	GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error)
 }
 
 type profileRepository struct {
@@ -343,4 +344,13 @@ func (pr *profileRepository) GetUserVoicePrompts(ctx context.Context, userID str
 	}
 
 	return vp, nil
+}
+
+func (pr *profileRepository) GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error) {
+	photos, err := entity.Photos(entity.PhotoWhere.UserID.EQ(null.StringFrom(userID))).All(ctx, pr.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return photos, nil
 }

@@ -67,7 +67,7 @@ type EnrichedProfile struct {
 	Ethnicity       Ethnicity
 	SpokenLanguages []Language
 	VoicePrompts    []VoicePrompt
-	// todo: Add voice prompts, pictures
+	Photos          []Photo
 
 	Work       *string
 	JobTitle   *string
@@ -83,6 +83,12 @@ type VoicePrompt struct {
 	IsPrimary  bool
 	Position   int16
 	DurationMs int
+}
+
+type Photo struct {
+	URL       string
+	IsPrimary bool
+	Position  int16
 }
 
 type Status struct {

@@ -90,6 +90,16 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		}
 	}
 
+	if profile.Photos != nil {
+		for _, photo := range profile.Photos {
+			result.Photos = append(result.Photos, dto.Photo{
+				URL:       photo.URL,
+				IsPrimary: photo.IsPrimary,
+				Position:  photo.Position,
+			})
+		}
+	}
+
 	if profile.ChildrenStatus != nil {
 		result.ChildrenStatus = &dto.Status{
 			ID:    result.ChildrenStatus.ID,
