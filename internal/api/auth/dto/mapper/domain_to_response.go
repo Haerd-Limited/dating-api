@@ -12,15 +12,20 @@ func ToAuthResponse(authResult *authDomain.AuthResult, message string) *dto.Auth
 		}
 	}
 
-	return &dto.AuthResponse{
+	result := &dto.AuthResponse{
 		Message:      message,
 		AccessToken:  authResult.AccessToken,
 		RefreshToken: authResult.RefreshToken,
-		User: &dto.User{
+	}
+
+	if authResult.User != nil {
+		result.User = &dto.User{
 			ID:             authResult.User.ID,
 			OnboardingStep: string(authResult.User.OnboardingStep),
-		},
+		}
 	}
+
+	return result
 }
 
 func ToRequestCodeResponse(sentTo string) dto.RequestCodeResponse {
