@@ -9,7 +9,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 )
 
 const (
@@ -24,10 +23,6 @@ var (
 )
 
 func MapRegisterRequestToDomain(request dto.RegisterRequest) (domain.Register, error) {
-	/*dob, err := time.Parse("2006-01-02", request.DateOfBirth)
-	if err != nil {
-		return nil, commonErrors.ErrInvalidDob
-	}*/
 	firstName := strings.TrimSpace(request.FirstName)
 
 	var lastName string
@@ -50,7 +45,7 @@ func MapRegisterRequestToDomain(request dto.RegisterRequest) (domain.Register, e
 	}
 
 	if !looksLikeEmail(strings.TrimSpace(request.Email)) {
-		return domain.Register{}, validators.ErrInvalidEmail
+		return domain.Register{}, commonErrors.ErrInvalidEmail
 	}
 
 	return domain.Register{

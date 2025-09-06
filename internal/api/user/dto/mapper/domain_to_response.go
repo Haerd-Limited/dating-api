@@ -1,9 +1,10 @@
 package mapper
 
 import (
+	"time"
+
 	"github.com/Haerd-Limited/dating-api/internal/api/user/dto"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
-	"time"
 )
 
 func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {

@@ -20,7 +20,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 )
 
 type Handler interface {
@@ -267,15 +266,15 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusUnauthorized, TokenRevokedOrExpiredMsg
 	case errors.Is(err, auth.ErrRefreshTokenAlreadyRevoked):
 		return http.StatusOK, TokenRevokedOrExpiredMsg
-	case errors.Is(err, validators.ErrInvalidDOBFormat):
+	case errors.Is(err, commonErrors.ErrInvalidDOBFormat):
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, commonErrors.ErrInvalidDob):
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, commonErrors.ErrInvalidGender):
 		return http.StatusBadRequest, messages.InvalidGenderMsg
-	case errors.Is(err, validators.ErrInvalidEmail):
+	case errors.Is(err, commonErrors.ErrInvalidEmail):
 		return http.StatusBadRequest, InvalidEmailMsg
-	case errors.Is(err, validators.ErrMissingRequiredField):
+	case errors.Is(err, commonErrors.ErrMissingRequiredField):
 		return http.StatusBadRequest, MissingRequiredFieldMsg
 
 	default:

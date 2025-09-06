@@ -88,7 +88,8 @@ func New(
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {
 					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
-					r.Get("/", userHandler.MyProfile()) // full profile (with visibility flags)
+					r.Get("/", userHandler.GetMyProfile())
+					r.Patch("/", userHandler.UpdateMyProfile())
 					// TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})

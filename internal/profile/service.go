@@ -15,6 +15,7 @@ import (
 
 type Service interface {
 	GetMyProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error)
+	UpdateMyProfile(ctx context.Context, updatedProfile domain.UpdateProfile) (domain.EnrichedProfile, error)
 }
 
 type service struct {
@@ -33,6 +34,148 @@ func NewProfileService(
 		profileRepo: profileRepository,
 		lookupRepo:  lookupRepository,
 	}
+}
+
+func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) (domain.EnrichedProfile, error) {
+	// Load current profile
+	prof, err := s.getUserProfile(ctx, up.UserID)
+	if err != nil {
+		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user profile: %w", err)
+	}
+
+	// Basic
+	if up.DisplayName != nil {
+		prof.DisplayName = up.DisplayName
+	}
+
+	if up.Birthdate != nil {
+		prof.Birthdate = *up.Birthdate
+	}
+
+	if up.HeightCM != nil {
+		prof.HeightCM = *up.HeightCM
+	}
+
+	// Location
+	if up.Latitude != nil {
+		prof.Latitude = *up.Latitude
+	}
+
+	if up.Longitude != nil {
+		prof.Longitude = *up.Longitude
+	}
+
+	if up.City != nil {
+		prof.City = *up.City
+	}
+
+	if up.Country != nil {
+		prof.Country = *up.Country
+	}
+
+	if up.GenderID != nil {
+		prof.GenderID = *up.GenderID
+	}
+
+	if up.DatingIntentionID != nil {
+		prof.DatingIntentionID = *up.DatingIntentionID
+	}
+
+	if up.ReligionID != nil {
+		prof.ReligionID = *up.ReligionID
+	}
+
+	if up.EducationLevelID != nil {
+		prof.EducationLevelID = *up.EducationLevelID
+	}
+
+	if up.PoliticalBeliefID != nil {
+		prof.PoliticalBeliefID = *up.PoliticalBeliefID
+	}
+
+	if up.DrinkingID != nil {
+		prof.DrinkingID = *up.DrinkingID
+	}
+
+	if up.SmokingID != nil {
+		prof.SmokingID = *up.SmokingID
+	}
+
+	if up.MarijuanaID != nil {
+		prof.MarijuanaID = *up.MarijuanaID
+	}
+
+	if up.DrugsID != nil {
+		prof.DrugsID = *up.DrugsID
+	}
+
+	if up.ChildrenStatusID != nil {
+		prof.ChildrenStatusID = up.ChildrenStatusID
+	}
+
+	if up.FamilyPlanID != nil {
+		prof.FamilyPlanID = up.FamilyPlanID
+	}
+
+	if up.EthnicityID != nil {
+		prof.EthnicityID = *up.EthnicityID
+	}
+
+	// Work / education text fields
+	if up.Work != nil {
+		prof.Work = up.Work
+	}
+
+	if up.JobTitle != nil {
+		prof.JobTitle = up.JobTitle
+	}
+
+	if up.University != nil {
+		prof.University = up.University
+	}
+
+	// Persist
+	err = s.updateUserProfile(ctx, prof)
+	if err != nil {
+		return domain.EnrichedProfile{}, fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	if len(up.SpokenLanguages) > 0 {
+		err = s.profileRepo.UpsertUserSpokenLanguages(ctx, up.UserID, up.SpokenLanguages)
+		if err != nil {
+			return domain.EnrichedProfile{}, fmt.Errorf("failed to upsert user spoken languages: %w", err)
+		}
+	}
+
+	if len(up.Photos) > 0 {
+		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID))
+		if err != nil {
+			return domain.EnrichedProfile{}, fmt.Errorf("failed to insert user photos: %w", err)
+		}
+	}
+
+	if len(up.VoicePrompts) > 0 {
+		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsToEntity(up.VoicePrompts, up.UserID))
+		if err != nil {
+			return domain.EnrichedProfile{}, fmt.Errorf("failed to insert user voice prompts: %w", err)
+		}
+	}
+
+	return s.GetEnrichedProfile(ctx, up.UserID)
+}
+
+func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Profile) error {
+	updatedUserProfileEntity, err := mapper.MapProfileToEntity(userProfile)
+	if err != nil {
+		return fmt.Errorf("failed to map user profile to entity: %w", err)
+	}
+
+	err = s.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity)
+	if err != nil {
+		return fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	return nil
 }
 
 func (s *service) GetMyProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error) {

@@ -57,7 +57,7 @@ const (
 
 type onboardingService struct {
 	logger      *zap.Logger
-	repo        storage.ProfileRepository
+	profileRepo storage.ProfileRepository
 	userService user.Service
 	authService auth.Service
 	awsService  aws.Service
@@ -74,7 +74,7 @@ func NewOnboardingService(
 ) Service {
 	return &onboardingService{
 		logger:      logger,
-		repo:        onboardingRepository,
+		profileRepo: onboardingRepository,
 		userService: userService,
 		authService: authService,
 		awsService:  awsService,
@@ -413,7 +413,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
 	}
 
-	err = os.repo.InsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
+	err = os.profileRepo.UpsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to insert user spoken languages: %w", err)
 	}
@@ -572,7 +572,7 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	}
 
 	// insert photos into user photos table
-	err = os.repo.InsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToEntity(uploadedPhotos))
+	err = os.profileRepo.UpsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToEntity(uploadedPhotos))
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to insert user photos: %w", err)
 	}
@@ -622,7 +622,7 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 	}
 
 	// insert prompts into user prompts table
-	err = os.repo.InsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToEntity(uploadedPrompts))
+	err = os.profileRepo.UpsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToEntity(uploadedPrompts))
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to insert user prompts: %w", err)
 	}
@@ -638,7 +638,7 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 		return domain.StepResult{}, fmt.Errorf("failed to marshal palette: %w", err)
 	}
 	// store colours.
-	err = os.repo.UpsertUserTheme(ctx, entity.UserTheme{
+	err = os.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
 		UserID:  uploadedPrompts.UserID,
 		BaseHex: uploadedPrompts.BaseHex,
 		Palette: palJSON,
@@ -744,7 +744,7 @@ func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile 
 		return fmt.Errorf("failed to map user profile to entity: %w", err)
 	}
 
-	err = os.repo.UpdateUserProfile(ctx, updatedUserProfileEntity)
+	err = os.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity)
 	if err != nil {
 		return fmt.Errorf("failed to update user profile: %w", err)
 	}
@@ -753,7 +753,7 @@ func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile 
 }
 
 func (os *onboardingService) getUserProfile(ctx context.Context, userID string) (*domain.UserProfile, error) {
-	userProfileEntity, err := os.repo.GetUserProfileByUserID(ctx, userID)
+	userProfileEntity, err := os.profileRepo.GetUserProfileByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

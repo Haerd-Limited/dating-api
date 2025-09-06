@@ -19,9 +19,9 @@ import (
 type ProfileRepository interface {
 	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
 	UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error
-	InsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
-	InsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
-	InsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
+	UpsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
+	UpsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
+	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
@@ -75,7 +75,7 @@ func (pr *profileRepository) GetPrompts(ctx context.Context) (entity.PromptTypeS
 	return prompts, nil
 }
 
-func (pr *profileRepository) InsertUserPrompts(
+func (pr *profileRepository) UpsertUserPrompts(
 	ctx context.Context,
 	userID string,
 	prompts []entity.VoicePrompt,
@@ -154,7 +154,7 @@ func (pr *profileRepository) InsertUserPrompts(
 	return nil
 }
 
-func (pr *profileRepository) InsertUserPhotos(
+func (pr *profileRepository) UpsertUserPhotos(
 	ctx context.Context,
 	userID string,
 	photos []entity.Photo,
@@ -223,7 +223,7 @@ func (pr *profileRepository) InsertUserPhotos(
 	return nil
 }
 
-func (pr *profileRepository) InsertUserSpokenLanguages(
+func (pr *profileRepository) UpsertUserSpokenLanguages(
 	ctx context.Context,
 	userID string,
 	languages []int16,

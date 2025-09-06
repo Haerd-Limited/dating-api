@@ -19,7 +19,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/validators"
 )
 
 type Handler interface {
@@ -766,7 +765,7 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusConflict, messages.EmailAlreadyExistsMsg
 	case errors.Is(err, user.ErrUserDetailsAlreadyExists):
 		return http.StatusConflict, messages.UserDetailsAlreadyExistsMsg
-	case errors.Is(err, validators.ErrInvalidDOBFormat):
+	case errors.Is(err, commonErrors.ErrInvalidDOBFormat):
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, commonErrors.ErrInvalidDob):
 		return http.StatusBadRequest, messages.InvalidDobMsg

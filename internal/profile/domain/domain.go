@@ -40,6 +40,43 @@ type Profile struct {
 	UpdatedAt time.Time
 }
 
+type UpdateProfile struct {
+	DisplayName *string
+	Birthdate   *time.Time
+	HeightCM    *int16
+	UserID      string
+
+	// Location
+	Latitude  *float64
+	Longitude *float64
+	City      *string
+	Country   *string
+
+	// Single-selects
+	GenderID          *int16
+	DatingIntentionID *int16
+	ReligionID        *int16
+	EducationLevelID  *int16
+	PoliticalBeliefID *int16
+	DrinkingID        *int16
+	SmokingID         *int16
+	MarijuanaID       *int16
+	DrugsID           *int16
+	ChildrenStatusID  *int16
+	FamilyPlanID      *int16
+	EthnicityID       *int16
+	SpokenLanguages   []int16
+	VoicePrompts      []VoicePrompt
+	Photos            []Photo
+
+	Work       *string
+	JobTitle   *string
+	University *string
+
+	CreatedAt *time.Time
+	UpdatedAt time.Time
+}
+
 type EnrichedProfile struct {
 	DisplayName *string
 	Birthdate   time.Time
