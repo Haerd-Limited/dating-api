@@ -136,7 +136,49 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user spoken languages: %w", err)
 	}
 
+	result.VoicePrompts, err = s.getUserVoicePrompts(ctx, userID)
+	if err != nil {
+		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user voice prompts: %w", err)
+	}
+
 	return result, nil
+}
+
+func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]domain.VoicePrompt, error) {
+	voicePromptEntities, err := s.profileRepo.GetUserVoicePrompts(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user voice prompts: %w", err)
+	}
+
+	var voicePrompts []domain.VoicePrompt
+
+	for _, vpe := range voicePromptEntities {
+		if !vpe.PromptType.Valid {
+			return nil, fmt.Errorf("invalid prompt type: promptType=%v", vpe.PromptType.Int16)
+		}
+
+		var vpeErr error
+
+		promptType, vpeErr := s.lookupRepo.GetPromptTypeByID(ctx, vpe.PromptType.Int16)
+		if vpeErr != nil {
+			return nil, fmt.Errorf("failed to get prompt type by ID: %w", vpeErr)
+		}
+
+		voicePrompts = append(voicePrompts, domain.VoicePrompt{
+			URL: vpe.AudioURL,
+			PromptType: domain.Prompt{
+				ID:       promptType.ID,
+				Label:    promptType.Label,
+				Key:      promptType.Key,
+				Category: promptType.Category,
+			},
+			IsPrimary:  vpe.IsPrimary,
+			Position:   vpe.Position.Int16,
+			DurationMs: vpe.DurationMS,
+		})
+	}
+
+	return voicePrompts, nil
 }
 
 func (s *service) getUserProfile(ctx context.Context, userID string) (*domain.Profile, error) {

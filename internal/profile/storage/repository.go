@@ -25,6 +25,7 @@ type ProfileRepository interface {
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
+	GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error)
 }
 
 type profileRepository struct {
@@ -333,4 +334,13 @@ func (pr *profileRepository) GetUserSpokenLanguages(ctx context.Context, userID 
 	}
 
 	return ids, nil
+}
+
+func (pr *profileRepository) GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error) {
+	vp, err := entity.VoicePrompts(entity.VoicePromptWhere.UserID.EQ(null.StringFrom(userID))).All(ctx, pr.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return vp, nil
 }

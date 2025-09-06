@@ -66,6 +66,7 @@ type EnrichedProfile struct {
 	FamilyPlan      *Status
 	Ethnicity       Ethnicity
 	SpokenLanguages []Language
+	VoicePrompts    []VoicePrompt
 	// todo: Add voice prompts, pictures
 
 	Work       *string
@@ -78,7 +79,7 @@ type EnrichedProfile struct {
 
 type VoicePrompt struct {
 	URL        string
-	PromptType int16
+	PromptType Prompt
 	IsPrimary  bool
 	Position   int16
 	DurationMs int

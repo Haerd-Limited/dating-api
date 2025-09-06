@@ -73,6 +73,23 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		}
 	}
 
+	if profile.VoicePrompts != nil {
+		for _, prompt := range profile.VoicePrompts {
+			result.VoicePrompts = append(result.VoicePrompts, dto.VoicePrompt{
+				URL: prompt.URL,
+				PromptType: dto.Prompt{
+					ID:       prompt.PromptType.ID,
+					Label:    prompt.PromptType.Label,
+					Key:      prompt.PromptType.Key,
+					Category: prompt.PromptType.Category,
+				},
+				IsPrimary:  prompt.IsPrimary,
+				Position:   prompt.Position,
+				DurationMs: prompt.DurationMs,
+			})
+		}
+	}
+
 	if profile.ChildrenStatus != nil {
 		result.ChildrenStatus = &dto.Status{
 			ID:    result.ChildrenStatus.ID,
