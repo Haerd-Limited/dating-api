@@ -52,10 +52,14 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 
 	if up.City.Valid {
 		d.City = up.City.String
+	} else {
+		d.City = "None"
 	}
 
 	if up.Country.Valid {
 		d.Country = up.Country.String
+	} else {
+		d.Country = "None"
 	}
 
 	// Single-select IDs
@@ -110,14 +114,23 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 	// Extra text fields
 	if up.Work.Valid {
 		d.Work = &up.Work.String
+	} else {
+		temp := "None"
+		d.Work = &temp
 	}
 
 	if up.JobTitle.Valid {
 		d.JobTitle = &up.JobTitle.String
+	} else {
+		temp := "None"
+		d.JobTitle = &temp
 	}
 
 	if up.University.Valid {
 		d.University = &up.University.String
+	} else {
+		temp := "None"
+		d.University = &temp
 	}
 
 	// ProfileMeta (jsonb)
