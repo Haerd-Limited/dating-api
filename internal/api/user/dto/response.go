@@ -69,6 +69,8 @@ type FeedProfile struct {
 	SpokenLanguages []string      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt `json:"voice_prompts"`
 
+	Verified bool `json:"verified"`
+
 	Work       *string `json:"work,omitempty"`
 	JobTitle   *string `json:"job_title,omitempty"`
 	University *string `json:"university,omitempty"`

@@ -34,8 +34,8 @@ type FeedProfile struct {
 	JobTitle   *string
 	University *string
 
-	Verified   bool // todo: implement
-	DistanceKm int  // todo: implement
+	Verified   bool // todo: implement logi
+	DistanceKm int  // todo: implement logic
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

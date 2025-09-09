@@ -34,6 +34,7 @@ func NewDiscoverService(
 	}
 }
 
+// todo: add filters like  age, race, distance, age
 func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]domain.FeedProfile, error) {
 	candidates, err := s.discoverRepo.GetCandidates(ctx, userID, limit, offset)
 	if err != nil {
