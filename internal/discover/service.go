@@ -1,0 +1,57 @@
+package discover
+
+import (
+	"context"
+	"fmt"
+
+	"go.uber.org/zap"
+
+	"github.com/Haerd-Limited/dating-api/internal/discover/domain"
+	"github.com/Haerd-Limited/dating-api/internal/discover/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/discover/storage"
+	"github.com/Haerd-Limited/dating-api/internal/profile"
+)
+
+type Service interface {
+	GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]domain.FeedProfile, error)
+}
+
+type service struct {
+	logger         *zap.Logger
+	profileService profile.Service
+	discoverRepo   storage.DiscoverRepository
+}
+
+func NewDiscoverService(
+	logger *zap.Logger,
+	profileService profile.Service,
+	discoverRepo storage.DiscoverRepository,
+) Service {
+	return &service{
+		logger:         logger,
+		profileService: profileService,
+		discoverRepo:   discoverRepo,
+	}
+}
+
+func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]domain.FeedProfile, error) {
+	candidates, err := s.discoverRepo.GetCandidates(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get candidate IDs userID=%s limit=%v offset=%v: %w", userID, limit, offset, err)
+	}
+
+	var profiles []domain.FeedProfile
+
+	for _, candidate := range candidates {
+		var profileErr error
+
+		p, profileErr := s.profileService.GetEnrichedProfile(ctx, candidate.UserID)
+		if profileErr != nil {
+			return nil, fmt.Errorf("failed to get enriched profile userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		}
+
+		profiles = append(profiles, mapper.MapEnrichedProfileToFeedProfile(p))
+	}
+
+	return profiles, nil
+}

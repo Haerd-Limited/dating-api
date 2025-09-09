@@ -11,6 +11,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/user"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
+	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
@@ -25,6 +26,7 @@ func New(
 	userService internaluser.Service,
 	onboardingService internalonboarding.Service,
 	profileService internalprofile.Service,
+	discoverService internaldiscover.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -34,7 +36,7 @@ func New(
 	router.Use(middleware.Recoverer) // recovers from panics
 
 	authHandler := auth.NewAuthHandler(logger, authService)
-	userHandler := user.NewUserHandler(logger, userService, profileService)
+	userHandler := user.NewUserHandler(logger, userService, profileService, discoverService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
@@ -72,6 +74,11 @@ func New(
 						})
 					},
 				)
+
+				r.Route("/discover", func(r chi.Router) {
+					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
+					r.Get("/", userHandler.GetDiscover())
+				})
 
 				// Media (used during onboarding & later)
 				/*

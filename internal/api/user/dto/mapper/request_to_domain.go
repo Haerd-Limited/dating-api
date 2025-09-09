@@ -1,23 +1,27 @@
 package mapper
 
 import (
+	"time"
+
 	"github.com/Haerd-Limited/dating-api/internal/api/user/dto"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
-	"time"
 )
 
 func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (domain.UpdateProfile, error) {
 	var birthdate *time.Time
+
 	if req.Birthdate != nil {
 		temp, err := time.Parse(time.DateOnly, *req.Birthdate)
 		if err != nil {
 			return domain.UpdateProfile{}, commonErrors.ErrInvalidDob
 		}
+
 		birthdate = &temp
 	}
 
 	var voicePrompts []domain.VoicePrompt
+
 	if req.VoicePrompts != nil {
 		for _, vp := range req.VoicePrompts {
 			voicePrompts = append(voicePrompts, domain.VoicePrompt{
@@ -33,6 +37,7 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 	}
 
 	var photos []domain.Photo
+
 	if req.Photos != nil {
 		for _, p := range req.Photos {
 			photos = append(photos, domain.Photo{
@@ -42,6 +47,7 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 			})
 		}
 	}
+
 	return domain.UpdateProfile{
 		DisplayName:       req.DisplayName,
 		Birthdate:         birthdate,
@@ -69,7 +75,7 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 		Work:              req.Work,
 		JobTitle:          req.JobTitle,
 		University:        req.University,
-		//CreatedAt:         &time.Time{},
-		//UpdatedAt: time.Now().UTC(),
+		// CreatedAt:         &time.Time{},
+		// UpdatedAt: time.Now().UTC(),
 	}, nil
 }

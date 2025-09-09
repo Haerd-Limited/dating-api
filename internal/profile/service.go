@@ -16,6 +16,7 @@ import (
 type Service interface {
 	GetMyProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error)
 	UpdateMyProfile(ctx context.Context, updatedProfile domain.UpdateProfile) (domain.EnrichedProfile, error)
+	GetEnrichedProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error)
 }
 
 type service struct {

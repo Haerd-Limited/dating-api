@@ -115,11 +115,12 @@ type EnrichedProfile struct {
 }
 
 type VoicePrompt struct {
-	URL        string
-	PromptType Prompt
-	IsPrimary  bool
-	Position   int16
-	DurationMs int
+	URL            string
+	PromptType     Prompt
+	IsPrimary      bool
+	Position       int16
+	DurationMs     int
+	PromptCoverURL string // TODO: HAVE frontend provide this for BE to store
 }
 
 type Photo struct {

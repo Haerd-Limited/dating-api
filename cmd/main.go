@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/internal/discover"
+	storage3 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"log"
 	"net/http"
 	"os"
@@ -87,6 +89,9 @@ func main() {
 	profileRepo := storage2.NewProfileRepository(db)
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo)
 
+	discoverRepo := storage3.NewDiscoverRepository(db)
+	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
+
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)
 
@@ -113,6 +118,7 @@ func main() {
 		userService,
 		onboardingService,
 		profileService,
+		discoverService,
 	)
 
 	// Start server with context

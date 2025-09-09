@@ -17,13 +17,13 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type ProfileRepository interface {
-	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
 	UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
-	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
+	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
+	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
 	GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error)
 	GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error)
