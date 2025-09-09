@@ -24,7 +24,6 @@ import (
 type Handler interface {
 	GetMyProfile() http.HandlerFunc
 	UpdateMyProfile() http.HandlerFunc
-	GetDiscover() http.HandlerFunc
 }
 
 type handler struct {
@@ -38,13 +37,11 @@ func NewUserHandler(
 	logger *zap.Logger,
 	userService user.Service,
 	profileService profile.Service,
-	discoverService discover.Service,
 ) Handler {
 	return &handler{
-		logger:          logger,
-		userService:     userService,
-		profileService:  profileService,
-		discoverService: discoverService,
+		logger:         logger,
+		userService:    userService,
+		profileService: profileService,
 	}
 }
 
@@ -150,50 +147,6 @@ func (h *handler) UpdateMyProfile() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.ProfileToDto(updatedProfile))
-	}
-}
-
-func (h *handler) GetDiscover() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		userID, ok := commoncontext.UserIDFromContext(ctx)
-		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
-			return
-		}
-
-		limit := request.ParseQueryInt(r, "limit", 10)
-		offset := request.ParseQueryInt(r, "offset", 0)
-
-		result, err := h.discoverService.GetDiscoverFeed(ctx, userID, limit, offset)
-		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting user discover feed", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
-		}
-
-		render.Json(w, http.StatusOK, mapper.FeedProfilesToDto(result))
 	}
 }
 

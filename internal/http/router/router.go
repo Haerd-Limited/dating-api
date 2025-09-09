@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/Haerd-Limited/dating-api/internal/api/discover"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -36,8 +37,9 @@ func New(
 	router.Use(middleware.Recoverer) // recovers from panics
 
 	authHandler := auth.NewAuthHandler(logger, authService)
-	userHandler := user.NewUserHandler(logger, userService, profileService, discoverService)
+	userHandler := user.NewUserHandler(logger, userService, profileService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
+	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
@@ -77,7 +79,7 @@ func New(
 
 				r.Route("/discover", func(r chi.Router) {
 					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
-					r.Get("/", userHandler.GetDiscover())
+					r.Get("/", discoverHandler.GetDiscover())
 				})
 
 				// Media (used during onboarding & later)
