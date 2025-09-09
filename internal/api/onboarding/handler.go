@@ -637,7 +637,7 @@ func (h *handler) Photos() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg),
+				commonMappers.ToSimpleErrorResponse(messages.AllFieldsRequiredMsg),
 			)
 
 			return
