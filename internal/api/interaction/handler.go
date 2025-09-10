@@ -1,4 +1,4 @@
-package discover
+package interaction
 
 import (
 	"context"
@@ -7,10 +7,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Haerd-Limited/dating-api/internal/api/discover/dto/mapper"
-	"github.com/Haerd-Limited/dating-api/internal/discover"
+	"github.com/Haerd-Limited/dating-api/internal/api/interaction/dto/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/api/user/dto"
+	"github.com/Haerd-Limited/dating-api/internal/interaction"
+	storage2 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
@@ -18,25 +21,25 @@ import (
 )
 
 type Handler interface {
-	GetDiscover() http.HandlerFunc
+	Create() http.HandlerFunc
 }
 
 type handler struct {
-	logger          *zap.Logger
-	discoverService discover.Service
+	logger             *zap.Logger
+	interactionService interaction.Service
 }
 
-func NewDiscoverHandler(
+func NewInteractionHandler(
 	logger *zap.Logger,
-	discoverService discover.Service,
+	interactionService interaction.Service,
 ) Handler {
 	return &handler{
-		logger:          logger,
-		discoverService: discoverService,
+		logger:             logger,
+		interactionService: interactionService,
 	}
 }
 
-func (h *handler) GetDiscover() http.HandlerFunc {
+func (h *handler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -55,10 +58,22 @@ func (h *handler) GetDiscover() http.HandlerFunc {
 			return
 		}
 
-		limit := request.ParseQueryInt(r, "limit", 10)
-		offset := request.ParseQueryInt(r, "offset", 0)
+		var req dto.SwipesRequest
 
-		result, err := h.discoverService.GetDiscoverFeed(ctx, userID, limit, offset)
+		// Validates and decodes request
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate swipes request body", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("All fields are required and action field must be one of 'like','pass' or 'superlike'"),
+			)
+
+			return
+		}
+
+		err = h.interactionService.CreateSwipe(ctx, mapper.SwipesRequestToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -68,7 +83,7 @@ func (h *handler) GetDiscover() http.HandlerFunc {
 				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
 				return
 			default:
-				h.logger.Sugar().Errorw("Error getting user discover feed", "error", err)
+				h.logger.Sugar().Errorw("Error creating swipe", "error", err)
 				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 
@@ -76,7 +91,7 @@ func (h *handler) GetDiscover() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusOK, mapper.FeedProfilesToDto(result))
+		render.Json(w, http.StatusCreated, commonMappers.ToSimpleMessageResponse("Successfully created"))
 	}
 }
 
@@ -84,6 +99,10 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, storage.ErrUserDoesNotExists):
 		return http.StatusNotFound, "User does not exist"
+	case errors.Is(err, commonErrors.ErrInvalidDOBFormat):
+		return http.StatusBadRequest, messages.InvalidDobMsg
+	case errors.Is(err, storage2.ErrAlreadySwiped):
+		return http.StatusConflict, "You've already swiped on this user"
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}

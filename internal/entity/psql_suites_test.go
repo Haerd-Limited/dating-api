@@ -44,6 +44,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("SpatialRefSys", testSpatialRefSysUpsert)
 
+	t.Run("Swipes", testSwipesUpsert)
+
 	t.Run("UserPreferences", testUserPreferencesUpsert)
 
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesUpsert)

@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/internal/discover"
-	storage3 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"log"
 	"net/http"
 	"os"
@@ -23,7 +21,11 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"github.com/Haerd-Limited/dating-api/internal/config"
+	"github.com/Haerd-Limited/dating-api/internal/discover"
+	storage3 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/http/router"
+	"github.com/Haerd-Limited/dating-api/internal/interaction"
+	storage4 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
@@ -92,6 +94,9 @@ func main() {
 	discoverRepo := storage3.NewDiscoverRepository(db)
 	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
 
+	interactionRepo := storage4.NewInteractionRepository(db)
+	interactionService := interaction.NewInteractionService(logger, interactionRepo)
+
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)
 
@@ -119,6 +124,7 @@ func main() {
 		onboardingService,
 		profileService,
 		discoverService,
+		interactionService,
 	)
 
 	// Start server with context

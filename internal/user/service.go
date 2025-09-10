@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/coocood/freecache"
-	"github.com/lib/pq"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/aws"
@@ -46,26 +45,11 @@ func NewUserService(
 	}
 }
 
-var (
-	ErrEmailAlreadyExists       = errors.New("email already exists")
-	ErrUserDetailsAlreadyExists = errors.New("user details already exists")
-	ErrInvalidCredentials       = errors.New("invalid credentials")
-)
+var ErrInvalidCredentials = errors.New("invalid credentials")
 
 func (us *userService) CreateUser(ctx context.Context, user domain.User) (*string, error) {
 	userID, err := us.userRepo.InsertUser(ctx, mapper.ToUserEntity(user))
-	if err != nil { // todo: move to repo layer
-		// Check if the error is a unique constraint violation (email already exists)
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
-			switch pqErr.Constraint {
-			case "users_email_key":
-				return nil, ErrEmailAlreadyExists
-			default:
-				return nil, ErrUserDetailsAlreadyExists
-			}
-		}
-
+	if err != nil {
 		return nil, err
 	}
 

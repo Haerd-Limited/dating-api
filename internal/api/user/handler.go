@@ -9,7 +9,6 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/api/user/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/user/dto/mapper"
-	"github.com/Haerd-Limited/dating-api/internal/discover"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -27,10 +26,9 @@ type Handler interface {
 }
 
 type handler struct {
-	logger          *zap.Logger
-	userService     user.Service
-	profileService  profile.Service
-	discoverService discover.Service
+	logger         *zap.Logger
+	userService    user.Service
+	profileService profile.Service
 }
 
 func NewUserHandler(

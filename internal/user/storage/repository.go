@@ -9,6 +9,7 @@ import (
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 )
@@ -42,6 +43,11 @@ func (r *userRepository) UpdateUser(ctx context.Context, user *entity.User) erro
 	return nil
 }
 
+var (
+	ErrEmailAlreadyExists       = errors.New("email already exists")
+	ErrUserDetailsAlreadyExists = errors.New("user details already exists")
+)
+
 func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*string, error) {
 	// Start a transaction so user and scaffold are atomic
 	tx, err := r.db.BeginTxx(ctx, &sql.TxOptions{})
@@ -57,6 +63,17 @@ func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*st
 	// 1) Insert user
 	err = user.Insert(ctx, tx, boil.Infer())
 	if err != nil {
+		// Check if the error is a unique constraint violation (email already exists)
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			switch pqErr.Constraint {
+			case "users_email_key":
+				return rollback(ErrEmailAlreadyExists)
+			default:
+				return rollback(ErrUserDetailsAlreadyExists)
+			}
+		}
+
 		return rollback(fmt.Errorf("failed inserting user entity: %w", err))
 	}
 

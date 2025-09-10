@@ -1,9 +1,10 @@
 package mapper
 
 import (
+	"time"
+
 	"github.com/Haerd-Limited/dating-api/internal/api/discover/dto"
 	discoverdomain "github.com/Haerd-Limited/dating-api/internal/discover/domain"
-	"time"
 )
 
 func FeedProfilesToDto(profiles []discoverdomain.FeedProfile) []dto.FeedProfile {
@@ -11,6 +12,7 @@ func FeedProfilesToDto(profiles []discoverdomain.FeedProfile) []dto.FeedProfile 
 	for _, profile := range profiles {
 		result = append(result, FeedProfileToDto(profile))
 	}
+
 	return result
 }
 

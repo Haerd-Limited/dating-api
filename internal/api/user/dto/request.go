@@ -2,6 +2,16 @@ package dto
 
 import "github.com/go-playground/validator/v10"
 
+type SwipesRequest struct {
+	TargetUserID   string  `json:"target_user_id" validate:"required"`
+	Action         string  `json:"action" validate:"oneof=like pass superlike"`
+	IdempotencyKey *string `json:"idempotency_key"`
+}
+
+func (sr SwipesRequest) Validate() error {
+	return validator.New().Struct(sr)
+}
+
 type UpdateProfileRequest struct {
 	// Profile
 	DisplayName *string `json:"display_name,omitempty"`

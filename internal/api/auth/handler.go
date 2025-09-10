@@ -14,6 +14,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	"github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user"
+	userstorage "github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
@@ -256,9 +257,9 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusRequestTimeout, messages.RequestTimeoutMsg
 	case errors.Is(err, http.ErrNotMultipart):
 		return http.StatusBadRequest, messages.InvalidUploadFormMsg
-	case errors.Is(err, user.ErrEmailAlreadyExists):
+	case errors.Is(err, userstorage.ErrEmailAlreadyExists):
 		return http.StatusConflict, messages.EmailAlreadyExistsMsg
-	case errors.Is(err, user.ErrUserDetailsAlreadyExists):
+	case errors.Is(err, userstorage.ErrUserDetailsAlreadyExists):
 		return http.StatusConflict, messages.UserDetailsAlreadyExistsMsg
 	case errors.Is(err, user.ErrInvalidCredentials):
 		return http.StatusBadRequest, InvalidCredentialsMsg

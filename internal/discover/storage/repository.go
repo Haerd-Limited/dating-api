@@ -3,8 +3,8 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/aarondl/null/v8"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/jmoiron/sqlx"
 
@@ -48,6 +48,7 @@ func (r *discoverRepository) getOppositeGender(ctx context.Context, userID strin
 
 	// Step 3: Assume genders are stored as "male" / "female" keys in DB
 	var oppositeKey string
+
 	switch currentGender.Label {
 	case "Male", "male":
 		oppositeKey = "female"

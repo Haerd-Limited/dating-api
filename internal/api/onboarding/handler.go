@@ -11,7 +11,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
-	"github.com/Haerd-Limited/dating-api/internal/user"
+	userstorage "github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
@@ -761,9 +761,9 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidIDMsg
 	case errors.Is(err, http.ErrNotMultipart):
 		return http.StatusBadRequest, messages.InvalidUploadFormMsg
-	case errors.Is(err, user.ErrEmailAlreadyExists):
+	case errors.Is(err, userstorage.ErrEmailAlreadyExists):
 		return http.StatusConflict, messages.EmailAlreadyExistsMsg
-	case errors.Is(err, user.ErrUserDetailsAlreadyExists):
+	case errors.Is(err, userstorage.ErrUserDetailsAlreadyExists):
 		return http.StatusConflict, messages.UserDetailsAlreadyExistsMsg
 	case errors.Is(err, commonErrors.ErrInvalidDOBFormat):
 		return http.StatusBadRequest, messages.InvalidDobMsg

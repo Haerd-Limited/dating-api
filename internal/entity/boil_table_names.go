@@ -23,6 +23,7 @@ var TableNames = struct {
 	RefreshTokens         string
 	Religions             string
 	SpatialRefSys         string
+	Swipes                string
 	UserInterests         string
 	UserLanguages         string
 	UserPreferences       string
@@ -52,6 +53,7 @@ var TableNames = struct {
 	RefreshTokens:         "refresh_tokens",
 	Religions:             "religions",
 	SpatialRefSys:         "spatial_ref_sys",
+	Swipes:                "swipes",
 	UserInterests:         "user_interests",
 	UserLanguages:         "user_languages",
 	UserPreferences:       "user_preferences",

@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  seed_family_tables sql
+	@cd ./migrations && goose create  create_swipes_table sql
 .PHONY: migrate-create
 
 
