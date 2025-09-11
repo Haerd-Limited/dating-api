@@ -127,38 +127,40 @@ func hslToRgb(h, s, l float64) (r, g, b float64) {
 }
 
 // GeneratePalette9 returns 9 swatches; index 4 is exactly the base color.
+// GeneratePalette9 returns 9 hex colours where index 4 is the base.
+// The lightness deltas are shaped to mimic the visual spacing in the
+// reference scale (denser near the base, wider at the extremes).
 func GeneratePalette9(baseHex string) ([]string, error) {
+	// 1) Parse base → HSL
 	r, g, b, err := hexToRGB(baseHex)
 	if err != nil {
 		return nil, err
 	}
-
 	h, s, l := rgbToHsl(r, g, b)
 
-	// Relative lightness deltas around base (tweak to taste)
-	deltas := []float64{+0.35, +0.25, +0.15, +0.05, 0, -0.07, -0.15, -0.25, -0.35}
+	// 2) Lightness offsets around the base (index 4 == 0 offset).
+	// Tuned to feel like the provided strip: slightly tighter steps
+	// close to the base, larger steps toward the ends.
+	// (Negative = darker than base, Positive = lighter than base)
+	deltas := []float64{
+		-0.35, -0.26, -0.18, -0.09, 0.00, +0.10, +0.20, +0.29, +0.38,
+	}
 
+	// 3) Build swatches with gentle saturation taper:
+	// lighten ⇒ reduce S a bit; darken ⇒ nudge S up a touch.
 	out := make([]string, len(deltas))
+	for i, d := range deltas {
+		// target lightness, clamped to [0,1]
+		L := mustClamp01(l + d)
 
-	for i, dL := range deltas {
-		L := mustClamp01(l + dL)
-
-		// Saturation taper: preserve exact base (i==4), subtly reduce at extremes
-		var sAdj float64
-		if i == 4 {
-			sAdj = s
-		} else {
-			adj := (4.0 - math.Abs(float64(i)-4.0)) / 4.0 // 1 at center → 0 at ends
-			sAdj = s * (0.85 + 0.15*adj)                  // center->s, ends->~0.85s
-			sAdj = mustClamp01(sAdj)
-		}
+		// saturation adjustment: distance from the base index (4)
+		dist := math.Abs(float64(i)-4.0) / 4.0 // 0 at base, up to 1 at ends
+		sAdj := s*(1.0-0.15*dist) + 0.08*dist  // reduce S when lighter, add a little when darker
+		sAdj = mustClamp01(sAdj)
 
 		R, G, B := hslToRgb(h, sAdj, L)
 		out[i] = rgbToHex(R, G, B)
 	}
-
-	// Guarantee exact base at index 4 (avoids FP drift)
-	out[4] = rgbToHex(r, g, b)
 
 	return out, nil
 }

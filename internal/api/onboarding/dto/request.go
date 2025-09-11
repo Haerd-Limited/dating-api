@@ -4,8 +4,16 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type ProfileRequest struct {
+	ProfileBaseColour    string `json:"profile_base_colour" validate:"required"`
+	ProfileCoverPhotoURL string `json:"profile_cover_photo_url" validate:"required"`
+}
+
+func (pr ProfileRequest) Validate() error {
+	return validator.New().Struct(pr)
+}
+
 type PromptsRequest struct {
-	ProfileColour   string        `json:"profile_colour" validate:"required"`
 	UploadedPrompts []VoicePrompt `json:"uploaded_prompts" validate:"required,dive"`
 }
 

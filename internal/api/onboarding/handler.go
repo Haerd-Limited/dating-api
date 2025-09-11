@@ -33,6 +33,7 @@ type Handler interface {
 	Languages() http.HandlerFunc
 	Photos() http.HandlerFunc
 	Prompts() http.HandlerFunc
+	Profile() http.HandlerFunc
 }
 
 type handler struct {
@@ -722,6 +723,62 @@ func (h *handler) Prompts() http.HandlerFunc {
 		}
 
 		result, err := h.onboardingService.Prompts(ctx, userPrompts)
+		if err != nil {
+			switch {
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // no need to return a response. Client socket is closed.
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error updating prompts", "error", err)
+				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
+
+				return
+			}
+		}
+
+		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
+	}
+}
+
+func (h *handler) Profile() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			authHeader := r.Header.Get("Authorization")
+			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
+
+			render.Json(
+				w,
+				http.StatusUnauthorized,
+				commonMappers.ToSimpleErrorResponse(
+					messages.AuthenticationRequiredMsg,
+				))
+
+			return
+		}
+
+		var req dto.ProfileRequest
+
+		// Validates and decodes request
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate profile request body", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg),
+			)
+
+			return
+		}
+
+		result, err := h.onboardingService.Profile(ctx, mapper.MapProfileToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):

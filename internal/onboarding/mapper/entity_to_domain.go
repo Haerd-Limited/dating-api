@@ -174,6 +174,10 @@ func MapUserProfileToDomain(up *entity.UserProfile) *domain.UserProfile {
 		UpdatedAt: up.UpdatedAt,
 	}
 
+	if up.CoverPhotoURL.Valid {
+		d.CoverPhotoURL = &up.CoverPhotoURL.String
+	}
+
 	// Basic fields
 	if up.DisplayName.Valid {
 		d.DisplayName = &up.DisplayName.String

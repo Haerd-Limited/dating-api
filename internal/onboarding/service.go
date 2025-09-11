@@ -44,6 +44,7 @@ type Service interface {
 	Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.StepResult, error)
 	// Prompts handles the submission of user-uploaded prompts and updates the onboarding process with the provided data.
 	Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.StepResult, error)
+	Profile(ctx context.Context, profileDetails domain.Profile) (domain.StepResult, error)
 }
 
 const (
@@ -627,8 +628,38 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 		return domain.StepResult{}, fmt.Errorf("failed to insert user prompts: %w", err)
 	}
 
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID, StepForPrompts)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+	}
+
+	return domain.StepResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+	}, nil
+}
+
+func (os *onboardingService) Profile(ctx context.Context, profileDetails domain.Profile) (domain.StepResult, error) {
+	const StepForProfile = domain.OnboardingStepsProfile
+
+	err := os.ensureStep(ctx, profileDetails.UserID, StepForProfile)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+	}
+
+	userProfile, err := os.getUserProfile(ctx, profileDetails.UserID)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+	}
+
+	userProfile.CoverPhotoURL = &profileDetails.ProfileCoverPhotoURL
+
+	err = os.updateUserProfile(ctx, userProfile)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+	}
+
 	// generate colours
-	palette, err := theme.GeneratePalette9(uploadedPrompts.BaseHex)
+	palette, err := theme.GeneratePalette9(profileDetails.ProfileBaseColour)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to generate palette: %w", err)
 	}
@@ -639,15 +670,15 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 	}
 	// store colours.
 	err = os.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
-		UserID:  uploadedPrompts.UserID,
-		BaseHex: uploadedPrompts.BaseHex,
+		UserID:  profileDetails.UserID,
+		BaseHex: profileDetails.ProfileBaseColour,
 		Palette: palJSON,
 	})
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to upsert user theme: %w", err)
 	}
 
-	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID, StepForPrompts)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, profileDetails.UserID, StepForProfile)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}

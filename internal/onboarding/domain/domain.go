@@ -2,11 +2,15 @@ package domain
 
 import "time"
 
+type Profile struct {
+	UserID               string
+	ProfileBaseColour    string
+	ProfileCoverPhotoURL string
+}
+
 type Prompts struct {
-	UploadedPrompts     []VoicePrompt
-	UserID              string
-	BaseHex             string
-	PromptCoverPhotoUrl string
+	UploadedPrompts []VoicePrompt
+	UserID          string
 }
 
 type StepResult struct {
@@ -214,10 +218,11 @@ type UserProfile struct {
 	// Extra text fields in user_profiles
 
 	// Work the user's workplace
-	Work        *string
-	JobTitle    *string
-	University  *string
-	ProfileMeta *map[string]any
+	Work          *string
+	JobTitle      *string
+	University    *string
+	ProfileMeta   *map[string]any
+	CoverPhotoURL *string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

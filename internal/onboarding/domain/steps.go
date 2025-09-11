@@ -14,6 +14,7 @@ const (
 	OnboardingStepsLanguages        Steps = "LANGUAGES"
 	OnboardingStepsPhotos           Steps = "PHOTOS"
 	OnboardingStepsPrompts          Steps = "PROMPTS"
+	OnboardingStepsProfile          Steps = "PROFILE"
 	OnboardingStepsComplete         Steps = "COMPLETE"
 )
 
@@ -80,5 +81,6 @@ var OrderedSteps = []Steps{
 	OnboardingStepsLanguages,
 	OnboardingStepsPhotos,
 	OnboardingStepsPrompts,
+	OnboardingStepsProfile,
 	OnboardingStepsComplete,
 }

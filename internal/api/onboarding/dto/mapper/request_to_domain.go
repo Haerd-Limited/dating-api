@@ -183,6 +183,14 @@ func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) (domain.Uplo
 	}, nil
 }
 
+func MapProfileToDomain(req dto.ProfileRequest, userID string) domain.Profile {
+	return domain.Profile{
+		UserID:               userID,
+		ProfileBaseColour:    req.ProfileBaseColour,
+		ProfileCoverPhotoURL: req.ProfileCoverPhotoURL,
+	}
+}
+
 func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Prompts, error) {
 	var voicePrompts []domain.VoicePrompt
 	// todo: check if position values are unique
@@ -200,7 +208,6 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Pr
 	return domain.Prompts{
 		UserID:          userID,
 		UploadedPrompts: voicePrompts,
-		BaseHex:         req.ProfileColour,
 	}, nil
 }
 
