@@ -53,18 +53,11 @@ func (r *authRepository) FindActiveVerificationCode(ctx context.Context, channel
 }
 
 func (r *authRepository) IncrementAttempts(ctx context.Context, id int64) error {
-	vc, err := entity.VerificationCodes(entity.VerificationCodeWhere.ID.EQ(id)).One(ctx, r.db)
-	if err != nil {
-		return fmt.Errorf("failed to find verification code: %w", err)
-	}
-
-	vc.Attempts = vc.Attempts + 1
-
-	_, err = vc.Update(ctx, r.db, boil.Whitelist("attempts"))
-	if err != nil {
-		return fmt.Errorf("failed to update verification code: %w", err)
-	}
-
+	_, err := r.db.ExecContext(ctx, `
+        UPDATE verification_codes
+           SET attempts = attempts + 1
+         WHERE id = $1
+    `, id)
 	return err
 }
 
