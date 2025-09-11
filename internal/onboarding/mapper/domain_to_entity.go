@@ -15,11 +15,12 @@ func MapPromptsToEntity(uploadedPrompts domain.Prompts) []entity.VoicePrompt {
 	var out []entity.VoicePrompt
 	for _, p := range uploadedPrompts.UploadedPrompts {
 		out = append(out, entity.VoicePrompt{
-			UserID:     null.StringFrom(uploadedPrompts.UserID),
-			PromptType: null.Int16From(p.PromptType),
-			Position:   null.Int16From(p.Position),
-			IsPrimary:  p.IsPrimary,
-			AudioURL:   p.URL,
+			UserID:        null.StringFrom(uploadedPrompts.UserID),
+			PromptType:    null.Int16From(p.PromptType),
+			Position:      null.Int16From(p.Position),
+			IsPrimary:     p.IsPrimary,
+			AudioURL:      p.URL,
+			CoverPhotoURL: null.StringFrom(p.CoverPhotoUrl),
 			// todo: add transcript
 			// todo: add duration somehow
 		})

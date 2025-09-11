@@ -46,7 +46,6 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 	for _, candidate := range candidates {
 		var profileErr error
 
-		// todo: remove already liked/passed/superliked/people
 		p, profileErr := s.profileService.GetEnrichedProfile(ctx, candidate.UserID)
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to get enriched profile userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)

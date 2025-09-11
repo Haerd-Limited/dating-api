@@ -189,10 +189,11 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Pr
 	// todo: ensure count is min 4, max 6
 	for _, p := range req.UploadedPrompts {
 		voicePrompts = append(voicePrompts, domain.VoicePrompt{
-			URL:        p.URL,
-			Position:   p.Position,
-			IsPrimary:  p.IsPrimary,
-			PromptType: p.PromptType,
+			URL:           p.URL,
+			Position:      p.Position,
+			IsPrimary:     p.IsPrimary,
+			PromptType:    p.PromptType,
+			CoverPhotoUrl: p.CoverPhotoUrl,
 		})
 	}
 

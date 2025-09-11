@@ -3,9 +3,10 @@ package domain
 import "time"
 
 type Prompts struct {
-	UploadedPrompts []VoicePrompt
-	UserID          string
-	BaseHex         string
+	UploadedPrompts     []VoicePrompt
+	UserID              string
+	BaseHex             string
+	PromptCoverPhotoUrl string
 }
 
 type StepResult struct {
@@ -16,11 +17,12 @@ type StepResult struct {
 }
 
 type VoicePrompt struct {
-	URL        string
-	PromptType int16
-	IsPrimary  bool
-	Position   int16
-	DurationMs int
+	URL           string
+	PromptType    int16
+	IsPrimary     bool
+	Position      int16
+	DurationMs    int
+	CoverPhotoUrl string
 }
 type PhotosContent struct {
 	Prompts                []Prompt

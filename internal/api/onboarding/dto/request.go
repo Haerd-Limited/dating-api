@@ -10,10 +10,11 @@ type PromptsRequest struct {
 }
 
 type VoicePrompt struct {
-	URL        string `json:"upload_url" validate:"required"`
-	PromptType int16  `json:"prompt_type" validate:"required"`
-	IsPrimary  bool   `json:"is_primary"`
-	Position   int16  `json:"position" validate:"required"`
+	URL           string `json:"upload_url" validate:"required"`
+	PromptType    int16  `json:"prompt_type" validate:"required"`
+	IsPrimary     bool   `json:"is_primary"`
+	Position      int16  `json:"position" validate:"required"`
+	CoverPhotoUrl string `json:"cover_photo_url" validate:"required"`
 }
 
 func (pr PromptsRequest) Validate() error {

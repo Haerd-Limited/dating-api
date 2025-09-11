@@ -108,5 +108,6 @@ func (r *discoverRepository) GetCandidates(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get candidates: %w", err)
 	}
+
 	return users, nil
 }

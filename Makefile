@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  create_swipes_table sql
+	@cd ./migrations && goose create  add_cover_photo_url_to_profile_table sql
 .PHONY: migrate-create
 
 
