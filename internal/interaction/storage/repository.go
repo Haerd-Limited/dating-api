@@ -2,12 +2,12 @@ package storage
 
 import (
 	"context"
-	"github.com/aarondl/sqlboiler/v4/queries/qm"
-	"github.com/friendsofgo/errors"
-	"github.com/lib/pq"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
+	"github.com/friendsofgo/errors"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 )
@@ -28,9 +28,7 @@ func NewInteractionRepository(db *sqlx.DB) InteractionRepository {
 	}
 }
 
-var (
-	ErrAlreadySwiped = errors.New("you've already swiped on this user.")
-)
+var ErrAlreadySwiped = errors.New("you've already swiped on this user.")
 
 const (
 	like      = "like"
@@ -47,11 +45,13 @@ func (is *repository) InsertSwipe(ctx context.Context, swipe entity.Swipe) error
 			case "swipes_actor_target_uniq":
 				return ErrAlreadySwiped
 			}
+
 			return err
 		}
 
 		return err
 	}
+
 	return nil
 }
 
@@ -64,9 +64,11 @@ func (is *repository) CheckIfMatchable(ctx context.Context, userID string, targe
 	if err != nil {
 		return false, err
 	}
+
 	if !ok {
 		return false, nil
 	}
+
 	return true, nil
 }
 
@@ -78,6 +80,7 @@ func (is *repository) CreateMatch(ctx context.Context, match entity.Match) error
 			// already matched – treat as success
 			return nil
 		}
+
 		return err
 	}
 

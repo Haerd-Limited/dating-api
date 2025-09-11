@@ -3,11 +3,12 @@ package interaction
 import (
 	"context"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/internal/entity"
-	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
+
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
+	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 )
 
@@ -38,6 +39,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) error {
 	if err != nil {
 		return fmt.Errorf("failed to check if matchable userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 	}
+
 	if !matchable {
 		return nil
 	}

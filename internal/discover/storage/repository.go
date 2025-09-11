@@ -70,7 +70,11 @@ func (r *discoverRepository) getOppositeGender(ctx context.Context, userID strin
 	return opposite, nil
 }
 
-func (r *discoverRepository) GetCandidates(ctx context.Context, userID string, limit int, offset int) (entity.UserProfileSlice, error) {
+func (r *discoverRepository) GetCandidates(
+	ctx context.Context,
+	userID string,
+	limit, offset int,
+) (entity.UserProfileSlice, error) {
 	oppositeGender, err := r.getOppositeGender(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get opposite gender: %w", err)
@@ -79,19 +83,30 @@ func (r *discoverRepository) GetCandidates(ctx context.Context, userID string, l
 	const stepComplete = "COMPLETE"
 
 	users, err := entity.UserProfiles(
-		// don’t return the caller’s own profile
+		// not me
 		entity.UserProfileWhere.UserID.NEQ(userID),
-		// match opposite gender
+
+		// opposite gender
 		entity.UserProfileWhere.GenderID.EQ(null.Int16From(oppositeGender.ID)),
-		// only users who finished onboarding
+
+		// only fully onboarded users
 		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
 		qm.Where("u.onboarding_step = ?", stepComplete),
+
+		// exclude anyone I've already swiped on (like / pass / superlike — any action)
+		qm.Where(`
+            NOT EXISTS (
+                SELECT 1
+                  FROM swipes s
+                 WHERE s.actor_id  = ?
+                   AND s.target_id = user_profiles.user_id
+            )`, userID),
+
 		qm.Limit(limit),
 		qm.Offset(offset),
 	).All(ctx, r.db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get candidates: %w", err)
 	}
-
 	return users, nil
 }
