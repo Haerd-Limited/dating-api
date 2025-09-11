@@ -1,9 +1,10 @@
 package mapper
 
 import (
+	"github.com/aarondl/null/v8"
+
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
-	"github.com/aarondl/null/v8"
 )
 
 func SwipeToEntity(s domain.Swipe) entity.Swipe {
