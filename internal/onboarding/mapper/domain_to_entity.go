@@ -20,7 +20,7 @@ func MapPromptsToEntity(uploadedPrompts domain.Prompts) []entity.VoicePrompt {
 			Position:      null.Int16From(p.Position),
 			IsPrimary:     p.IsPrimary,
 			AudioURL:      p.URL,
-			CoverPhotoURL: null.StringFrom(p.CoverPhotoUrl),
+			CoverPhotoURL: null.StringFromPtr(p.CoverPhotoUrl),
 			// todo: add transcript
 			// todo: add duration somehow
 		})

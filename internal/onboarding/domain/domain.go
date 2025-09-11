@@ -26,7 +26,7 @@ type VoicePrompt struct {
 	IsPrimary     bool
 	Position      int16
 	DurationMs    int
-	CoverPhotoUrl string
+	CoverPhotoUrl *string
 }
 type PhotosContent struct {
 	Prompts                []Prompt
