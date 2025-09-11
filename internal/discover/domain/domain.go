@@ -29,6 +29,7 @@ type FeedProfile struct {
 	Ethnicity       string
 	SpokenLanguages []string
 	VoicePrompts    []VoicePrompt
+	Theme           UserTheme
 
 	Work       *string
 	JobTitle   *string
@@ -39,6 +40,11 @@ type FeedProfile struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type UserTheme struct {
+	BaseHex string
+	Palette []string
 }
 
 type VoicePrompt struct {

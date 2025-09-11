@@ -42,7 +42,7 @@ func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) 
 	prof, err := s.getUserProfile(ctx, up.UserID)
 	if err != nil {
 		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user profile: %w", err)
-	}
+	} //todo: update theme
 
 	// Basic
 	if up.DisplayName != nil {
@@ -211,6 +211,11 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 		UpdatedAt:   userProfile.UpdatedAt,
 	}
 
+	result.Theme, err = s.getUserTheme(ctx, userID)
+	if err != nil {
+		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user theme: %w", err)
+	}
+
 	result.Gender, err = s.getGenderByID(ctx, userProfile.GenderID)
 	if err != nil {
 		return domain.EnrichedProfile{}, fmt.Errorf("failed to get gender: %w", err)
@@ -288,6 +293,24 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	result.Photos, err = s.getUserPhotos(ctx, userID)
 	if err != nil {
 		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user photos: %w", err)
+	}
+
+	return result, nil
+}
+
+func (s *service) getUserTheme(ctx context.Context, userID string) (domain.UserTheme, error) {
+	userThemeEntity, err := s.profileRepo.GetUserTheme(ctx, userID)
+	if err != nil {
+		return domain.UserTheme{}, fmt.Errorf("failed to get user theme: %w", err)
+	}
+
+	result := domain.UserTheme{
+		BaseHex: userThemeEntity.BaseHex,
+	}
+
+	err = userThemeEntity.Palette.Unmarshal(&result.Palette)
+	if err != nil {
+		return domain.UserTheme{}, fmt.Errorf("failed to unmarshal palette: %w", err)
 	}
 
 	return result, nil

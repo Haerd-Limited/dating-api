@@ -27,6 +27,7 @@ type FeedProfile struct {
 	Ethnicity       string        `json:"ethnicity"`
 	SpokenLanguages []string      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt `json:"voice_prompts"`
+	Theme           UserTheme     `json:"theme"`
 
 	Verified bool `json:"verified"`
 
@@ -36,6 +37,10 @@ type FeedProfile struct {
 
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+}
+type UserTheme struct {
+	BaseHex string   `json:"base_hex"`
+	Palette []string `json:"palette"`
 }
 
 type VoicePrompt struct {

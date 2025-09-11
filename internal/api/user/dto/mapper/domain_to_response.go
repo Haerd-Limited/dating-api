@@ -18,6 +18,10 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		Longitude:   profile.Longitude,
 		City:        profile.City,
 		Country:     profile.Country,
+		Theme: dto.UserTheme{
+			BaseHex: profile.Theme.BaseHex,
+			Palette: profile.Theme.Palette,
+		},
 		Gender: dto.Gender{
 			ID:    profile.Gender.ID,
 			Label: profile.Gender.Label,

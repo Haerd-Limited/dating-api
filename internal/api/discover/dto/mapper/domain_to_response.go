@@ -66,6 +66,10 @@ func FeedProfileToDto(profile discoverdomain.FeedProfile) dto.FeedProfile {
 		SpokenLanguages: profile.SpokenLanguages,
 		VoicePrompts:    voicePrompts,
 		Verified:        profile.Verified,
+		Theme: dto.UserTheme{
+			BaseHex: profile.Theme.BaseHex,
+			Palette: profile.Theme.Palette,
+		},
 
 		Work:       profile.Work,
 		JobTitle:   profile.JobTitle,

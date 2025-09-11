@@ -105,13 +105,18 @@ type EnrichedProfile struct {
 	SpokenLanguages []Language
 	VoicePrompts    []VoicePrompt
 	Photos          []Photo
-
-	Work       *string
-	JobTitle   *string
-	University *string
+	Theme           UserTheme
+	Work            *string
+	JobTitle        *string
+	University      *string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type UserTheme struct {
+	BaseHex string
+	Palette []string
 }
 
 type VoicePrompt struct {

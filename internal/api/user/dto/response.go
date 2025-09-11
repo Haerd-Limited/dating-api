@@ -33,12 +33,18 @@ type Profile struct {
 	VoicePrompts    []VoicePrompt   `json:"voice_prompts"`
 	Photos          []Photo         `json:"photos"`
 
-	Work       *string `json:"work,omitempty"`
-	JobTitle   *string `json:"job_title,omitempty"`
-	University *string `json:"university,omitempty"`
+	Work       *string   `json:"work,omitempty"`
+	JobTitle   *string   `json:"job_title,omitempty"`
+	University *string   `json:"university,omitempty"`
+	Theme      UserTheme `json:"theme"`
 
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+}
+
+type UserTheme struct {
+	BaseHex string   `json:"base_hex"`
+	Palette []string `json:"palette"`
 }
 
 type Photo struct {

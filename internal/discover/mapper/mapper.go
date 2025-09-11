@@ -35,6 +35,10 @@ func MapEnrichedProfileToFeedProfile(ep profiledomain.EnrichedProfile) domain.Fe
 
 		CreatedAt: ep.CreatedAt,
 		UpdatedAt: ep.UpdatedAt,
+		Theme: domain.UserTheme{
+			BaseHex: ep.Theme.BaseHex,
+			Palette: ep.Theme.Palette,
+		},
 	}
 
 	// Optional statuses -> pointers to label
