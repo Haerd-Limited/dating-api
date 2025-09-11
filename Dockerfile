@@ -34,8 +34,8 @@ COPY --from=builder /app/haerd-dating-api .
 
 # Copy migrations and .env file
 COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/.env .env
-COPY --from=builder /app/secrets ./secrets
+#COPY --from=builder /app/.env .env
+#COPY --from=builder /app/secrets ./secrets
 
 # Expose the port the app listens on
 EXPOSE 8080
