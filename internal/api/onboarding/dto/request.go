@@ -14,7 +14,7 @@ func (pr ProfileRequest) Validate() error {
 }
 
 type PromptsRequest struct {
-	UploadedPrompts []VoicePrompt `json:"uploaded_prompts" validate:"required,,min=4,max=6,dive"`
+	UploadedPrompts []VoicePrompt `json:"uploaded_prompts" validate:"required,min=4,max=6,dive"`
 }
 
 type VoicePrompt struct {
