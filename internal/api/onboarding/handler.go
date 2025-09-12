@@ -705,7 +705,7 @@ func (h *handler) Prompts() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg),
+				commonMappers.ToSimpleErrorResponse("Please provide at least 4 prompts. Maximum 6 prompts. Prompt type, url and position are required fields"),
 			)
 
 			return
