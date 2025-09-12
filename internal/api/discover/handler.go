@@ -76,7 +76,7 @@ func (h *handler) GetDiscover() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusOK, mapper.FeedProfilesToDto(result))
+		render.Json(w, http.StatusOK, mapper.ProfileCardsToDto(result))
 	}
 }
 

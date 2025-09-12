@@ -1,6 +1,6 @@
 package dto
 
-type FeedProfile struct {
+type ProfileCard struct {
 	DisplayName *string `json:"display_name,omitempty"`
 	Birthdate   string  `json:"birthdate"`
 	Age         int     `json:"age"`

@@ -5,8 +5,8 @@ import (
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 )
 
-func MapEnrichedProfileToFeedProfile(ep profiledomain.EnrichedProfile) domain.FeedProfile {
-	fp := domain.FeedProfile{
+func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) domain.ProfileCard {
+	fp := domain.ProfileCard{
 		DisplayName: ep.DisplayName,
 		Birthdate:   ep.Birthdate,
 		Age:         ep.Age,

@@ -7,16 +7,16 @@ import (
 	discoverdomain "github.com/Haerd-Limited/dating-api/internal/discover/domain"
 )
 
-func FeedProfilesToDto(profiles []discoverdomain.FeedProfile) []dto.FeedProfile {
-	var result []dto.FeedProfile
+func ProfileCardsToDto(profiles []discoverdomain.ProfileCard) []dto.ProfileCard {
+	var result []dto.ProfileCard
 	for _, profile := range profiles {
-		result = append(result, FeedProfileToDto(profile))
+		result = append(result, ProfileCardToDto(profile))
 	}
 
 	return result
 }
 
-func FeedProfileToDto(profile discoverdomain.FeedProfile) dto.FeedProfile {
+func ProfileCardToDto(profile discoverdomain.ProfileCard) dto.ProfileCard {
 	// Format times
 	birthdateStr := profile.Birthdate.Format(time.DateOnly)
 	createdAtStr := profile.CreatedAt.Format(time.RFC3339)
@@ -39,7 +39,7 @@ func FeedProfileToDto(profile discoverdomain.FeedProfile) dto.FeedProfile {
 		})
 	}
 
-	return dto.FeedProfile{
+	return dto.ProfileCard{
 		DisplayName: profile.DisplayName,
 		Birthdate:   birthdateStr,
 		Age:         profile.Age,

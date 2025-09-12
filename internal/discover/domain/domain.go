@@ -2,7 +2,7 @@ package domain
 
 import "time"
 
-type FeedProfile struct {
+type ProfileCard struct {
 	DisplayName *string
 	Birthdate   time.Time
 	Age         int

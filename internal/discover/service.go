@@ -13,7 +13,7 @@ import (
 )
 
 type Service interface {
-	GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]domain.FeedProfile, error)
+	GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]domain.ProfileCard, error)
 }
 
 type service struct {
@@ -35,13 +35,13 @@ func NewDiscoverService(
 }
 
 // todo: add filters like  age, race, distance, age
-func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]domain.FeedProfile, error) {
+func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]domain.ProfileCard, error) {
 	candidates, err := s.discoverRepo.GetCandidates(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get candidate IDs userID=%s limit=%v offset=%v: %w", userID, limit, offset, err)
 	}
 
-	var profiles []domain.FeedProfile
+	var profiles []domain.ProfileCard
 
 	for _, candidate := range candidates {
 		var profileErr error
@@ -51,7 +51,7 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 			return nil, fmt.Errorf("failed to get enriched profile userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
 
-		profiles = append(profiles, mapper.MapEnrichedProfileToFeedProfile(p))
+		profiles = append(profiles, mapper.MapEnrichedProfileToProfileCard(p))
 	}
 
 	return profiles, nil
