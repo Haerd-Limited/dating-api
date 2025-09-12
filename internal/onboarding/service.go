@@ -236,6 +236,10 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 				VoicePromptsUploadUrls: voicePromptUploadUrls,
 			},
 		}, nil
+	case domain.OnboardingStepsProfile:
+		return domain.StepResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+		}, nil
 
 	case domain.OnboardingStepsComplete:
 		return domain.StepResult{

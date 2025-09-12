@@ -242,11 +242,11 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Ref
 		return nil, fmt.Errorf("failed to get refresh token refreshToken=%s: %w", utils.Redacted(refreshInput.RefreshToken), err)
 	}
 
-	if time.Now().After(refreshToken.ExpiresAt) { // todo: move to repository layer
+	if time.Now().After(refreshToken.ExpiresAt) {
 		return nil, ErrRefreshTokenExpired
 	}
 
-	if refreshToken.Revoked { // todo: move to repository layer
+	if refreshToken.Revoked {
 		return nil, ErrRefreshTokenRevoked
 	}
 
