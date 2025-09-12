@@ -51,7 +51,7 @@ const (
 	maxUploadCountPhotos  = 6
 	maxUploadCountPrompts = 6
 	maxUploadBytes        = 5 << 20 // 5 MiB
-	presignTTL            = 10 * time.Minute
+	presignTTL            = 20 * time.Minute
 	mimeJPEG              = "image/jpeg"
 	mimeM4A               = "audio/mp4" // m4a is an MP4 container; "audio/m4a" also seen but "audio/mp4" is safer
 )
@@ -583,7 +583,7 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	}
 
 	// generate prompt urls.
-	urls, err := os.awsService.GenerateUploadURLs(ctx, uploadedPhotos.UserID, maxUploadCountPrompts, mimeM4A, time.Duration(10)*time.Minute)
+	urls, err := os.awsService.GenerateUploadURLs(ctx, uploadedPhotos.UserID, maxUploadCountPrompts, mimeM4A, presignTTL)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
 	}
