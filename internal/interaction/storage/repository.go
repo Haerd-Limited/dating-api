@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -16,6 +17,7 @@ type InteractionRepository interface {
 	InsertSwipe(ctx context.Context, swipe entity.Swipe) error
 	CheckIfMatchable(ctx context.Context, userID string, targetUserID string) (bool, error)
 	CreateMatch(ctx context.Context, match entity.Match) error
+	GetIncomingLikes(ctx context.Context, userID string, limit, offset int) ([]string, error)
 }
 
 type repository struct {
@@ -31,10 +33,31 @@ func NewInteractionRepository(db *sqlx.DB) InteractionRepository {
 var ErrAlreadySwiped = errors.New("you've already swiped on this user.")
 
 const (
-	like      = "like"
-	pass      = "pass"
-	superlike = "superlike"
+	actionLike      = "like"
+	actionPass      = "pass"
+	actionSuperlike = "actionSuperlike"
 )
+
+// GetIncomingLikes returns profiles of users who have liked/superliked `userID`.
+func (is *repository) GetIncomingLikes(ctx context.Context, userID string, limit, offset int) ([]string, error) {
+	swipes, err := entity.Swipes(
+		entity.SwipeWhere.TargetID.EQ(userID),
+		qm.Where("action IN (?, ?)", actionLike, actionSuperlike),
+		qm.Limit(limit),
+		qm.Offset(offset),
+		qm.OrderBy("created_at ASC"),
+	).All(ctx, is.db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch incoming likes for userID=%s: %w", userID, err)
+	}
+
+	var userIDs []string
+	for _, s := range swipes {
+		userIDs = append(userIDs, s.ActorID) // the "liker"
+	}
+
+	return userIDs, nil
+}
 
 func (is *repository) InsertSwipe(ctx context.Context, swipe entity.Swipe) error {
 	err := swipe.Insert(ctx, is.db, boil.Infer())
@@ -59,7 +82,7 @@ func (is *repository) CheckIfMatchable(ctx context.Context, userID string, targe
 	ok, err := entity.Swipes(
 		entity.SwipeWhere.ActorID.EQ(targetUserID), // they swiped
 		entity.SwipeWhere.TargetID.EQ(userID),      // on me
-		qm.Where("action IN (?, ?)", like, superlike),
+		qm.Where("action IN (?, ?)", actionLike, actionSuperlike),
 	).Exists(ctx, is.db)
 	if err != nil {
 		return false, err

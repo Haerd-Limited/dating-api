@@ -58,6 +58,7 @@ func (r *authRepository) IncrementAttempts(ctx context.Context, id int64) error 
            SET attempts = attempts + 1
          WHERE id = $1
     `, id)
+
 	return err
 }
 

@@ -136,6 +136,7 @@ func GeneratePalette9(baseHex string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	h, s, l := rgbToHsl(r, g, b)
 
 	// 2) Lightness offsets around the base (index 4 == 0 offset).
@@ -149,6 +150,7 @@ func GeneratePalette9(baseHex string) ([]string, error) {
 	// 3) Build swatches with gentle saturation taper:
 	// lighten ⇒ reduce S a bit; darken ⇒ nudge S up a touch.
 	out := make([]string, len(deltas))
+
 	for i, d := range deltas {
 		// target lightness, clamped to [0,1]
 		L := mustClamp01(l + d)

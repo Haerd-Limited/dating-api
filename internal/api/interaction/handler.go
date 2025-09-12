@@ -3,6 +3,7 @@ package interaction
 import (
 	"context"
 	"errors"
+	cardsdto "github.com/Haerd-Limited/dating-api/internal/profilecard/dto"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -22,6 +23,7 @@ import (
 
 type Handler interface {
 	Create() http.HandlerFunc
+	GetLikes() http.HandlerFunc
 }
 
 type handler struct {
@@ -95,8 +97,55 @@ func (h *handler) Create() http.HandlerFunc {
 	}
 }
 
+func (h *handler) GetLikes() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			authHeader := r.Header.Get("Authorization")
+			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
+
+			render.Json(
+				w,
+				http.StatusUnauthorized,
+				commonMappers.ToSimpleErrorResponse(
+					messages.AuthenticationRequiredMsg,
+				))
+
+			return
+		}
+
+		dir := r.URL.Query().Get("direction")
+		limit := request.ParseQueryInt(r, "limit", 5)
+		offset := request.ParseQueryInt(r, "offset", 0)
+
+		profiles, err := h.interactionService.GetLikes(ctx, userID, dir, offset, limit)
+		if err != nil {
+			switch {
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // no need to return a response. Client socket is closed.
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error getting likes", "error", err)
+				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
+
+				return
+			}
+		}
+
+		render.Json(w, http.StatusOK, cardsdto.ProfileCardsToDto(profiles))
+	}
+}
+
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, interaction.ErrInvalidDirection):
+		return http.StatusBadRequest, "Invalid direction. Direction must be 'incoming'"
 	case errors.Is(err, storage.ErrUserDoesNotExists):
 		return http.StatusNotFound, "User does not exist"
 	case errors.Is(err, commonErrors.ErrInvalidDOBFormat):

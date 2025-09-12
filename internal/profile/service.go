@@ -11,12 +11,14 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
+	"github.com/Haerd-Limited/dating-api/internal/profilecard"
 )
 
 type Service interface {
 	GetMyProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error)
 	UpdateMyProfile(ctx context.Context, updatedProfile domain.UpdateProfile) (domain.EnrichedProfile, error)
 	GetEnrichedProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error)
+	GetProfileCard(ctx context.Context, userID string) (profilecard.ProfileCard, error)
 }
 
 type service struct {
@@ -42,7 +44,7 @@ func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) 
 	prof, err := s.getUserProfile(ctx, up.UserID)
 	if err != nil {
 		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user profile: %w", err)
-	} //todo: update theme
+	} // todo: update theme
 
 	// Basic
 	if up.DisplayName != nil {
@@ -296,6 +298,15 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	}
 
 	return result, nil
+}
+
+func (s *service) GetProfileCard(ctx context.Context, userID string) (profilecard.ProfileCard, error) {
+	enrichedProfile, err := s.GetEnrichedProfile(ctx, userID)
+	if err != nil {
+		return profilecard.ProfileCard{}, fmt.Errorf("failed to get enriched profile: %w", err)
+	}
+
+	return mapper.MapEnrichedProfileToProfileCard(enrichedProfile), nil
 }
 
 func (s *service) getUserTheme(ctx context.Context, userID string) (domain.UserTheme, error) {

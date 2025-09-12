@@ -95,7 +95,7 @@ func main() {
 	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
 
 	interactionRepo := storage4.NewInteractionRepository(db)
-	interactionService := interaction.NewInteractionService(logger, interactionRepo)
+	interactionService := interaction.NewInteractionService(logger, interactionRepo, profileService)
 
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)

@@ -10,23 +10,34 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/internal/profile"
+	"github.com/Haerd-Limited/dating-api/internal/profilecard"
 )
 
 type Service interface {
 	CreateSwipe(ctx context.Context, swipe domain.Swipe) error
+	GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]profilecard.ProfileCard, error)
 }
 
 type service struct {
 	logger          *zap.Logger
+	profileService  profile.Service
 	interactionRepo storage.InteractionRepository
 }
 
-func NewInteractionService(logger *zap.Logger, interactionRepo storage.InteractionRepository) Service {
+func NewInteractionService(
+	logger *zap.Logger,
+	interactionRepo storage.InteractionRepository,
+	profileService profile.Service,
+) Service {
 	return &service{
 		logger:          logger,
 		interactionRepo: interactionRepo,
+		profileService:  profileService,
 	}
 }
+
+var ErrInvalidDirection = fmt.Errorf("invalid direction")
 
 func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) error {
 	//todo:if like or super like, notifiy
@@ -60,4 +71,33 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) error {
 	//todo:send notification
 
 	return nil
+}
+
+func (is *service) GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]profilecard.ProfileCard, error) {
+	var likesUserIDs []string
+
+	var profiles []profilecard.ProfileCard
+
+	var err error
+	switch direction {
+	case "incoming":
+		likesUserIDs, err = is.interactionRepo.GetIncomingLikes(ctx, userID, limit, offset)
+	default:
+		return nil, ErrInvalidDirection
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, id := range likesUserIDs {
+		p, profileErr := is.profileService.GetProfileCard(ctx, id)
+		if profileErr != nil {
+			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, id, profileErr)
+		}
+
+		profiles = append(profiles, p)
+	}
+
+	return profiles, nil
 }

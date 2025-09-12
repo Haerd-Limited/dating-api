@@ -7,8 +7,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Haerd-Limited/dating-api/internal/api/discover/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
+	"github.com/Haerd-Limited/dating-api/internal/profilecard/dto"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
@@ -76,7 +76,7 @@ func (h *handler) GetDiscover() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusOK, mapper.ProfileCardsToDto(result))
+		render.Json(w, http.StatusOK, dto.ProfileCardsToDto(result))
 	}
 }
 
