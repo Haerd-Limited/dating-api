@@ -68,7 +68,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) error {
 	if err != nil {
 		return fmt.Errorf("failed to created match userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 	}
-	//todo:send notification
+	//todo:send notification to targetuser
 
 	return nil
 }
