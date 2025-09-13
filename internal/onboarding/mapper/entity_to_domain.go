@@ -179,9 +179,7 @@ func MapUserProfileToDomain(up *entity.UserProfile) *domain.UserProfile {
 	}
 
 	// Basic fields
-	if up.DisplayName.Valid {
-		d.DisplayName = &up.DisplayName.String
-	}
+	d.DisplayName = &up.DisplayName
 
 	if up.Birthdate.Valid {
 		d.Birthdate = up.Birthdate.Time

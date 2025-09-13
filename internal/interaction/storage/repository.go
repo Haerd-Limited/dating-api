@@ -18,6 +18,7 @@ type InteractionRepository interface {
 	CheckIfMatchable(ctx context.Context, userID string, targetUserID string) (bool, error)
 	CreateMatch(ctx context.Context, match entity.Match) error
 	GetIncomingLikes(ctx context.Context, userID string, limit, offset int) ([]string, error)
+	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
 }
 
 type repository struct {
@@ -35,7 +36,7 @@ var ErrAlreadySwiped = errors.New("you've already swiped on this user.")
 const (
 	actionLike      = "like"
 	actionPass      = "pass"
-	actionSuperlike = "actionSuperlike"
+	actionSuperlike = "superlike"
 )
 
 // GetIncomingLikes returns profiles of users who have liked/superliked `userID`.
@@ -108,4 +109,18 @@ func (is *repository) CreateMatch(ctx context.Context, match entity.Match) error
 	}
 
 	return nil
+}
+
+func (is *repository) GetMatches(ctx context.Context, userID string) ([]*entity.Match, error) {
+	matches, err := entity.Matches(
+		entity.MatchWhere.UserB.EQ(userID),
+		qm.Or2(
+			entity.MatchWhere.UserA.EQ(userID),
+		),
+	).All(ctx, is.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return matches, nil
 }

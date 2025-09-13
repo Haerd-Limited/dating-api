@@ -56,7 +56,7 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 
 	// Strings
 	if p.DisplayName != nil {
-		ent.DisplayName = null.StringFrom(*p.DisplayName)
+		ent.DisplayName = *p.DisplayName
 	}
 
 	if p.City != "" {

@@ -3,7 +3,7 @@ package profilecard
 import "time"
 
 type ProfileCard struct {
-	DisplayName *string
+	DisplayName string
 	Birthdate   time.Time
 	Age         int
 	HeightCM    int16

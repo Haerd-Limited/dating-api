@@ -6,3 +6,12 @@ type Swipe struct {
 	UserID         string
 	IdempotencyKey *string
 }
+
+type Match struct {
+	UserID         string
+	DisplayName    string
+	MessagePreview string
+	Emoji          string
+	Reveal         bool
+	RevealProgress int
+}

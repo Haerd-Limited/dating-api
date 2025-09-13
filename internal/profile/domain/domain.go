@@ -3,7 +3,7 @@ package domain
 import "time"
 
 type Profile struct {
-	DisplayName *string
+	DisplayName string
 	Birthdate   time.Time
 	HeightCM    int16
 	UserID      string
@@ -41,7 +41,7 @@ type Profile struct {
 }
 
 type UpdateProfile struct {
-	DisplayName *string
+	DisplayName string
 	Birthdate   *time.Time
 	HeightCM    *int16
 	UserID      string
@@ -78,7 +78,7 @@ type UpdateProfile struct {
 }
 
 type EnrichedProfile struct {
-	DisplayName *string
+	DisplayName string
 	Birthdate   time.Time
 	Age         int
 	HeightCM    int16

@@ -25,7 +25,7 @@ import (
 // UserProfile is an object representing the database table.
 type UserProfile struct {
 	UserID            string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	DisplayName       null.String `boil:"display_name" json:"display_name,omitempty" toml:"display_name" yaml:"display_name,omitempty"`
+	DisplayName       string      `boil:"display_name" json:"display_name" toml:"display_name" yaml:"display_name"`
 	Birthdate         null.Time   `boil:"birthdate" json:"birthdate,omitempty" toml:"birthdate" yaml:"birthdate,omitempty"`
 	HeightCM          null.Int16  `boil:"height_cm" json:"height_cm,omitempty" toml:"height_cm" yaml:"height_cm,omitempty"`
 	Geo               string      `boil:"geo" json:"geo" toml:"geo" yaml:"geo"`
@@ -195,7 +195,7 @@ func (w whereHelpernull_JSON) IsNotNull() qm.QueryMod { return qmhelper.WhereIsN
 
 var UserProfileWhere = struct {
 	UserID            whereHelperstring
-	DisplayName       whereHelpernull_String
+	DisplayName       whereHelperstring
 	Birthdate         whereHelpernull_Time
 	HeightCM          whereHelpernull_Int16
 	Geo               whereHelperstring
@@ -222,7 +222,7 @@ var UserProfileWhere = struct {
 	CoverPhotoURL     whereHelpernull_String
 }{
 	UserID:            whereHelperstring{field: "\"user_profiles\".\"user_id\""},
-	DisplayName:       whereHelpernull_String{field: "\"user_profiles\".\"display_name\""},
+	DisplayName:       whereHelperstring{field: "\"user_profiles\".\"display_name\""},
 	Birthdate:         whereHelpernull_Time{field: "\"user_profiles\".\"birthdate\""},
 	HeightCM:          whereHelpernull_Int16{field: "\"user_profiles\".\"height_cm\""},
 	Geo:               whereHelperstring{field: "\"user_profiles\".\"geo\""},
@@ -515,8 +515,8 @@ type userProfileL struct{}
 
 var (
 	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url"}
-	userProfileColumnsWithoutDefault = []string{"user_id"}
-	userProfileColumnsWithDefault    = []string{"display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url"}
+	userProfileColumnsWithoutDefault = []string{"user_id", "display_name"}
+	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )

@@ -5,11 +5,11 @@ type GetProfileResponse struct {
 }
 
 type Profile struct {
-	DisplayName *string `json:"display_name,omitempty"`
-	Birthdate   string  `json:"birthdate"`
-	Age         int     `json:"age"`
-	HeightCM    int16   `json:"height_cm"`
-	UserID      string  `json:"user_id"`
+	DisplayName string `json:"display_name,omitempty"`
+	Birthdate   string `json:"birthdate"`
+	Age         int    `json:"age"`
+	HeightCM    int16  `json:"height_cm"`
+	UserID      string `json:"user_id"`
 
 	// Location
 	Latitude  float64 `json:"latitude,omitempty"`

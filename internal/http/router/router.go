@@ -95,6 +95,10 @@ func New(
 					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", interactionHandler.GetLikes())
 				})
+				r.Route("/matches", func(r chi.Router) {
+					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
+					r.Get("/", interactionHandler.GetMatches())
+				})
 				// Media (used during onboarding & later)
 				/*
 					r.Post("/media/photos/presign", mediaHandler.PresignPhoto()) // returns URL/fields
