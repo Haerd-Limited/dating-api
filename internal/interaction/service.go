@@ -136,7 +136,7 @@ func (is *service) GetMatches(ctx context.Context, userID string) ([]domain.Matc
 			UserID:         matchedUserID,
 			DisplayName:    profileCard.DisplayName,
 			Emoji:          "😄", // todo: update register or edit profile to allow user to set emoji. this emoji is default for now
-			MessagePreview: "To be implemented",
+			MessagePreview: fmt.Sprintf("You are now matched with %s!", profileCard.DisplayName),
 			Reveal:         false,
 			RevealProgress: 0,
 		})
