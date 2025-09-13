@@ -93,6 +93,13 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 	}
 
 	for _, id := range likesUserIDs {
+		alreadyMatched, matchedErr := is.interactionRepo.AlreadyMatched(ctx, userID, id)
+		if matchedErr != nil {
+			return nil, fmt.Errorf("failed to check if already matched userID=%s targetUserID=%s: %w", userID, id, err)
+		}
+		if alreadyMatched {
+			continue
+		}
 		p, profileErr := is.profileService.GetProfileCard(ctx, id)
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, id, profileErr)

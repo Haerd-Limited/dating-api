@@ -19,6 +19,7 @@ type InteractionRepository interface {
 	CreateMatch(ctx context.Context, match entity.Match) error
 	GetIncomingLikes(ctx context.Context, userID string, limit, offset int) ([]string, error)
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
+	AlreadyMatched(ctx context.Context, userID string, targetUserID string) (bool, error)
 }
 
 type repository struct {
@@ -123,4 +124,19 @@ func (is *repository) GetMatches(ctx context.Context, userID string) ([]*entity.
 	}
 
 	return matches, nil
+}
+
+func (is *repository) AlreadyMatched(ctx context.Context, userID string, targetUserID string) (bool, error) {
+	ok, err := entity.Matches(
+		entity.MatchWhere.UserA.EQ(userID),
+		entity.MatchWhere.UserB.EQ(targetUserID),
+	).Exists(ctx, is.db)
+	if err != nil {
+		return false, err
+	}
+
+	if ok {
+		return true, nil
+	}
+	return false, nil
 }
