@@ -16,7 +16,6 @@ var TableNames = struct {
 	Interests             string
 	Languages             string
 	Matches               string
-	MessagesVoice         string
 	Photos                string
 	PoliticalBeliefs      string
 	PromptTypes           string
@@ -46,7 +45,6 @@ var TableNames = struct {
 	Interests:             "interests",
 	Languages:             "languages",
 	Matches:               "matches",
-	MessagesVoice:         "messages_voice",
 	Photos:                "photos",
 	PoliticalBeliefs:      "political_beliefs",
 	PromptTypes:           "prompt_types",

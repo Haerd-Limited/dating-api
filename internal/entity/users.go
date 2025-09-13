@@ -107,7 +107,6 @@ var UserRels = struct {
 	DeviceTokens            string
 	UserAMatches            string
 	UserBMatches            string
-	SenderMessagesVoices    string
 	Photos                  string
 	RefreshTokens           string
 	ActorSwipes             string
@@ -123,7 +122,6 @@ var UserRels = struct {
 	DeviceTokens:            "DeviceTokens",
 	UserAMatches:            "UserAMatches",
 	UserBMatches:            "UserBMatches",
-	SenderMessagesVoices:    "SenderMessagesVoices",
 	Photos:                  "Photos",
 	RefreshTokens:           "RefreshTokens",
 	ActorSwipes:             "ActorSwipes",
@@ -142,7 +140,6 @@ type userR struct {
 	DeviceTokens            DeviceTokenSlice           `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
 	UserAMatches            MatchSlice                 `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
 	UserBMatches            MatchSlice                 `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
-	SenderMessagesVoices    MessagesVoiceSlice         `boil:"SenderMessagesVoices" json:"SenderMessagesVoices" toml:"SenderMessagesVoices" yaml:"SenderMessagesVoices"`
 	Photos                  PhotoSlice                 `boil:"Photos" json:"Photos" toml:"Photos" yaml:"Photos"`
 	RefreshTokens           RefreshTokenSlice          `boil:"RefreshTokens" json:"RefreshTokens" toml:"RefreshTokens" yaml:"RefreshTokens"`
 	ActorSwipes             SwipeSlice                 `boil:"ActorSwipes" json:"ActorSwipes" toml:"ActorSwipes" yaml:"ActorSwipes"`
@@ -252,22 +249,6 @@ func (r *userR) GetUserBMatches() MatchSlice {
 	}
 
 	return r.UserBMatches
-}
-
-func (o *User) GetSenderMessagesVoices() MessagesVoiceSlice {
-	if o == nil {
-		return nil
-	}
-
-	return o.R.GetSenderMessagesVoices()
-}
-
-func (r *userR) GetSenderMessagesVoices() MessagesVoiceSlice {
-	if r == nil {
-		return nil
-	}
-
-	return r.SenderMessagesVoices
 }
 
 func (o *User) GetPhotos() PhotoSlice {
@@ -787,20 +768,6 @@ func (o *User) UserBMatches(mods ...qm.QueryMod) matchQuery {
 	)
 
 	return Matches(queryMods...)
-}
-
-// SenderMessagesVoices retrieves all the messages_voice's MessagesVoices with an executor via sender_id column.
-func (o *User) SenderMessagesVoices(mods ...qm.QueryMod) messagesVoiceQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("\"messages_voice\".\"sender_id\"=?", o.ID),
-	)
-
-	return MessagesVoices(queryMods...)
 }
 
 // Photos retrieves all the photo's Photos with an executor.
@@ -1599,119 +1566,6 @@ func (userL) LoadUserBMatches(ctx context.Context, e boil.ContextExecutor, singu
 					foreign.R = &matchR{}
 				}
 				foreign.R.UserBUser = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadSenderMessagesVoices allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (userL) LoadSenderMessagesVoices(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
-	var slice []*User
-	var object *User
-
-	if singular {
-		var ok bool
-		object, ok = maybeUser.(*User)
-		if !ok {
-			object = new(User)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
-			}
-		}
-	} else {
-		s, ok := maybeUser.(*[]*User)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &userR{}
-		}
-		args[object.ID] = struct{}{}
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &userR{}
-			}
-			args[obj.ID] = struct{}{}
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`messages_voice`),
-		qm.WhereIn(`messages_voice.sender_id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load messages_voice")
-	}
-
-	var resultSlice []*MessagesVoice
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice messages_voice")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on messages_voice")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for messages_voice")
-	}
-
-	if len(messagesVoiceAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.SenderMessagesVoices = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &messagesVoiceR{}
-			}
-			foreign.R.Sender = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ID == foreign.SenderID {
-				local.R.SenderMessagesVoices = append(local.R.SenderMessagesVoices, foreign)
-				if foreign.R == nil {
-					foreign.R = &messagesVoiceR{}
-				}
-				foreign.R.Sender = local
 				break
 			}
 		}
@@ -2962,59 +2816,6 @@ func (o *User) AddUserBMatches(ctx context.Context, exec boil.ContextExecutor, i
 			}
 		} else {
 			rel.R.UserBUser = o
-		}
-	}
-	return nil
-}
-
-// AddSenderMessagesVoices adds the given related objects to the existing relationships
-// of the user, optionally inserting them as new records.
-// Appends related to o.R.SenderMessagesVoices.
-// Sets related.R.Sender appropriately.
-func (o *User) AddSenderMessagesVoices(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*MessagesVoice) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.SenderID = o.ID
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"messages_voice\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"sender_id"}),
-				strmangle.WhereClause("\"", "\"", 2, messagesVoicePrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.ID}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.SenderID = o.ID
-		}
-	}
-
-	if o.R == nil {
-		o.R = &userR{
-			SenderMessagesVoices: related,
-		}
-	} else {
-		o.R.SenderMessagesVoices = append(o.R.SenderMessagesVoices, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &messagesVoiceR{
-				Sender: o,
-			}
-		} else {
-			rel.R.Sender = o
 		}
 	}
 	return nil

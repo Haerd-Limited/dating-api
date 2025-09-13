@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  make_displayname_not_null sql
+	@cd ./migrations && goose create  drop_to_messages_voice_table sql
 .PHONY: migrate-create
 
 

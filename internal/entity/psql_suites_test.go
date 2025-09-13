@@ -30,8 +30,6 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Matches", testMatchesUpsert)
 
-	t.Run("MessagesVoices", testMessagesVoicesUpsert)
-
 	t.Run("Photos", testPhotosUpsert)
 
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsUpsert)

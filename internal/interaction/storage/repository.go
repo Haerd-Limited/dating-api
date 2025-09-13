@@ -138,5 +138,6 @@ func (is *repository) AlreadyMatched(ctx context.Context, userID string, targetU
 	if ok {
 		return true, nil
 	}
+
 	return false, nil
 }
