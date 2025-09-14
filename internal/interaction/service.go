@@ -120,36 +120,8 @@ func (is *service) GetMatches(ctx context.Context, userID string) ([]domain.Matc
 	}
 
 	if len(matchEntities) == 0 {
-		return nil, nil
+		return []domain.Match{}, nil
 	}
 
-	var matches []domain.Match
-
-	for _, matchEntity := range matchEntities {
-		var matchedUserID string
-		if matchEntity.UserA == userID {
-			matchedUserID = matchEntity.UserB
-		} else {
-			matchedUserID = matchEntity.UserA
-		}
-		// get display name
-		profileCard, profileErr := is.profileService.GetProfileCard(ctx, matchedUserID)
-		if profileErr != nil {
-			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, matchedUserID, profileErr)
-		}
-		// todo: Get latest message
-		// todo:  calculate reveal progress
-
-		// set reveal
-		matches = append(matches, domain.Match{
-			UserID:         matchedUserID,
-			DisplayName:    profileCard.DisplayName,
-			Emoji:          "😄", // todo: update register or edit profile to allow user to set emoji. this emoji is default for now
-			MessagePreview: fmt.Sprintf("You are now matched with %s!", profileCard.DisplayName),
-			Reveal:         false,
-			RevealProgress: 0,
-		})
-	}
-
-	return matches, nil
+	return mapper.MapMatchEntitiesToDomain(matchEntities), nil
 }

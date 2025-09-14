@@ -12,6 +12,7 @@ import "testing"
 // It does NOT run each operation group in parallel.
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
+	t.Run("Conversations", testConversations)
 	t.Run("DatingIntentions", testDatingIntentions)
 	t.Run("DeviceTokens", testDeviceTokens)
 	t.Run("EducationLevels", testEducationLevels)
@@ -24,6 +25,8 @@ func TestParent(t *testing.T) {
 	t.Run("Interests", testInterests)
 	t.Run("Languages", testLanguages)
 	t.Run("Matches", testMatches)
+	t.Run("MessageReceipts", testMessageReceipts)
+	t.Run("Messages", testMessages)
 	t.Run("Photos", testPhotos)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefs)
 	t.Run("PromptTypes", testPromptTypes)
@@ -41,6 +44,7 @@ func TestParent(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	t.Run("Conversations", testConversationsDelete)
 	t.Run("DatingIntentions", testDatingIntentionsDelete)
 	t.Run("DeviceTokens", testDeviceTokensDelete)
 	t.Run("EducationLevels", testEducationLevelsDelete)
@@ -53,6 +57,8 @@ func TestDelete(t *testing.T) {
 	t.Run("Interests", testInterestsDelete)
 	t.Run("Languages", testLanguagesDelete)
 	t.Run("Matches", testMatchesDelete)
+	t.Run("MessageReceipts", testMessageReceiptsDelete)
+	t.Run("Messages", testMessagesDelete)
 	t.Run("Photos", testPhotosDelete)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsDelete)
 	t.Run("PromptTypes", testPromptTypesDelete)
@@ -70,6 +76,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestQueryDeleteAll(t *testing.T) {
+	t.Run("Conversations", testConversationsQueryDeleteAll)
 	t.Run("DatingIntentions", testDatingIntentionsQueryDeleteAll)
 	t.Run("DeviceTokens", testDeviceTokensQueryDeleteAll)
 	t.Run("EducationLevels", testEducationLevelsQueryDeleteAll)
@@ -82,6 +89,8 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Interests", testInterestsQueryDeleteAll)
 	t.Run("Languages", testLanguagesQueryDeleteAll)
 	t.Run("Matches", testMatchesQueryDeleteAll)
+	t.Run("MessageReceipts", testMessageReceiptsQueryDeleteAll)
+	t.Run("Messages", testMessagesQueryDeleteAll)
 	t.Run("Photos", testPhotosQueryDeleteAll)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsQueryDeleteAll)
 	t.Run("PromptTypes", testPromptTypesQueryDeleteAll)
@@ -99,6 +108,7 @@ func TestQueryDeleteAll(t *testing.T) {
 }
 
 func TestSliceDeleteAll(t *testing.T) {
+	t.Run("Conversations", testConversationsSliceDeleteAll)
 	t.Run("DatingIntentions", testDatingIntentionsSliceDeleteAll)
 	t.Run("DeviceTokens", testDeviceTokensSliceDeleteAll)
 	t.Run("EducationLevels", testEducationLevelsSliceDeleteAll)
@@ -111,6 +121,8 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Interests", testInterestsSliceDeleteAll)
 	t.Run("Languages", testLanguagesSliceDeleteAll)
 	t.Run("Matches", testMatchesSliceDeleteAll)
+	t.Run("MessageReceipts", testMessageReceiptsSliceDeleteAll)
+	t.Run("Messages", testMessagesSliceDeleteAll)
 	t.Run("Photos", testPhotosSliceDeleteAll)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsSliceDeleteAll)
 	t.Run("PromptTypes", testPromptTypesSliceDeleteAll)
@@ -128,6 +140,7 @@ func TestSliceDeleteAll(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
+	t.Run("Conversations", testConversationsExists)
 	t.Run("DatingIntentions", testDatingIntentionsExists)
 	t.Run("DeviceTokens", testDeviceTokensExists)
 	t.Run("EducationLevels", testEducationLevelsExists)
@@ -140,6 +153,8 @@ func TestExists(t *testing.T) {
 	t.Run("Interests", testInterestsExists)
 	t.Run("Languages", testLanguagesExists)
 	t.Run("Matches", testMatchesExists)
+	t.Run("MessageReceipts", testMessageReceiptsExists)
+	t.Run("Messages", testMessagesExists)
 	t.Run("Photos", testPhotosExists)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsExists)
 	t.Run("PromptTypes", testPromptTypesExists)
@@ -157,6 +172,7 @@ func TestExists(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
+	t.Run("Conversations", testConversationsFind)
 	t.Run("DatingIntentions", testDatingIntentionsFind)
 	t.Run("DeviceTokens", testDeviceTokensFind)
 	t.Run("EducationLevels", testEducationLevelsFind)
@@ -169,6 +185,8 @@ func TestFind(t *testing.T) {
 	t.Run("Interests", testInterestsFind)
 	t.Run("Languages", testLanguagesFind)
 	t.Run("Matches", testMatchesFind)
+	t.Run("MessageReceipts", testMessageReceiptsFind)
+	t.Run("Messages", testMessagesFind)
 	t.Run("Photos", testPhotosFind)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsFind)
 	t.Run("PromptTypes", testPromptTypesFind)
@@ -186,6 +204,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestBind(t *testing.T) {
+	t.Run("Conversations", testConversationsBind)
 	t.Run("DatingIntentions", testDatingIntentionsBind)
 	t.Run("DeviceTokens", testDeviceTokensBind)
 	t.Run("EducationLevels", testEducationLevelsBind)
@@ -198,6 +217,8 @@ func TestBind(t *testing.T) {
 	t.Run("Interests", testInterestsBind)
 	t.Run("Languages", testLanguagesBind)
 	t.Run("Matches", testMatchesBind)
+	t.Run("MessageReceipts", testMessageReceiptsBind)
+	t.Run("Messages", testMessagesBind)
 	t.Run("Photos", testPhotosBind)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsBind)
 	t.Run("PromptTypes", testPromptTypesBind)
@@ -215,6 +236,7 @@ func TestBind(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
+	t.Run("Conversations", testConversationsOne)
 	t.Run("DatingIntentions", testDatingIntentionsOne)
 	t.Run("DeviceTokens", testDeviceTokensOne)
 	t.Run("EducationLevels", testEducationLevelsOne)
@@ -227,6 +249,8 @@ func TestOne(t *testing.T) {
 	t.Run("Interests", testInterestsOne)
 	t.Run("Languages", testLanguagesOne)
 	t.Run("Matches", testMatchesOne)
+	t.Run("MessageReceipts", testMessageReceiptsOne)
+	t.Run("Messages", testMessagesOne)
 	t.Run("Photos", testPhotosOne)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsOne)
 	t.Run("PromptTypes", testPromptTypesOne)
@@ -244,6 +268,7 @@ func TestOne(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
+	t.Run("Conversations", testConversationsAll)
 	t.Run("DatingIntentions", testDatingIntentionsAll)
 	t.Run("DeviceTokens", testDeviceTokensAll)
 	t.Run("EducationLevels", testEducationLevelsAll)
@@ -256,6 +281,8 @@ func TestAll(t *testing.T) {
 	t.Run("Interests", testInterestsAll)
 	t.Run("Languages", testLanguagesAll)
 	t.Run("Matches", testMatchesAll)
+	t.Run("MessageReceipts", testMessageReceiptsAll)
+	t.Run("Messages", testMessagesAll)
 	t.Run("Photos", testPhotosAll)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsAll)
 	t.Run("PromptTypes", testPromptTypesAll)
@@ -273,6 +300,7 @@ func TestAll(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
+	t.Run("Conversations", testConversationsCount)
 	t.Run("DatingIntentions", testDatingIntentionsCount)
 	t.Run("DeviceTokens", testDeviceTokensCount)
 	t.Run("EducationLevels", testEducationLevelsCount)
@@ -285,6 +313,8 @@ func TestCount(t *testing.T) {
 	t.Run("Interests", testInterestsCount)
 	t.Run("Languages", testLanguagesCount)
 	t.Run("Matches", testMatchesCount)
+	t.Run("MessageReceipts", testMessageReceiptsCount)
+	t.Run("Messages", testMessagesCount)
 	t.Run("Photos", testPhotosCount)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsCount)
 	t.Run("PromptTypes", testPromptTypesCount)
@@ -302,6 +332,7 @@ func TestCount(t *testing.T) {
 }
 
 func TestHooks(t *testing.T) {
+	t.Run("Conversations", testConversationsHooks)
 	t.Run("DatingIntentions", testDatingIntentionsHooks)
 	t.Run("DeviceTokens", testDeviceTokensHooks)
 	t.Run("EducationLevels", testEducationLevelsHooks)
@@ -314,6 +345,8 @@ func TestHooks(t *testing.T) {
 	t.Run("Interests", testInterestsHooks)
 	t.Run("Languages", testLanguagesHooks)
 	t.Run("Matches", testMatchesHooks)
+	t.Run("MessageReceipts", testMessageReceiptsHooks)
+	t.Run("Messages", testMessagesHooks)
 	t.Run("Photos", testPhotosHooks)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsHooks)
 	t.Run("PromptTypes", testPromptTypesHooks)
@@ -331,6 +364,8 @@ func TestHooks(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
+	t.Run("Conversations", testConversationsInsert)
+	t.Run("Conversations", testConversationsInsertWhitelist)
 	t.Run("DatingIntentions", testDatingIntentionsInsert)
 	t.Run("DatingIntentions", testDatingIntentionsInsertWhitelist)
 	t.Run("DeviceTokens", testDeviceTokensInsert)
@@ -355,6 +390,10 @@ func TestInsert(t *testing.T) {
 	t.Run("Languages", testLanguagesInsertWhitelist)
 	t.Run("Matches", testMatchesInsert)
 	t.Run("Matches", testMatchesInsertWhitelist)
+	t.Run("MessageReceipts", testMessageReceiptsInsert)
+	t.Run("MessageReceipts", testMessageReceiptsInsertWhitelist)
+	t.Run("Messages", testMessagesInsert)
+	t.Run("Messages", testMessagesInsertWhitelist)
 	t.Run("Photos", testPhotosInsert)
 	t.Run("Photos", testPhotosInsertWhitelist)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsInsert)
@@ -386,6 +425,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestReload(t *testing.T) {
+	t.Run("Conversations", testConversationsReload)
 	t.Run("DatingIntentions", testDatingIntentionsReload)
 	t.Run("DeviceTokens", testDeviceTokensReload)
 	t.Run("EducationLevels", testEducationLevelsReload)
@@ -398,6 +438,8 @@ func TestReload(t *testing.T) {
 	t.Run("Interests", testInterestsReload)
 	t.Run("Languages", testLanguagesReload)
 	t.Run("Matches", testMatchesReload)
+	t.Run("MessageReceipts", testMessageReceiptsReload)
+	t.Run("Messages", testMessagesReload)
 	t.Run("Photos", testPhotosReload)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsReload)
 	t.Run("PromptTypes", testPromptTypesReload)
@@ -415,6 +457,7 @@ func TestReload(t *testing.T) {
 }
 
 func TestReloadAll(t *testing.T) {
+	t.Run("Conversations", testConversationsReloadAll)
 	t.Run("DatingIntentions", testDatingIntentionsReloadAll)
 	t.Run("DeviceTokens", testDeviceTokensReloadAll)
 	t.Run("EducationLevels", testEducationLevelsReloadAll)
@@ -427,6 +470,8 @@ func TestReloadAll(t *testing.T) {
 	t.Run("Interests", testInterestsReloadAll)
 	t.Run("Languages", testLanguagesReloadAll)
 	t.Run("Matches", testMatchesReloadAll)
+	t.Run("MessageReceipts", testMessageReceiptsReloadAll)
+	t.Run("Messages", testMessagesReloadAll)
 	t.Run("Photos", testPhotosReloadAll)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsReloadAll)
 	t.Run("PromptTypes", testPromptTypesReloadAll)
@@ -444,6 +489,7 @@ func TestReloadAll(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
+	t.Run("Conversations", testConversationsSelect)
 	t.Run("DatingIntentions", testDatingIntentionsSelect)
 	t.Run("DeviceTokens", testDeviceTokensSelect)
 	t.Run("EducationLevels", testEducationLevelsSelect)
@@ -456,6 +502,8 @@ func TestSelect(t *testing.T) {
 	t.Run("Interests", testInterestsSelect)
 	t.Run("Languages", testLanguagesSelect)
 	t.Run("Matches", testMatchesSelect)
+	t.Run("MessageReceipts", testMessageReceiptsSelect)
+	t.Run("Messages", testMessagesSelect)
 	t.Run("Photos", testPhotosSelect)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsSelect)
 	t.Run("PromptTypes", testPromptTypesSelect)
@@ -473,6 +521,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	t.Run("Conversations", testConversationsUpdate)
 	t.Run("DatingIntentions", testDatingIntentionsUpdate)
 	t.Run("DeviceTokens", testDeviceTokensUpdate)
 	t.Run("EducationLevels", testEducationLevelsUpdate)
@@ -485,6 +534,8 @@ func TestUpdate(t *testing.T) {
 	t.Run("Interests", testInterestsUpdate)
 	t.Run("Languages", testLanguagesUpdate)
 	t.Run("Matches", testMatchesUpdate)
+	t.Run("MessageReceipts", testMessageReceiptsUpdate)
+	t.Run("Messages", testMessagesUpdate)
 	t.Run("Photos", testPhotosUpdate)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsUpdate)
 	t.Run("PromptTypes", testPromptTypesUpdate)
@@ -502,6 +553,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestSliceUpdateAll(t *testing.T) {
+	t.Run("Conversations", testConversationsSliceUpdateAll)
 	t.Run("DatingIntentions", testDatingIntentionsSliceUpdateAll)
 	t.Run("DeviceTokens", testDeviceTokensSliceUpdateAll)
 	t.Run("EducationLevels", testEducationLevelsSliceUpdateAll)
@@ -514,6 +566,8 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Interests", testInterestsSliceUpdateAll)
 	t.Run("Languages", testLanguagesSliceUpdateAll)
 	t.Run("Matches", testMatchesSliceUpdateAll)
+	t.Run("MessageReceipts", testMessageReceiptsSliceUpdateAll)
+	t.Run("Messages", testMessagesSliceUpdateAll)
 	t.Run("Photos", testPhotosSliceUpdateAll)
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsSliceUpdateAll)
 	t.Run("PromptTypes", testPromptTypesSliceUpdateAll)

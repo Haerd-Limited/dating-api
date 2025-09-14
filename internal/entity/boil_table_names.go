@@ -4,6 +4,7 @@
 package entity
 
 var TableNames = struct {
+	Conversations         string
 	DatingIntentions      string
 	DeviceTokens          string
 	EducationLevels       string
@@ -16,6 +17,8 @@ var TableNames = struct {
 	Interests             string
 	Languages             string
 	Matches               string
+	MessageReceipts       string
+	Messages              string
 	Photos                string
 	PoliticalBeliefs      string
 	PromptTypes           string
@@ -33,6 +36,7 @@ var TableNames = struct {
 	VerificationCodes     string
 	VoicePrompts          string
 }{
+	Conversations:         "conversations",
 	DatingIntentions:      "dating_intentions",
 	DeviceTokens:          "device_tokens",
 	EducationLevels:       "education_levels",
@@ -45,6 +49,8 @@ var TableNames = struct {
 	Interests:             "interests",
 	Languages:             "languages",
 	Matches:               "matches",
+	MessageReceipts:       "message_receipts",
+	Messages:              "messages",
 	Photos:                "photos",
 	PoliticalBeliefs:      "political_beliefs",
 	PromptTypes:           "prompt_types",

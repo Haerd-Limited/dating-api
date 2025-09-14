@@ -8,11 +8,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
+	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/user"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
+	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
 	internalinteraction "github.com/Haerd-Limited/dating-api/internal/interaction"
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
@@ -31,6 +33,7 @@ func New(
 	profileService internalprofile.Service,
 	discoverService internaldiscover.Service,
 	interactionService internalinteraction.Service,
+	conversationService internalconversation.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -44,6 +47,7 @@ func New(
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
 	interactionHandler := interaction.NewInteractionHandler(logger, interactionService)
+	conversationHandler := conversation.NewConversationHandler(logger, conversationService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
@@ -95,9 +99,9 @@ func New(
 					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", interactionHandler.GetLikes())
 				})
-				r.Route("/matches", func(r chi.Router) {
+				r.Route("/conversations", func(r chi.Router) {
 					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
-					r.Get("/", interactionHandler.GetMatches())
+					r.Get("/", conversationHandler.GetConversations())
 				})
 				// Media (used during onboarding & later)
 				/*

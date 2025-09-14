@@ -21,6 +21,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"github.com/Haerd-Limited/dating-api/internal/config"
+	"github.com/Haerd-Limited/dating-api/internal/conversation"
+	storage5 "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	storage3 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/http/router"
@@ -97,6 +99,9 @@ func main() {
 	interactionRepo := storage4.NewInteractionRepository(db)
 	interactionService := interaction.NewInteractionService(logger, interactionRepo, profileService)
 
+	conversationRepo := storage5.NewConversationRepository(db)
+	conversationService := conversation.NewConversationService(logger, conversationRepo, interactionService, profileService)
+
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)
 
@@ -125,6 +130,7 @@ func main() {
 		profileService,
 		discoverService,
 		interactionService,
+		conversationService,
 	)
 
 	// Start server with context

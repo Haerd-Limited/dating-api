@@ -104,9 +104,13 @@ var UserRels = struct {
 	UserPreference          string
 	UserProfile             string
 	UserTheme               string
+	UserAConversations      string
+	UserBConversations      string
 	DeviceTokens            string
 	UserAMatches            string
 	UserBMatches            string
+	MessageReceipts         string
+	SenderMessages          string
 	Photos                  string
 	RefreshTokens           string
 	ActorSwipes             string
@@ -119,9 +123,13 @@ var UserRels = struct {
 	UserPreference:          "UserPreference",
 	UserProfile:             "UserProfile",
 	UserTheme:               "UserTheme",
+	UserAConversations:      "UserAConversations",
+	UserBConversations:      "UserBConversations",
 	DeviceTokens:            "DeviceTokens",
 	UserAMatches:            "UserAMatches",
 	UserBMatches:            "UserBMatches",
+	MessageReceipts:         "MessageReceipts",
+	SenderMessages:          "SenderMessages",
 	Photos:                  "Photos",
 	RefreshTokens:           "RefreshTokens",
 	ActorSwipes:             "ActorSwipes",
@@ -137,9 +145,13 @@ type userR struct {
 	UserPreference          *UserPreference            `boil:"UserPreference" json:"UserPreference" toml:"UserPreference" yaml:"UserPreference"`
 	UserProfile             *UserProfile               `boil:"UserProfile" json:"UserProfile" toml:"UserProfile" yaml:"UserProfile"`
 	UserTheme               *UserTheme                 `boil:"UserTheme" json:"UserTheme" toml:"UserTheme" yaml:"UserTheme"`
+	UserAConversations      ConversationSlice          `boil:"UserAConversations" json:"UserAConversations" toml:"UserAConversations" yaml:"UserAConversations"`
+	UserBConversations      ConversationSlice          `boil:"UserBConversations" json:"UserBConversations" toml:"UserBConversations" yaml:"UserBConversations"`
 	DeviceTokens            DeviceTokenSlice           `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
 	UserAMatches            MatchSlice                 `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
 	UserBMatches            MatchSlice                 `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
+	MessageReceipts         MessageReceiptSlice        `boil:"MessageReceipts" json:"MessageReceipts" toml:"MessageReceipts" yaml:"MessageReceipts"`
+	SenderMessages          MessageSlice               `boil:"SenderMessages" json:"SenderMessages" toml:"SenderMessages" yaml:"SenderMessages"`
 	Photos                  PhotoSlice                 `boil:"Photos" json:"Photos" toml:"Photos" yaml:"Photos"`
 	RefreshTokens           RefreshTokenSlice          `boil:"RefreshTokens" json:"RefreshTokens" toml:"RefreshTokens" yaml:"RefreshTokens"`
 	ActorSwipes             SwipeSlice                 `boil:"ActorSwipes" json:"ActorSwipes" toml:"ActorSwipes" yaml:"ActorSwipes"`
@@ -203,6 +215,38 @@ func (r *userR) GetUserTheme() *UserTheme {
 	return r.UserTheme
 }
 
+func (o *User) GetUserAConversations() ConversationSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetUserAConversations()
+}
+
+func (r *userR) GetUserAConversations() ConversationSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.UserAConversations
+}
+
+func (o *User) GetUserBConversations() ConversationSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetUserBConversations()
+}
+
+func (r *userR) GetUserBConversations() ConversationSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.UserBConversations
+}
+
 func (o *User) GetDeviceTokens() DeviceTokenSlice {
 	if o == nil {
 		return nil
@@ -249,6 +293,38 @@ func (r *userR) GetUserBMatches() MatchSlice {
 	}
 
 	return r.UserBMatches
+}
+
+func (o *User) GetMessageReceipts() MessageReceiptSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetMessageReceipts()
+}
+
+func (r *userR) GetMessageReceipts() MessageReceiptSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.MessageReceipts
+}
+
+func (o *User) GetSenderMessages() MessageSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetSenderMessages()
+}
+
+func (r *userR) GetSenderMessages() MessageSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.SenderMessages
 }
 
 func (o *User) GetPhotos() PhotoSlice {
@@ -728,6 +804,34 @@ func (o *User) UserTheme(mods ...qm.QueryMod) userThemeQuery {
 	return UserThemes(queryMods...)
 }
 
+// UserAConversations retrieves all the conversation's Conversations with an executor via user_a column.
+func (o *User) UserAConversations(mods ...qm.QueryMod) conversationQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"conversations\".\"user_a\"=?", o.ID),
+	)
+
+	return Conversations(queryMods...)
+}
+
+// UserBConversations retrieves all the conversation's Conversations with an executor via user_b column.
+func (o *User) UserBConversations(mods ...qm.QueryMod) conversationQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"conversations\".\"user_b\"=?", o.ID),
+	)
+
+	return Conversations(queryMods...)
+}
+
 // DeviceTokens retrieves all the device_token's DeviceTokens with an executor.
 func (o *User) DeviceTokens(mods ...qm.QueryMod) deviceTokenQuery {
 	var queryMods []qm.QueryMod
@@ -768,6 +872,34 @@ func (o *User) UserBMatches(mods ...qm.QueryMod) matchQuery {
 	)
 
 	return Matches(queryMods...)
+}
+
+// MessageReceipts retrieves all the message_receipt's MessageReceipts with an executor.
+func (o *User) MessageReceipts(mods ...qm.QueryMod) messageReceiptQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"message_receipts\".\"user_id\"=?", o.ID),
+	)
+
+	return MessageReceipts(queryMods...)
+}
+
+// SenderMessages retrieves all the message's Messages with an executor via sender_id column.
+func (o *User) SenderMessages(mods ...qm.QueryMod) messageQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"messages\".\"sender_id\"=?", o.ID),
+	)
+
+	return Messages(queryMods...)
 }
 
 // Photos retrieves all the photo's Photos with an executor.
@@ -1235,6 +1367,232 @@ func (userL) LoadUserTheme(ctx context.Context, e boil.ContextExecutor, singular
 	return nil
 }
 
+// LoadUserAConversations allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadUserAConversations(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`conversations`),
+		qm.WhereIn(`conversations.user_a in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load conversations")
+	}
+
+	var resultSlice []*Conversation
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice conversations")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on conversations")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for conversations")
+	}
+
+	if len(conversationAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.UserAConversations = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &conversationR{}
+			}
+			foreign.R.UserAUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserA {
+				local.R.UserAConversations = append(local.R.UserAConversations, foreign)
+				if foreign.R == nil {
+					foreign.R = &conversationR{}
+				}
+				foreign.R.UserAUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadUserBConversations allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadUserBConversations(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`conversations`),
+		qm.WhereIn(`conversations.user_b in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load conversations")
+	}
+
+	var resultSlice []*Conversation
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice conversations")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on conversations")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for conversations")
+	}
+
+	if len(conversationAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.UserBConversations = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &conversationR{}
+			}
+			foreign.R.UserBUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserB {
+				local.R.UserBConversations = append(local.R.UserBConversations, foreign)
+				if foreign.R == nil {
+					foreign.R = &conversationR{}
+				}
+				foreign.R.UserBUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadDeviceTokens allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (userL) LoadDeviceTokens(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
@@ -1566,6 +1924,232 @@ func (userL) LoadUserBMatches(ctx context.Context, e boil.ContextExecutor, singu
 					foreign.R = &matchR{}
 				}
 				foreign.R.UserBUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadMessageReceipts allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadMessageReceipts(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`message_receipts`),
+		qm.WhereIn(`message_receipts.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load message_receipts")
+	}
+
+	var resultSlice []*MessageReceipt
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice message_receipts")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on message_receipts")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for message_receipts")
+	}
+
+	if len(messageReceiptAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.MessageReceipts = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &messageReceiptR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.MessageReceipts = append(local.R.MessageReceipts, foreign)
+				if foreign.R == nil {
+					foreign.R = &messageReceiptR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadSenderMessages allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadSenderMessages(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`messages`),
+		qm.WhereIn(`messages.sender_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load messages")
+	}
+
+	var resultSlice []*Message
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice messages")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on messages")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for messages")
+	}
+
+	if len(messageAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.SenderMessages = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &messageR{}
+			}
+			foreign.R.Sender = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.SenderID {
+				local.R.SenderMessages = append(local.R.SenderMessages, foreign)
+				if foreign.R == nil {
+					foreign.R = &messageR{}
+				}
+				foreign.R.Sender = local
 				break
 			}
 		}
@@ -2662,6 +3246,112 @@ func (o *User) SetUserTheme(ctx context.Context, exec boil.ContextExecutor, inse
 	return nil
 }
 
+// AddUserAConversations adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.UserAConversations.
+// Sets related.R.UserAUser appropriately.
+func (o *User) AddUserAConversations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Conversation) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserA = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"conversations\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_a"}),
+				strmangle.WhereClause("\"", "\"", 2, conversationPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserA = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			UserAConversations: related,
+		}
+	} else {
+		o.R.UserAConversations = append(o.R.UserAConversations, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &conversationR{
+				UserAUser: o,
+			}
+		} else {
+			rel.R.UserAUser = o
+		}
+	}
+	return nil
+}
+
+// AddUserBConversations adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.UserBConversations.
+// Sets related.R.UserBUser appropriately.
+func (o *User) AddUserBConversations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Conversation) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserB = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"conversations\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_b"}),
+				strmangle.WhereClause("\"", "\"", 2, conversationPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserB = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			UserBConversations: related,
+		}
+	} else {
+		o.R.UserBConversations = append(o.R.UserBConversations, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &conversationR{
+				UserBUser: o,
+			}
+		} else {
+			rel.R.UserBUser = o
+		}
+	}
+	return nil
+}
+
 // AddDeviceTokens adds the given related objects to the existing relationships
 // of the user, optionally inserting them as new records.
 // Appends related to o.R.DeviceTokens.
@@ -2816,6 +3506,112 @@ func (o *User) AddUserBMatches(ctx context.Context, exec boil.ContextExecutor, i
 			}
 		} else {
 			rel.R.UserBUser = o
+		}
+	}
+	return nil
+}
+
+// AddMessageReceipts adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.MessageReceipts.
+// Sets related.R.User appropriately.
+func (o *User) AddMessageReceipts(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*MessageReceipt) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"message_receipts\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, messageReceiptPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.MessageID, rel.UserID, rel.Status}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			MessageReceipts: related,
+		}
+	} else {
+		o.R.MessageReceipts = append(o.R.MessageReceipts, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &messageReceiptR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddSenderMessages adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.SenderMessages.
+// Sets related.R.Sender appropriately.
+func (o *User) AddSenderMessages(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Message) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.SenderID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"messages\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"sender_id"}),
+				strmangle.WhereClause("\"", "\"", 2, messagePrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.SenderID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			SenderMessages: related,
+		}
+	} else {
+		o.R.SenderMessages = append(o.R.SenderMessages, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &messageR{
+				Sender: o,
+			}
+		} else {
+			rel.R.Sender = o
 		}
 	}
 	return nil

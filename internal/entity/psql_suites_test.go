@@ -6,6 +6,8 @@ package entity
 import "testing"
 
 func TestUpsert(t *testing.T) {
+	t.Run("Conversations", testConversationsUpsert)
+
 	t.Run("DatingIntentions", testDatingIntentionsUpsert)
 
 	t.Run("DeviceTokens", testDeviceTokensUpsert)
@@ -29,6 +31,10 @@ func TestUpsert(t *testing.T) {
 	t.Run("Languages", testLanguagesUpsert)
 
 	t.Run("Matches", testMatchesUpsert)
+
+	t.Run("MessageReceipts", testMessageReceiptsUpsert)
+
+	t.Run("Messages", testMessagesUpsert)
 
 	t.Run("Photos", testPhotosUpsert)
 

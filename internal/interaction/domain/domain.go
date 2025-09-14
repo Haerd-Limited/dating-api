@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"time"
+)
+
 type Swipe struct {
 	TargetUserID   string
 	Action         string
@@ -8,10 +12,9 @@ type Swipe struct {
 }
 
 type Match struct {
-	UserID         string
-	DisplayName    string
-	MessagePreview string
-	Emoji          string
-	Reveal         bool
-	RevealProgress int
+	ID         string
+	UserA      string
+	UserB      string
+	CreatedAt  time.Time
+	RevealedAt time.Time
 }

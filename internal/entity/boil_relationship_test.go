@@ -8,9 +8,16 @@ import "testing"
 // TestToOne tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOne(t *testing.T) {
+	t.Run("ConversationToMessageUsingLastMessage", testConversationToOneMessageUsingLastMessage)
+	t.Run("ConversationToUserUsingUserAUser", testConversationToOneUserUsingUserAUser)
+	t.Run("ConversationToUserUsingUserBUser", testConversationToOneUserUsingUserBUser)
 	t.Run("DeviceTokenToUserUsingUser", testDeviceTokenToOneUserUsingUser)
 	t.Run("MatchToUserUsingUserAUser", testMatchToOneUserUsingUserAUser)
 	t.Run("MatchToUserUsingUserBUser", testMatchToOneUserUsingUserBUser)
+	t.Run("MessageReceiptToMessageUsingMessage", testMessageReceiptToOneMessageUsingMessage)
+	t.Run("MessageReceiptToUserUsingUser", testMessageReceiptToOneUserUsingUser)
+	t.Run("MessageToConversationUsingConversation", testMessageToOneConversationUsingConversation)
+	t.Run("MessageToUserUsingSender", testMessageToOneUserUsingSender)
 	t.Run("PhotoToUserUsingUser", testPhotoToOneUserUsingUser)
 	t.Run("RefreshTokenToUserUsingUser", testRefreshTokenToOneUserUsingUser)
 	t.Run("SwipeToUserUsingActor", testSwipeToOneUserUsingActor)
@@ -46,6 +53,7 @@ func TestOneToOne(t *testing.T) {
 // TestToMany tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToMany(t *testing.T) {
+	t.Run("ConversationToMessages", testConversationToManyMessages)
 	t.Run("DatingIntentionToUserProfiles", testDatingIntentionToManyUserProfiles)
 	t.Run("EducationLevelToUserProfiles", testEducationLevelToManyUserProfiles)
 	t.Run("EthnicityToUserProfiles", testEthnicityToManyUserProfiles)
@@ -58,12 +66,18 @@ func TestToMany(t *testing.T) {
 	t.Run("HabitToSmokingUserProfiles", testHabitToManySmokingUserProfiles)
 	t.Run("InterestToUsers", testInterestToManyUsers)
 	t.Run("LanguageToUsers", testLanguageToManyUsers)
+	t.Run("MessageToLastMessageConversations", testMessageToManyLastMessageConversations)
+	t.Run("MessageToMessageReceipts", testMessageToManyMessageReceipts)
 	t.Run("PoliticalBeliefToUserProfiles", testPoliticalBeliefToManyUserProfiles)
 	t.Run("PromptTypeToVoicePrompts", testPromptTypeToManyVoicePrompts)
 	t.Run("ReligionToUserProfiles", testReligionToManyUserProfiles)
+	t.Run("UserToUserAConversations", testUserToManyUserAConversations)
+	t.Run("UserToUserBConversations", testUserToManyUserBConversations)
 	t.Run("UserToDeviceTokens", testUserToManyDeviceTokens)
 	t.Run("UserToUserAMatches", testUserToManyUserAMatches)
 	t.Run("UserToUserBMatches", testUserToManyUserBMatches)
+	t.Run("UserToMessageReceipts", testUserToManyMessageReceipts)
+	t.Run("UserToSenderMessages", testUserToManySenderMessages)
 	t.Run("UserToPhotos", testUserToManyPhotos)
 	t.Run("UserToRefreshTokens", testUserToManyRefreshTokens)
 	t.Run("UserToActorSwipes", testUserToManyActorSwipes)
@@ -77,9 +91,16 @@ func TestToMany(t *testing.T) {
 // TestToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOneSet(t *testing.T) {
+	t.Run("ConversationToMessageUsingLastMessageConversations", testConversationToOneSetOpMessageUsingLastMessage)
+	t.Run("ConversationToUserUsingUserAConversations", testConversationToOneSetOpUserUsingUserAUser)
+	t.Run("ConversationToUserUsingUserBConversations", testConversationToOneSetOpUserUsingUserBUser)
 	t.Run("DeviceTokenToUserUsingDeviceTokens", testDeviceTokenToOneSetOpUserUsingUser)
 	t.Run("MatchToUserUsingUserAMatches", testMatchToOneSetOpUserUsingUserAUser)
 	t.Run("MatchToUserUsingUserBMatches", testMatchToOneSetOpUserUsingUserBUser)
+	t.Run("MessageReceiptToMessageUsingMessageReceipts", testMessageReceiptToOneSetOpMessageUsingMessage)
+	t.Run("MessageReceiptToUserUsingMessageReceipts", testMessageReceiptToOneSetOpUserUsingUser)
+	t.Run("MessageToConversationUsingMessages", testMessageToOneSetOpConversationUsingConversation)
+	t.Run("MessageToUserUsingSenderMessages", testMessageToOneSetOpUserUsingSender)
 	t.Run("PhotoToUserUsingPhotos", testPhotoToOneSetOpUserUsingUser)
 	t.Run("RefreshTokenToUserUsingRefreshTokens", testRefreshTokenToOneSetOpUserUsingUser)
 	t.Run("SwipeToUserUsingActorSwipes", testSwipeToOneSetOpUserUsingActor)
@@ -107,6 +128,7 @@ func TestToOneSet(t *testing.T) {
 // TestToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOneRemove(t *testing.T) {
+	t.Run("ConversationToMessageUsingLastMessageConversations", testConversationToOneRemoveOpMessageUsingLastMessage)
 	t.Run("PhotoToUserUsingPhotos", testPhotoToOneRemoveOpUserUsingUser)
 	t.Run("UserProfileToFamilyStatusUsingChildrenStatusUserProfiles", testUserProfileToOneRemoveOpFamilyStatusUsingChildrenStatus)
 	t.Run("UserProfileToDatingIntentionUsingUserProfiles", testUserProfileToOneRemoveOpDatingIntentionUsingDatingIntention)
@@ -139,6 +161,7 @@ func TestOneToOneRemove(t *testing.T) {}
 // TestToManyAdd tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManyAdd(t *testing.T) {
+	t.Run("ConversationToMessages", testConversationToManyAddOpMessages)
 	t.Run("DatingIntentionToUserProfiles", testDatingIntentionToManyAddOpUserProfiles)
 	t.Run("EducationLevelToUserProfiles", testEducationLevelToManyAddOpUserProfiles)
 	t.Run("EthnicityToUserProfiles", testEthnicityToManyAddOpUserProfiles)
@@ -151,12 +174,18 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("HabitToSmokingUserProfiles", testHabitToManyAddOpSmokingUserProfiles)
 	t.Run("InterestToUsers", testInterestToManyAddOpUsers)
 	t.Run("LanguageToUsers", testLanguageToManyAddOpUsers)
+	t.Run("MessageToLastMessageConversations", testMessageToManyAddOpLastMessageConversations)
+	t.Run("MessageToMessageReceipts", testMessageToManyAddOpMessageReceipts)
 	t.Run("PoliticalBeliefToUserProfiles", testPoliticalBeliefToManyAddOpUserProfiles)
 	t.Run("PromptTypeToVoicePrompts", testPromptTypeToManyAddOpVoicePrompts)
 	t.Run("ReligionToUserProfiles", testReligionToManyAddOpUserProfiles)
+	t.Run("UserToUserAConversations", testUserToManyAddOpUserAConversations)
+	t.Run("UserToUserBConversations", testUserToManyAddOpUserBConversations)
 	t.Run("UserToDeviceTokens", testUserToManyAddOpDeviceTokens)
 	t.Run("UserToUserAMatches", testUserToManyAddOpUserAMatches)
 	t.Run("UserToUserBMatches", testUserToManyAddOpUserBMatches)
+	t.Run("UserToMessageReceipts", testUserToManyAddOpMessageReceipts)
+	t.Run("UserToSenderMessages", testUserToManyAddOpSenderMessages)
 	t.Run("UserToPhotos", testUserToManyAddOpPhotos)
 	t.Run("UserToRefreshTokens", testUserToManyAddOpRefreshTokens)
 	t.Run("UserToActorSwipes", testUserToManyAddOpActorSwipes)
@@ -182,6 +211,7 @@ func TestToManySet(t *testing.T) {
 	t.Run("HabitToSmokingUserProfiles", testHabitToManySetOpSmokingUserProfiles)
 	t.Run("InterestToUsers", testInterestToManySetOpUsers)
 	t.Run("LanguageToUsers", testLanguageToManySetOpUsers)
+	t.Run("MessageToLastMessageConversations", testMessageToManySetOpLastMessageConversations)
 	t.Run("PoliticalBeliefToUserProfiles", testPoliticalBeliefToManySetOpUserProfiles)
 	t.Run("PromptTypeToVoicePrompts", testPromptTypeToManySetOpVoicePrompts)
 	t.Run("ReligionToUserProfiles", testReligionToManySetOpUserProfiles)
@@ -206,6 +236,7 @@ func TestToManyRemove(t *testing.T) {
 	t.Run("HabitToSmokingUserProfiles", testHabitToManyRemoveOpSmokingUserProfiles)
 	t.Run("InterestToUsers", testInterestToManyRemoveOpUsers)
 	t.Run("LanguageToUsers", testLanguageToManyRemoveOpUsers)
+	t.Run("MessageToLastMessageConversations", testMessageToManyRemoveOpLastMessageConversations)
 	t.Run("PoliticalBeliefToUserProfiles", testPoliticalBeliefToManyRemoveOpUserProfiles)
 	t.Run("PromptTypeToVoicePrompts", testPromptTypeToManyRemoveOpVoicePrompts)
 	t.Run("ReligionToUserProfiles", testReligionToManyRemoveOpUserProfiles)
