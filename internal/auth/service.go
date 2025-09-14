@@ -20,7 +20,7 @@ import (
 	authStorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/communication"
-	domain2 "github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
+	onboardingdomain "github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/auth"
@@ -73,6 +73,8 @@ var (
 	ErrRefreshTokenExpired        = errors.New("refresh token expired")
 	ErrRefreshTokenRevoked        = errors.New("refresh token has been revoked")
 	ErrRefreshTokenAlreadyRevoked = errors.New("refresh token already revoked")
+	ErrPhoneNumberRequired        = errors.New("phone number required")
+	ErrEmailRequired              = errors.New("email required")
 )
 
 func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*domain.AuthResult, error) {
@@ -108,7 +110,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		return nil, errors.New("invalid or expired code")
 	}
 
-	// 4) Resolve user (create on register / login_or_signup)
+	// 4) Resolve user (create on register )
 	exists, err := as.UserService.UserExistsByIdentifier(ctx, in.Channel, identifier)
 	if err != nil {
 		return nil, fmt.Errorf("user lookup failed: %w", err)
@@ -126,23 +128,55 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		if err != nil {
 			return nil, fmt.Errorf("auth user: %w", err)
 		}
+
+		toks, err := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
+		if err != nil {
+			return nil, fmt.Errorf("issue tokens: %w", err)
+		}
+
+		return &domain.AuthResult{
+			RefreshToken: toks.RefreshToken,
+			AccessToken:  toks.AccessToken,
+			User: &domain.User{
+				ID:             userDetails.ID,
+				OnboardingStep: onboardingdomain.Steps(userDetails.OnboardingStep),
+			},
+		}, nil
+	case "register":
+		if exists {
+			return nil, errors.New("user already exists")
+		}
+
+		if in.Phone == nil {
+			return nil, ErrPhoneNumberRequired
+		}
+
+		// create user
+		userID, regErr := as.UserService.CreateUser(ctx, userdomain.User{
+			PhoneNumber:    *in.Phone,
+			OnboardingStep: string(onboardingdomain.OnboardingStepsIntro),
+		})
+		if regErr != nil {
+			return nil, fmt.Errorf("failed to create user: %w", regErr)
+		}
+
+		toks, regErr := as.GenerateAccessAndRefreshToken(ctx, *userID)
+		if regErr != nil {
+			return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		}
+
+		return &domain.AuthResult{
+			RefreshToken: toks.RefreshToken,
+			AccessToken:  toks.AccessToken,
+			User: &domain.User{
+				ID:             *userID,
+				OnboardingStep: onboardingdomain.OnboardingStepsIntro,
+			},
+		}, nil
+
 	default:
 		return nil, fmt.Errorf("unknown purpose: %s", purpose)
 	}
-
-	toks, err := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
-	if err != nil {
-		return nil, fmt.Errorf("issue tokens: %w", err)
-	}
-
-	return &domain.AuthResult{
-		RefreshToken: toks.RefreshToken,
-		AccessToken:  toks.AccessToken,
-		User: &domain.User{
-			ID:             userDetails.ID,
-			OnboardingStep: domain2.Steps(userDetails.OnboardingStep),
-		},
-	}, nil
 }
 
 func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error) {
@@ -181,8 +215,6 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 		shouldSend = exists
 	case "register":
 		shouldSend = !exists
-	case "login_or_signup":
-		shouldSend = true
 	default:
 		// unknown purpose -> treat as login
 		shouldSend = exists

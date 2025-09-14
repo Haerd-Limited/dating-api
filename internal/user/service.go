@@ -16,7 +16,7 @@ import (
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=user
 type Service interface {
-	CreateUser(ctx context.Context, user domain.User) (*string, error)
+	CreateUser(ctx context.Context, user domain.User) (userID *string, err error)
 	AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error)
 	GetUser(ctx context.Context, id string) (*domain.User, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
@@ -47,8 +47,8 @@ func NewUserService(
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 
-func (us *userService) CreateUser(ctx context.Context, user domain.User) (*string, error) {
-	userID, err := us.userRepo.InsertUser(ctx, mapper.ToUserEntity(user))
+func (us *userService) CreateUser(ctx context.Context, user domain.User) (userID *string, err error) {
+	userID, err = us.userRepo.InsertUser(ctx, mapper.ToUserEntity(user))
 	if err != nil {
 		return nil, err
 	}
@@ -96,18 +96,19 @@ func (us *userService) GetUsersByIDs(ctx context.Context, ids []string) ([]*doma
 }
 
 func (us *userService) UpdateUser(ctx context.Context, user *domain.User) error {
-	return us.userRepo.UpdateUser(ctx, mapper.ToUserEntity(*user))
+	updatedEntity, cols := mapper.ToUpdatedUserEntity(*user)
+	return us.userRepo.UpdateUser(ctx, updatedEntity, cols)
 }
 
 func (us *userService) UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error) {
 	switch channel {
 	case "sms":
-		user, err := us.userRepo.GetByPhoneNumber(ctx, identifier)
+		exists, err := us.userRepo.CheckUserExistenceByPhoneNumber(ctx, identifier)
 		if err != nil {
 			return false, err
 		}
 
-		return user != nil, nil
+		return exists, nil
 		// todo: implement email
 	default:
 		return false, fmt.Errorf("unsupported channel: %s", channel)

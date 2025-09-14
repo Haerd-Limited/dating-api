@@ -12,7 +12,7 @@ type VerifyCodeRequest struct {
 	Channel string  `json:"channel" validate:"required,oneof=sms email"`
 	Email   *string `json:"email,omitempty"`
 	Phone   *string `json:"phone,omitempty"`
-	Purpose string  `json:"purpose,omitempty"`
+	Purpose string  `json:"purpose" validate:"required,oneof=login register"`
 	Code    string  `json:"code" validate:"required,len=6,numeric"`
 }
 
@@ -23,8 +23,8 @@ func (vcr VerifyCodeRequest) Validate() error {
 type RequestCodeRequest struct {
 	Channel string  `json:"channel" validate:"required,oneof=email sms"`
 	Email   *string `json:"email,omitempty" validate:"omitempty,email"`
-	Phone   *string `json:"phone,omitempty"`   // validate E.164 in service
-	Purpose string  `json:"purpose,omitempty"` // default "login"
+	Phone   *string `json:"phone,omitempty"`                                  // validate E.164 in service
+	Purpose string  `json:"purpose" validate:"required,oneof=login register"` // default "login"
 }
 
 func (rcr RequestCodeRequest) Validate() error {

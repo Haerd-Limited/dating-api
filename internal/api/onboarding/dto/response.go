@@ -87,7 +87,7 @@ type Habit struct {
 	Label string `json:"label"`
 }
 
-type RegisterContent struct {
+type IntroContent struct {
 	DatingIntentions []DatingIntention `json:"dating_intentions"`
 	Genders          []Gender          `json:"genders"`
 }

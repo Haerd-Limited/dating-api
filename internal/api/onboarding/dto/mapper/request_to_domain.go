@@ -22,7 +22,7 @@ var (
 	ErrInvalidID          = errors.New("id must be greater than 0")
 )
 
-func MapRegisterRequestToDomain(request dto.RegisterRequest) (domain.Register, error) {
+func MapIntroRequestToDomain(request dto.IntroRequest, userID string) (domain.Intro, error) {
 	firstName := strings.TrimSpace(request.FirstName)
 
 	var lastName string
@@ -31,30 +31,29 @@ func MapRegisterRequestToDomain(request dto.RegisterRequest) (domain.Register, e
 	}
 
 	if hasAnySpace(firstName) || hasAnySpace(lastName) {
-		return domain.Register{}, ErrNameContainsSpaces
+		return domain.Intro{}, ErrNameContainsSpaces
 	}
 
 	// first name length check
 	if l := len(firstName); l < minNameLen || l > maxNameLen {
-		return domain.Register{}, ErrInvalidNameLength
+		return domain.Intro{}, ErrInvalidNameLength
 	}
 
 	// last name length check
 	if l := len(lastName); l < minNameLen || l > maxNameLen {
-		return domain.Register{}, ErrInvalidNameLength
+		return domain.Intro{}, ErrInvalidNameLength
 	}
 
 	if !looksLikeEmail(strings.TrimSpace(request.Email)) {
-		return domain.Register{}, commonErrors.ErrInvalidEmail
+		return domain.Intro{}, commonErrors.ErrInvalidEmail
 	}
 
-	return domain.Register{
-		FirstName:   firstName,
-		LastName:    &lastName,
-		PhoneNumber: normalizePhone(request.PhoneNumber),
-		Email:       strings.TrimSpace(request.Email),
-		// After the user registers Basics will be their current/first step.
-		// Setting this will allow us to resume the application if they drop off after registration
+	return domain.Intro{
+		UserID:    userID,
+		FirstName: firstName,
+		LastName:  &lastName,
+		// PhoneNumber: normalizePhone(request.PhoneNumber),
+		Email: strings.TrimSpace(request.Email),
 	}, nil
 }
 
@@ -217,7 +216,8 @@ func hasAnySpace(s string) bool {
 }
 
 func looksLikeEmail(s string) bool { return strings.Contains(s, "@") && strings.Contains(s, ".") }
-func normalizePhone(s string) string {
+
+/*func normalizePhone(s string) string {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return ""
@@ -225,3 +225,4 @@ func normalizePhone(s string) string {
 
 	return s // stub
 }
+*/

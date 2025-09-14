@@ -24,8 +24,8 @@ import (
 type Service interface {
 	// GetUserCurrentStep retrieves the current onboarding step for a user based on their unique user ID. Returns a GetUserCurrentStepResult.
 	GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error)
-	// Register creates a new user based on the provided registration details and returns tokens and onboarding steps.
-	Register(ctx context.Context, registerDetails domain.Register) (domain.StepResult, error)
+	// Intro creates a new user based on the provided registration details and returns tokens and onboarding steps.
+	Intro(ctx context.Context, introDetails domain.Intro) (domain.StepResult, error)
 	// Basics updates the user's basic details such as birthdate, height, gender, and dating intention, and returns onboarding steps.
 	Basics(ctx context.Context, basicDetails domain.Basics) (domain.StepResult, error)
 	// Location updates the user's location details and returns the result of the operation or an error if it fails.
@@ -95,6 +95,10 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 
 	// each step should return the previous step's response since a user being on a step means they've not completed that step.
 	switch currentStep {
+	case domain.OnboardingStepsIntro:
+		return domain.StepResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+		}, nil
 	case domain.OnboardingStepsBasics:
 		genders, err := os.getGenders(ctx)
 		if err != nil {
@@ -108,7 +112,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 
 		return domain.StepResult{
 			OnboardingSteps: domain.OnboardingStepsBasics.GenerateOnboardingSteps(),
-			Content: domain.RegisterContent{
+			Content: domain.IntroContent{
 				DatingIntentions: datingIntentions,
 				Genders:          genders,
 			},
@@ -250,17 +254,40 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	}
 }
 
-func (os *onboardingService) Register(ctx context.Context, registerDetails domain.Register) (domain.StepResult, error) {
-	// Call user service and insert into user service
-	userID, err := os.userService.CreateUser(ctx, userdomain.User{
-		Email:          registerDetails.Email,
-		PhoneNumber:    registerDetails.PhoneNumber,
-		FirstName:      registerDetails.FirstName,
-		LastName:       registerDetails.LastName,
-		OnboardingStep: string(domain.OnboardingStepsBasics),
+func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intro) (domain.StepResult, error) {
+	const StepForIntro = domain.OnboardingStepsIntro
+
+	err := os.ensureStep(ctx, introDetails.UserID, StepForIntro)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+	}
+
+	err = os.userService.UpdateUser(ctx, &userdomain.User{
+		ID:        introDetails.UserID,
+		Email:     introDetails.Email,
+		FirstName: introDetails.FirstName,
+		LastName:  introDetails.LastName,
 	})
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to create user: %w", err)
+		return domain.StepResult{}, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	userProfile, err := os.getUserProfile(ctx, introDetails.UserID)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+	}
+
+	var Lastname string
+	if introDetails.LastName != nil {
+		Lastname = *introDetails.LastName
+	}
+
+	displayName := fmt.Sprintf("%s %s", introDetails.FirstName, Lastname)
+	userProfile.DisplayName = &displayName
+
+	err = os.updateUserProfile(ctx, userProfile)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
 	// Get dating intentions and genders and populate Content
@@ -274,17 +301,14 @@ func (os *onboardingService) Register(ctx context.Context, registerDetails domai
 		return domain.StepResult{}, fmt.Errorf("failed to get dating intentions: %w", err)
 	}
 
-	// generate and store access and refresh tokens
-	tokens, err := os.authService.GenerateAccessAndRefreshToken(ctx, *userID)
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, introDetails.UserID, StepForIntro)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to generate access and refresh tokens: %w", err)
+		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
-		AccessToken:     &tokens.AccessToken,
-		RefreshToken:    &tokens.RefreshToken,
-		OnboardingSteps: domain.OnboardingStepsBasics.GenerateOnboardingSteps(),
-		Content: domain.RegisterContent{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+		Content: domain.IntroContent{
 			DatingIntentions: datingIntentions,
 			Genders:          genders,
 		},
@@ -831,7 +855,8 @@ func (os *onboardingService) bumpOnboardingStep(
 	next := expected.NextStep()
 	u.OnboardingStep = string(next)
 
-	if err := os.userService.UpdateUser(ctx, u); err != nil {
+	err = os.userService.UpdateUser(ctx, u)
+	if err != nil {
 		return domain.OnboardingStepsUnset, fmt.Errorf("update step: %w", err)
 	}
 

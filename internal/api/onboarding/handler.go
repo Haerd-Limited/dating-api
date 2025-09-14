@@ -23,7 +23,7 @@ import (
 
 type Handler interface {
 	GetStep() http.HandlerFunc
-	Register() http.HandlerFunc
+	Intro() http.HandlerFunc
 	Basics() http.HandlerFunc
 	Location() http.HandlerFunc
 	Lifestyle() http.HandlerFunc
@@ -92,28 +92,43 @@ func (h *handler) GetStep() http.HandlerFunc {
 	}
 }
 
-func (h *handler) Register() http.HandlerFunc {
+func (h *handler) Intro() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		var req dto.RegisterRequest
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			authHeader := r.Header.Get("Authorization")
+			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
+
+			render.Json(
+				w,
+				http.StatusUnauthorized,
+				commonMappers.ToSimpleErrorResponse(
+					messages.AuthenticationRequiredMsg,
+				))
+
+			return
+		}
+
+		var req dto.IntroRequest
 
 		// Validates and decodes request
 		err := request.DecodeAndValidate(r.Body, &req)
 		if err != nil {
-			h.logger.Sugar().Warnw("failed to decode and validate register request body", "error", err)
+			h.logger.Sugar().Warnw("failed to decode and validate intro request body", "error", err)
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse("email, phone_number and first_name are required fields"),
+				commonMappers.ToSimpleErrorResponse("email and first_name are required fields"),
 			)
 
 			return
 		}
 
-		registerDetails, err := mapper.MapRegisterRequestToDomain(req)
+		introDetails, err := mapper.MapIntroRequestToDomain(req, userID)
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to map register request to register input", "error", err)
+			h.logger.Sugar().Errorw("failed to map intro request to intro input", "error", err)
 			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 			render.Json(w, statusCode,
 				commonMappers.ToSimpleErrorResponse(errMsg),
@@ -122,7 +137,7 @@ func (h *handler) Register() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.onboardingService.Register(ctx, registerDetails)
+		result, err := h.onboardingService.Intro(ctx, introDetails)
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):

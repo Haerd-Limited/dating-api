@@ -3,7 +3,6 @@ package mapper
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/types"
 
@@ -79,15 +78,23 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 		ent.University = null.StringFrom(*p.University)
 	}
 
-	ent.Birthdate = null.TimeFrom(p.Birthdate)
+	if p.Birthdate.IsZero() {
+		ent.Birthdate = null.TimeFrom(p.Birthdate)
+	}
 
 	// Scalars
-	ent.HeightCM = null.Int16From(p.HeightCM)
+	if p.HeightCM != 0 {
+		ent.HeightCM = null.Int16From(p.HeightCM)
+	}
 
 	// FKs (SMALLINT → int16)
-	ent.GenderID = null.Int16From(p.GenderID)
+	if p.GenderID != 0 {
+		ent.GenderID = null.Int16From(p.GenderID)
+	}
 
-	ent.DatingIntentionID = null.Int16From(p.DatingIntentionID)
+	if p.DatingIntentionID != 0 {
+		ent.DatingIntentionID = null.Int16From(p.DatingIntentionID)
+	}
 
 	if p.ReligionID != 0 {
 		ent.ReligionID = null.Int16From(p.ReligionID)

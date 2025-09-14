@@ -18,8 +18,9 @@ import (
 type UserRepository interface {
 	InsertUser(ctx context.Context, user *entity.User) (*string, error)
 	GetByPhoneNumber(ctx context.Context, number string) (*entity.User, error)
+	CheckUserExistenceByPhoneNumber(ctx context.Context, number string) (bool, error)
 	GetUserByID(ctx context.Context, id string) (*entity.User, error)
-	UpdateUser(ctx context.Context, user *entity.User) error
+	UpdateUser(ctx context.Context, e *entity.User, cols []string) error
 }
 
 type userRepository struct {
@@ -34,12 +35,14 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 
 var ErrUserDoesNotExists = errors.New("user does not exists")
 
-func (r *userRepository) UpdateUser(ctx context.Context, user *entity.User) error {
-	_, err := user.Update(ctx, r.db, boil.Infer())
+func (r *userRepository) UpdateUser(ctx context.Context, e *entity.User, cols []string) error {
+	if len(cols) == 0 {
+		return nil
+	} // nothing to change
+	_, err := e.Update(ctx, r.db, boil.Whitelist(cols...))
 	if err != nil {
-		return fmt.Errorf("failed to update user with ID %s: %w", user.ID, err)
+		return fmt.Errorf("failed to update user %s: %w", e.ID, err)
 	}
-
 	return nil
 }
 
@@ -86,8 +89,10 @@ func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*st
 
 	// 2) Scaffold empty profile
 	profile := &entity.UserProfile{
-		UserID:      user.ID,
-		DisplayName: fmt.Sprintf("%s %s", user.FirstName, user.LastName.String),
+		UserID: user.ID,
+	}
+	if user.FirstName != "" {
+		profile.DisplayName = fmt.Sprintf("%s %s", user.FirstName, user.LastName.String)
 	}
 
 	err = profile.Insert(ctx, tx, boil.Infer())
@@ -136,4 +141,13 @@ func (r *userRepository) GetUserByID(ctx context.Context, id string) (*entity.Us
 	}
 
 	return user, nil
+}
+
+func (r *userRepository) CheckUserExistenceByPhoneNumber(ctx context.Context, number string) (bool, error) {
+	exists, err := entity.Users(entity.UserWhere.Phone.EQ(null.StringFrom(number))).Exists(ctx, r.db)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }

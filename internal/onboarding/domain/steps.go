@@ -5,6 +5,7 @@ type Steps string
 const (
 	OnboardingStepsUnset            Steps = "UNSET"
 	OnboardingStepsNone             Steps = "NONE"
+	OnboardingStepsIntro            Steps = "INTRO"
 	OnboardingStepsBasics           Steps = "BASICS"
 	OnboardingStepsLocation         Steps = "LOCATION"
 	OnboardingStepsLifestyle        Steps = "LIFESTYLE"
@@ -72,6 +73,7 @@ func (s Steps) NextStep() Steps {
 }
 
 var OrderedSteps = []Steps{
+	OnboardingStepsIntro,
 	OnboardingStepsBasics,
 	OnboardingStepsLocation,
 	OnboardingStepsLifestyle,

@@ -158,11 +158,11 @@ type Basics struct {
 	DatingIntentionID int16
 }
 
-type Register struct {
-	Email       string
-	PhoneNumber string
-	FirstName   string
-	LastName    *string
+type Intro struct {
+	Email     string
+	UserID    string
+	FirstName string
+	LastName  *string
 }
 
 type OnboardingSteps struct {
@@ -174,7 +174,7 @@ type OnboardingSteps struct {
 	TotalSteps   int
 }
 
-type RegisterContent struct {
+type IntroContent struct {
 	DatingIntentions []DatingIntention
 	Genders          []Gender
 }

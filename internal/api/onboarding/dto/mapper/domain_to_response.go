@@ -7,12 +7,12 @@ import (
 
 func ToOnboardingResponse(result domain.StepResult) dto.OnboardingResponse {
 	switch v := result.Content.(type) {
-	case domain.RegisterContent:
+	case domain.IntroContent:
 		return dto.OnboardingResponse{
 			AccessToken:     result.AccessToken,
 			RefreshToken:    result.RefreshToken,
 			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
-			Content:         MapRegisterContentToDto(v),
+			Content:         MapIntroContentToDto(v),
 		}
 	case domain.LocationContent:
 		return dto.OnboardingResponse{
@@ -187,7 +187,7 @@ func MapLocationContentToDto(content domain.LocationContent) dto.LocationContent
 	}
 }
 
-func MapRegisterContentToDto(content domain.RegisterContent) dto.RegisterContent {
+func MapIntroContentToDto(content domain.IntroContent) dto.IntroContent {
 	var datingIntentions []dto.DatingIntention
 	for _, intention := range content.DatingIntentions {
 		datingIntentions = append(datingIntentions, dto.DatingIntention{
@@ -204,7 +204,7 @@ func MapRegisterContentToDto(content domain.RegisterContent) dto.RegisterContent
 		})
 	}
 
-	return dto.RegisterContent{
+	return dto.IntroContent{
 		DatingIntentions: datingIntentions,
 		Genders:          genders,
 	}

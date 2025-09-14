@@ -112,13 +112,13 @@ func (br BasicsRequest) Validate() error {
 	return validator.New().Struct(br)
 }
 
-type RegisterRequest struct {
-	Email       string  `json:"email" validate:"required,email"`
-	PhoneNumber string  `json:"phone_number" validate:"required"`
-	FirstName   string  `json:"first_name" validate:"required"`
-	LastName    *string `json:"last_name"`
+type IntroRequest struct {
+	Email string `json:"email" validate:"required,email"`
+	// PhoneNumber string  `json:"phone_number" validate:"required"`
+	FirstName string  `json:"first_name" validate:"required"`
+	LastName  *string `json:"last_name"`
 }
 
-func (rr RegisterRequest) Validate() error {
+func (rr IntroRequest) Validate() error {
 	return validator.New().Struct(rr)
 }

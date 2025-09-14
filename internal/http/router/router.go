@@ -67,12 +67,11 @@ func New(
 			r.Group(func(r chi.Router) {
 				r.Route(
 					"/onboarding", func(r chi.Router) {
-						r.Post("/register", onboardingHandler.Register())
-						// After the register endpoint, the user has an account and therefore must be authroised to complete the other steps
 						r.Group(func(r chi.Router) {
 							r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 							r.Get("/step", onboardingHandler.GetStep())
-							r.Patch("/basics", onboardingHandler.Basics()) // todo: starts with phonenumber verification
+							r.Post("/intro", onboardingHandler.Intro())
+							r.Patch("/basics", onboardingHandler.Basics())
 							r.Patch("/location", onboardingHandler.Location())
 							r.Patch("/lifestyle", onboardingHandler.Lifestyle())
 							r.Patch("/beliefs", onboardingHandler.Beliefs())
@@ -102,6 +101,7 @@ func New(
 				r.Route("/conversations", func(r chi.Router) {
 					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", conversationHandler.GetConversations())
+					r.Post("/{id}/messages", conversationHandler.SendMessage())
 				})
 				// Media (used during onboarding & later)
 				/*
