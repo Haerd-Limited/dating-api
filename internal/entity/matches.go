@@ -29,6 +29,7 @@ type Match struct {
 	UserB      string    `boil:"user_b" json:"user_b" toml:"user_b" yaml:"user_b"`
 	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	RevealedAt null.Time `boil:"revealed_at" json:"revealed_at,omitempty" toml:"revealed_at" yaml:"revealed_at,omitempty"`
+	Status     string    `boil:"status" json:"status" toml:"status" yaml:"status"`
 
 	R *matchR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L matchL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -40,12 +41,14 @@ var MatchColumns = struct {
 	UserB      string
 	CreatedAt  string
 	RevealedAt string
+	Status     string
 }{
 	ID:         "id",
 	UserA:      "user_a",
 	UserB:      "user_b",
 	CreatedAt:  "created_at",
 	RevealedAt: "revealed_at",
+	Status:     "status",
 }
 
 var MatchTableColumns = struct {
@@ -54,12 +57,14 @@ var MatchTableColumns = struct {
 	UserB      string
 	CreatedAt  string
 	RevealedAt string
+	Status     string
 }{
 	ID:         "matches.id",
 	UserA:      "matches.user_a",
 	UserB:      "matches.user_b",
 	CreatedAt:  "matches.created_at",
 	RevealedAt: "matches.revealed_at",
+	Status:     "matches.status",
 }
 
 // Generated where
@@ -70,12 +75,14 @@ var MatchWhere = struct {
 	UserB      whereHelperstring
 	CreatedAt  whereHelpertime_Time
 	RevealedAt whereHelpernull_Time
+	Status     whereHelperstring
 }{
 	ID:         whereHelperstring{field: "\"matches\".\"id\""},
 	UserA:      whereHelperstring{field: "\"matches\".\"user_a\""},
 	UserB:      whereHelperstring{field: "\"matches\".\"user_b\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"matches\".\"created_at\""},
 	RevealedAt: whereHelpernull_Time{field: "\"matches\".\"revealed_at\""},
+	Status:     whereHelperstring{field: "\"matches\".\"status\""},
 }
 
 // MatchRels is where relationship names are stored.
@@ -134,9 +141,9 @@ func (r *matchR) GetUserBUser() *User {
 type matchL struct{}
 
 var (
-	matchAllColumns            = []string{"id", "user_a", "user_b", "created_at", "revealed_at"}
+	matchAllColumns            = []string{"id", "user_a", "user_b", "created_at", "revealed_at", "status"}
 	matchColumnsWithoutDefault = []string{"user_a", "user_b"}
-	matchColumnsWithDefault    = []string{"id", "created_at", "revealed_at"}
+	matchColumnsWithDefault    = []string{"id", "created_at", "revealed_at", "status"}
 	matchPrimaryKeyColumns     = []string{"id"}
 	matchGeneratedColumns      = []string{}
 )

@@ -805,7 +805,7 @@ func testMatchesSelect(t *testing.T) {
 }
 
 var (
-	matchDBTypes = map[string]string{`ID`: `uuid`, `UserA`: `uuid`, `UserB`: `uuid`, `CreatedAt`: `timestamp with time zone`, `RevealedAt`: `timestamp with time zone`}
+	matchDBTypes = map[string]string{`ID`: `uuid`, `UserA`: `uuid`, `UserB`: `uuid`, `CreatedAt`: `timestamp with time zone`, `RevealedAt`: `timestamp with time zone`, `Status`: `enum.match_status('active','unmatched','blocked')`}
 	_            = bytes.MinRead
 )
 

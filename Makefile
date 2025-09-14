@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  rename_threads_to_conversations sql
+	@cd ./migrations && goose create  add_status_to_match_table sql
 .PHONY: migrate-create
 
 

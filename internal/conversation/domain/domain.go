@@ -37,6 +37,14 @@ type Message struct {
 	CreatedAt      time.Time
 }
 
+type MatchStatus string
+
+const (
+	MatchStatusActive    MatchStatus = "active"
+	MatchStatusUnmatched MatchStatus = "unmatched"
+	MatchStatusBlocked   MatchStatus = "blocked"
+)
+
 type Match struct {
 	ID         string
 	UserA      string

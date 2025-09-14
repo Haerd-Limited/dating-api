@@ -51,6 +51,21 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
+// Enum values for MatchStatus
+const (
+	MatchStatusActive    string = "active"
+	MatchStatusUnmatched string = "unmatched"
+	MatchStatusBlocked   string = "blocked"
+)
+
+func AllMatchStatus() []string {
+	return []string{
+		MatchStatusActive,
+		MatchStatusUnmatched,
+		MatchStatusBlocked,
+	}
+}
+
 // Enum values for MessageType
 const (
 	MessageTypeText   string = "text"
