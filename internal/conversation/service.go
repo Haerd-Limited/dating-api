@@ -8,40 +8,38 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
+	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
-	"github.com/Haerd-Limited/dating-api/internal/interaction"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 )
 
 type Service interface {
 	GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error)
+	CreateConversation(ctx context.Context, userID, matchUserID string) error
 }
 
 type service struct {
-	logger             *zap.Logger
-	conversationRepo   storage.ConversationRepository
-	interactionService interaction.Service
-	profileService     profile.Service
+	logger           *zap.Logger
+	conversationRepo storage.ConversationRepository
+	profileService   profile.Service
 }
 
 func NewConversationService(
 	logger *zap.Logger,
 	conversationRepo storage.ConversationRepository,
-	interactionService interaction.Service,
 	profileService profile.Service,
 ) Service {
 	return &service{
-		logger:             logger,
-		conversationRepo:   conversationRepo,
-		interactionService: interactionService,
-		profileService:     profileService,
+		logger:           logger,
+		conversationRepo: conversationRepo,
+		profileService:   profileService,
 	}
 }
 
 func (s *service) GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error) {
 	// 1. Get Matches.
 	// this is to make sure user's are matched since a user can't have a convo before matching. and if unmatched, convo should be gone
-	matches, err := s.interactionService.GetMatches(ctx, userID)
+	matches, err := s.getMatches(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get matches userID=%s: %w", userID, err)
 	}
@@ -117,7 +115,7 @@ func (s *service) GetConversation(ctx context.Context, userID, matchID string) (
 
 	return &domain.Conversation{
 		ID: conversationEntity.ID,
-		Match: domain.Match{
+		MatchedUser: domain.MatchedUser{
 			ID:          matchID,
 			DisplayName: matchProfile.DisplayName,
 			Emoji:       "😊", // todo: allow users to set emoji at register and update profile
@@ -128,6 +126,15 @@ func (s *service) GetConversation(ctx context.Context, userID, matchID string) (
 		LastMessage: lastMessage,
 		UnreadCount: 0, // todo: figure out what this means
 	}, nil
+}
+
+func (s *service) CreateConversation(ctx context.Context, userID, matchUserID string) error {
+	_, err := s.conversationRepo.CreateConversation(ctx, userID, matchUserID)
+	if err != nil {
+		return fmt.Errorf("failed to create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, err)
+	}
+
+	return nil
 }
 
 func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID string, lastMessageID int64) (*domain.Message, error) {
@@ -178,4 +185,17 @@ func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID
 		MediaSeconds:   &mediaSeconds,
 		CreatedAt:      lastMessageEntity.CreatedAt,
 	}, nil
+}
+
+func (is *service) getMatches(ctx context.Context, userID string) ([]domain.Match, error) {
+	matchEntities, err := is.conversationRepo.GetMatches(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get matches userID=%s: %w", userID, err)
+	}
+
+	if len(matchEntities) == 0 {
+		return []domain.Match{}, nil
+	}
+
+	return mapper.MapMatchEntitiesToDomain(matchEntities), nil
 }

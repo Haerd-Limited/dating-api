@@ -72,7 +72,7 @@ func New(
 						r.Group(func(r chi.Router) {
 							r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 							r.Get("/step", onboardingHandler.GetStep())
-							r.Patch("/basics", onboardingHandler.Basics())
+							r.Patch("/basics", onboardingHandler.Basics()) // todo: starts with phonenumber verification
 							r.Patch("/location", onboardingHandler.Location())
 							r.Patch("/lifestyle", onboardingHandler.Lifestyle())
 							r.Patch("/beliefs", onboardingHandler.Beliefs())

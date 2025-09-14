@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
@@ -17,24 +18,26 @@ import (
 type Service interface {
 	CreateSwipe(ctx context.Context, swipe domain.Swipe) error
 	GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]profilecard.ProfileCard, error)
-	GetMatches(ctx context.Context, userID string) ([]domain.Match, error)
 }
 
 type service struct {
-	logger          *zap.Logger
-	profileService  profile.Service
-	interactionRepo storage.InteractionRepository
+	logger              *zap.Logger
+	profileService      profile.Service
+	interactionRepo     storage.InteractionRepository
+	conversationService conversation.Service
 }
 
 func NewInteractionService(
 	logger *zap.Logger,
 	interactionRepo storage.InteractionRepository,
 	profileService profile.Service,
+	conversationService conversation.Service,
 ) Service {
 	return &service{
-		logger:          logger,
-		interactionRepo: interactionRepo,
-		profileService:  profileService,
+		logger:              logger,
+		interactionRepo:     interactionRepo,
+		profileService:      profileService,
+		conversationService: conversationService,
 	}
 }
 
@@ -68,6 +71,11 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) error {
 	})
 	if err != nil {
 		return fmt.Errorf("failed to created match userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+	}
+
+	err = is.conversationService.CreateConversation(ctx, swipe.UserID, swipe.TargetUserID)
+	if err != nil {
+		return fmt.Errorf("failed to create conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 	}
 	//todo:send notification to targetuser
 
@@ -111,17 +119,4 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 	}
 
 	return profiles, nil
-}
-
-func (is *service) GetMatches(ctx context.Context, userID string) ([]domain.Match, error) {
-	matchEntities, err := is.interactionRepo.GetMatches(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get matches userID=%s: %w", userID, err)
-	}
-
-	if len(matchEntities) == 0 {
-		return []domain.Match{}, nil
-	}
-
-	return mapper.MapMatchEntitiesToDomain(matchEntities), nil
 }

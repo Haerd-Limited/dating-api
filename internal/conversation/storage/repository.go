@@ -18,6 +18,7 @@ type ConversationRepository interface {
 	GetConversationByUserIDs(ctx context.Context, userA, userB string) (*entity.Conversation, error)
 	GetLastMessageByID(ctx context.Context, lastMessageID int64) (*entity.Message, error)
 	CreateConversation(ctx context.Context, userA, userB string) (*entity.Conversation, error)
+	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
 }
 
 type repository struct {
@@ -99,4 +100,18 @@ func (r *repository) CreateConversation(ctx context.Context, userA, userB string
 	}
 
 	return c, nil
+}
+
+func (is *repository) GetMatches(ctx context.Context, userID string) ([]*entity.Match, error) {
+	matches, err := entity.Matches(
+		entity.MatchWhere.UserB.EQ(userID),
+		qm.Or2(
+			entity.MatchWhere.UserA.EQ(userID),
+		),
+	).All(ctx, is.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return matches, nil
 }

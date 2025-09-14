@@ -96,11 +96,11 @@ func main() {
 	discoverRepo := storage3.NewDiscoverRepository(db)
 	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
 
-	interactionRepo := storage4.NewInteractionRepository(db)
-	interactionService := interaction.NewInteractionService(logger, interactionRepo, profileService)
-
 	conversationRepo := storage5.NewConversationRepository(db)
-	conversationService := conversation.NewConversationService(logger, conversationRepo, interactionService, profileService)
+	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService)
+
+	interactionRepo := storage4.NewInteractionRepository(db)
+	interactionService := interaction.NewInteractionService(logger, interactionRepo, profileService, conversationService)
 
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache)

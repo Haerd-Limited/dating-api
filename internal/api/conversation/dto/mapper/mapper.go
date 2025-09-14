@@ -36,9 +36,9 @@ func MapConversationToDto(convo domain.Conversation) dto.Conversation {
 	return dto.Conversation{
 		ID: convo.ID,
 		Match: dto.Match{
-			ID:          convo.Match.ID,
-			DisplayName: convo.Match.DisplayName,
-			Emoji:       convo.Match.Emoji,
+			ID:          convo.MatchedUser.ID,
+			DisplayName: convo.MatchedUser.DisplayName,
+			Emoji:       convo.MatchedUser.Emoji,
 		},
 		CreatedAt:      convo.CreatedAt,
 		LastActivityAt: convo.LastActivityAt,

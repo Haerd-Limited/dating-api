@@ -12,15 +12,15 @@ const (
 
 type Conversation struct {
 	ID string
-	// Match the user/person you matched with
-	Match          Match
+	// MatchedUser the user/person you matched with
+	MatchedUser    MatchedUser
 	CreatedAt      time.Time
 	LastActivityAt time.Time
 	LastMessage    *Message
 	UnreadCount    int
 }
 
-type Match struct {
+type MatchedUser struct {
 	ID          string
 	DisplayName string
 	Emoji       string
@@ -35,4 +35,12 @@ type Message struct {
 	MediaKey       *string
 	MediaSeconds   *float64
 	CreatedAt      time.Time
+}
+
+type Match struct {
+	ID         string
+	UserA      string
+	UserB      string
+	CreatedAt  time.Time
+	RevealedAt time.Time
 }
