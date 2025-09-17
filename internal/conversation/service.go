@@ -3,7 +3,6 @@ package conversation
 import (
 	"context"
 	"fmt"
-
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
@@ -113,6 +112,13 @@ func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID 
 		lastMessage, lmErr = s.getLastMessageByID(ctx, userID, matchID, conversationEntity.LastMessageID.Int64)
 		if lmErr != nil {
 			return nil, fmt.Errorf("failed to get last message userID=%s matchID=%s: %w", userID, matchID, lmErr)
+		}
+	} else {
+		systemMsg := fmt.Sprintf("Start the chat with %s", matchProfile.DisplayName)
+		lastMessage = &domain.Message{
+			ConversationID: conversationEntity.ID,
+			Type:           domain.MessageTypeSystem,
+			TextBody:       &systemMsg,
 		}
 	}
 
