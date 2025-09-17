@@ -39,10 +39,12 @@ func (r *userRepository) UpdateUser(ctx context.Context, e *entity.User, cols []
 	if len(cols) == 0 {
 		return nil
 	} // nothing to change
+
 	_, err := e.Update(ctx, r.db, boil.Whitelist(cols...))
 	if err != nil {
 		return fmt.Errorf("failed to update user %s: %w", e.ID, err)
 	}
+
 	return nil
 }
 

@@ -27,4 +27,5 @@ type Message struct {
 	MediaKey       *string   `json:"media_key"`
 	MediaSeconds   *float64  `json:"media_seconds"`
 	CreatedAt      time.Time `json:"created_at"`
+	ClientMsgID    string    `json:"client_msg_id"`
 }

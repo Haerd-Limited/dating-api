@@ -3,7 +3,6 @@ package conversation
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"go.uber.org/zap"
 
@@ -16,23 +15,27 @@ import (
 type Service interface {
 	GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error)
 	CreateConversation(ctx context.Context, userID, matchUserID string) error
+	SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error)
 }
 
 type service struct {
 	logger           *zap.Logger
 	conversationRepo storage.ConversationRepository
 	profileService   profile.Service
+	flake            interface{ Next() int64 }
 }
 
 func NewConversationService(
 	logger *zap.Logger,
 	conversationRepo storage.ConversationRepository,
 	profileService profile.Service,
+	flake interface{ Next() int64 },
 ) Service {
 	return &service{
 		logger:           logger,
 		conversationRepo: conversationRepo,
 		profileService:   profileService,
+		flake:            flake,
 	}
 }
 
@@ -61,7 +64,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 
 		var conversation *domain.Conversation
 
-		conversation, convoErr := s.GetConversation(ctx, userID, matchUserID)
+		conversation, convoErr := s.GetConversationByUserIds(ctx, userID, matchUserID)
 		if convoErr != nil {
 			return nil, fmt.Errorf("failed to get conversation userID=%s matchUserID=%s: %w", userID, matchUserID, convoErr)
 		}
@@ -73,7 +76,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 				return nil, fmt.Errorf("failed to create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, createConvoErr)
 			}
 
-			conversation, convoErr = s.GetConversation(ctx, userID, matchUserID)
+			conversation, convoErr = s.GetConversationByUserIds(ctx, userID, matchUserID)
 			if convoErr != nil {
 				return nil, fmt.Errorf("failed to get conversation userID=%s matchUserID=%s: %w", userID, matchUserID, convoErr)
 			}
@@ -86,7 +89,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 	return conversations, nil
 }
 
-func (s *service) GetConversation(ctx context.Context, userID, matchID string) (*domain.Conversation, error) {
+func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID string) (*domain.Conversation, error) {
 	conversationEntity, err := s.conversationRepo.GetConversationByUserIDs(ctx, userID, matchID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get conversation userID=%s matchID=%s: %w", userID, matchID, err)
@@ -109,7 +112,7 @@ func (s *service) GetConversation(ctx context.Context, userID, matchID string) (
 
 		lastMessage, lmErr = s.getLastMessageByID(ctx, userID, matchID, conversationEntity.LastMessageID.Int64)
 		if lmErr != nil {
-			return nil, fmt.Errorf("failed to get last message userID=%s matchID=%s: %w", userID, matchID, err)
+			return nil, fmt.Errorf("failed to get last message userID=%s matchID=%s: %w", userID, matchID, lmErr)
 		}
 	}
 
@@ -140,55 +143,23 @@ func (s *service) CreateConversation(ctx context.Context, userID, matchUserID st
 func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID string, lastMessageID int64) (*domain.Message, error) {
 	lastMessageEntity, err := s.conversationRepo.GetLastMessageByID(ctx, lastMessageID)
 	if err != nil {
-		return &domain.Message{}, fmt.Errorf("failed to get last message userID=%s matchID=%s: %w", userID, matchID, err)
+		return &domain.Message{}, fmt.Errorf("failed to get last message entity userID=%s matchID=%s: %w", userID, matchID, err)
 	}
 
 	if lastMessageEntity == nil {
-		return &domain.Message{}, nil
+		return nil, nil
 	}
 
-	var messageType domain.MessageType
-
-	switch lastMessageEntity.Type {
-	case "text":
-		messageType = domain.MessageTypeText
-	case "voice":
-		messageType = domain.MessageTypeVoice
-	case "system":
-		messageType = domain.MessageTypeSystem
-	default:
-		return &domain.Message{}, fmt.Errorf("unknown message type: %s", lastMessageEntity.Type)
+	msg, err := mapper.MapMessageEntityToDomain(*lastMessageEntity)
+	if err != nil {
+		return &domain.Message{}, fmt.Errorf("failed to map message entity userID=%s matchID=%s: %w", userID, matchID, err)
 	}
 
-	var textBody *string
-	if lastMessageEntity.TextBody.Valid {
-		textBody = &lastMessageEntity.TextBody.String
-	}
-
-	var mediaKey *string
-	if lastMessageEntity.MediaKey.Valid {
-		mediaKey = &lastMessageEntity.MediaKey.String
-	}
-
-	mediaSeconds, msErr := strconv.ParseFloat(lastMessageEntity.MediaSeconds.String(), 64)
-	if msErr != nil {
-		return &domain.Message{}, fmt.Errorf("failed to parse media seconds: %w", msErr)
-	}
-
-	return &domain.Message{
-		ID:             lastMessageEntity.ID,
-		ConversationID: lastMessageEntity.ConversationID,
-		SenderID:       lastMessageEntity.SenderID,
-		Type:           messageType,
-		TextBody:       textBody,
-		MediaKey:       mediaKey,
-		MediaSeconds:   &mediaSeconds,
-		CreatedAt:      lastMessageEntity.CreatedAt,
-	}, nil
+	return &msg, nil
 }
 
-func (is *service) getMatches(ctx context.Context, userID string) ([]domain.Match, error) {
-	matchEntities, err := is.conversationRepo.GetMatches(ctx, userID)
+func (s *service) getMatches(ctx context.Context, userID string) ([]domain.Match, error) {
+	matchEntities, err := s.conversationRepo.GetMatches(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get matches userID=%s: %w", userID, err)
 	}
@@ -198,4 +169,20 @@ func (is *service) getMatches(ctx context.Context, userID string) ([]domain.Matc
 	}
 
 	return mapper.MapMatchEntitiesToDomain(matchEntities), nil
+}
+
+func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error) {
+	msg.ID = s.flake.Next()
+	msgEntity, err := s.conversationRepo.SendMessageViaTx(ctx, mapper.MapMessageDomainToEntity(msg))
+
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("failed to send message userID=%s: %w", msg.SenderID, err)
+	}
+
+	result, err := mapper.MapMessageEntityToDomain(*msgEntity)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("failed to map message entity userID=%s: %w", msg.SenderID, err)
+	}
+
+	return result, nil
 }

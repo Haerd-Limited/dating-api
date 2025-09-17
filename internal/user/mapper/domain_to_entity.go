@@ -43,21 +43,27 @@ func ToUpdatedUserEntity(u domain.User) (*entity.User, []string) {
 		e.Email = null.StringFrom(u.Email)
 		cols = append(cols, entity.UserColumns.Email)
 	}
+
 	if u.FirstName != "" {
 		e.FirstName = u.FirstName
 		cols = append(cols, entity.UserColumns.FirstName)
 	}
+
 	if u.LastName != nil { // non-nil => write; "" means empty string, not NULL
 		e.LastName = null.StringFromPtr(u.LastName)
 		cols = append(cols, entity.UserColumns.LastName)
 	}
+
 	if u.PhoneNumber != "" {
 		e.Phone = null.StringFrom(u.PhoneNumber)
+
 		cols = append(cols, entity.UserColumns.Phone)
 	}
+
 	if u.OnboardingStep != "" {
 		e.OnboardingStep = u.OnboardingStep
 		cols = append(cols, entity.UserColumns.OnboardingStep)
 	}
+
 	return e, cols
 }

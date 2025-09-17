@@ -3,6 +3,7 @@ package mapper
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/types"
 

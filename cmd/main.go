@@ -35,6 +35,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commondb "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/db"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/ids"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 	s3Storage "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/storage"
 )
@@ -96,8 +97,9 @@ func main() {
 	discoverRepo := storage3.NewDiscoverRepository(db)
 	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
 
+	flake := ids.NewSnowflake(1)
 	conversationRepo := storage5.NewConversationRepository(db)
-	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService)
+	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake)
 
 	interactionRepo := storage4.NewInteractionRepository(db)
 	interactionService := interaction.NewInteractionService(logger, interactionRepo, profileService, conversationService)

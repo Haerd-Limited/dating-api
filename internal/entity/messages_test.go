@@ -1286,7 +1286,7 @@ func testMessagesSelect(t *testing.T) {
 }
 
 var (
-	messageDBTypes = map[string]string{`ID`: `bigint`, `ConversationID`: `uuid`, `SenderID`: `uuid`, `Type`: `enum.message_type('text','voice','system')`, `TextBody`: `text`, `MediaKey`: `text`, `MediaSeconds`: `numeric`, `CreatedAt`: `timestamp with time zone`, `EditedAt`: `timestamp with time zone`, `DeletedAt`: `timestamp with time zone`}
+	messageDBTypes = map[string]string{`ID`: `bigint`, `ConversationID`: `uuid`, `SenderID`: `uuid`, `Type`: `enum.message_type('text','voice','system')`, `TextBody`: `text`, `MediaKey`: `text`, `MediaSeconds`: `numeric`, `CreatedAt`: `timestamp with time zone`, `EditedAt`: `timestamp with time zone`, `DeletedAt`: `timestamp with time zone`, `ClientMSGID`: `uuid`}
 	_              = bytes.MinRead
 )
 

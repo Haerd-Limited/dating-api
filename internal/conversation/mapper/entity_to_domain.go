@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
@@ -29,4 +31,43 @@ func MapMatchEntityToDomain(matchEntity *entity.Match) domain.Match {
 		CreatedAt:  matchEntity.CreatedAt,
 		RevealedAt: revealedAt,
 	}
+}
+
+func MapMessageEntityToDomain(msg entity.Message) (domain.Message, error) {
+	var textBody *string
+	if msg.TextBody.Valid {
+		textBody = &msg.TextBody.String
+	}
+
+	var mediaKey *string
+	if msg.MediaKey.Valid {
+		mediaKey = &msg.MediaKey.String
+	}
+
+	var mediaSeconds float64
+
+	var msErr error
+	if !msg.MediaSeconds.IsZero() {
+		mediaSeconds, msErr = strconv.ParseFloat(msg.MediaSeconds.String(), 64)
+		if msErr != nil {
+			return domain.Message{}, fmt.Errorf("failed to parse media seconds: %w", msErr)
+		}
+	}
+
+	var clientMSGID string
+	if msg.ClientMSGID.Valid {
+		clientMSGID = msg.ClientMSGID.String
+	}
+
+	return domain.Message{
+		ID:             msg.ID,
+		ConversationID: msg.ConversationID,
+		SenderID:       msg.SenderID,
+		Type:           domain.MessageType(msg.Type),
+		TextBody:       textBody,
+		MediaKey:       mediaKey,
+		MediaSeconds:   &mediaSeconds,
+		CreatedAt:      msg.CreatedAt,
+		ClientMsgID:    clientMSGID,
+	}, nil
 }

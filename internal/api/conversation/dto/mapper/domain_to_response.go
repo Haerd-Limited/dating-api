@@ -5,6 +5,24 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 )
 
+func MapMessageToDto(msg *domain.Message) dto.Message {
+	if msg == nil {
+		return dto.Message{}
+	}
+
+	return dto.Message{
+		ID:             msg.ID,
+		ConversationID: msg.ConversationID,
+		SenderID:       msg.SenderID,
+		Type:           string(msg.Type),
+		TextBody:       msg.TextBody,
+		MediaKey:       msg.MediaKey,
+		MediaSeconds:   msg.MediaSeconds,
+		CreatedAt:      msg.CreatedAt,
+		ClientMsgID:    msg.ClientMsgID,
+	}
+}
+
 func MapConversationsToDtos(conversations []domain.Conversation) []dto.Conversation {
 	if conversations == nil {
 		return []dto.Conversation{}
@@ -30,6 +48,7 @@ func MapConversationToDto(convo domain.Conversation) dto.Conversation {
 			MediaKey:       convo.LastMessage.MediaKey,
 			MediaSeconds:   convo.LastMessage.MediaSeconds,
 			CreatedAt:      convo.LastMessage.CreatedAt,
+			ClientMsgID:    convo.LastMessage.ClientMsgID,
 		}
 	}
 

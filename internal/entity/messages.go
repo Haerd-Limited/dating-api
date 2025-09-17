@@ -35,6 +35,7 @@ type Message struct {
 	CreatedAt      time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	EditedAt       null.Time         `boil:"edited_at" json:"edited_at,omitempty" toml:"edited_at" yaml:"edited_at,omitempty"`
 	DeletedAt      null.Time         `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	ClientMSGID    null.String       `boil:"client_msg_id" json:"client_msg_id,omitempty" toml:"client_msg_id" yaml:"client_msg_id,omitempty"`
 
 	R *messageR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L messageL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -51,6 +52,7 @@ var MessageColumns = struct {
 	CreatedAt      string
 	EditedAt       string
 	DeletedAt      string
+	ClientMSGID    string
 }{
 	ID:             "id",
 	ConversationID: "conversation_id",
@@ -62,6 +64,7 @@ var MessageColumns = struct {
 	CreatedAt:      "created_at",
 	EditedAt:       "edited_at",
 	DeletedAt:      "deleted_at",
+	ClientMSGID:    "client_msg_id",
 }
 
 var MessageTableColumns = struct {
@@ -75,6 +78,7 @@ var MessageTableColumns = struct {
 	CreatedAt      string
 	EditedAt       string
 	DeletedAt      string
+	ClientMSGID    string
 }{
 	ID:             "messages.id",
 	ConversationID: "messages.conversation_id",
@@ -86,6 +90,7 @@ var MessageTableColumns = struct {
 	CreatedAt:      "messages.created_at",
 	EditedAt:       "messages.edited_at",
 	DeletedAt:      "messages.deleted_at",
+	ClientMSGID:    "messages.client_msg_id",
 }
 
 // Generated where
@@ -127,6 +132,7 @@ var MessageWhere = struct {
 	CreatedAt      whereHelpertime_Time
 	EditedAt       whereHelpernull_Time
 	DeletedAt      whereHelpernull_Time
+	ClientMSGID    whereHelpernull_String
 }{
 	ID:             whereHelperint64{field: "\"messages\".\"id\""},
 	ConversationID: whereHelperstring{field: "\"messages\".\"conversation_id\""},
@@ -138,6 +144,7 @@ var MessageWhere = struct {
 	CreatedAt:      whereHelpertime_Time{field: "\"messages\".\"created_at\""},
 	EditedAt:       whereHelpernull_Time{field: "\"messages\".\"edited_at\""},
 	DeletedAt:      whereHelpernull_Time{field: "\"messages\".\"deleted_at\""},
+	ClientMSGID:    whereHelpernull_String{field: "\"messages\".\"client_msg_id\""},
 }
 
 // MessageRels is where relationship names are stored.
@@ -234,9 +241,9 @@ func (r *messageR) GetMessageReceipts() MessageReceiptSlice {
 type messageL struct{}
 
 var (
-	messageAllColumns            = []string{"id", "conversation_id", "sender_id", "type", "text_body", "media_key", "media_seconds", "created_at", "edited_at", "deleted_at"}
+	messageAllColumns            = []string{"id", "conversation_id", "sender_id", "type", "text_body", "media_key", "media_seconds", "created_at", "edited_at", "deleted_at", "client_msg_id"}
 	messageColumnsWithoutDefault = []string{"id", "conversation_id", "sender_id", "type"}
-	messageColumnsWithDefault    = []string{"text_body", "media_key", "media_seconds", "created_at", "edited_at", "deleted_at"}
+	messageColumnsWithDefault    = []string{"text_body", "media_key", "media_seconds", "created_at", "edited_at", "deleted_at", "client_msg_id"}
 	messagePrimaryKeyColumns     = []string{"id"}
 	messageGeneratedColumns      = []string{}
 )

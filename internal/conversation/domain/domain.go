@@ -35,6 +35,7 @@ type Message struct {
 	MediaKey       *string
 	MediaSeconds   *float64
 	CreatedAt      time.Time
+	ClientMsgID    string
 }
 
 type MatchStatus string
