@@ -137,6 +137,10 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 		ent.EthnicityID = null.Int16From(p.EthnicityID)
 	}
 
+	if p.CoverPhotoURL != nil {
+		ent.CoverPhotoURL = null.StringFromPtr(p.CoverPhotoURL)
+	}
+
 	// JSONB: your entity expects []byte
 	if p.ProfileMeta != nil {
 		b, err := json.Marshal(*p.ProfileMeta)
