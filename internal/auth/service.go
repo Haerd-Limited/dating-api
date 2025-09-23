@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"net"
 	"regexp"
 	"strings"
@@ -46,6 +47,7 @@ type authService struct {
 	codeTTL              time.Duration
 	perIDPerHour         int // e.g., 3
 	perIPPerHour         int // e.g., 20
+	env                  string
 }
 
 func NewAuthService(
@@ -55,6 +57,7 @@ func NewAuthService(
 	AuthRepository authStorage.AuthRepository,
 	awsService aws.Service,
 	communicationService communication.Service,
+	env string,
 ) Service {
 	return &authService{
 		logger:               logger,
@@ -66,6 +69,7 @@ func NewAuthService(
 		codeTTL:              10 * time.Minute,
 		perIDPerHour:         3,
 		perIPPerHour:         20,
+		env:                  env,
 	}
 }
 
@@ -85,29 +89,32 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 
 	purpose := strings.ToLower(in.Purpose)
 
-	// 1) Find latest active code
-	rec, err := as.AuthRepo.FindActiveVerificationCode(ctx, in.Channel, identifier, purpose)
-	if err != nil {
-		// do not reveal which part failed
-		return nil, fmt.Errorf("failed to find active code channel=%s identifier=%s purpose=%s: %w",
-			in.Channel, identifier, purpose, err)
-	}
+	//Reduce twilio usage when testing
+	if strings.ToLower(as.env) == constants.ProductionEnvironment {
+		// 1) Find latest active code
+		rec, err := as.AuthRepo.FindActiveVerificationCode(ctx, in.Channel, identifier, purpose)
+		if err != nil {
+			// do not reveal which part failed
+			return nil, fmt.Errorf("failed to find active code channel=%s identifier=%s purpose=%s: %w",
+				in.Channel, identifier, purpose, err)
+		}
 
-	if rec.Attempts >= rec.MaxAttempts {
-		return nil, errors.New("too many attempts")
-	}
+		if rec.Attempts >= rec.MaxAttempts {
+			return nil, errors.New("too many attempts")
+		}
 
-	// 2) Compare HMAC
-	expected := as.hmac(in.Code, identifier, purpose)
-	if !hmac.Equal([]byte(expected), []byte(rec.CodeHash)) {
-		_ = as.AuthRepo.IncrementAttempts(ctx, rec.ID)
-		return nil, errors.New("invalid or expired code")
-	}
+		// 2) Compare HMAC
+		expected := as.hmac(in.Code, identifier, purpose)
+		if !hmac.Equal([]byte(expected), []byte(rec.CodeHash)) {
+			_ = as.AuthRepo.IncrementAttempts(ctx, rec.ID)
+			return nil, errors.New("invalid or expired code")
+		}
 
-	// 3) Consume single-use
-	ok, err := as.AuthRepo.ConsumeVerificationCode(ctx, rec.ID)
-	if err != nil || !ok {
-		return nil, errors.New("invalid or expired code")
+		// 3) Consume single-use
+		ok, err := as.AuthRepo.ConsumeVerificationCode(ctx, rec.ID)
+		if err != nil || !ok {
+			return nil, errors.New("invalid or expired code")
+		}
 	}
 
 	// 4) Resolve user (create on register )

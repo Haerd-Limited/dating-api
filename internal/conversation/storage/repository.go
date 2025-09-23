@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/aarondl/null/v8"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/friendsofgo/errors"
@@ -46,6 +46,7 @@ func (r *repository) SendMessageViaTx(ctx context.Context, msg entity.Message) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
+
 	defer func() {
 		_ = tx.Rollback()
 	}()
@@ -59,8 +60,10 @@ func (r *repository) SendMessageViaTx(ctx context.Context, msg entity.Message) (
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNonExistentConversation
 		}
+
 		return nil, fmt.Errorf("failed to get conversation: %w", err)
 	}
+
 	if msg.SenderID != convo.UserA && msg.SenderID != convo.UserB {
 		return nil, ErrNotConversationParticipant // not a participant
 	}
@@ -73,8 +76,10 @@ func (r *repository) SendMessageViaTx(ctx context.Context, msg entity.Message) (
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNonExistentMatch
 		}
+
 		return nil, fmt.Errorf("failed to get match: %w", err)
 	}
+
 	if match.Status != entity.MatchStatusActive {
 		return nil, fmt.Errorf("%w : status=%s", ErrMatchNotActive, match.Status)
 	}
@@ -83,9 +88,10 @@ func (r *repository) SendMessageViaTx(ctx context.Context, msg entity.Message) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert message: %w", err)
 	}
-	//4. Set messageID as conversations messageID
+	// 4. Set messageID as conversations messageID
 	convo.LastMessageID = null.Int64From(msg.ID)
 	convo.LastActivityAt = time.Now()
+
 	_, err = convo.Update(ctx, tx, boil.Whitelist(
 		entity.ConversationColumns.LastMessageID,
 		entity.ConversationColumns.LastActivityAt,
@@ -110,8 +116,10 @@ func (r *repository) GetConversationByID(ctx context.Context, conversationID str
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
+
 	return convo, nil
 }
 

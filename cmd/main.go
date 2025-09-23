@@ -114,7 +114,7 @@ func main() {
 	)
 
 	authRepo := authstorage.NewAuthRepository(db)
-	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService)
+	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 
 	onboardingService := onboarding.NewOnboardingService(logger, profileRepo, userService, authService, awsService, lookupRepo)
 
