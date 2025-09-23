@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"net"
 	"regexp"
 	"strings"
@@ -25,6 +24,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/auth"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
@@ -89,7 +89,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 
 	purpose := strings.ToLower(in.Purpose)
 
-	//Reduce twilio usage when testing
+	// Reduce twilio usage when testing
 	if strings.ToLower(as.env) == constants.ProductionEnvironment {
 		// 1) Find latest active code
 		rec, err := as.AuthRepo.FindActiveVerificationCode(ctx, in.Channel, identifier, purpose)

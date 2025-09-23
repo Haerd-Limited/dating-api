@@ -2,12 +2,10 @@ package config
 
 import (
 	"fmt"
-	"log"
-	"os"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
+	"log"
 )
 
 type Config struct {
@@ -27,24 +25,16 @@ type Config struct {
 	TwilioNumber               string `mapstructure:"TWILIO_NUMBER" yaml:"twilio_number"`
 }
 
-// LoadConfig loads configuration from the OS environment and, if not in production,
-// from a .env file at the root of the repository.
+// LoadConfig loads configuration from the OS environment unless you're in local. In that case from a .env file at the root of the repository.
 func LoadConfig() (*Config, error) {
-	// Check if running in production.
-	// When ENV is any environment apart from local, we assume all necessary system environment variables are set.
-	// Otherwise, if local, load variables from the .env file.
-	if os.Getenv("ENV") == "local" {
-		if err := godotenv.Load(); err != nil {
-			log.Printf("Warning: no .env file found, relying on OS environment variables: %v", err)
-		}
-	}
-
 	// Use Viper to read environment variables.
 	viper.AutomaticEnv()
 
-	// Set a default value for ENV if it hasn't been set.
 	if viper.GetString("ENV") == "" {
-		viper.Set("ENV", "dev")
+		log.Printf("environment variable %s not set. Defaulting to local", viper.GetString("ENV"))
+		if err := godotenv.Load(); err != nil {
+			log.Fatalf("no .env file found. please place a .env file at the root of this repository: %v", err)
+		}
 	}
 
 	// Create a Config instance with values from environment variables.
