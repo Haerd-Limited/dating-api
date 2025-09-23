@@ -6,6 +6,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 	"log"
+	"os"
+	"strings"
 )
 
 type Config struct {
@@ -25,15 +27,19 @@ type Config struct {
 	TwilioNumber               string `mapstructure:"TWILIO_NUMBER" yaml:"twilio_number"`
 }
 
-// LoadConfig loads configuration from the OS environment unless you're in local. In that case from a .env file at the root of the repository.
+// LoadConfig loads from OS env; if ENV=local (or unset) it will attempt to load .env first.
 func LoadConfig() (*Config, error) {
-	// Use Viper to read environment variables.
 	viper.AutomaticEnv()
 
-	if viper.GetString("ENV") == "" {
-		log.Printf("environment variable %s not set. Defaulting to local", viper.GetString("ENV"))
+	// Sensible default; can be overridden by real ENV
+	viper.SetDefault("ENV", "local")
+
+	// If ENV explicitly set to "local" (or not set in OS), try .env without failing hard.
+	rawEnv := os.Getenv("ENV")
+	if rawEnv == "" || strings.EqualFold(rawEnv, "local") {
 		if err := godotenv.Load(); err != nil {
-			log.Fatalf("no .env file found. please place a .env file at the root of this repository: %v", err)
+			// Not fatal—just informational in local dev
+			log.Printf("no .env file found (ok if running in CI/containers): %v", err)
 		}
 	}
 
