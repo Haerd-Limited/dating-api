@@ -31,9 +31,9 @@ type Config struct {
 // from a .env file at the root of the repository.
 func LoadConfig() (*Config, error) {
 	// Check if running in production.
-	// When ENV is "prod", we assume all necessary environment variables are set.
-	// Otherwise, load variables from the .env file.
-	if os.Getenv("ENV") != "prod" {
+	// When ENV is any environment apart from local, we assume all necessary system environment variables are set.
+	// Otherwise, if local, load variables from the .env file.
+	if os.Getenv("ENV") == "local" {
 		if err := godotenv.Load(); err != nil {
 			log.Printf("Warning: no .env file found, relying on OS environment variables: %v", err)
 		}
