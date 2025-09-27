@@ -13,7 +13,6 @@ import (
 
 	"github.com/coocood/freecache"
 	"github.com/jmoiron/sqlx"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"
@@ -41,11 +40,6 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file (only in development)
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found or error loading .env file")
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -143,7 +137,6 @@ func main() {
 
 	go func() {
 		logger.Sugar().Infof("Server starting on port %s", cfg.Port)
-
 		err = server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Sugar().Fatalf("ListenAndServe error: %v", err)
