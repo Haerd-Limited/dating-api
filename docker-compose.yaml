@@ -20,7 +20,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      # Comment our above and uncomment below when running container locally
+      # Comment out above and uncomment below when running container locally
       #dockerfile: Dockerfile.local
     container_name: haerd_dating_api
     restart: unless-stopped
