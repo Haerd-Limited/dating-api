@@ -102,6 +102,7 @@ func New(
 					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", conversationHandler.GetConversations())
 					r.Post("/{id}/messages", conversationHandler.SendMessage())
+					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
 				})
 				// Media (used during onboarding & later)
 				/*

@@ -138,6 +138,7 @@ func main() {
 
 	go func() {
 		logger.Sugar().Infof("Server starting on port %s", cfg.Port)
+
 		err = server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			logger.Sugar().Fatalf("ListenAndServe error: %v", err)

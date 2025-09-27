@@ -2,12 +2,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
-	"github.com/joho/godotenv"
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
+	"github.com/spf13/viper"
 )
 
 type Config struct {

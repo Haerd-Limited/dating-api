@@ -22,6 +22,7 @@ type ConversationRepository interface {
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
 	SendMessageViaTx(ctx context.Context, msg entity.Message) (*entity.Message, error)
 	GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error)
+	GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error)
 }
 
 type repository struct {
@@ -40,6 +41,36 @@ var (
 	ErrMatchNotActive             = errors.New("match is not active")
 	ErrNotConversationParticipant = errors.New("user is not a participant in the conversation")
 )
+
+func (r *repository) isConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
+	isParticipant, err := entity.Conversations(
+		entity.ConversationWhere.ID.EQ(conversationID),
+		qm.Where("user_a = ? OR user_b = ?", userID, userID),
+	).Exists(ctx, r.db)
+	if err != nil {
+		return false, err
+	}
+	return isParticipant, nil
+}
+
+func (r *repository) GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error) {
+	isParticipant, err := r.isConversationParticipant(ctx, conversationID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isParticipant {
+		return nil, ErrNotConversationParticipant
+	}
+
+	messages, err := entity.Messages(
+		entity.MessageWhere.ConversationID.EQ(conversationID),
+		qm.OrderBy(entity.MessageColumns.CreatedAt+" ASC"),
+	).All(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	return messages, nil
+}
 
 func (r *repository) SendMessageViaTx(ctx context.Context, msg entity.Message) (*entity.Message, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)

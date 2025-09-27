@@ -16,6 +16,7 @@ type Service interface {
 	GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error)
 	CreateConversation(ctx context.Context, userID, matchUserID string) error
 	SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error)
+	GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error)
 }
 
 type service struct {
@@ -37,6 +38,31 @@ func NewConversationService(
 		profileService:   profileService,
 		flake:            flake,
 	}
+}
+
+func (s *service) GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error) {
+	messageEntities, err := s.conversationRepo.GetMessagesByConversationID(ctx, convoID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get messages userID=%s convoID=%s: %w", userID, convoID, err)
+	}
+
+	if len(messageEntities) == 0 {
+		return []domain.Message{}, nil
+	}
+
+	var messages []domain.Message
+
+	var msg domain.Message
+	for _, messageEntity := range messageEntities {
+		msg, err = mapper.MapMessageEntityToDomain(*messageEntity)
+		if err != nil {
+			return nil, fmt.Errorf("failed to map message entity userID=%s convoID=%s: %w", userID, convoID, err)
+		}
+
+		messages = append(messages, msg)
+	}
+
+	return messages, nil
 }
 
 func (s *service) GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error) {

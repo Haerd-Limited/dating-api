@@ -5,6 +5,21 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 )
 
+func MapMessagesToResponse(domainMessages []domain.Message) dto.GetConversationMessagesResponse {
+	if domainMessages == nil {
+		return dto.GetConversationMessagesResponse{}
+	}
+
+	var messages []dto.Message
+	for _, msg := range domainMessages {
+		messages = append(messages, MapMessageToDto(&msg))
+	}
+
+	return dto.GetConversationMessagesResponse{
+		Messages: messages,
+	}
+}
+
 func MapMessageToDto(msg *domain.Message) dto.Message {
 	if msg == nil {
 		return dto.Message{}

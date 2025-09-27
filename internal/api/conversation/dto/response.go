@@ -2,6 +2,10 @@ package dto
 
 import "time"
 
+type GetConversationMessagesResponse struct {
+	Messages []Message `json:"messages"`
+}
+
 type Conversation struct {
 	ID string `json:"id"`
 	// Match the user/person you matched with
