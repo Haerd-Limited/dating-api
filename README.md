@@ -1,7 +1,9 @@
 # Haerd Dating Api
 
 The backend for the Haerd dating app built with:
-- **Language**: Go (Chi router + SQL Boiler)
+- **Language**: Go 
+- **ORM**: SQL Boiler
+- **Router**: Chi
 - **Database**: PostgreSQL
 - **Blob Storage**: AWS S3
 - **Containerization**: Docker & Docker Compose
