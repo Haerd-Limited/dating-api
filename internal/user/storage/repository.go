@@ -33,7 +33,11 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 	}
 }
 
-var ErrUserDoesNotExists = errors.New("user does not exists")
+var (
+	ErrUserDoesNotExists        = errors.New("user does not exists")
+	ErrEmailAlreadyExists       = errors.New("email already exists")
+	ErrUserDetailsAlreadyExists = errors.New("user details already exists")
+)
 
 func (r *userRepository) UpdateUser(ctx context.Context, e *entity.User, cols []string) error {
 	if len(cols) == 0 {
@@ -42,16 +46,21 @@ func (r *userRepository) UpdateUser(ctx context.Context, e *entity.User, cols []
 
 	_, err := e.Update(ctx, r.db, boil.Whitelist(cols...))
 	if err != nil {
+		// Check if the error is a unique constraint violation (email already exists)
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			switch pqErr.Constraint {
+			case "users_email_key":
+				return ErrEmailAlreadyExists
+			default:
+				return ErrUserDetailsAlreadyExists
+			}
+		}
 		return fmt.Errorf("failed to update user %s: %w", e.ID, err)
 	}
 
 	return nil
 }
-
-var (
-	ErrEmailAlreadyExists       = errors.New("email already exists")
-	ErrUserDetailsAlreadyExists = errors.New("user details already exists")
-)
 
 func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*string, error) {
 	// Start a transaction so user and scaffold are atomic
