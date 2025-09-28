@@ -63,7 +63,7 @@ func (wae WorkAndEducationRequest) Validate() error {
 
 type BackgroundRequest struct {
 	EducationLevelID int16 `json:"education_level_id" validate:"required"`
-	EthnicityID      int16 `json:"ethnicity_id" validate:"required"`
+	EthnicityID      int16 `json:"ethnicity_id" validate:"required"` //todo: make it an array.
 }
 
 func (br BackgroundRequest) Validate() error {

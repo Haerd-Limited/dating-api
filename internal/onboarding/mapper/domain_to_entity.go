@@ -79,7 +79,7 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 		ent.University = null.StringFrom(*p.University)
 	}
 
-	if p.Birthdate.IsZero() {
+	if !p.Birthdate.IsZero() {
 		ent.Birthdate = null.TimeFrom(p.Birthdate)
 	}
 
