@@ -21,7 +21,7 @@ type ProfileRepository interface {
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
-	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error
+	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string) error
 	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
@@ -305,14 +305,8 @@ func (pr *profileRepository) GetUserProfileByUserID(ctx context.Context, userID 
 	return userProfile, nil
 }
 
-func (pr *profileRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error {
-	var columns boil.Columns
-	if userProfile.Geo == "SRID=4326;POINT(0 0)" {
-		columns = boil.Blacklist("geo")
-	} else {
-		columns = boil.Infer()
-	}
-	_, err := userProfile.Update(ctx, pr.db, columns)
+func (pr *profileRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string) error {
+	_, err := userProfile.Update(ctx, pr.db, boil.Whitelist(whiteList...))
 	if err != nil {
 		return err
 	}

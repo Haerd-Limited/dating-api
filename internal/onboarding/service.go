@@ -798,12 +798,12 @@ func (os *onboardingService) getDatingIntentions(ctx context.Context) ([]domain.
 }
 
 func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile *domain.UserProfile) error {
-	updatedUserProfileEntity, err := mapper.MapProfileToEntity(userProfile)
+	updatedUserProfileEntity, whiteList, err := mapper.MapProfileToEntityForUpdate(userProfile)
 	if err != nil {
 		return fmt.Errorf("failed to map user profile to entity: %w", err)
 	}
 
-	err = os.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity)
+	err = os.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity, whiteList)
 	if err != nil {
 		return fmt.Errorf("failed to update user profile: %w", err)
 	}
