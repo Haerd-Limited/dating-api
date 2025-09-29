@@ -129,8 +129,7 @@ func (h *handler) VerifyCode() http.HandlerFunc {
 				render.Json(
 					w,
 					http.StatusConflict,
-					mapper.ToAuthResponse(
-						nil,
+					commonMappers.ToSimpleErrorResponse(
 						"A user with this number is already registered. Please try and log in",
 					),
 				)
