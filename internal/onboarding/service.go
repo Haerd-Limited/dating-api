@@ -803,9 +803,6 @@ func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile 
 		return fmt.Errorf("failed to map user profile to entity: %w", err)
 	}
 
-	os.logger.Info("long lat in domain", zap.Float64("long", userProfile.Longitude), zap.Float64("lat", userProfile.Latitude))
-	os.logger.Info("geo in entity", zap.String("long", updatedUserProfileEntity.Geo))
-
 	err = os.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity)
 	if err != nil {
 		return fmt.Errorf("failed to update user profile: %w", err)

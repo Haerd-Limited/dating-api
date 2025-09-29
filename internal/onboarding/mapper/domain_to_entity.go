@@ -43,6 +43,7 @@ func MapUploadedPhotosToEntity(uploadedPhotos domain.UploadedPhotos) []entity.Ph
 	return out
 }
 
+// todo: update this to return whitelist aswell to make updates easier and prevent overwriting
 func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 	if p == nil {
 		return nil, nil
