@@ -306,7 +306,13 @@ func (pr *profileRepository) GetUserProfileByUserID(ctx context.Context, userID 
 }
 
 func (pr *profileRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile) error {
-	_, err := userProfile.Update(ctx, pr.db, boil.Infer())
+	var columns boil.Columns
+	if userProfile.Geo == "SRID=4326;POINT(0 0)" {
+		columns = boil.Blacklist("geo")
+	} else {
+		columns = boil.Infer()
+	}
+	_, err := userProfile.Update(ctx, pr.db, columns)
 	if err != nil {
 		return err
 	}

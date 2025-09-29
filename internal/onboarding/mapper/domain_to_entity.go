@@ -158,7 +158,7 @@ func MapProfileToEntity(p *domain.UserProfile) (*entity.UserProfile, error) {
 		ent.Geo = fmt.Sprintf("SRID=4326;POINT(%f %f)", p.Longitude, p.Latitude)
 	} else {
 		// fallback default to avoid PostGIS parse error
-		//ent.Geo = "SRID=4326;POINT(0 0)"
+		ent.Geo = "SRID=4326;POINT(0 0)"
 	}
 
 	return ent, nil
