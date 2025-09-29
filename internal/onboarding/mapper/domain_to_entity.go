@@ -3,8 +3,8 @@ package mapper
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/aarondl/null/v8"
-	"github.com/aarondl/sqlboiler/v4/types"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
@@ -178,65 +178,9 @@ func MapProfileToEntityForUpdate(p *domain.UserProfile) (*entity.UserProfile, []
 	// Location → Geo
 	if p.Latitude != 0.0 && p.Longitude != 0.0 {
 		ent.Geo = fmt.Sprintf("SRID=4326;POINT(%f %f)", p.Longitude, p.Latitude)
+
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Geo)
 	}
 
 	return ent, columnWhitelist, nil
-}
-
-// ---- PREFERENCES ----
-
-func MapPreferencesToEntity(userID string, pr *domain.Preferences) (*entity.UserPreference, error) {
-	if pr == nil {
-		return nil, nil
-	}
-
-	ent := &entity.UserPreference{
-		UserID: userID,
-	}
-
-	if pr.DistanceKM != nil {
-		ent.DistanceKM = null.Int16From(*pr.DistanceKM)
-	}
-
-	if pr.AgeMin != nil {
-		ent.AgeMin = null.Int16From(*pr.AgeMin)
-	}
-
-	if pr.AgeMax != nil {
-		ent.AgeMax = null.Int16From(*pr.AgeMax)
-	}
-
-	// Arrays: entity uses types.Int64Array
-	if pr.SeekGenderIDs != nil {
-		ent.SeekGenderIds = ids32ToI64Array(*pr.SeekGenderIDs)
-	}
-
-	if pr.SeekIntentionIDs != nil {
-		ent.SeekIntentionIds = ids32ToI64Array(*pr.SeekIntentionIDs)
-	}
-
-	if pr.SeekReligionIDs != nil {
-		ent.SeekReligionIds = ids32ToI64Array(*pr.SeekReligionIDs)
-	}
-
-	if pr.SeekPoliticalIDs != nil {
-		ent.SeekPoliticalBeliefIds = ids32ToI64Array(*pr.SeekPoliticalIDs)
-	}
-
-	return ent, nil
-}
-
-// Helper: []int32 → types.Int64Array
-func ids32ToI64Array(in []int32) types.Int64Array {
-	if len(in) == 0 {
-		return types.Int64Array{}
-	}
-
-	out := make(types.Int64Array, len(in))
-	for i, v := range in {
-		out[i] = int64(v)
-	}
-
-	return out
 }

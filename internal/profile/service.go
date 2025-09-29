@@ -166,12 +166,12 @@ func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) 
 }
 
 func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Profile) error {
-	updatedUserProfileEntity, err := mapper.MapProfileToEntity(userProfile)
+	updatedUserProfileEntity, whitelist, err := mapper.MapProfileToEntityForUpdate(userProfile)
 	if err != nil {
 		return fmt.Errorf("failed to map user profile to entity: %w", err)
 	}
 
-	err = s.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity)
+	err = s.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity, whitelist)
 	if err != nil {
 		return fmt.Errorf("failed to update user profile: %w", err)
 	}

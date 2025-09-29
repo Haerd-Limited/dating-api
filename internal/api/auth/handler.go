@@ -133,6 +133,7 @@ func (h *handler) VerifyCode() http.HandlerFunc {
 						"A user with this number is already registered. Please try and log in",
 					),
 				)
+
 				return
 			default:
 				// Anti-enumeration: still 200 OK, but log server-side

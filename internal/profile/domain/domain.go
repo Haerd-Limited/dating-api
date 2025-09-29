@@ -27,6 +27,7 @@ type Profile struct {
 	ChildrenStatusID  *int16
 	FamilyPlanID      *int16
 	EthnicityID       int16
+	CoverPhotoURL     *string
 
 	// Extra text fields in user_profiles
 

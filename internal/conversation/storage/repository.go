@@ -50,6 +50,7 @@ func (r *repository) isConversationParticipant(ctx context.Context, conversation
 	if err != nil {
 		return false, err
 	}
+
 	return isParticipant, nil
 }
 
@@ -58,6 +59,7 @@ func (r *repository) GetMessagesByConversationID(ctx context.Context, conversati
 	if err != nil {
 		return nil, err
 	}
+
 	if !isParticipant {
 		return nil, ErrNotConversationParticipant
 	}
@@ -69,6 +71,7 @@ func (r *repository) GetMessagesByConversationID(ctx context.Context, conversati
 	if err != nil {
 		return nil, err
 	}
+
 	return messages, nil
 }
 

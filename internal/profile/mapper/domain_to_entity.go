@@ -10,10 +10,12 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 )
 
-func MapProfileToEntity(p *domain.Profile) (*entity.UserProfile, error) {
+func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []string, error) {
 	if p == nil {
-		return nil, nil
+		return nil, nil, nil
 	}
+
+	var columnWhitelist []string
 
 	ent := &entity.UserProfile{}
 
@@ -22,99 +24,131 @@ func MapProfileToEntity(p *domain.Profile) (*entity.UserProfile, error) {
 	}
 
 	// Strings
-	ent.DisplayName = p.DisplayName
+	if p.DisplayName != "" {
+		ent.DisplayName = p.DisplayName
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.DisplayName)
+	}
 
 	if p.City != "" {
 		ent.City = null.StringFrom(p.City)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.City)
 	}
 
 	if p.Country != "" {
 		ent.Country = null.StringFrom(p.Country)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Country)
 	}
 
 	if p.Work != nil {
 		ent.Work = null.StringFrom(*p.Work)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Work)
 	}
 
 	if p.JobTitle != nil {
 		ent.JobTitle = null.StringFrom(*p.JobTitle)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.JobTitle)
 	}
 
 	if p.University != nil {
 		ent.University = null.StringFrom(*p.University)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.University)
 	}
 
-	ent.Birthdate = null.TimeFrom(p.Birthdate)
+	if !p.Birthdate.IsZero() {
+		ent.Birthdate = null.TimeFrom(p.Birthdate)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Birthdate)
+	}
 
 	// Scalars
-	ent.HeightCM = null.Int16From(p.HeightCM)
+	if p.HeightCM != 0 {
+		ent.HeightCM = null.Int16From(p.HeightCM)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.HeightCM)
+	}
 
 	// FKs (SMALLINT → int16)
-	ent.GenderID = null.Int16From(p.GenderID)
+	if p.GenderID != 0 {
+		ent.GenderID = null.Int16From(p.GenderID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.GenderID)
+	}
 
-	ent.DatingIntentionID = null.Int16From(p.DatingIntentionID)
+	if p.DatingIntentionID != 0 {
+		ent.DatingIntentionID = null.Int16From(p.DatingIntentionID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.DatingIntentionID)
+	}
 
 	if p.ReligionID != 0 {
 		ent.ReligionID = null.Int16From(p.ReligionID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.ReligionID)
 	}
 
 	if p.EducationLevelID != 0 {
 		ent.EducationLevelID = null.Int16From(p.EducationLevelID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.EducationLevelID)
 	}
 
 	if p.PoliticalBeliefID != 0 {
 		ent.PoliticalBeliefID = null.Int16From(p.PoliticalBeliefID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.PoliticalBeliefID)
 	}
 
 	if p.DrinkingID != 0 {
 		ent.DrinkingID = null.Int16From(p.DrinkingID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.DrinkingID)
 	}
 
 	if p.SmokingID != 0 {
 		ent.SmokingID = null.Int16From(p.SmokingID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.SmokingID)
 	}
 
 	if p.MarijuanaID != 0 {
 		ent.MarijuanaID = null.Int16From(p.MarijuanaID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.MarijuanaID)
 	}
 
 	if p.DrugsID != 0 {
 		ent.DrugsID = null.Int16From(p.DrugsID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.DrugsID)
 	}
 
 	if p.ChildrenStatusID != nil {
 		ent.ChildrenStatusID = null.Int16FromPtr(p.ChildrenStatusID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.ChildrenStatusID)
 	}
 
 	if p.FamilyPlanID != nil {
-		ent.FamilyPlanID = null.Int16From(*p.FamilyPlanID)
+		ent.FamilyPlanID = null.Int16From(int16(*p.FamilyPlanID))
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.FamilyPlanID)
 	}
 
 	if p.EthnicityID != 0 {
 		ent.EthnicityID = null.Int16From(p.EthnicityID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.EthnicityID)
+	}
+
+	if p.CoverPhotoURL != nil {
+		ent.CoverPhotoURL = null.StringFromPtr(p.CoverPhotoURL)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverPhotoURL)
 	}
 
 	// JSONB: your entity expects []byte
 	if p.ProfileMeta != nil {
 		b, err := json.Marshal(*p.ProfileMeta)
 		if err != nil {
-			return nil, fmt.Errorf("marshal profile_meta: %w", err)
+			return nil, nil, fmt.Errorf("marshal profile_meta: %w", err)
 		}
 
 		ent.ProfileMeta = null.JSONFrom(b)
 	}
 
-	// NOTE: lat/lon → geo is handled in the repository with ST_MakePoint if you decide to pass them down.
-
 	// Location → Geo
 	if p.Latitude != 0.0 && p.Longitude != 0.0 {
 		ent.Geo = fmt.Sprintf("SRID=4326;POINT(%f %f)", p.Longitude, p.Latitude)
-	} else {
-		// fallback default to avoid PostGIS parse error
-		ent.Geo = "SRID=4326;POINT(0 0)"
+
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Geo)
 	}
 
-	return ent, nil
+	return ent, columnWhitelist, nil
 }
 
 func MapUpdatedPhotosToEntity(updatedPhotos []domain.Photo, userID string) []entity.Photo {

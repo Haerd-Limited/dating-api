@@ -56,6 +56,7 @@ func (r *userRepository) UpdateUser(ctx context.Context, e *entity.User, cols []
 				return ErrUserDetailsAlreadyExists
 			}
 		}
+
 		return fmt.Errorf("failed to update user %s: %w", e.ID, err)
 	}
 
