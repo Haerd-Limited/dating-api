@@ -125,6 +125,7 @@ func (h *handler) VerifyCode() http.HandlerFunc {
 				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
 				return
 			case errors.Is(err, auth.ErrUserAlreadyRegistered) && req.Purpose == "register":
+				h.logger.Sugar().Warn("user already registered", zap.Error(err))
 				render.Json(
 					w,
 					http.StatusConflict,
