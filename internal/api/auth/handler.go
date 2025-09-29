@@ -124,6 +124,16 @@ func (h *handler) VerifyCode() http.HandlerFunc {
 			case errors.Is(err, context.DeadlineExceeded):
 				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
 				return
+			case errors.Is(err, auth.ErrUserAlreadyRegistered) && req.Purpose == "register":
+				render.Json(
+					w,
+					http.StatusConflict,
+					mapper.ToAuthResponse(
+						nil,
+						"A user with this number is already registered. Please try and log in",
+					),
+				)
+				return
 			default:
 				// Anti-enumeration: still 200 OK, but log server-side
 				h.logger.Warn("failed to verify code", zap.Error(err))

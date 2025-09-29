@@ -78,6 +78,7 @@ var (
 	ErrRefreshTokenRevoked        = errors.New("refresh token has been revoked")
 	ErrRefreshTokenAlreadyRevoked = errors.New("refresh token already revoked")
 	ErrPhoneNumberRequired        = errors.New("phone number required")
+	ErrUserAlreadyRegistered      = errors.New("user already registered")
 	ErrEmailRequired              = errors.New("email required")
 )
 
@@ -151,7 +152,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		}, nil
 	case "register":
 		if exists {
-			return nil, errors.New("user already exists")
+			return nil, ErrUserAlreadyRegistered
 		}
 
 		if in.Phone == nil {
