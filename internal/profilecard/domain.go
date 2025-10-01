@@ -30,6 +30,7 @@ type ProfileCard struct {
 	SpokenLanguages []string
 	VoicePrompts    []VoicePrompt
 	Theme           UserTheme
+	CoverPhotoUrl   *string
 
 	Work       *string
 	JobTitle   *string
@@ -48,11 +49,12 @@ type UserTheme struct {
 }
 
 type VoicePrompt struct {
-	URL        string
-	PromptType Prompt
-	IsPrimary  bool
-	Position   int16
-	DurationMs int
+	URL           string
+	PromptType    Prompt
+	IsPrimary     bool
+	Position      int16
+	DurationMs    int
+	CoverPhotoUrl string
 }
 
 type Prompt struct {

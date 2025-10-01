@@ -39,6 +39,7 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 			BaseHex: ep.Theme.BaseHex,
 			Palette: ep.Theme.Palette,
 		},
+		CoverPhotoUrl: ep.CoverPhotoURL,
 	}
 
 	// Optional statuses -> pointers to label
@@ -72,9 +73,10 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 					Label:    vp.PromptType.Label,
 					Category: vp.PromptType.Category,
 				},
-				IsPrimary:  vp.IsPrimary,
-				Position:   vp.Position,
-				DurationMs: vp.DurationMs,
+				IsPrimary:     vp.IsPrimary,
+				Position:      vp.Position,
+				DurationMs:    vp.DurationMs,
+				CoverPhotoUrl: vp.PromptCoverURL,
 			})
 		}
 	}

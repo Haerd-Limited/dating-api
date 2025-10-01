@@ -28,6 +28,7 @@ type ProfileCard struct {
 	SpokenLanguages []string      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt `json:"voice_prompts"`
 	Theme           UserTheme     `json:"theme"`
+	CoverPhotoURL   string        `json:"cover_photo_url,omitempty"`
 
 	Verified bool `json:"verified"`
 
@@ -44,11 +45,12 @@ type UserTheme struct {
 }
 
 type VoicePrompt struct {
-	URL        string `json:"url"`
-	PromptType Prompt `json:"prompt_type"`
-	IsPrimary  bool   `json:"is_primary"`
-	Position   int16  `json:"position"`
-	DurationMs int    `json:"duration_ms"`
+	URL           string `json:"url"`
+	PromptType    Prompt `json:"prompt_type"`
+	IsPrimary     bool   `json:"is_primary"`
+	Position      int16  `json:"position"`
+	DurationMs    int    `json:"duration_ms"`
+	CoverPhotoUrl string `json:"cover_photo_url"`
 }
 
 type Prompt struct {

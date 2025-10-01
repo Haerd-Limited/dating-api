@@ -32,6 +32,7 @@ type Profile struct {
 	SpokenLanguages []Language      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt   `json:"voice_prompts"`
 	Photos          []Photo         `json:"photos"`
+	CoverPhotoURL   string          `json:"cover_photo_url"`
 
 	Work       *string   `json:"work,omitempty"`
 	JobTitle   *string   `json:"job_title,omitempty"`
@@ -54,11 +55,12 @@ type Photo struct {
 }
 
 type VoicePrompt struct {
-	URL        string `json:"url"`
-	PromptType Prompt `json:"prompt_type"`
-	IsPrimary  bool   `json:"is_primary"`
-	Position   int16  `json:"position"`
-	DurationMs int    `json:"duration_ms"`
+	URL           string `json:"url"`
+	PromptType    Prompt `json:"prompt_type"`
+	IsPrimary     bool   `json:"is_primary"`
+	Position      int16  `json:"position"`
+	DurationMs    int    `json:"duration_ms"`
+	CoverPhotoURL string `json:"cover_photo_url"`
 }
 
 type Status struct {

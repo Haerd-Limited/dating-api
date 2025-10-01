@@ -32,10 +32,16 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 				Label:    vp.PromptType.Label,
 				Category: vp.PromptType.Category,
 			},
-			IsPrimary:  vp.IsPrimary,
-			Position:   vp.Position,
-			DurationMs: vp.DurationMs,
+			IsPrimary:     vp.IsPrimary,
+			Position:      vp.Position,
+			DurationMs:    vp.DurationMs,
+			CoverPhotoUrl: vp.CoverPhotoUrl,
 		})
+	}
+
+	var coverPhotoUrl string
+	if profile.CoverPhotoUrl != nil {
+		coverPhotoUrl = *profile.CoverPhotoUrl
 	}
 
 	return ProfileCard{
@@ -70,9 +76,10 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 			Palette: profile.Theme.Palette,
 		},
 
-		Work:       profile.Work,
-		JobTitle:   profile.JobTitle,
-		University: profile.University,
+		Work:          profile.Work,
+		JobTitle:      profile.JobTitle,
+		University:    profile.University,
+		CoverPhotoURL: coverPhotoUrl,
 
 		CreatedAt: createdAtStr,
 		UpdatedAt: updatedAtStr,

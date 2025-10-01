@@ -69,6 +69,10 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		UpdatedAt:  profile.UpdatedAt.Format(time.DateOnly),
 	}
 
+	if profile.CoverPhotoURL != nil {
+		result.CoverPhotoURL = *profile.CoverPhotoURL
+	}
+
 	if profile.SpokenLanguages != nil {
 		for _, language := range profile.SpokenLanguages {
 			result.SpokenLanguages = append(result.SpokenLanguages, dto.Language{
@@ -88,9 +92,10 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 					Key:      prompt.PromptType.Key,
 					Category: prompt.PromptType.Category,
 				},
-				IsPrimary:  prompt.IsPrimary,
-				Position:   prompt.Position,
-				DurationMs: prompt.DurationMs,
+				IsPrimary:     prompt.IsPrimary,
+				Position:      prompt.Position,
+				DurationMs:    prompt.DurationMs,
+				CoverPhotoURL: prompt.PromptCoverURL,
 			})
 		}
 	}

@@ -197,20 +197,21 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	}
 
 	result := domain.EnrichedProfile{
-		DisplayName: userProfile.DisplayName,
-		Birthdate:   userProfile.Birthdate,
-		Age:         calculateAge(userProfile.Birthdate),
-		HeightCM:    userProfile.HeightCM,
-		UserID:      userID,
-		Latitude:    userProfile.Latitude,
-		Longitude:   userProfile.Longitude,
-		City:        userProfile.City,
-		Country:     userProfile.Country,
-		Work:        userProfile.Work,
-		JobTitle:    userProfile.JobTitle,
-		University:  userProfile.University,
-		CreatedAt:   userProfile.CreatedAt,
-		UpdatedAt:   userProfile.UpdatedAt,
+		DisplayName:   userProfile.DisplayName,
+		Birthdate:     userProfile.Birthdate,
+		Age:           calculateAge(userProfile.Birthdate),
+		HeightCM:      userProfile.HeightCM,
+		UserID:        userID,
+		Latitude:      userProfile.Latitude,
+		Longitude:     userProfile.Longitude,
+		City:          userProfile.City,
+		Country:       userProfile.Country,
+		Work:          userProfile.Work,
+		JobTitle:      userProfile.JobTitle,
+		University:    userProfile.University,
+		CreatedAt:     userProfile.CreatedAt,
+		UpdatedAt:     userProfile.UpdatedAt,
+		CoverPhotoURL: userProfile.CoverPhotoURL,
 	}
 
 	result.Theme, err = s.getUserTheme(ctx, userID)
@@ -366,6 +367,11 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 			return nil, fmt.Errorf("failed to get prompt type by ID: %w", vpeErr)
 		}
 
+		var promptCoverURL string
+		if vpe.CoverPhotoURL.Valid {
+			promptCoverURL = vpe.CoverPhotoURL.String
+		}
+
 		voicePrompts = append(voicePrompts, domain.VoicePrompt{
 			URL: vpe.AudioURL,
 			PromptType: domain.Prompt{
@@ -374,9 +380,10 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 				Key:      promptType.Key,
 				Category: promptType.Category,
 			},
-			IsPrimary:  vpe.IsPrimary,
-			Position:   vpe.Position.Int16,
-			DurationMs: vpe.DurationMS,
+			IsPrimary:      vpe.IsPrimary,
+			Position:       vpe.Position.Int16,
+			DurationMs:     vpe.DurationMS,
+			PromptCoverURL: promptCoverURL,
 		})
 	}
 

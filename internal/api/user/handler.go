@@ -80,6 +80,7 @@ func (h *handler) GetMyProfile() http.HandlerFunc {
 			}
 		}
 
+		//todo:update to use a toresponse mapper
 		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile))
 	}
 }

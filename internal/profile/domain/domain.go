@@ -110,6 +110,7 @@ type EnrichedProfile struct {
 	Work            *string
 	JobTitle        *string
 	University      *string
+	CoverPhotoURL   *string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
