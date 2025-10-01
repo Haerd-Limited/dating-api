@@ -72,20 +72,18 @@ func New(
 				r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 				r.Route(
 					"/onboarding", func(r chi.Router) {
-						r.Group(func(r chi.Router) {
-							r.Get("/step", onboardingHandler.GetStep())
-							r.Post("/intro", onboardingHandler.Intro())
-							r.Patch("/basics", onboardingHandler.Basics())
-							r.Patch("/location", onboardingHandler.Location())
-							r.Patch("/lifestyle", onboardingHandler.Lifestyle())
-							r.Patch("/beliefs", onboardingHandler.Beliefs())
-							r.Patch("/background", onboardingHandler.Background())
-							r.Patch("/work-and-education", onboardingHandler.WorkAndEducation())
-							r.Post("/languages", onboardingHandler.Languages())
-							r.Post("/photos", onboardingHandler.Photos())
-							r.Post("/prompts", onboardingHandler.Prompts())
-							r.Post("/profile", onboardingHandler.Profile())
-						})
+						r.Get("/step", onboardingHandler.GetStep())
+						r.Post("/intro", onboardingHandler.Intro())
+						r.Patch("/basics", onboardingHandler.Basics())
+						r.Patch("/location", onboardingHandler.Location())
+						r.Patch("/lifestyle", onboardingHandler.Lifestyle())
+						r.Patch("/beliefs", onboardingHandler.Beliefs())
+						r.Patch("/background", onboardingHandler.Background())
+						r.Patch("/work-and-education", onboardingHandler.WorkAndEducation())
+						r.Post("/languages", onboardingHandler.Languages())
+						r.Post("/photos", onboardingHandler.Photos())
+						r.Post("/prompts", onboardingHandler.Prompts())
+						r.Post("/profile", onboardingHandler.Profile())
 					},
 				)
 
