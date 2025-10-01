@@ -42,7 +42,7 @@ type Profile struct {
 }
 
 type UpdateProfile struct {
-	DisplayName string
+	DisplayName *string
 	Birthdate   *time.Time
 	HeightCM    *int16
 	UserID      string

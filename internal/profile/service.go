@@ -47,7 +47,9 @@ func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) 
 	} // todo: update theme
 
 	// Basic
-	prof.DisplayName = up.DisplayName
+	if up.DisplayName != nil {
+		prof.DisplayName = *up.DisplayName
+	}
 
 	if up.Birthdate != nil {
 		prof.Birthdate = *up.Birthdate

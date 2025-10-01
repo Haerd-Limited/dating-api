@@ -80,7 +80,5 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 		Work:              req.Work,
 		JobTitle:          req.JobTitle,
 		University:        req.University,
-		// CreatedAt:         &time.Time{},
-		// UpdatedAt: time.Now().UTC(),
 	}, nil
 }
