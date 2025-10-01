@@ -69,10 +69,10 @@ func New(
 
 			// --- Protected (must be logged in)
 			r.Group(func(r chi.Router) {
+				r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 				r.Route(
 					"/onboarding", func(r chi.Router) {
 						r.Group(func(r chi.Router) {
-							r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 							r.Get("/step", onboardingHandler.GetStep())
 							r.Post("/intro", onboardingHandler.Intro())
 							r.Patch("/basics", onboardingHandler.Basics())
@@ -90,27 +90,22 @@ func New(
 				)
 
 				r.Route("/discover", func(r chi.Router) {
-					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", discoverHandler.GetDiscover())
 				})
 				r.Route("/swipes", func(r chi.Router) {
-					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Post("/", interactionHandler.Create())
 				})
 
 				r.Route("/likes", func(r chi.Router) {
-					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", interactionHandler.GetLikes())
 				})
 				r.Route("/conversations", func(r chi.Router) {
-					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", conversationHandler.GetConversations())
 					r.Post("/{id}/messages", conversationHandler.SendMessage())
 					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
 				})
 
 				r.Route("/media", func(r chi.Router) {
-					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/photos/presign", mediaHandler.GeneratePhotoUploadUrl()) // returns URL/fields
 					// r.Post("/media/photos", mediaHandler.AttachPhoto())          // save URL, position, is_primary
 					// r.Patch("/media/photos/{id}", mediaHandler.UpdatePhoto())    // reorder / set primary
@@ -123,7 +118,6 @@ func New(
 
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {
-					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
 					r.Get("/", userHandler.GetMyProfile())
 					r.Patch("/", userHandler.UpdateMyProfile())
 					// TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
