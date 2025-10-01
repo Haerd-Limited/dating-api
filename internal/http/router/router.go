@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/Haerd-Limited/dating-api/internal/api/media"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -12,6 +11,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction"
+	"github.com/Haerd-Limited/dating-api/internal/api/media"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/user"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
@@ -23,7 +23,6 @@ import (
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internaluser "github.com/Haerd-Limited/dating-api/internal/user"
-
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
 
@@ -110,14 +109,17 @@ func New(
 					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
 				})
 
-				r.Get("/media/photos/presign", mediaHandler.GeneratePhotoUploadUrl()) // returns URL/fields
-				//r.Post("/media/photos", mediaHandler.AttachPhoto())          // save URL, position, is_primary
-				//r.Patch("/media/photos/{id}", mediaHandler.UpdatePhoto())    // reorder / set primary
-				//r.Delete("/media/photos/{id}", mediaHandler.DeletePhoto())
+				r.Route("/media", func(r chi.Router) {
+					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
+					r.Get("/photos/presign", mediaHandler.GeneratePhotoUploadUrl()) // returns URL/fields
+					// r.Post("/media/photos", mediaHandler.AttachPhoto())          // save URL, position, is_primary
+					// r.Patch("/media/photos/{id}", mediaHandler.UpdatePhoto())    // reorder / set primary
+					// r.Delete("/media/photos/{id}", mediaHandler.DeletePhoto())
 
-				r.Get("/media/voice/presign", mediaHandler.GenerateVoiceNoteUploadUrl())
-				//r.Post("/media/voice", mediaHandler.AttachVoice())#
-				//r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
+					r.Get("/voice/presign", mediaHandler.GenerateVoiceNoteUploadUrl())
+					// r.Post("/media/voice", mediaHandler.AttachVoice())#
+					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
+				})
 
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {

@@ -3,14 +3,16 @@ package media
 import (
 	"context"
 	"errors"
+	"net/http"
+
+	"go.uber.org/zap"
+
 	"github.com/Haerd-Limited/dating-api/internal/api/media/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
-	"go.uber.org/zap"
-	"net/http"
 )
 
 type Handler interface {
@@ -63,7 +65,7 @@ func (h *handler) GeneratePhotoUploadUrl() http.HandlerFunc {
 				return
 			default:
 				h.logger.Sugar().Errorw("Error generating photo upload url", "error", err)
-				//statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				// statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
 
 				return
@@ -104,7 +106,7 @@ func (h *handler) GenerateVoiceNoteUploadUrl() http.HandlerFunc {
 				return
 			default:
 				h.logger.Sugar().Errorw("Error generating voicenote upload url", "error", err)
-				//statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+				// statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
 
 				return

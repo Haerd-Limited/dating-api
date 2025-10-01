@@ -3,10 +3,12 @@ package media
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/media/domain"
-	"go.uber.org/zap"
-	"time"
 )
 
 type Service interface {
@@ -40,11 +42,13 @@ func NewMediaService(
 		awsService: awsService,
 	}
 }
+
 func (s *service) GeneratePhotoUploadUrl(ctx context.Context, userID string) (domain.UploadUrl, error) {
 	url, err := s.awsService.GenerateUploadURLs(ctx, userID, minUploadCountPhotos, mimeJPEG, presignTTL)
 	if err != nil {
 		return domain.UploadUrl{}, fmt.Errorf("failed to generate photo upload url: %w", err)
 	}
+
 	if len(url) != minUploadCountPhotos {
 		return domain.UploadUrl{}, fmt.Errorf("failed to generate photo upload url: expected %d urls, got %d", minUploadCountPhotos, len(url))
 	}
@@ -62,6 +66,7 @@ func (s *service) GenerateVoiceNoteUploadUrl(ctx context.Context, userID string)
 	if err != nil {
 		return domain.UploadUrl{}, fmt.Errorf("failed to generate voicenote upload url: %w", err)
 	}
+
 	if len(url) != minUploadCountVoiceNotes {
 		return domain.UploadUrl{}, fmt.Errorf("failed to generate voicenote upload url: expected %d urls, got %d", minUploadCountVoiceNotes, len(url))
 	}

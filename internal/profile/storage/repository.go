@@ -308,7 +308,9 @@ func (pr *profileRepository) GetUserProfileByUserID(ctx context.Context, userID 
 
 func (pr *profileRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string) error {
 	userProfile.UpdatedAt = time.Now()
+
 	whiteList = append(whiteList, "updated_at")
+
 	_, err := userProfile.Update(ctx, pr.db, boil.Whitelist(whiteList...))
 	if err != nil {
 		return err
