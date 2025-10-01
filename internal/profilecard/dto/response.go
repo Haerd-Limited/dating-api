@@ -28,7 +28,7 @@ type ProfileCard struct {
 	SpokenLanguages []string      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt `json:"voice_prompts"`
 	Theme           UserTheme     `json:"theme"`
-	CoverPhotoURL   string        `json:"cover_photo_url,omitempty"`
+	CoverPhotoURL   string        `json:"cover_photo_url"`
 
 	Verified bool `json:"verified"`
 
