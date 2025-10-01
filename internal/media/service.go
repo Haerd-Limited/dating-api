@@ -13,7 +13,7 @@ import (
 
 type Service interface {
 	GeneratePhotoUploadUrl(ctx context.Context, userID string) (domain.UploadUrl, error)
-	GenerateVoiceNoteUploadUrl(ctx context.Context, userID string) (domain.UploadUrl, error)
+	GenerateVoiceNoteUploadUrl(ctx context.Context, userID string, purpose string) (domain.UploadUrl, error)
 	GenerateUploadURLsForProfilePhotos(ctx context.Context, userID string) ([]domain.UploadUrl, error)
 	GenerateUploadURLsForProfilePrompts(ctx context.Context, userID string) ([]domain.UploadUrl, error)
 }
@@ -45,7 +45,7 @@ func NewMediaService(
 }
 
 func (s *service) GeneratePhotoUploadUrl(ctx context.Context, userID string) (domain.UploadUrl, error) {
-	url, err := s.awsService.GenerateUploadURLs(ctx, userID, minUploadCountPhotos, mimeJPEG, presignTTL)
+	url, err := s.awsService.GenerateUploadURLs(ctx, userID, minUploadCountPhotos, mimeJPEG, presignTTL, nil)
 	if err != nil {
 		return domain.UploadUrl{}, fmt.Errorf("failed to generate photo upload url: %w", err)
 	}
@@ -62,8 +62,8 @@ func (s *service) GeneratePhotoUploadUrl(ctx context.Context, userID string) (do
 	}, nil
 }
 
-func (s *service) GenerateVoiceNoteUploadUrl(ctx context.Context, userID string) (domain.UploadUrl, error) {
-	url, err := s.awsService.GenerateUploadURLs(ctx, userID, minUploadCountVoiceNotes, mimeM4A, presignTTL)
+func (s *service) GenerateVoiceNoteUploadUrl(ctx context.Context, userID string, purpose string) (domain.UploadUrl, error) {
+	url, err := s.awsService.GenerateUploadURLs(ctx, userID, minUploadCountVoiceNotes, mimeM4A, presignTTL, &purpose)
 	if err != nil {
 		return domain.UploadUrl{}, fmt.Errorf("failed to generate voicenote upload url: %w", err)
 	}
@@ -81,7 +81,7 @@ func (s *service) GenerateVoiceNoteUploadUrl(ctx context.Context, userID string)
 }
 
 func (s *service) GenerateUploadURLsForProfilePhotos(ctx context.Context, userID string) ([]domain.UploadUrl, error) {
-	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPhotos, mimeJPEG, presignTTL)
+	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPhotos, mimeJPEG, presignTTL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate upload urls: %w", err)
 	}
@@ -95,11 +95,12 @@ func (s *service) GenerateUploadURLsForProfilePhotos(ctx context.Context, userID
 			MaxBytes:  maxUploadBytes,
 		})
 	}
+
 	return photoUploadUrls, nil
 }
 
 func (s *service) GenerateUploadURLsForProfilePrompts(ctx context.Context, userID string) ([]domain.UploadUrl, error) {
-	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPrompts, mimeM4A, presignTTL)
+	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPrompts, mimeM4A, presignTTL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate upload urls: %w", err)
 	}
@@ -113,5 +114,6 @@ func (s *service) GenerateUploadURLsForProfilePrompts(ctx context.Context, userI
 			MaxBytes:  maxUploadBytes,
 		})
 	}
+
 	return voicePromptUploadUrls, nil
 }

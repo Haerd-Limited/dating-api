@@ -27,7 +27,12 @@ type presigner struct {
 }
 
 type Presigner interface {
-	GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration) ([]UploadSlot, error)
+	GenerateUploadURLs(
+		ctx context.Context,
+		userID string, count int,
+		contentType string,
+		ttl time.Duration,
+		purpose *string) ([]UploadSlot, error)
 }
 
 func NewPresigner(ctx context.Context, region, bucket string, loadOpts ...func(*config.LoadOptions) error) (Presigner, error) {
@@ -51,7 +56,7 @@ func NewPresigner(ctx context.Context, region, bucket string, loadOpts ...func(*
 
 // GenerateUploadURLs returns 'count' presigned PUT URLs under users/{userID}/photos
 // All URLs are signed to require the provided contentType header.
-func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration) ([]UploadSlot, error) {
+func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration, purpose *string) ([]UploadSlot, error) {
 	if count <= 0 {
 		return nil, errors.New("count must be > 0")
 	}
@@ -69,7 +74,10 @@ func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count
 
 	for i := 0; i < count; i++ {
 		var key string
-		if strings.Contains(contentType, "audio") {
+
+		if purpose != nil && *purpose == "voicenote" {
+			key = fmt.Sprintf("users/%s/messages/voice-notes/%s.%s", sanitize(userID), uuid.NewString(), ext)
+		} else if strings.Contains(contentType, "audio") {
 			key = fmt.Sprintf("users/%s/prompts/%s.%s", sanitize(userID), uuid.NewString(), ext)
 		} else {
 			key = fmt.Sprintf("users/%s/photos/%s.%s", sanitize(userID), uuid.NewString(), ext)

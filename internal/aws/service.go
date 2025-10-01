@@ -11,7 +11,7 @@ import (
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=aws
 type Service interface {
-	GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration) ([]commonStorage.UploadSlot, error)
+	GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration, purpose *string) ([]commonStorage.UploadSlot, error)
 }
 
 type awsService struct {
@@ -32,6 +32,6 @@ func NewAwsService(
 	}
 }
 
-func (s *awsService) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration) ([]commonStorage.UploadSlot, error) {
-	return s.S3Presigner.GenerateUploadURLs(ctx, userID, count, contentType, ttl)
+func (s *awsService) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration, purpose *string) ([]commonStorage.UploadSlot, error) {
+	return s.S3Presigner.GenerateUploadURLs(ctx, userID, count, contentType, ttl, purpose)
 }

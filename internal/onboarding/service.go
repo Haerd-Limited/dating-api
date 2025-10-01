@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"

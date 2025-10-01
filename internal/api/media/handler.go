@@ -7,12 +7,14 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/api/media/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/media/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
 
 type Handler interface {
@@ -95,7 +97,21 @@ func (h *handler) GenerateVoiceNoteUploadUrl() http.HandlerFunc {
 			return
 		}
 
-		url, err := h.mediaService.GenerateVoiceNoteUploadUrl(ctx, userID)
+		var req dto.GenerateVoiceNoteUploadUrlRequest
+
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate generate voicenote upload url request body", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("All fields are required and action field must be one of 'voicenote' or 'prompt'"),
+			)
+
+			return
+		}
+
+		url, err := h.mediaService.GenerateVoiceNoteUploadUrl(ctx, userID, req.Purpose)
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
