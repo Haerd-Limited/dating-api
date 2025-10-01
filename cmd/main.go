@@ -112,9 +112,9 @@ func main() {
 	authRepo := authstorage.NewAuthRepository(db)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 
-	onboardingService := onboarding.NewOnboardingService(logger, profileRepo, userService, authService, awsService, lookupRepo)
-
 	mediaService := media.NewMediaService(logger, awsService)
+
+	onboardingService := onboarding.NewOnboardingService(logger, profileRepo, userService, authService, lookupRepo, mediaService)
 
 	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)
 	if err != nil {

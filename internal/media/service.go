@@ -14,13 +14,14 @@ import (
 type Service interface {
 	GeneratePhotoUploadUrl(ctx context.Context, userID string) (domain.UploadUrl, error)
 	GenerateVoiceNoteUploadUrl(ctx context.Context, userID string) (domain.UploadUrl, error)
+	GenerateUploadURLsForProfilePhotos(ctx context.Context, userID string) ([]domain.UploadUrl, error)
+	GenerateUploadURLsForProfilePrompts(ctx context.Context, userID string) ([]domain.UploadUrl, error)
 }
 
 const (
 	maxUploadCountPhotos     = 6
 	minUploadCountPhotos     = 1
 	maxUploadCountPrompts    = 6
-	minUploadCountPrompts    = 1
 	minUploadCountVoiceNotes = 1
 	maxUploadBytes           = 5 << 20 // 5 MiB
 	presignTTL               = 20 * time.Minute
@@ -77,4 +78,40 @@ func (s *service) GenerateVoiceNoteUploadUrl(ctx context.Context, userID string)
 		Headers:   url[0].Headers,
 		MaxBytes:  maxUploadBytes,
 	}, nil
+}
+
+func (s *service) GenerateUploadURLsForProfilePhotos(ctx context.Context, userID string) ([]domain.UploadUrl, error) {
+	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPhotos, mimeJPEG, presignTTL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate upload urls: %w", err)
+	}
+
+	var photoUploadUrls []domain.UploadUrl
+	for _, url := range urls {
+		photoUploadUrls = append(photoUploadUrls, domain.UploadUrl{
+			Key:       url.Key,
+			UploadUrl: url.URL,
+			Headers:   url.Headers,
+			MaxBytes:  maxUploadBytes,
+		})
+	}
+	return photoUploadUrls, nil
+}
+
+func (s *service) GenerateUploadURLsForProfilePrompts(ctx context.Context, userID string) ([]domain.UploadUrl, error) {
+	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPrompts, mimeM4A, presignTTL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate upload urls: %w", err)
+	}
+
+	var voicePromptUploadUrls []domain.UploadUrl
+	for _, url := range urls {
+		voicePromptUploadUrls = append(voicePromptUploadUrls, domain.UploadUrl{
+			Key:       url.Key,
+			UploadUrl: url.URL,
+			Headers:   url.Headers,
+			MaxBytes:  maxUploadBytes,
+		})
+	}
+	return voicePromptUploadUrls, nil
 }
