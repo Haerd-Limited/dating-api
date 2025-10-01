@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/Haerd-Limited/dating-api/internal/api/media"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -17,10 +18,12 @@ import (
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
 	internalinteraction "github.com/Haerd-Limited/dating-api/internal/interaction"
+	internalmedia "github.com/Haerd-Limited/dating-api/internal/media"
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internaluser "github.com/Haerd-Limited/dating-api/internal/user"
+
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
 
@@ -34,6 +37,7 @@ func New(
 	discoverService internaldiscover.Service,
 	interactionService internalinteraction.Service,
 	conversationService internalconversation.Service,
+	mediaService internalmedia.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -48,6 +52,7 @@ func New(
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
 	interactionHandler := interaction.NewInteractionHandler(logger, interactionService)
 	conversationHandler := conversation.NewConversationHandler(logger, conversationService)
+	mediaHandler := media.NewMediaHandler(logger, mediaService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
@@ -104,17 +109,15 @@ func New(
 					r.Post("/{id}/messages", conversationHandler.SendMessage())
 					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
 				})
-				// Media (used during onboarding & later)
-				/*
-					r.Post("/media/photos/presign", mediaHandler.PresignPhoto()) // returns URL/fields
-					r.Post("/media/photos", mediaHandler.AttachPhoto())          // save URL, position, is_primary
-					r.Patch("/media/photos/{id}", mediaHandler.UpdatePhoto())    // reorder / set primary
-					r.Delete("/media/photos/{id}", mediaHandler.DeletePhoto())
 
-					r.Post("/media/voice/presign", mediaHandler.PresignVoice())
-					r.Post("/media/voice", mediaHandler.AttachVoice())
-					r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
-				*/
+				r.Get("/media/photos/presign", mediaHandler.GeneratePhotoUploadUrl()) // returns URL/fields
+				//r.Post("/media/photos", mediaHandler.AttachPhoto())          // save URL, position, is_primary
+				//r.Patch("/media/photos/{id}", mediaHandler.UpdatePhoto())    // reorder / set primary
+				//r.Delete("/media/photos/{id}", mediaHandler.DeletePhoto())
+
+				r.Get("/media/voice/presign", mediaHandler.GenerateVoiceNoteUploadUrl())
+				//r.Post("/media/voice", mediaHandler.AttachVoice())#
+				//r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
 
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {

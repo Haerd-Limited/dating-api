@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/internal/media"
 	"log"
 	"net/http"
 	"os"
@@ -113,6 +114,8 @@ func main() {
 
 	onboardingService := onboarding.NewOnboardingService(logger, profileRepo, userService, authService, awsService, lookupRepo)
 
+	mediaService := media.NewMediaService(logger, awsService)
+
 	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)
 	if err != nil {
 		logger.Sugar().Fatalf("failed to create notification service: %v", err)
@@ -128,6 +131,7 @@ func main() {
 		discoverService,
 		interactionService,
 		conversationService,
+		mediaService,
 	)
 
 	// Start server with context

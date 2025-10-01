@@ -188,6 +188,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 
 	case domain.OnboardingStepsPhotos:
 		// GET 6 presigned urls from amazon s3
+		//todo: update to depend on the media service instead
 		urls, err := os.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPhotos, mimeJPEG, presignTTL)
 		if err != nil {
 			return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
