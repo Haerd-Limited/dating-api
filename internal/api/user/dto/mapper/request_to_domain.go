@@ -48,13 +48,8 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 		}
 	}
 
-	var displayName string
-	if req.DisplayName != nil {
-		displayName = *req.DisplayName
-	}
-
 	return domain.UpdateProfile{
-		DisplayName:       displayName,
+		DisplayName:       req.DisplayName,
 		Birthdate:         birthdate,
 		HeightCM:          req.HeightCM,
 		UserID:            userID,
