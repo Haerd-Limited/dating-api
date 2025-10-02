@@ -1,4 +1,4 @@
-package user
+package profile
 
 import (
 	"context"
@@ -7,10 +7,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Haerd-Limited/dating-api/internal/api/user/dto"
-	"github.com/Haerd-Limited/dating-api/internal/api/user/dto/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
+	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
-	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
@@ -27,18 +26,15 @@ type Handler interface {
 
 type handler struct {
 	logger         *zap.Logger
-	userService    user.Service
 	profileService profile.Service
 }
 
-func NewUserHandler(
+func NewProfileHandler(
 	logger *zap.Logger,
-	userService user.Service,
 	profileService profile.Service,
 ) Handler {
 	return &handler{
 		logger:         logger,
-		userService:    userService,
 		profileService: profileService,
 	}
 }

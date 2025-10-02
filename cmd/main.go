@@ -125,7 +125,6 @@ func main() {
 		logger,
 		cfg.JwtSecret,
 		authService,
-		userService,
 		onboardingService,
 		profileService,
 		discoverService,

@@ -3,7 +3,7 @@ package mapper
 import (
 	"time"
 
-	"github.com/Haerd-Limited/dating-api/internal/api/user/dto"
+	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 )
 

@@ -48,6 +48,7 @@ type UpdateProfile struct {
 	HeightCM     *int16
 	UserID       string
 	ProfileEmoji *string
+	BaseColour   *string
 
 	// Location
 	Latitude  *float64

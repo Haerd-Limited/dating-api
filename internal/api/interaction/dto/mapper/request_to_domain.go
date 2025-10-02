@@ -1,7 +1,7 @@
 package mapper
 
 import (
-	"github.com/Haerd-Limited/dating-api/internal/api/user/dto"
+	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 )
 

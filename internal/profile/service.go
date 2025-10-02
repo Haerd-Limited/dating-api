@@ -110,7 +110,6 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		return fmt.Errorf("failed to get user profile: %w", err)
 	}
 
-	// todo: update theme
 	// Basic
 	if up.DisplayName != nil {
 		prof.DisplayName = *up.DisplayName
@@ -214,6 +213,13 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	err = s.updateUserProfile(ctx, prof)
 	if err != nil {
 		return fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	if up.BaseColour != nil {
+		err = s.UpsertUserTheme(ctx, up.UserID, *up.BaseColour)
+		if err != nil {
+			return fmt.Errorf("failed to upsert user theme: %w", err)
+		}
 	}
 
 	if len(up.SpokenLanguages) > 0 {
@@ -377,14 +383,9 @@ func (s *service) GetProfileCard(ctx context.Context, userID string) (profilecar
 
 func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string) error {
 	// generate colours
-	palette, err := theme.GeneratePalette9(baseColour)
+	palJSON, err := s.generatePaletteJsonFromBaseColour(baseColour)
 	if err != nil {
-		return fmt.Errorf("failed to generate palette: %w", err)
-	}
-
-	palJSON, err := json.Marshal(palette)
-	if err != nil {
-		return fmt.Errorf("failed to marshal palette: %w", err)
+		return fmt.Errorf("failed to generate palette json: %w", err)
 	}
 	// store colours.
 	err = s.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
@@ -397,6 +398,20 @@ func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string
 	}
 
 	return nil
+}
+
+func (s *service) generatePaletteJsonFromBaseColour(baseColour string) ([]byte, error) {
+	palette, err := theme.GeneratePalette9(baseColour)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate palette: %w", err)
+	}
+
+	palJSON, err := json.Marshal(palette)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal palette: %w", err)
+	}
+
+	return palJSON, nil
 }
 
 func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error {

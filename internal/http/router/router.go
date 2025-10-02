@@ -13,7 +13,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction"
 	"github.com/Haerd-Limited/dating-api/internal/api/media"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
-	"github.com/Haerd-Limited/dating-api/internal/api/user"
+	"github.com/Haerd-Limited/dating-api/internal/api/profile"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
@@ -22,7 +22,6 @@ import (
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
-	internaluser "github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
 
@@ -30,7 +29,6 @@ func New(
 	logger *zap.Logger,
 	jwtSecret string,
 	authService internalauth.Service,
-	userService internaluser.Service,
 	onboardingService internalonboarding.Service,
 	profileService internalprofile.Service,
 	discoverService internaldiscover.Service,
@@ -46,7 +44,7 @@ func New(
 	router.Use(middleware.Recoverer) // recovers from panics
 
 	authHandler := auth.NewAuthHandler(logger, authService)
-	userHandler := user.NewUserHandler(logger, userService, profileService)
+	profileHandler := profile.NewProfileHandler(logger, profileService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
 	interactionHandler := interaction.NewInteractionHandler(logger, interactionService)
@@ -116,8 +114,8 @@ func New(
 
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {
-					r.Get("/", userHandler.GetMyProfile())
-					r.Patch("/", userHandler.UpdateMyProfile())
+					r.Get("/", profileHandler.GetMyProfile())
+					r.Patch("/", profileHandler.UpdateMyProfile())
 					// TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})
