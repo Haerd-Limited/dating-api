@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -44,7 +45,10 @@ func NewProfileService(
 	}
 }
 
-var ErrContainsSocialMediaPromotion = fmt.Errorf("this field cannot contain social media promotion")
+var (
+	ErrContainsSocialMediaPromotion = fmt.Errorf("this field cannot contain social media promotion")
+	ErrInvalidID                    = errors.New("id must be greater than 0")
+)
 
 func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error) {
 	userProfile, err := s.getUserProfile(ctx, userID)
@@ -176,30 +180,58 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	if up.GenderID != nil {
+		if *up.GenderID == 0 {
+			return fmt.Errorf("invalid gender id: %w", ErrInvalidID)
+		}
+
 		prof.GenderID = *up.GenderID
 	}
 
 	if up.DatingIntentionID != nil {
+		if *up.DatingIntentionID == 0 {
+			return fmt.Errorf("invalid dating intention id: %w", ErrInvalidID)
+		}
+
 		prof.DatingIntentionID = *up.DatingIntentionID
 	}
 
 	if up.ReligionID != nil {
+		if *up.ReligionID == 0 {
+			return fmt.Errorf("invalid religion id: %w", ErrInvalidID)
+		}
+
 		prof.ReligionID = *up.ReligionID
 	}
 
 	if up.EducationLevelID != nil {
+		if *up.EducationLevelID == 0 {
+			return fmt.Errorf("invalid education level id: %w", ErrInvalidID)
+		}
+
 		prof.EducationLevelID = *up.EducationLevelID
 	}
 
 	if up.PoliticalBeliefID != nil {
+		if *up.PoliticalBeliefID == 0 {
+			return fmt.Errorf("invalid political belief id: %w", ErrInvalidID)
+		}
+
 		prof.PoliticalBeliefID = *up.PoliticalBeliefID
 	}
 
 	if up.DrinkingID != nil {
+		if *up.DrinkingID == 0 {
+			return fmt.Errorf("invalid drinking habit id: %w", ErrInvalidID)
+		}
+
 		prof.DrinkingID = *up.DrinkingID
 	}
 
 	if up.SmokingID != nil {
+		if *up.SmokingID == 0 {
+			return fmt.Errorf("invalid smoking habit id: %w", ErrInvalidID)
+		}
+
 		prof.SmokingID = *up.SmokingID
 	}
 
@@ -208,18 +240,34 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	if up.DrugsID != nil {
+		if *up.DrugsID == 0 {
+			return fmt.Errorf("invalid drugs habit id: %w", ErrInvalidID)
+		}
+
 		prof.DrugsID = *up.DrugsID
 	}
 
 	if up.ChildrenStatusID != nil {
+		if *up.ChildrenStatusID == 0 {
+			return fmt.Errorf("invalid children status id: %w", ErrInvalidID)
+		}
+
 		prof.ChildrenStatusID = up.ChildrenStatusID
 	}
 
 	if up.FamilyPlanID != nil {
+		if *up.FamilyPlanID == 0 {
+			return fmt.Errorf("invalid family plan id: %w", ErrInvalidID)
+		}
+
 		prof.FamilyPlanID = up.FamilyPlanID
 	}
 
 	if up.EthnicityID != nil {
+		if *up.EthnicityID == 0 {
+			return fmt.Errorf("invalid ethnicity id: %w", ErrInvalidID)
+		}
+
 		prof.EthnicityID = *up.EthnicityID
 	}
 

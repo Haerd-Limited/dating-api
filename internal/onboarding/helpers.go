@@ -8,62 +8,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
 )
 
-func (os *onboardingService) validateBeliefDetails(beliefDetails domain.Beliefs) error {
-	if beliefDetails.PoliticalBeliefsID == 0 {
-		return fmt.Errorf("invalid political belief id: %w", ErrInvalidID)
-	}
-
-	if beliefDetails.ReligionID == 0 {
-		return fmt.Errorf("invalid religion id: %w", ErrInvalidID)
-	}
-
-	return nil
-}
-
-func (os *onboardingService) validateBackgroundDetails(backgroundDetails domain.Background) error {
-	if backgroundDetails.EducationLevelID == 0 {
-		return fmt.Errorf("invalid education level id: %w", ErrInvalidID)
-	}
-
-	if backgroundDetails.EthnicityID == 0 {
-		return fmt.Errorf("invalid ethnicity id: %w", ErrInvalidID)
-	}
-
-	return nil
-}
-
-func (os *onboardingService) validateLifestyleDetails(lifestyleDetails domain.Lifestyle) error {
-	if lifestyleDetails.DrinkingID == 0 {
-		return fmt.Errorf("invaid drinking id: %w", ErrInvalidID)
-	}
-
-	if lifestyleDetails.SmokingID == 0 {
-		return fmt.Errorf("invaid smoking id: %w", ErrInvalidID)
-	}
-
-	if lifestyleDetails.MarijuanaID == 0 {
-		return fmt.Errorf("invalid marijuanna id: %w", ErrInvalidID)
-	}
-
-	if lifestyleDetails.DrugsID == 0 {
-		return fmt.Errorf("invalid drugs id: %w", ErrInvalidID)
-	}
-
-	return nil
-}
-
-func (os *onboardingService) validateBasicDetails(basicDetails domain.Basics) error {
-	if basicDetails.GenderID == 0 {
-		return fmt.Errorf("invaid gender id: %w", ErrInvalidID)
-	}
-
-	if basicDetails.DatingIntentionID == 0 {
-		return fmt.Errorf("invaid dating intention id: %w", ErrInvalidID)
-	}
-
-	return nil
-}
-
 // todo: call of below through lookup service if logic gets involved
 func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Language, error) {
 	languageEntities, err := os.lookupRepo.GetLanguages(ctx)

@@ -772,7 +772,7 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidEmailMsg
 	case errors.Is(err, onboarding.ErrIncorrectStepCalled):
 		return http.StatusBadRequest, "Incorrect step called"
-	case errors.Is(err, onboarding.ErrInvalidID):
+	case errors.Is(err, profile.ErrInvalidID):
 		return http.StatusBadRequest, messages.InvalidIDMsg
 	case errors.Is(err, http.ErrNotMultipart):
 		return http.StatusBadRequest, messages.InvalidUploadFormMsg

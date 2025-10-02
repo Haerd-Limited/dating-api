@@ -72,10 +72,7 @@ func NewOnboardingService(
 	}
 }
 
-var (
-	ErrIncorrectStepCalled = errors.New("incorrect step called")
-	ErrInvalidID           = errors.New("id must be greater than 0")
-)
+var ErrIncorrectStepCalled = errors.New("incorrect step called")
 
 func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error) {
 	u, err := os.userService.GetUser(ctx, userID)
@@ -315,11 +312,6 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
-	err = os.validateBasicDetails(basicDetails)
-	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("validate basic details: %w", err)
-	}
-
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, basicDetails.UserID)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
@@ -396,11 +388,6 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 	err := os.ensureStep(ctx, lifestyleDetails.UserID, StepForLifestyle)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
-	}
-
-	err = os.validateLifestyleDetails(lifestyleDetails)
-	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("validate lifestyle details: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, lifestyleDetails.UserID)
@@ -492,11 +479,6 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
-	err = os.validateBeliefDetails(beliefDetails)
-	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("validate belief details: %w", err)
-	}
-
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, beliefDetails.UserID)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
@@ -540,11 +522,6 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 	err := os.ensureStep(ctx, backgroundDetails.UserID, StepForBackground)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
-	}
-
-	err = os.validateBackgroundDetails(backgroundDetails)
-	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("validate background details: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, backgroundDetails.UserID)
