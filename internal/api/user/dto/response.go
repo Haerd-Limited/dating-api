@@ -5,11 +5,13 @@ type GetProfileResponse struct {
 }
 
 type Profile struct {
-	DisplayName string `json:"display_name,omitempty"`
-	Birthdate   string `json:"birthdate"`
-	Age         int    `json:"age"`
-	HeightCM    int16  `json:"height_cm"`
-	UserID      string `json:"user_id"`
+	DisplayName   string `json:"display_name,omitempty"`
+	Birthdate     string `json:"birthdate"`
+	Age           int    `json:"age"`
+	HeightCM      int16  `json:"height_cm"`
+	UserID        string `json:"user_id"`
+	CoverPhotoURL string `json:"cover_photo_url"`
+	Emoji         string `json:"emoji"`
 
 	// Location
 	Latitude  float64 `json:"latitude,omitempty"`
@@ -32,7 +34,6 @@ type Profile struct {
 	SpokenLanguages []Language      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt   `json:"voice_prompts"`
 	Photos          []Photo         `json:"photos"`
-	CoverPhotoURL   string          `json:"cover_photo_url"`
 
 	Work       *string   `json:"work,omitempty"`
 	JobTitle   *string   `json:"job_title,omitempty"`

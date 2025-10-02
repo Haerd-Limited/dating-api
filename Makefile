@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  add_client_msg_id_to_msg_table sql
+	@cd ./migrations && goose create  add_profile_emoji_to_profile_table sql
 .PHONY: migrate-create
 
 

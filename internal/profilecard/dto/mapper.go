@@ -51,10 +51,12 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		HeightCM:    profile.HeightCM,
 		UserID:      profile.UserID,
 
-		Latitude:  profile.Latitude,
-		Longitude: profile.Longitude,
-		City:      profile.City,
-		Country:   profile.Country,
+		Latitude:      profile.Latitude,
+		Longitude:     profile.Longitude,
+		City:          profile.City,
+		Country:       profile.Country,
+		Emoji:         profile.Emoji,
+		CoverPhotoURL: coverPhotoUrl,
 
 		Gender:          profile.Gender,
 		DatingIntention: profile.DatingIntention,
@@ -76,10 +78,9 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 			Palette: profile.Theme.Palette,
 		},
 
-		Work:          profile.Work,
-		JobTitle:      profile.JobTitle,
-		University:    profile.University,
-		CoverPhotoURL: coverPhotoUrl,
+		Work:       profile.Work,
+		JobTitle:   profile.JobTitle,
+		University: profile.University,
 
 		CreatedAt: createdAtStr,
 		UpdatedAt: updatedAtStr,

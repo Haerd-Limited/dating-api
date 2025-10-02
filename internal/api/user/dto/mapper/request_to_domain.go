@@ -29,9 +29,10 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 				PromptType: domain.Prompt{
 					ID: vp.PromptType,
 				},
-				IsPrimary:  vp.IsPrimary,
-				Position:   vp.Position,
-				DurationMs: vp.DurationMs,
+				IsPrimary:      vp.IsPrimary,
+				Position:       vp.Position,
+				DurationMs:     vp.DurationMs,
+				PromptCoverURL: vp.CoverPhotoURL,
 			})
 		}
 	}
@@ -75,5 +76,7 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 		Work:              req.Work,
 		JobTitle:          req.JobTitle,
 		University:        req.University,
+		CoverPhotoURL:     req.CoverPhotoUrl,
+		ProfileEmoji:      req.ProfileEmoji,
 	}, nil
 }

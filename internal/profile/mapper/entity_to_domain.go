@@ -6,6 +6,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
 // MapProfileToDomain maps an entity.UserProfile (DB model) to a domain.UserProfile.
@@ -18,6 +19,12 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 		UserID:    up.UserID,
 		CreatedAt: up.CreatedAt,
 		UpdatedAt: up.UpdatedAt,
+	}
+
+	if up.Emoji.Valid {
+		d.Emoji = up.Emoji.String
+	} else { // default emoji
+		d.Emoji = constants.DefaultEmoji
 	}
 
 	if up.CoverPhotoURL.Valid {

@@ -14,6 +14,7 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		Age:         profile.Age,
 		HeightCM:    profile.HeightCM,
 		UserID:      profile.UserID,
+		Emoji:       profile.Emoji,
 		Latitude:    profile.Latitude,
 		Longitude:   profile.Longitude,
 		City:        profile.City,

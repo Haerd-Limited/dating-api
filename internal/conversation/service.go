@@ -154,7 +154,7 @@ func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID 
 		MatchedUser: domain.MatchedUser{
 			ID:          matchID,
 			DisplayName: matchProfile.DisplayName,
-			Emoji:       "😊", // todo: allow users to set emoji at register and update profile
+			Emoji:       matchProfile.Emoji,
 		},
 		CreatedAt:      conversationEntity.CreatedAt,
 		LastActivityAt: conversationEntity.LastActivityAt,

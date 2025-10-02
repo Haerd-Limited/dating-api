@@ -6,6 +6,7 @@ type ProfileCard struct {
 	Age         int    `json:"age"`
 	HeightCM    int16  `json:"height_cm"`
 	UserID      string `json:"user_id"`
+	Emoji       string `json:"emoji"`
 
 	// Location
 	Latitude  float64 `json:"latitude,omitempty"`

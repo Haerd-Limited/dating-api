@@ -3,11 +3,13 @@ package profilecard
 import "time"
 
 type ProfileCard struct {
-	DisplayName string
-	Birthdate   time.Time
-	Age         int
-	HeightCM    int16
-	UserID      string
+	DisplayName   string
+	Birthdate     time.Time
+	Age           int
+	HeightCM      int16
+	UserID        string
+	CoverPhotoUrl *string
+	Emoji         string
 
 	// Location
 	Latitude  float64
@@ -30,7 +32,6 @@ type ProfileCard struct {
 	SpokenLanguages []string
 	VoicePrompts    []VoicePrompt
 	Theme           UserTheme
-	CoverPhotoUrl   *string
 
 	Work       *string
 	JobTitle   *string

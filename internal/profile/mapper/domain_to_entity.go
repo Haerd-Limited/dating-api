@@ -3,6 +3,7 @@ package mapper
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 
 	"github.com/aarondl/null/v8"
 
@@ -21,6 +22,16 @@ func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []stri
 
 	if p.UserID != "" {
 		ent.UserID = p.UserID
+	}
+
+	if p.Emoji != "" && p.Emoji != constants.DefaultEmoji {
+		ent.Emoji = null.StringFrom(p.Emoji)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Emoji)
+	}
+
+	if p.CoverPhotoURL != nil {
+		ent.CoverPhotoURL = null.StringFromPtr(p.CoverPhotoURL)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverPhotoURL)
 	}
 
 	// Strings
@@ -169,11 +180,12 @@ func MapVoicePromptsToEntity(uploadedPrompts []domain.VoicePrompt, userID string
 	var out []entity.VoicePrompt
 	for _, p := range uploadedPrompts {
 		out = append(out, entity.VoicePrompt{
-			UserID:     null.StringFrom(userID),
-			PromptType: null.Int16From(p.PromptType.ID),
-			Position:   null.Int16From(p.Position),
-			IsPrimary:  p.IsPrimary,
-			AudioURL:   p.URL,
+			UserID:        null.StringFrom(userID),
+			PromptType:    null.Int16From(p.PromptType.ID),
+			Position:      null.Int16From(p.Position),
+			IsPrimary:     p.IsPrimary,
+			AudioURL:      p.URL,
+			CoverPhotoURL: null.StringFrom(p.PromptCoverURL),
 			// todo: add transcript
 			// todo: add duration somehow
 		})

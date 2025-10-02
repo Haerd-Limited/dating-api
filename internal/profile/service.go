@@ -59,6 +59,14 @@ func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) 
 		prof.HeightCM = *up.HeightCM
 	}
 
+	if up.ProfileEmoji != nil {
+		prof.Emoji = *up.ProfileEmoji
+	}
+
+	if up.CoverPhotoURL != nil {
+		prof.CoverPhotoURL = up.CoverPhotoURL
+	}
+
 	// Location
 	if up.Latitude != nil {
 		prof.Latitude = *up.Latitude
@@ -212,6 +220,7 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 		CreatedAt:     userProfile.CreatedAt,
 		UpdatedAt:     userProfile.UpdatedAt,
 		CoverPhotoURL: userProfile.CoverPhotoURL,
+		Emoji:         userProfile.Emoji,
 	}
 
 	result.Theme, err = s.getUserTheme(ctx, userID)

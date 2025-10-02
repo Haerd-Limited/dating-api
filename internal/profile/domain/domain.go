@@ -28,6 +28,7 @@ type Profile struct {
 	FamilyPlanID      *int16
 	EthnicityID       int16
 	CoverPhotoURL     *string
+	Emoji             string
 
 	// Extra text fields in user_profiles
 
@@ -42,10 +43,11 @@ type Profile struct {
 }
 
 type UpdateProfile struct {
-	DisplayName *string
-	Birthdate   *time.Time
-	HeightCM    *int16
-	UserID      string
+	DisplayName  *string
+	Birthdate    *time.Time
+	HeightCM     *int16
+	UserID       string
+	ProfileEmoji *string
 
 	// Location
 	Latitude  *float64
@@ -69,6 +71,7 @@ type UpdateProfile struct {
 	SpokenLanguages   []int16
 	VoicePrompts      []VoicePrompt
 	Photos            []Photo
+	CoverPhotoURL     *string
 
 	Work       *string
 	JobTitle   *string
@@ -79,11 +82,13 @@ type UpdateProfile struct {
 }
 
 type EnrichedProfile struct {
-	DisplayName string
-	Birthdate   time.Time
-	Age         int
-	HeightCM    int16
-	UserID      string
+	DisplayName   string
+	Birthdate     time.Time
+	Age           int
+	HeightCM      int16
+	UserID        string
+	CoverPhotoURL *string
+	Emoji         string
 
 	// Location
 	Latitude  float64
@@ -110,7 +115,6 @@ type EnrichedProfile struct {
 	Work            *string
 	JobTitle        *string
 	University      *string
-	CoverPhotoURL   *string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

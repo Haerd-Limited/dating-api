@@ -50,6 +50,7 @@ type UserProfile struct {
 	CreatedAt         time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt         time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	CoverPhotoURL     null.String `boil:"cover_photo_url" json:"cover_photo_url,omitempty" toml:"cover_photo_url" yaml:"cover_photo_url,omitempty"`
+	Emoji             null.String `boil:"emoji" json:"emoji,omitempty" toml:"emoji" yaml:"emoji,omitempty"`
 
 	R *userProfileR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userProfileL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -82,6 +83,7 @@ var UserProfileColumns = struct {
 	CreatedAt         string
 	UpdatedAt         string
 	CoverPhotoURL     string
+	Emoji             string
 }{
 	UserID:            "user_id",
 	DisplayName:       "display_name",
@@ -109,6 +111,7 @@ var UserProfileColumns = struct {
 	CreatedAt:         "created_at",
 	UpdatedAt:         "updated_at",
 	CoverPhotoURL:     "cover_photo_url",
+	Emoji:             "emoji",
 }
 
 var UserProfileTableColumns = struct {
@@ -138,6 +141,7 @@ var UserProfileTableColumns = struct {
 	CreatedAt         string
 	UpdatedAt         string
 	CoverPhotoURL     string
+	Emoji             string
 }{
 	UserID:            "user_profiles.user_id",
 	DisplayName:       "user_profiles.display_name",
@@ -165,6 +169,7 @@ var UserProfileTableColumns = struct {
 	CreatedAt:         "user_profiles.created_at",
 	UpdatedAt:         "user_profiles.updated_at",
 	CoverPhotoURL:     "user_profiles.cover_photo_url",
+	Emoji:             "user_profiles.emoji",
 }
 
 // Generated where
@@ -220,6 +225,7 @@ var UserProfileWhere = struct {
 	CreatedAt         whereHelpertime_Time
 	UpdatedAt         whereHelpertime_Time
 	CoverPhotoURL     whereHelpernull_String
+	Emoji             whereHelpernull_String
 }{
 	UserID:            whereHelperstring{field: "\"user_profiles\".\"user_id\""},
 	DisplayName:       whereHelperstring{field: "\"user_profiles\".\"display_name\""},
@@ -247,6 +253,7 @@ var UserProfileWhere = struct {
 	CreatedAt:         whereHelpertime_Time{field: "\"user_profiles\".\"created_at\""},
 	UpdatedAt:         whereHelpertime_Time{field: "\"user_profiles\".\"updated_at\""},
 	CoverPhotoURL:     whereHelpernull_String{field: "\"user_profiles\".\"cover_photo_url\""},
+	Emoji:             whereHelpernull_String{field: "\"user_profiles\".\"emoji\""},
 }
 
 // UserProfileRels is where relationship names are stored.
@@ -514,9 +521,9 @@ func (r *userProfileR) GetUser() *User {
 type userProfileL struct{}
 
 var (
-	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url"}
+	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji"}
 	userProfileColumnsWithoutDefault = []string{"user_id", "display_name"}
-	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url"}
+	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )
