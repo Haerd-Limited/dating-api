@@ -80,9 +80,14 @@ var (
 	ErrPhoneNumberRequired        = errors.New("phone number required")
 	ErrUserAlreadyRegistered      = errors.New("user already registered")
 	ErrEmailRequired              = errors.New("email required")
+	ErrInvalidChannel             = errors.New("invalid channel")
 )
 
 func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*domain.AuthResult, error) {
+	if in.Purpose == "" {
+		in.Purpose = constants.LoginPurpose
+	}
+
 	identifier, err := as.normalizeIdentifier(in.Channel, in.Email, in.Phone)
 	if err != nil {
 		return nil, fmt.Errorf("invalid identifier: %w", err)
@@ -127,30 +132,34 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 	var userDetails *userdomain.User
 
 	switch purpose {
-	case "login":
+	case constants.LoginPurpose:
 		if !exists {
 			return nil, errors.New("invalid or expired code")
 		}
 
-		userDetails, err = as.UserService.AuthenticateUser(ctx, identifier)
-		if err != nil {
-			return nil, fmt.Errorf("auth user: %w", err)
+		if in.Channel == constants.SmsChannel {
+			userDetails, err = as.UserService.GetUserByPhoneNumber(ctx, identifier)
+			if err != nil {
+				return nil, fmt.Errorf("auth user: %w", err)
+			}
+		} else {
+			return nil, ErrInvalidChannel
 		}
 
-		toks, err := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
-		if err != nil {
-			return nil, fmt.Errorf("issue tokens: %w", err)
+		tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
+		if tokenErr != nil {
+			return nil, fmt.Errorf("issue tokens: %w", tokenErr)
 		}
 
 		return &domain.AuthResult{
-			RefreshToken: toks.RefreshToken,
-			AccessToken:  toks.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+			AccessToken:  tokens.AccessToken,
 			User: &domain.User{
 				ID:             userDetails.ID,
 				OnboardingStep: onboardingdomain.Steps(userDetails.OnboardingStep),
 			},
 		}, nil
-	case "register":
+	case constants.RegisterPurpose:
 		if exists {
 			return nil, ErrUserAlreadyRegistered
 		}
@@ -168,14 +177,14 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 			return nil, fmt.Errorf("failed to create user: %w", regErr)
 		}
 
-		toks, regErr := as.GenerateAccessAndRefreshToken(ctx, *userID)
-		if regErr != nil {
-			return nil, fmt.Errorf("failed to generate tokens: %w", err)
+		tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, *userID)
+		if tokenErr != nil {
+			return nil, fmt.Errorf("failed to generate tokens: %w", tokenErr)
 		}
 
 		return &domain.AuthResult{
-			RefreshToken: toks.RefreshToken,
-			AccessToken:  toks.AccessToken,
+			RefreshToken: tokens.RefreshToken,
+			AccessToken:  tokens.AccessToken,
 			User: &domain.User{
 				ID:             *userID,
 				OnboardingStep: onboardingdomain.OnboardingStepsIntro,
@@ -188,6 +197,10 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 }
 
 func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error) {
+	if requestCodeDetails.Purpose == "" {
+		requestCodeDetails.Purpose = constants.LoginPurpose
+	}
+
 	identifier, err := as.normalizeIdentifier(requestCodeDetails.Channel, requestCodeDetails.Email, requestCodeDetails.Phone)
 	if err != nil {
 		return "", fmt.Errorf("failed to normalize identifier: %w", err)
@@ -219,9 +232,9 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	shouldSend := false
 
 	switch purpose {
-	case "login":
+	case constants.LoginPurpose:
 		shouldSend = exists
-	case "register":
+	case constants.RegisterPurpose:
 		shouldSend = !exists
 	default:
 		// unknown purpose -> treat as login
@@ -262,9 +275,9 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	var sendErr error
 
 	switch requestCodeDetails.Channel {
-	case "email":
+	case constants.EmailChannel:
 		sendErr = as.communicationService.SendEmailOTP(identifier, code)
-	case "sms":
+	case constants.SmsChannel:
 		sendErr = as.communicationService.SendSMSOTP(identifier, code)
 	}
 
@@ -354,7 +367,7 @@ func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID
 
 func (as *authService) normalizeIdentifier(channel string, email *string, phone *string) (string, error) {
 	switch channel {
-	case "email":
+	case constants.EmailChannel:
 		if email == nil || *email == "" {
 			return "", errors.New("email required")
 		}
@@ -366,7 +379,7 @@ func (as *authService) normalizeIdentifier(channel string, email *string, phone 
 		}
 
 		return e, nil
-	case "sms":
+	case constants.SmsChannel:
 		if phone == nil || *phone == "" {
 			return "", errors.New("phone required")
 		}
@@ -380,7 +393,7 @@ func (as *authService) normalizeIdentifier(channel string, email *string, phone 
 
 		return p, nil
 	default:
-		return "", errors.New("invalid channel")
+		return "", ErrInvalidChannel
 	}
 }
 

@@ -12,12 +12,13 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/internal/user/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=user
 type Service interface {
 	CreateUser(ctx context.Context, user domain.User) (userID *string, err error)
-	AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error)
+	GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (*domain.User, error)
 	GetUser(ctx context.Context, id string) (*domain.User, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
@@ -56,14 +57,11 @@ func (us *userService) CreateUser(ctx context.Context, user domain.User) (userID
 	return userID, nil
 }
 
-// AuthenticateUser checks credentials and returns the user if valid, otherwise an error.
-func (us *userService) AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error) {
+func (us *userService) GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (*domain.User, error) {
 	userEntity, err := us.userRepo.GetByPhoneNumber(ctx, phoneNumber)
 	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
-
-	// todo: update/implement using phonenumber like hinge
 
 	return mapper.UserEntityToUserDomain(userEntity), nil
 }
@@ -102,7 +100,7 @@ func (us *userService) UpdateUser(ctx context.Context, user *domain.User) error 
 
 func (us *userService) UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error) {
 	switch channel {
-	case "sms":
+	case constants.SmsChannel:
 		exists, err := us.userRepo.CheckUserExistenceByPhoneNumber(ctx, identifier)
 		if err != nil {
 			return false, err

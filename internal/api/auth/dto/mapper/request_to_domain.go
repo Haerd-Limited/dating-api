@@ -6,10 +6,6 @@ import (
 )
 
 func ToVerifyDomain(req dto.VerifyCodeRequest, ip string) domain.VerifyCode {
-	if req.Purpose == "" {
-		req.Purpose = "login"
-	}
-
 	return domain.VerifyCode{
 		Channel: req.Channel,
 		Email:   req.Email,
@@ -21,10 +17,6 @@ func ToVerifyDomain(req dto.VerifyCodeRequest, ip string) domain.VerifyCode {
 }
 
 func MapRequestCodeRequestToDomain(request dto.RequestCodeRequest, ip string) domain.RequestCode {
-	if request.Purpose == "" {
-		request.Purpose = "login"
-	}
-
 	return domain.RequestCode{
 		Channel: request.Channel,
 		Email:   request.Email,

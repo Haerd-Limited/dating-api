@@ -8,7 +8,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
 )
 
-// todo: call of below through lookup service.
+// todo: call of below through lookup service if logic gets involved
 func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Language, error) {
 	languageEntities, err := os.lookupRepo.GetLanguages(ctx)
 	if err != nil {

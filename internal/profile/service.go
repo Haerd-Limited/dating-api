@@ -415,10 +415,14 @@ func (s *service) generatePaletteJsonFromBaseColour(baseColour string) ([]byte, 
 }
 
 func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error {
+	// todo: check if position values are unique
+	// todo: ensure count is max 6
 	return s.profileRepo.UpsertUserPrompts(ctx, userID, mapper.MapVoicePromptsUpdateToEntity(prompts, userID))
 }
 
 func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {
+	// todo: check if position values are unique
+	// todo: ensure count is min/max 6
 	return s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID))
 }
 

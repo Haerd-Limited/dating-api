@@ -27,7 +27,7 @@ type (
 		Channel string // "sms" | "email"
 		Email   *string
 		Phone   *string
-		Purpose string // "login" | "register" | "login_or_signup"
+		Purpose string // "login" | "register"
 		Code    string // 6 digits
 		IP      string
 	}

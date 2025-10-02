@@ -1,5 +1,9 @@
 package constants
 
 const (
-	DefaultEmoji = "😄"
+	DefaultEmoji    = "😄"
+	SmsChannel      = "sms"
+	EmailChannel    = "email"
+	LoginPurpose    = "login"
+	RegisterPurpose = "register"
 )

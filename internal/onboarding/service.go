@@ -637,6 +637,7 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
 	}
 
+	// todo: ensure count is min 4
 	// insert prompts into user prompts table
 	err = os.profileService.UpsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToProfileVoicePrompts(uploadedPrompts))
 	if err != nil {
