@@ -44,8 +44,9 @@ func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) 
 	prof, err := s.getUserProfile(ctx, up.UserID)
 	if err != nil {
 		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user profile: %w", err)
-	} // todo: update theme
+	}
 
+	// todo: update theme
 	// Basic
 	if up.DisplayName != nil {
 		prof.DisplayName = *up.DisplayName
