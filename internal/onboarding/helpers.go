@@ -104,6 +104,7 @@ func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile 
 	return nil
 }
 
+// todo: remove and let profile service handle
 func (os *onboardingService) getUserProfile(ctx context.Context, userID string) (*domain.UserProfile, error) {
 	userProfileEntity, err := os.profileRepo.GetUserProfileByUserID(ctx, userID)
 	if err != nil {

@@ -3,12 +3,12 @@ package mapper
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 
 	"github.com/aarondl/null/v8"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
 func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []string, error) {

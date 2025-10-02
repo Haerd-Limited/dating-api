@@ -57,7 +57,7 @@ type onboardingService struct {
 
 func NewOnboardingService(
 	logger *zap.Logger,
-	onboardingRepository storage.ProfileRepository,
+	profileRepo storage.ProfileRepository,
 	userService user.Service,
 	authService auth.Service,
 	lookupRepo lookupstorage.LookupRepository,
@@ -65,7 +65,7 @@ func NewOnboardingService(
 ) Service {
 	return &onboardingService{
 		logger:       logger,
-		profileRepo:  onboardingRepository,
+		profileRepo:  profileRepo,
 		userService:  userService,
 		authService:  authService,
 		lookupRepo:   lookupRepo,
