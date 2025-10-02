@@ -69,7 +69,7 @@ type UpdateProfile struct {
 	FamilyPlanID      *int16
 	EthnicityID       *int16
 	SpokenLanguages   []int16
-	VoicePrompts      []VoicePrompt
+	VoicePrompts      []VoicePromptUpdate
 	Photos            []Photo
 	CoverPhotoURL     *string
 
@@ -132,6 +132,14 @@ type VoicePrompt struct {
 	Position       int16
 	DurationMs     int
 	PromptCoverURL string // TODO: HAVE frontend provide this for BE to store
+}
+type VoicePromptUpdate struct {
+	URL            string
+	PromptTypeID   int16
+	IsPrimary      bool
+	Position       int16
+	DurationMs     int
+	PromptCoverURL string
 }
 
 type Photo struct {

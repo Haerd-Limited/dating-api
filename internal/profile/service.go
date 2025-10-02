@@ -2,17 +2,20 @@ package profile
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/entity"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
 )
 
 type Service interface {
@@ -20,6 +23,11 @@ type Service interface {
 	GetProfileCard(ctx context.Context, userID string) (profilecard.ProfileCard, error)
 	GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error)
 	UpdateProfile(ctx context.Context, updatedProfile domain.UpdateProfile) error
+
+	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
+	UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error
+	UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error
+	UpsertUserTheme(ctx context.Context, userID, baseColour string) error
 }
 
 type service struct {
@@ -51,7 +59,7 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 		return domain.UpdateProfile{}, fmt.Errorf("failed to get user spoken languages: %w", err)
 	}
 
-	VoicePrompts, err := s.getUserVoicePrompts(ctx, userID)
+	VoicePrompts, err := s.getUserVoicePromptsForUpdate(ctx, userID)
 	if err != nil {
 		return domain.UpdateProfile{}, fmt.Errorf("failed to get user voice prompts: %w", err)
 	}
@@ -223,7 +231,7 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	if len(up.VoicePrompts) > 0 {
-		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsToEntity(up.VoicePrompts, up.UserID))
+		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, up.UserID))
 		if err != nil {
 			return fmt.Errorf("failed to insert user voice prompts: %w", err)
 		}
@@ -367,6 +375,42 @@ func (s *service) GetProfileCard(ctx context.Context, userID string) (profilecar
 	return mapper.MapEnrichedProfileToProfileCard(enrichedProfile), nil
 }
 
+func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string) error {
+	// generate colours
+	palette, err := theme.GeneratePalette9(baseColour)
+	if err != nil {
+		return fmt.Errorf("failed to generate palette: %w", err)
+	}
+
+	palJSON, err := json.Marshal(palette)
+	if err != nil {
+		return fmt.Errorf("failed to marshal palette: %w", err)
+	}
+	// store colours.
+	err = s.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
+		UserID:  userID,
+		BaseHex: baseColour,
+		Palette: palJSON,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upsert user theme: %w", err)
+	}
+
+	return nil
+}
+
+func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error {
+	return s.profileRepo.UpsertUserPrompts(ctx, userID, mapper.MapVoicePromptsUpdateToEntity(prompts, userID))
+}
+
+func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {
+	return s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID))
+}
+
+func (s *service) UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error {
+	return s.profileRepo.UpsertUserSpokenLanguages(ctx, userID, languages)
+}
+
 func (s *service) getUserTheme(ctx context.Context, userID string) (domain.UserTheme, error) {
 	userThemeEntity, err := s.profileRepo.GetUserTheme(ctx, userID)
 	if err != nil {
@@ -449,6 +493,27 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 	}
 
 	return voicePrompts, nil
+}
+
+func (s *service) getUserVoicePromptsForUpdate(ctx context.Context, userID string) ([]domain.VoicePromptUpdate, error) {
+	vps, err := s.getUserVoicePrompts(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user voice prompts: %w", err)
+	}
+
+	var result []domain.VoicePromptUpdate
+	for _, vp := range vps {
+		result = append(result, domain.VoicePromptUpdate{
+			URL:            vp.URL,
+			PromptTypeID:   vp.PromptType.ID,
+			IsPrimary:      vp.IsPrimary,
+			Position:       vp.Position,
+			DurationMs:     vp.DurationMs,
+			PromptCoverURL: vp.PromptCoverURL,
+		})
+	}
+
+	return result, nil
 }
 
 func (s *service) getUserProfile(ctx context.Context, userID string) (*domain.Profile, error) {

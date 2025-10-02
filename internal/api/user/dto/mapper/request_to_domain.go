@@ -20,15 +20,13 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 		birthdate = &temp
 	}
 
-	var voicePrompts []domain.VoicePrompt
+	var voicePrompts []domain.VoicePromptUpdate
 
 	if req.VoicePrompts != nil {
 		for _, vp := range req.VoicePrompts {
-			voicePrompts = append(voicePrompts, domain.VoicePrompt{
-				URL: vp.URL,
-				PromptType: domain.Prompt{
-					ID: vp.PromptType,
-				},
+			voicePrompts = append(voicePrompts, domain.VoicePromptUpdate{
+				URL:            vp.URL,
+				PromptTypeID:   vp.PromptType,
 				IsPrimary:      vp.IsPrimary,
 				Position:       vp.Position,
 				DurationMs:     vp.DurationMs,

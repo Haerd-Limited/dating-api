@@ -171,12 +171,12 @@ func MapUpdatedPhotosToEntity(updatedPhotos []domain.Photo, userID string) []ent
 	return out
 }
 
-func MapVoicePromptsToEntity(uploadedPrompts []domain.VoicePrompt, userID string) []entity.VoicePrompt {
+func MapVoicePromptsUpdateToEntity(uploadedPrompts []domain.VoicePromptUpdate, userID string) []entity.VoicePrompt {
 	var out []entity.VoicePrompt
 	for _, p := range uploadedPrompts {
 		out = append(out, entity.VoicePrompt{
 			UserID:        null.StringFrom(userID),
-			PromptType:    null.Int16From(p.PromptType.ID),
+			PromptType:    null.Int16From(p.PromptTypeID),
 			Position:      null.Int16From(p.Position),
 			IsPrimary:     p.IsPrimary,
 			AudioURL:      p.URL,

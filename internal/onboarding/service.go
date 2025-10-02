@@ -2,23 +2,19 @@ package onboarding
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"
-	"github.com/Haerd-Limited/dating-api/internal/entity"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
-	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
 )
 
 type Service interface {
@@ -49,7 +45,6 @@ type Service interface {
 
 type onboardingService struct {
 	logger         *zap.Logger
-	profileRepo    storage.ProfileRepository
 	userService    user.Service
 	authService    auth.Service
 	lookupRepo     lookupstorage.LookupRepository
@@ -59,16 +54,14 @@ type onboardingService struct {
 
 func NewOnboardingService(
 	logger *zap.Logger,
-	profileRepo storage.ProfileRepository,
 	userService user.Service,
 	authService auth.Service,
-	lookupRepo lookupstorage.LookupRepository,
 	mediaService media.Service,
 	profileService profile.Service,
+	lookupRepo lookupstorage.LookupRepository,
 ) Service {
 	return &onboardingService{
 		logger:         logger,
-		profileRepo:    profileRepo,
 		userService:    userService,
 		authService:    authService,
 		lookupRepo:     lookupRepo,
@@ -436,8 +429,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
 	}
 
-	// todo: move to profile service
-	err = os.profileRepo.UpsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
+	err = os.profileService.UpsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to insert user spoken languages: %w", err)
 	}
@@ -596,8 +588,7 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	}
 
 	// insert photos into user photos table
-	// todo: move to profile service
-	err = os.profileRepo.UpsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToEntity(uploadedPhotos))
+	err = os.profileService.UpsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToProfilePhotos(uploadedPhotos))
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to insert user photos: %w", err)
 	}
@@ -647,8 +638,7 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 	}
 
 	// insert prompts into user prompts table
-	// todo: move to profile service
-	err = os.profileRepo.UpsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToEntity(uploadedPrompts))
+	err = os.profileService.UpsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToProfileVoicePrompts(uploadedPrompts))
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to insert user prompts: %w", err)
 	}
@@ -683,22 +673,7 @@ func (os *onboardingService) Profile(ctx context.Context, profileDetails domain.
 		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	// generate colours
-	palette, err := theme.GeneratePalette9(profileDetails.ProfileBaseColour)
-	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to generate palette: %w", err)
-	}
-
-	palJSON, err := json.Marshal(palette)
-	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to marshal palette: %w", err)
-	}
-	// store colours.
-	err = os.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
-		UserID:  profileDetails.UserID,
-		BaseHex: profileDetails.ProfileBaseColour,
-		Palette: palJSON,
-	})
+	err = os.profileService.UpsertUserTheme(ctx, profileDetails.UserID, profileDetails.ProfileBaseColour)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to upsert user theme: %w", err)
 	}

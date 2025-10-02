@@ -1,22 +1,25 @@
 package mapper
 
 import (
-	"github.com/aarondl/null/v8"
-
-	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
+	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 )
 
-func MapPromptsToEntity(uploadedPrompts domain.Prompts) []entity.VoicePrompt {
-	var out []entity.VoicePrompt
+func MapPromptsToProfileVoicePrompts(uploadedPrompts domain.Prompts) []profiledomain.VoicePromptUpdate {
+	var out []profiledomain.VoicePromptUpdate
+
 	for _, p := range uploadedPrompts.UploadedPrompts {
-		out = append(out, entity.VoicePrompt{
-			UserID:        null.StringFrom(uploadedPrompts.UserID),
-			PromptType:    null.Int16From(p.PromptType),
-			Position:      null.Int16From(p.Position),
-			IsPrimary:     p.IsPrimary,
-			AudioURL:      p.URL,
-			CoverPhotoURL: null.StringFromPtr(p.CoverPhotoUrl),
+		var coverPhotoUrl string
+		if p.CoverPhotoUrl != nil {
+			coverPhotoUrl = *p.CoverPhotoUrl
+		}
+
+		out = append(out, profiledomain.VoicePromptUpdate{
+			PromptTypeID:   p.PromptType,
+			Position:       p.Position,
+			IsPrimary:      p.IsPrimary,
+			URL:            p.URL,
+			PromptCoverURL: coverPhotoUrl,
 			// todo: add transcript
 			// todo: add duration somehow
 		})
@@ -25,13 +28,12 @@ func MapPromptsToEntity(uploadedPrompts domain.Prompts) []entity.VoicePrompt {
 	return out
 }
 
-func MapUploadedPhotosToEntity(uploadedPhotos domain.UploadedPhotos) []entity.Photo {
-	var out []entity.Photo
+func MapUploadedPhotosToProfilePhotos(uploadedPhotos domain.UploadedPhotos) []profiledomain.Photo {
+	var out []profiledomain.Photo
 	for _, p := range uploadedPhotos.Photos {
-		out = append(out, entity.Photo{
-			UserID:    null.StringFrom(uploadedPhotos.UserID),
+		out = append(out, profiledomain.Photo{
 			URL:       p.URL,
-			Position:  null.Int16From(p.Position),
+			Position:  p.Position,
 			IsPrimary: p.IsPrimary,
 		})
 	}

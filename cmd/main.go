@@ -114,8 +114,7 @@ func main() {
 
 	mediaService := media.NewMediaService(logger, awsService)
 
-	onboardingService := onboarding.NewOnboardingService(
-		logger, profileRepo, userService, authService, lookupRepo, mediaService, profileService)
+	onboardingService := onboarding.NewOnboardingService(logger, userService, authService, mediaService, profileService, lookupRepo)
 
 	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)
 	if err != nil {
