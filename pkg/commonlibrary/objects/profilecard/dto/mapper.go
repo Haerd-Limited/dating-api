@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"github.com/Haerd-Limited/dating-api/internal/profilecard"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
 func ProfileCardsToDto(profiles []profilecard.ProfileCard) []ProfileCard {

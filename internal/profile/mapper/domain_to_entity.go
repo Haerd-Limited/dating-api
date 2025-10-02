@@ -137,11 +137,6 @@ func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []stri
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.EthnicityID)
 	}
 
-	if p.CoverPhotoURL != nil {
-		ent.CoverPhotoURL = null.StringFromPtr(p.CoverPhotoURL)
-		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverPhotoURL)
-	}
-
 	// JSONB: your entity expects []byte
 	if p.ProfileMeta != nil {
 		b, err := json.Marshal(*p.ProfileMeta)

@@ -90,30 +90,6 @@ func (os *onboardingService) getDatingIntentions(ctx context.Context) ([]domain.
 	return mapper.MapDatingIntentionsToDomain(datingIntentionsEntities), nil
 }
 
-func (os *onboardingService) updateUserProfile(ctx context.Context, userProfile *domain.UserProfile) error {
-	updatedUserProfileEntity, whiteList, err := mapper.MapProfileToEntityForUpdate(userProfile)
-	if err != nil {
-		return fmt.Errorf("failed to map user profile to entity: %w", err)
-	}
-
-	err = os.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity, whiteList)
-	if err != nil {
-		return fmt.Errorf("failed to update user profile: %w", err)
-	}
-
-	return nil
-}
-
-// todo: remove and let profile service handle
-func (os *onboardingService) getUserProfile(ctx context.Context, userID string) (*domain.UserProfile, error) {
-	userProfileEntity, err := os.profileRepo.GetUserProfileByUserID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return mapper.MapUserProfileToDomain(userProfileEntity), nil
-}
-
 // ensureStep makes sure that the step being called is the correct step to complete for the provided user. This prevents user's skipping steps in the onboarding process.
 func (os *onboardingService) ensureStep(ctx context.Context, userID string, expected domain.Steps) error {
 	u, err := os.userService.GetUser(ctx, userID)

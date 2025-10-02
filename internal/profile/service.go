@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,14 +12,14 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
-	"github.com/Haerd-Limited/dating-api/internal/profilecard"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
 type Service interface {
-	GetMyProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error)
-	UpdateMyProfile(ctx context.Context, updatedProfile domain.UpdateProfile) (domain.EnrichedProfile, error)
 	GetEnrichedProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error)
 	GetProfileCard(ctx context.Context, userID string) (profilecard.ProfileCard, error)
+	GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error)
+	UpdateProfile(ctx context.Context, updatedProfile domain.UpdateProfile) error
 }
 
 type service struct {
@@ -39,11 +40,66 @@ func NewProfileService(
 	}
 }
 
-func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) (domain.EnrichedProfile, error) {
+func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error) {
+	userProfile, err := s.getUserProfile(ctx, userID)
+	if err != nil {
+		return domain.UpdateProfile{}, fmt.Errorf("failed to get user profile: %w", err)
+	}
+
+	languageIds, err := s.profileRepo.GetUserSpokenLanguages(ctx, userID)
+	if err != nil {
+		return domain.UpdateProfile{}, fmt.Errorf("failed to get user spoken languages: %w", err)
+	}
+
+	VoicePrompts, err := s.getUserVoicePrompts(ctx, userID)
+	if err != nil {
+		return domain.UpdateProfile{}, fmt.Errorf("failed to get user voice prompts: %w", err)
+	}
+
+	Photos, err := s.getUserPhotos(ctx, userID)
+	if err != nil {
+		return domain.UpdateProfile{}, fmt.Errorf("failed to get user photos: %w", err)
+	}
+
+	return domain.UpdateProfile{
+		DisplayName:       &userProfile.DisplayName,
+		Birthdate:         &userProfile.Birthdate,
+		HeightCM:          &userProfile.HeightCM,
+		UserID:            userProfile.UserID,
+		ProfileEmoji:      &userProfile.Emoji,
+		Latitude:          &userProfile.Latitude,
+		Longitude:         &userProfile.Longitude,
+		City:              &userProfile.City,
+		Country:           &userProfile.Country,
+		GenderID:          &userProfile.GenderID,
+		DatingIntentionID: &userProfile.DatingIntentionID,
+		ReligionID:        &userProfile.ReligionID,
+		EducationLevelID:  &userProfile.EducationLevelID,
+		PoliticalBeliefID: &userProfile.PoliticalBeliefID,
+		DrinkingID:        &userProfile.DrinkingID,
+		SmokingID:         &userProfile.SmokingID,
+		MarijuanaID:       &userProfile.MarijuanaID,
+		DrugsID:           &userProfile.DrugsID,
+		ChildrenStatusID:  userProfile.ChildrenStatusID,
+		FamilyPlanID:      userProfile.FamilyPlanID,
+		EthnicityID:       &userProfile.EthnicityID,
+		SpokenLanguages:   languageIds,
+		VoicePrompts:      VoicePrompts,
+		Photos:            Photos,
+		CoverPhotoURL:     userProfile.CoverPhotoURL,
+		Work:              userProfile.Work,
+		JobTitle:          userProfile.JobTitle,
+		University:        userProfile.University,
+		CreatedAt:         &userProfile.CreatedAt,
+		UpdatedAt:         userProfile.UpdatedAt,
+	}, nil
+}
+
+func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) error {
 	// Load current profile
 	prof, err := s.getUserProfile(ctx, up.UserID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user profile: %w", err)
+		return fmt.Errorf("failed to get user profile: %w", err)
 	}
 
 	// todo: update theme
@@ -149,31 +205,31 @@ func (s *service) UpdateMyProfile(ctx context.Context, up domain.UpdateProfile) 
 	// Persist
 	err = s.updateUserProfile(ctx, prof)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to update user profile: %w", err)
+		return fmt.Errorf("failed to update user profile: %w", err)
 	}
 
 	if len(up.SpokenLanguages) > 0 {
 		err = s.profileRepo.UpsertUserSpokenLanguages(ctx, up.UserID, up.SpokenLanguages)
 		if err != nil {
-			return domain.EnrichedProfile{}, fmt.Errorf("failed to upsert user spoken languages: %w", err)
+			return fmt.Errorf("failed to upsert user spoken languages: %w", err)
 		}
 	}
 
 	if len(up.Photos) > 0 {
 		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID))
 		if err != nil {
-			return domain.EnrichedProfile{}, fmt.Errorf("failed to insert user photos: %w", err)
+			return fmt.Errorf("failed to insert user photos: %w", err)
 		}
 	}
 
 	if len(up.VoicePrompts) > 0 {
 		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsToEntity(up.VoicePrompts, up.UserID))
 		if err != nil {
-			return domain.EnrichedProfile{}, fmt.Errorf("failed to insert user voice prompts: %w", err)
+			return fmt.Errorf("failed to insert user voice prompts: %w", err)
 		}
 	}
 
-	return s.GetEnrichedProfile(ctx, up.UserID)
+	return nil
 }
 
 func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Profile) error {
@@ -188,15 +244,6 @@ func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Pro
 	}
 
 	return nil
-}
-
-func (s *service) GetMyProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error) {
-	userProfile, err := s.GetEnrichedProfile(ctx, userID)
-	if err != nil {
-		return domain.EnrichedProfile{}, err
-	}
-
-	return userProfile, nil
 }
 
 func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error) {
@@ -326,6 +373,10 @@ func (s *service) getUserTheme(ctx context.Context, userID string) (domain.UserT
 		return domain.UserTheme{}, fmt.Errorf("failed to get user theme: %w", err)
 	}
 
+	if userThemeEntity == nil {
+		return domain.UserTheme{}, nil
+	}
+
 	result := domain.UserTheme{
 		BaseHex: userThemeEntity.BaseHex,
 	}
@@ -437,7 +488,11 @@ func (s *service) getUserSpokenLanguages(ctx context.Context, userID string) ([]
 func (s *service) getGenderByID(ctx context.Context, genderID int16) (domain.Gender, error) {
 	genderEntity, err := s.lookupRepo.GetGenderByID(ctx, genderID)
 	if err != nil {
-		return domain.Gender{}, err
+		return domain.Gender{}, fmt.Errorf("failed to get gender by ID: %w", err)
+	}
+
+	if genderEntity == nil {
+		return domain.Gender{}, errors.New("gender not found")
 	}
 
 	return domain.Gender{
@@ -449,7 +504,11 @@ func (s *service) getGenderByID(ctx context.Context, genderID int16) (domain.Gen
 func (s *service) getDatingIntentionByID(ctx context.Context, datingIntentionID int16) (domain.DatingIntention, error) {
 	datingIntentionEntity, err := s.lookupRepo.GetDatingIntentionByID(ctx, datingIntentionID)
 	if err != nil {
-		return domain.DatingIntention{}, err
+		return domain.DatingIntention{}, fmt.Errorf("failed to get dating intention by ID: %w", err)
+	}
+
+	if datingIntentionEntity == nil {
+		return domain.DatingIntention{}, errors.New("dating intention not found")
 	}
 
 	return domain.DatingIntention{
@@ -461,7 +520,11 @@ func (s *service) getDatingIntentionByID(ctx context.Context, datingIntentionID 
 func (s *service) getReligionByID(ctx context.Context, religionID int16) (domain.Religion, error) {
 	religionEntity, err := s.lookupRepo.GetReligionByID(ctx, religionID)
 	if err != nil {
-		return domain.Religion{}, err
+		return domain.Religion{}, fmt.Errorf("failed to get religion by ID: %w", err)
+	}
+
+	if religionEntity == nil {
+		return domain.Religion{}, errors.New("religion not found")
 	}
 
 	return domain.Religion{
@@ -473,7 +536,11 @@ func (s *service) getReligionByID(ctx context.Context, religionID int16) (domain
 func (s *service) getEducationLevelByID(ctx context.Context, educationLevelID int16) (domain.EducationLevel, error) {
 	educationLevelEntity, err := s.lookupRepo.GetEducationLevelByID(ctx, educationLevelID)
 	if err != nil {
-		return domain.EducationLevel{}, err
+		return domain.EducationLevel{}, fmt.Errorf("failed to get education level by ID: %w", err)
+	}
+
+	if educationLevelEntity == nil {
+		return domain.EducationLevel{}, errors.New("education level not found")
 	}
 
 	return domain.EducationLevel{
@@ -485,7 +552,11 @@ func (s *service) getEducationLevelByID(ctx context.Context, educationLevelID in
 func (s *service) getPoliticalBeliefByID(ctx context.Context, politicalBeliefID int16) (domain.PoliticalBelief, error) {
 	politicalBeliefEntity, err := s.lookupRepo.GetPoliticalBeliefByID(ctx, politicalBeliefID)
 	if err != nil {
-		return domain.PoliticalBelief{}, err
+		return domain.PoliticalBelief{}, fmt.Errorf("failed to get political belief by ID: %w", err)
+	}
+
+	if politicalBeliefEntity == nil {
+		return domain.PoliticalBelief{}, errors.New("political belief not found")
 	}
 
 	return domain.PoliticalBelief{
@@ -497,7 +568,11 @@ func (s *service) getPoliticalBeliefByID(ctx context.Context, politicalBeliefID 
 func (s *service) getHabitByID(ctx context.Context, habitID int16) (domain.Habit, error) {
 	habitEntity, err := s.lookupRepo.GetHabitByID(ctx, habitID)
 	if err != nil {
-		return domain.Habit{}, err
+		return domain.Habit{}, fmt.Errorf("failed to get habit by ID: %w", err)
+	}
+
+	if habitEntity == nil {
+		return domain.Habit{}, errors.New("habit not found")
 	}
 
 	return domain.Habit{
@@ -509,11 +584,11 @@ func (s *service) getHabitByID(ctx context.Context, habitID int16) (domain.Habit
 func (s *service) getFamilyStatusByID(ctx context.Context, id int16) (*domain.Status, error) {
 	statusEntity, err := s.lookupRepo.GetFamilyStatusByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get family status by ID: %w", err)
 	}
 
 	if statusEntity == nil {
-		return nil, nil
+		return nil, errors.New("family status not found")
 	}
 
 	return &domain.Status{
@@ -526,11 +601,11 @@ func (s *service) getFamilyStatusByID(ctx context.Context, id int16) (*domain.St
 func (s *service) getFamilyPlanByID(ctx context.Context, id int16) (*domain.Status, error) {
 	statusEntity, err := s.lookupRepo.GetFamilyPlanByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get family plan by ID: %w", err)
 	}
 
 	if statusEntity == nil {
-		return nil, nil
+		return nil, errors.New("family plan not found")
 	}
 
 	return &domain.Status{
@@ -543,11 +618,11 @@ func (s *service) getFamilyPlanByID(ctx context.Context, id int16) (*domain.Stat
 func (s *service) getEthnicityByID(ctx context.Context, id int16) (domain.Ethnicity, error) {
 	ethnicityEntity, err := s.lookupRepo.GetEthnicityByID(ctx, id)
 	if err != nil {
-		return domain.Ethnicity{}, err
+		return domain.Ethnicity{}, fmt.Errorf("failed to get ethnicity by ID: %w", err)
 	}
 
 	if ethnicityEntity == nil {
-		return domain.Ethnicity{}, nil
+		return domain.Ethnicity{}, errors.New("ethnicity not found")
 	}
 
 	return domain.Ethnicity{

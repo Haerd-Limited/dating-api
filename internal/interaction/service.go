@@ -12,7 +12,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
-	"github.com/Haerd-Limited/dating-api/internal/profilecard"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
 type Service interface {

@@ -2,7 +2,7 @@ package mapper
 
 import (
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
-	"github.com/Haerd-Limited/dating-api/internal/profilecard"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
 func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profilecard.ProfileCard {

@@ -189,45 +189,6 @@ type DatingIntention struct {
 	Label string
 }
 
-type UserProfile struct {
-	DisplayName *string
-	Birthdate   time.Time
-	HeightCM    int16
-	UserID      string
-
-	// Location
-	Latitude  float64
-	Longitude float64
-	City      string
-	Country   string
-
-	// Single-selects
-	GenderID          int16
-	DatingIntentionID int16
-	ReligionID        int16
-	EducationLevelID  int16
-	PoliticalBeliefID int16
-	DrinkingID        int16
-	SmokingID         int16
-	MarijuanaID       int16
-	DrugsID           int16
-	ChildrenStatusID  int16
-	FamilyPlanID      *int32
-	EthnicityID       int16
-
-	// Extra text fields in user_profiles
-
-	// Work the user's workplace
-	Work          *string
-	JobTitle      *string
-	University    *string
-	ProfileMeta   *map[string]any
-	CoverPhotoURL *string
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
-}
-
 type Preferences struct {
 	// Preferences
 	DistanceKM       *int16

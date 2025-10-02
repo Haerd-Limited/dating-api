@@ -62,7 +62,7 @@ func (h *handler) GetMyProfile() http.HandlerFunc {
 			return
 		}
 
-		userProfile, err := h.profileService.GetMyProfile(ctx, userID)
+		userProfile, err := h.profileService.GetEnrichedProfile(ctx, userID)
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -127,7 +127,7 @@ func (h *handler) UpdateMyProfile() http.HandlerFunc {
 			)
 		}
 
-		updatedProfile, err := h.profileService.UpdateMyProfile(ctx, model)
+		err = h.profileService.UpdateProfile(ctx, model)
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -145,7 +145,7 @@ func (h *handler) UpdateMyProfile() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusOK, mapper.ProfileToDto(updatedProfile))
+		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Profile successfully updated"))
 	}
 }
 

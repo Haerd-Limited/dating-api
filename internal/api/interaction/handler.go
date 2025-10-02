@@ -11,12 +11,12 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/user/dto"
 	"github.com/Haerd-Limited/dating-api/internal/interaction"
 	storage2 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
-	cardsdto "github.com/Haerd-Limited/dating-api/internal/profilecard/dto"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
+	cardsdto "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )

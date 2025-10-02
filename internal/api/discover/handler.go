@@ -8,11 +8,11 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/discover"
-	"github.com/Haerd-Limited/dating-api/internal/profilecard/dto"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
