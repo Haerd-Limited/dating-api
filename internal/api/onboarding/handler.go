@@ -127,18 +127,7 @@ func (h *handler) Intro() http.HandlerFunc {
 			return
 		}
 
-		introDetails, err := mapper.MapIntroRequestToDomain(req, userID)
-		if err != nil {
-			h.logger.Sugar().Errorw("failed to map intro request to intro input", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
-			return
-		}
-
-		result, err := h.onboardingService.Intro(ctx, introDetails)
+		result, err := h.onboardingService.Intro(ctx, mapper.MapIntroRequestToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -193,16 +182,7 @@ func (h *handler) Basics() http.HandlerFunc {
 			return
 		}
 
-		basics, err := mapper.MapBasicRequestToDomain(req, userID)
-		if err != nil {
-			h.logger.Sugar().Warnw("failed to map basics request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-		}
-
-		result, err := h.onboardingService.Basics(ctx, basics)
+		result, err := h.onboardingService.Basics(ctx, mapper.MapBasicRequestToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -258,18 +238,7 @@ func (h *handler) Location() http.HandlerFunc {
 			return
 		}
 
-		locationDetails, err := mapper.MapLocationRequestToDomain(req, userID)
-		if err != nil {
-			h.logger.Sugar().Errorw("failed to map location request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
-			return
-		}
-
-		result, err := h.onboardingService.Location(ctx, locationDetails)
+		result, err := h.onboardingService.Location(ctx, mapper.MapLocationRequestToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -325,18 +294,7 @@ func (h *handler) Lifestyle() http.HandlerFunc {
 			return
 		}
 
-		lifestyleDetails, err := mapper.MapLifestyleRequestToDomain(req, userID)
-		if err != nil {
-			h.logger.Sugar().Errorw("failed to map lifestyle request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
-			return
-		}
-
-		result, err := h.onboardingService.Lifestyle(ctx, lifestyleDetails)
+		result, err := h.onboardingService.Lifestyle(ctx, mapper.MapLifestyleRequestToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -392,18 +350,7 @@ func (h *handler) Beliefs() http.HandlerFunc {
 			return
 		}
 
-		beliefDetails, err := mapper.MapBeliefsRequestToDomain(req, userID)
-		if err != nil {
-			h.logger.Sugar().Errorw("failed to map beliefs request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
-			return
-		}
-
-		result, err := h.onboardingService.Beliefs(ctx, beliefDetails)
+		result, err := h.onboardingService.Beliefs(ctx, mapper.MapBeliefsRequestToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -459,18 +406,7 @@ func (h *handler) Background() http.HandlerFunc {
 			return
 		}
 
-		backgroundDetails, err := mapper.MapBackgroundRequestToDomain(req, userID)
-		if err != nil {
-			h.logger.Sugar().Errorw("failed to map background request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
-			return
-		}
-
-		result, err := h.onboardingService.Background(ctx, backgroundDetails)
+		result, err := h.onboardingService.Background(ctx, mapper.MapBackgroundRequestToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -831,9 +767,11 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	case errors.Is(err, profile.ErrContainsSocialMediaPromotion):
 		return http.StatusBadRequest, messages.SocialsNotAllowedMsg
 
+	case errors.Is(err, commonErrors.ErrInvalidEmail):
+		return http.StatusBadRequest, messages.InvalidEmailMsg
 	case errors.Is(err, onboarding.ErrIncorrectStepCalled):
 		return http.StatusBadRequest, "Incorrect step called"
-	case errors.Is(err, mapper.ErrInvalidID):
+	case errors.Is(err, onboarding.ErrInvalidID):
 		return http.StatusBadRequest, messages.InvalidIDMsg
 	case errors.Is(err, http.ErrNotMultipart):
 		return http.StatusBadRequest, messages.InvalidUploadFormMsg
@@ -847,9 +785,9 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, commonErrors.ErrInvalidGender):
 		return http.StatusBadRequest, messages.InvalidGenderMsg
-	case errors.Is(err, mapper.ErrInvalidNameLength):
+	case errors.Is(err, onboarding.ErrInvalidNameLength):
 		return http.StatusBadRequest, InvalidUsernameLengthMsg
-	case errors.Is(err, mapper.ErrNameContainsSpaces):
+	case errors.Is(err, onboarding.ErrNameContainsSpaces):
 		return http.StatusBadRequest, UsernameContainsSpacesMsg
 
 	default:

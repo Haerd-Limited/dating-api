@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 )
 
 type Service interface {
@@ -70,7 +72,17 @@ func NewOnboardingService(
 	}
 }
 
-var ErrIncorrectStepCalled = errors.New("incorrect step called")
+const (
+	minNameLen = 3
+	maxNameLen = 20
+)
+
+var (
+	ErrIncorrectStepCalled = errors.New("incorrect step called")
+	ErrNameContainsSpaces  = errors.New("name must not contain spaces")
+	ErrInvalidNameLength   = errors.New("name must be between 3 and 20 characters")
+	ErrInvalidID           = errors.New("id must be greater than 0")
+)
 
 func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error) {
 	u, err := os.userService.GetUser(ctx, userID)
@@ -246,7 +258,12 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 
 	err := os.ensureStep(ctx, introDetails.UserID, StepForIntro)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+	}
+
+	err = os.validateAndSanitiseIntroDetails(&introDetails)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("validate and sanitise intro details: %w", err)
 	}
 
 	err = os.userService.UpdateUser(ctx, &userdomain.User{
@@ -256,12 +273,12 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 		LastName:  introDetails.LastName,
 	})
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, introDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
 	}
 
 	var Lastname string
@@ -274,23 +291,23 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
 	}
 
 	// Get dating intentions and genders and populate Content
 	genders, err := os.getGenders(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get genders: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get genders: %w", err)
 	}
 
 	datingIntentions, err := os.getDatingIntentions(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get dating intentions: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get dating intentions: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, introDetails.UserID, StepForIntro)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -310,6 +327,11 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
 	}
 
+	err = os.validateBasicDetails(basicDetails)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("validate basic details: %w", err)
+	}
+
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, basicDetails.UserID)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
@@ -318,7 +340,13 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 	userProfile.GenderID = &basicDetails.GenderID
 	userProfile.DatingIntentionID = &basicDetails.DatingIntentionID
 	userProfile.HeightCM = &basicDetails.HeightCm
-	userProfile.Birthdate = &basicDetails.Birthdate
+
+	dob, err := time.Parse(time.DateOnly, basicDetails.Birthdate)
+	if err != nil {
+		return domain.StepResult{}, commonErrors.ErrInvalidDob
+	}
+
+	userProfile.Birthdate = &dob
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
@@ -379,12 +407,17 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 
 	err := os.ensureStep(ctx, lifestyleDetails.UserID, StepForLifestyle)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+	}
+
+	err = os.validateLifestyleDetails(lifestyleDetails)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("validate lifestyle details: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, lifestyleDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
 	}
 
 	userProfile.MarijuanaID = &lifestyleDetails.MarijuanaID
@@ -394,22 +427,22 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
 	}
 
 	religions, err := os.getReligions(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get religions: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get religions: %w", err)
 	}
 
 	politicalBeliefs, err := os.getPoliticalBeliefs(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get political beliefs: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get political beliefs: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, lifestyleDetails.UserID, StepForLifestyle)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -468,12 +501,17 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 
 	err := os.ensureStep(ctx, beliefDetails.UserID, StepForBeliefs)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+	}
+
+	err = os.validateBeliefDetails(beliefDetails)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("validate belief details: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, beliefDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
 	}
 
 	userProfile.ReligionID = &beliefDetails.ReligionID
@@ -481,22 +519,22 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
 	}
 
 	educationLevels, err := os.getEducationLevels(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get education levels: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get education levels: %w", err)
 	}
 
 	ethnicities, err := os.getEthnicities(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get ethnicities: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get ethnicities: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, beliefDetails.UserID, StepForBeliefs)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -513,12 +551,17 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 
 	err := os.ensureStep(ctx, backgroundDetails.UserID, StepForBackground)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+	}
+
+	err = os.validateBackgroundDetails(backgroundDetails)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("validate background details: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, backgroundDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
 	}
 
 	userProfile.EducationLevelID = &backgroundDetails.EducationLevelID
@@ -526,12 +569,12 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, backgroundDetails.UserID, StepForBackground)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{

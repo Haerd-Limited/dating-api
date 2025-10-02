@@ -1,151 +1,63 @@
 package mapper
 
 import (
-	"errors"
-	"strings"
-	"time"
-	"unicode"
-
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
-	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 )
 
-const (
-	minNameLen = 3
-	maxNameLen = 20
-)
-
-var (
-	ErrNameContainsSpaces = errors.New("name must not contain spaces")
-	ErrInvalidNameLength  = errors.New("name must be between 3 and 20 characters")
-	ErrInvalidID          = errors.New("id must be greater than 0")
-)
-
-func MapIntroRequestToDomain(request dto.IntroRequest, userID string) (domain.Intro, error) {
-	firstName := strings.TrimSpace(request.FirstName)
-
-	var lastName string
-	if request.LastName != nil {
-		lastName = strings.TrimSpace(*request.LastName)
-	}
-
-	if hasAnySpace(firstName) || hasAnySpace(lastName) {
-		return domain.Intro{}, ErrNameContainsSpaces
-	}
-
-	// first name length check
-	if l := len(firstName); l < minNameLen || l > maxNameLen {
-		return domain.Intro{}, ErrInvalidNameLength
-	}
-
-	// last name length check
-	if l := len(lastName); l < minNameLen || l > maxNameLen {
-		return domain.Intro{}, ErrInvalidNameLength
-	}
-
-	if !looksLikeEmail(strings.TrimSpace(request.Email)) {
-		return domain.Intro{}, commonErrors.ErrInvalidEmail
-	}
-
+func MapIntroRequestToDomain(request dto.IntroRequest, userID string) domain.Intro {
 	return domain.Intro{
 		UserID:    userID,
-		FirstName: firstName,
-		LastName:  &lastName,
-		// PhoneNumber: normalizePhone(request.PhoneNumber),
-		Email: strings.TrimSpace(request.Email),
-	}, nil
+		FirstName: request.FirstName,
+		LastName:  request.LastName,
+		Email:     request.Email,
+	}
 }
 
-func MapBasicRequestToDomain(req dto.BasicsRequest, userID string) (domain.Basics, error) {
-	dob, err := time.Parse("2006-01-02", req.Birthdate)
-	if err != nil {
-		return domain.Basics{}, commonErrors.ErrInvalidDob
-	}
-
-	if req.GenderID == 0 {
-		return domain.Basics{}, ErrInvalidID
-	}
-
-	if req.DatingIntentionID == 0 {
-		return domain.Basics{}, ErrInvalidID
-	}
-
+func MapBasicRequestToDomain(req dto.BasicsRequest, userID string) domain.Basics {
 	return domain.Basics{
 		UserID:            userID,
-		Birthdate:         dob,
+		Birthdate:         req.Birthdate,
 		HeightCm:          req.HeightCm,
 		GenderID:          req.GenderID,
 		DatingIntentionID: req.DatingIntentionID,
-	}, nil
+	}
 }
 
-func MapLocationRequestToDomain(req dto.LocationRequest, userID string) (domain.Location, error) {
+func MapLocationRequestToDomain(req dto.LocationRequest, userID string) domain.Location {
 	return domain.Location{
 		UserID:    userID,
 		Latitude:  req.Latitude,
 		Longitude: req.Longitude,
 		City:      req.City,
 		Country:   req.Country,
-	}, nil
+	}
 }
 
-func MapLifestyleRequestToDomain(req dto.LifestyleRequest, userID string) (domain.Lifestyle, error) {
-	if req.DrinkingID == 0 {
-		return domain.Lifestyle{}, ErrInvalidID
-	}
-
-	if req.SmokingID == 0 {
-		return domain.Lifestyle{}, ErrInvalidID
-	}
-
-	if req.MarijuanaID == 0 {
-		return domain.Lifestyle{}, ErrInvalidID
-	}
-
-	if req.DrugsID == 0 {
-		return domain.Lifestyle{}, ErrInvalidID
-	}
-
+func MapLifestyleRequestToDomain(req dto.LifestyleRequest, userID string) domain.Lifestyle {
 	return domain.Lifestyle{
 		UserID:      userID,
 		DrinkingID:  req.DrinkingID,
 		MarijuanaID: req.MarijuanaID,
 		SmokingID:   req.SmokingID,
 		DrugsID:     req.DrugsID,
-	}, nil
+	}
 }
 
-func MapBackgroundRequestToDomain(req dto.BackgroundRequest, userID string) (domain.Background, error) {
-	if req.EducationLevelID == 0 {
-		return domain.Background{}, ErrInvalidID
-	}
-
-	if req.EthnicityID == 0 {
-		return domain.Background{}, ErrInvalidID
-	}
-
+func MapBackgroundRequestToDomain(req dto.BackgroundRequest, userID string) domain.Background {
 	return domain.Background{
 		UserID:           userID,
 		EducationLevelID: req.EducationLevelID,
 		EthnicityID:      req.EthnicityID,
-	}, nil
+	}
 }
 
-func MapBeliefsRequestToDomain(req dto.BeliefsRequest, userID string) (domain.Beliefs, error) {
-	if req.PoliticalBeliefID == 0 {
-		return domain.Beliefs{}, ErrInvalidID
-	}
-
-	if req.ReligionID == 0 {
-		return domain.Beliefs{}, ErrInvalidID
-	}
-
+func MapBeliefsRequestToDomain(req dto.BeliefsRequest, userID string) domain.Beliefs {
 	return domain.Beliefs{
 		UserID:             userID,
 		PoliticalBeliefsID: req.PoliticalBeliefID,
 		ReligionID:         req.ReligionID,
-	}, nil
+	}
 }
 
 func MapLanguagesRequestToDomain(req dto.LanguagesRequest, userID string) (domain.Languages, error) {
@@ -207,20 +119,3 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Pr
 		UploadedPrompts: voicePrompts,
 	}, nil
 }
-
-// hasAnySpace returns true if s contains any Unicode whitespace character.
-func hasAnySpace(s string) bool {
-	return strings.IndexFunc(s, unicode.IsSpace) >= 0
-}
-
-func looksLikeEmail(s string) bool { return strings.Contains(s, "@") && strings.Contains(s, ".") }
-
-/*func normalizePhone(s string) string {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return ""
-	}
-
-	return s // stub
-}
-*/

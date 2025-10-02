@@ -14,6 +14,7 @@ const (
 	InvalidGenderMsg            = "Please select male or female."
 	InvalidUploadFormMsg        = "Upload failed. Please use a valid form to upload files."
 	EmailAlreadyExistsMsg       = "Email already exists."
+	InvalidEmailMsg             = "Invalid email format."
 	UserDetailsAlreadyExistsMsg = "An account with these details already exists."
 	UserNameAlreadyExistsMsg    = "Username already exists."
 	InvalidUUIDMsg              = "Invalid ID format. Must be a valid UUID."

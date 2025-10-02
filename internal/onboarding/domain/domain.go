@@ -1,7 +1,5 @@
 package domain
 
-import "time"
-
 type Profile struct {
 	UserID               string
 	ProfileBaseColour    string
@@ -152,7 +150,7 @@ type Habit struct {
 
 type Basics struct {
 	UserID            string
-	Birthdate         time.Time
+	Birthdate         string
 	HeightCm          int16
 	GenderID          int16
 	DatingIntentionID int16

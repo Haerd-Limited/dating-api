@@ -3,10 +3,107 @@ package onboarding
 import (
 	"context"
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 )
+
+func (os *onboardingService) validateBeliefDetails(beliefDetails domain.Beliefs) error {
+	if beliefDetails.PoliticalBeliefsID == 0 {
+		return fmt.Errorf("invalid political belief id: %w", ErrInvalidID)
+	}
+
+	if beliefDetails.ReligionID == 0 {
+		return fmt.Errorf("invalid religion id: %w", ErrInvalidID)
+	}
+
+	return nil
+}
+
+func (os *onboardingService) validateBackgroundDetails(backgroundDetails domain.Background) error {
+	if backgroundDetails.EducationLevelID == 0 {
+		return fmt.Errorf("invalid education level id: %w", ErrInvalidID)
+	}
+
+	if backgroundDetails.EthnicityID == 0 {
+		return fmt.Errorf("invalid ethnicity id: %w", ErrInvalidID)
+	}
+
+	return nil
+}
+
+func (os *onboardingService) validateLifestyleDetails(lifestyleDetails domain.Lifestyle) error {
+	if lifestyleDetails.DrinkingID == 0 {
+		return fmt.Errorf("invaid drinking id: %w", ErrInvalidID)
+	}
+
+	if lifestyleDetails.SmokingID == 0 {
+		return fmt.Errorf("invaid smoking id: %w", ErrInvalidID)
+	}
+
+	if lifestyleDetails.MarijuanaID == 0 {
+		return fmt.Errorf("invalid marijuanna id: %w", ErrInvalidID)
+	}
+
+	if lifestyleDetails.DrugsID == 0 {
+		return fmt.Errorf("invalid drugs id: %w", ErrInvalidID)
+	}
+
+	return nil
+}
+
+func (os *onboardingService) validateBasicDetails(basicDetails domain.Basics) error {
+	if basicDetails.GenderID == 0 {
+		return fmt.Errorf("invaid gender id: %w", ErrInvalidID)
+	}
+
+	if basicDetails.DatingIntentionID == 0 {
+		return fmt.Errorf("invaid dating intention id: %w", ErrInvalidID)
+	}
+
+	return nil
+}
+
+func (os *onboardingService) validateAndSanitiseIntroDetails(intro *domain.Intro) error {
+	intro.FirstName = strings.TrimSpace(intro.FirstName)
+	if hasAnySpace(intro.FirstName) {
+		return fmt.Errorf("first%w", ErrNameContainsSpaces)
+	}
+	// first name length check
+	if l := len(intro.FirstName); l < minNameLen || l > maxNameLen {
+		return ErrInvalidNameLength
+	}
+
+	if intro.LastName != nil {
+		temp := strings.TrimSpace(*intro.LastName)
+		intro.LastName = &temp
+
+		if hasAnySpace(*intro.LastName) {
+			return fmt.Errorf("last%w", ErrNameContainsSpaces)
+		}
+
+		// last name length check
+		if l := len(*intro.LastName); l < minNameLen || l > maxNameLen {
+			return ErrInvalidNameLength
+		}
+	}
+
+	if !looksLikeEmail(strings.TrimSpace(intro.Email)) {
+		return commonErrors.ErrInvalidEmail
+	}
+
+	return nil
+}
+
+// hasAnySpace returns true if s contains any Unicode whitespace character.
+func hasAnySpace(s string) bool {
+	return strings.IndexFunc(s, unicode.IsSpace) >= 0
+}
+
+func looksLikeEmail(s string) bool { return strings.Contains(s, "@") && strings.Contains(s, ".") }
 
 // todo: call of below through lookup service if logic gets involved
 func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Language, error) {
