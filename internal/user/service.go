@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/coocood/freecache"
 	"go.uber.org/zap"
@@ -13,6 +15,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 )
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=user
@@ -46,7 +49,16 @@ func NewUserService(
 	}
 }
 
-var ErrInvalidCredentials = errors.New("invalid credentials")
+var (
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrNameContainsSpaces = errors.New("name must not contain spaces")
+	ErrInvalidNameLength  = errors.New("name must be between 3 and 20 characters")
+)
+
+const (
+	minNameLen = 3
+	maxNameLen = 20
+)
 
 func (us *userService) CreateUser(ctx context.Context, user domain.User) (userID *string, err error) {
 	userID, err = us.userRepo.InsertUser(ctx, mapper.ToUserEntity(user))
@@ -94,7 +106,13 @@ func (us *userService) GetUsersByIDs(ctx context.Context, ids []string) ([]*doma
 }
 
 func (us *userService) UpdateUser(ctx context.Context, user *domain.User) error {
+	err := us.validateAndSanitiseUserDetails(user)
+	if err != nil {
+		return fmt.Errorf("validate and sanitise user details: %w", err)
+	}
+
 	updatedEntity, cols := mapper.ToUpdatedUserEntity(*user)
+
 	return us.userRepo.UpdateUser(ctx, updatedEntity, cols)
 }
 
@@ -112,3 +130,41 @@ func (us *userService) UserExistsByIdentifier(ctx context.Context, channel, iden
 		return false, fmt.Errorf("unsupported channel: %s", channel)
 	}
 }
+
+func (us *userService) validateAndSanitiseUserDetails(userDetails *domain.User) error {
+	userDetails.FirstName = strings.TrimSpace(userDetails.FirstName)
+	if hasAnySpace(userDetails.FirstName) {
+		return fmt.Errorf("first%w", ErrNameContainsSpaces)
+	}
+	// first name length check
+	if l := len(userDetails.FirstName); l < minNameLen || l > maxNameLen {
+		return ErrInvalidNameLength
+	}
+
+	if userDetails.LastName != nil {
+		temp := strings.TrimSpace(*userDetails.LastName)
+		userDetails.LastName = &temp
+
+		if hasAnySpace(*userDetails.LastName) {
+			return fmt.Errorf("last%w", ErrNameContainsSpaces)
+		}
+
+		// last name length check
+		if l := len(*userDetails.LastName); l < minNameLen || l > maxNameLen {
+			return ErrInvalidNameLength
+		}
+	}
+
+	if !looksLikeEmail(strings.TrimSpace(userDetails.Email)) {
+		return commonErrors.ErrInvalidEmail
+	}
+
+	return nil
+}
+
+// hasAnySpace returns true if s contains any Unicode whitespace character.
+func hasAnySpace(s string) bool {
+	return strings.IndexFunc(s, unicode.IsSpace) >= 0
+}
+
+func looksLikeEmail(s string) bool { return strings.Contains(s, "@") && strings.Contains(s, ".") }

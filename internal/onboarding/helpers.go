@@ -3,12 +3,9 @@ package onboarding
 import (
 	"context"
 	"fmt"
-	"strings"
-	"unicode"
 
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
-	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 )
 
 func (os *onboardingService) validateBeliefDetails(beliefDetails domain.Beliefs) error {
@@ -66,44 +63,6 @@ func (os *onboardingService) validateBasicDetails(basicDetails domain.Basics) er
 
 	return nil
 }
-
-func (os *onboardingService) validateAndSanitiseIntroDetails(intro *domain.Intro) error {
-	intro.FirstName = strings.TrimSpace(intro.FirstName)
-	if hasAnySpace(intro.FirstName) {
-		return fmt.Errorf("first%w", ErrNameContainsSpaces)
-	}
-	// first name length check
-	if l := len(intro.FirstName); l < minNameLen || l > maxNameLen {
-		return ErrInvalidNameLength
-	}
-
-	if intro.LastName != nil {
-		temp := strings.TrimSpace(*intro.LastName)
-		intro.LastName = &temp
-
-		if hasAnySpace(*intro.LastName) {
-			return fmt.Errorf("last%w", ErrNameContainsSpaces)
-		}
-
-		// last name length check
-		if l := len(*intro.LastName); l < minNameLen || l > maxNameLen {
-			return ErrInvalidNameLength
-		}
-	}
-
-	if !looksLikeEmail(strings.TrimSpace(intro.Email)) {
-		return commonErrors.ErrInvalidEmail
-	}
-
-	return nil
-}
-
-// hasAnySpace returns true if s contains any Unicode whitespace character.
-func hasAnySpace(s string) bool {
-	return strings.IndexFunc(s, unicode.IsSpace) >= 0
-}
-
-func looksLikeEmail(s string) bool { return strings.Contains(s, "@") && strings.Contains(s, ".") }
 
 // todo: call of below through lookup service if logic gets involved
 func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Language, error) {

@@ -3,6 +3,7 @@ package onboarding
 import (
 	standardcontext "context"
 	"errors"
+	"github.com/Haerd-Limited/dating-api/internal/user"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -785,9 +786,9 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, commonErrors.ErrInvalidGender):
 		return http.StatusBadRequest, messages.InvalidGenderMsg
-	case errors.Is(err, onboarding.ErrInvalidNameLength):
+	case errors.Is(err, user.ErrInvalidNameLength):
 		return http.StatusBadRequest, InvalidUsernameLengthMsg
-	case errors.Is(err, onboarding.ErrNameContainsSpaces):
+	case errors.Is(err, user.ErrNameContainsSpaces):
 		return http.StatusBadRequest, UsernameContainsSpacesMsg
 
 	default:

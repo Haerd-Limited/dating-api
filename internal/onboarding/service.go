@@ -72,15 +72,8 @@ func NewOnboardingService(
 	}
 }
 
-const (
-	minNameLen = 3
-	maxNameLen = 20
-)
-
 var (
 	ErrIncorrectStepCalled = errors.New("incorrect step called")
-	ErrNameContainsSpaces  = errors.New("name must not contain spaces")
-	ErrInvalidNameLength   = errors.New("name must be between 3 and 20 characters")
 	ErrInvalidID           = errors.New("id must be greater than 0")
 )
 
@@ -259,11 +252,6 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 	err := os.ensureStep(ctx, introDetails.UserID, StepForIntro)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
-	}
-
-	err = os.validateAndSanitiseIntroDetails(&introDetails)
-	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("validate and sanitise intro details: %w", err)
 	}
 
 	err = os.userService.UpdateUser(ctx, &userdomain.User{
