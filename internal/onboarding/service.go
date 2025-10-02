@@ -87,7 +87,7 @@ var (
 func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error) {
 	u, err := os.userService.GetUser(ctx, userID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user by userID: %w", err)
 	}
 
 	currentStep := domain.Steps(u.OnboardingStep)
@@ -101,12 +101,12 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	case domain.OnboardingStepsBasics:
 		genders, err := os.getGenders(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to get genders: %w", err)
+			return domain.StepResult{}, fmt.Errorf("get genders: %w", err)
 		}
 
 		datingIntentions, err := os.getDatingIntentions(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to get dating intentions: %w", err)
+			return domain.StepResult{}, fmt.Errorf("get dating intentions: %w", err)
 		}
 
 		return domain.StepResult{
@@ -134,12 +134,12 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	case domain.OnboardingStepsBeliefs:
 		religions, err := os.getReligions(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to get religions: %w", err)
+			return domain.StepResult{}, fmt.Errorf("get religions: %w", err)
 		}
 
 		politicalBeliefs, err := os.getPoliticalBeliefs(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to get political beliefs: %w", err)
+			return domain.StepResult{}, fmt.Errorf("get political beliefs: %w", err)
 		}
 
 		return domain.StepResult{
@@ -152,12 +152,12 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	case domain.OnboardingStepsBackground:
 		educationLevels, err := os.getEducationLevels(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to get education levels: %w", err)
+			return domain.StepResult{}, fmt.Errorf("get education levels: %w", err)
 		}
 
 		ethnicities, err := os.getEthnicities(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to get ethnicities: %w", err)
+			return domain.StepResult{}, fmt.Errorf("get ethnicities: %w", err)
 		}
 
 		return domain.StepResult{
@@ -175,7 +175,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	case domain.OnboardingStepsLanguages:
 		languages, err := os.getLanguages(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to get languages: %w", err)
+			return domain.StepResult{}, fmt.Errorf("get languages: %w", err)
 		}
 
 		return domain.StepResult{
@@ -189,7 +189,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 		// GET 6 presigned urls from amazon s3
 		urls, err := os.mediaService.GenerateUploadURLsForProfilePhotos(ctx, userID)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to generate profile photo upload urls: %w", err)
+			return domain.StepResult{}, fmt.Errorf("generate profile photo upload urls: %w", err)
 		}
 
 		var photoUploadUrls []domain.UploadUrl
@@ -213,7 +213,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 		// generate prompt urls.
 		urls, err := os.mediaService.GenerateUploadURLsForProfilePrompts(ctx, userID)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
+			return domain.StepResult{}, fmt.Errorf("generate upload urls: %w", err)
 		}
 
 		var voicePromptUploadUrls []domain.UploadUrl
@@ -229,7 +229,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 		// get prompts
 		prompts, err := os.getPrompts(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("failed to get prompts: %w", err)
+			return domain.StepResult{}, fmt.Errorf("get prompts: %w", err)
 		}
 
 		return domain.StepResult{
@@ -324,7 +324,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 	err := os.ensureStep(ctx, basicDetails.UserID, StepForBasics)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
 	err = os.validateBasicDetails(basicDetails)
@@ -334,7 +334,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, basicDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
 	}
 
 	userProfile.GenderID = &basicDetails.GenderID
@@ -350,12 +350,12 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, basicDetails.UserID, StepForBasics)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -368,12 +368,12 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 	err := os.ensureStep(ctx, locationDetails.UserID, StepForLocation)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, locationDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
 	}
 
 	userProfile.City = &locationDetails.City
@@ -383,7 +383,7 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
 	}
 
 	habits, err := os.getHabits(ctx)
@@ -393,7 +393,7 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, locationDetails.UserID, StepForLocation)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -459,18 +459,18 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 
 	err := os.ensureStep(ctx, spokenLanguages.UserID, StepForLanguages)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
 	err = os.profileService.UpsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to insert user spoken languages: %w", err)
+		return domain.StepResult{}, fmt.Errorf("insert user spoken languages: %w", err)
 	}
 
 	// GET 6 presigned urls from amazon s3
 	urls, err := os.mediaService.GenerateUploadURLsForProfilePhotos(ctx, spokenLanguages.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
+		return domain.StepResult{}, fmt.Errorf("generate upload urls: %w", err)
 	}
 
 	var photoUploadUrls []domain.UploadUrl
@@ -485,7 +485,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, spokenLanguages.UserID, StepForLanguages)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -587,12 +587,12 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 
 	err := os.ensureStep(ctx, waeDetails.UserID, StepForWorkAndEducation)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, waeDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
 	}
 
 	userProfile.Work = &waeDetails.Workplace
@@ -601,17 +601,17 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
 	}
 
 	languages, err := os.getLanguages(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get languages: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get languages: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, waeDetails.UserID, StepForWorkAndEducation)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -627,19 +627,19 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 
 	err := os.ensureStep(ctx, uploadedPhotos.UserID, StepForPhotos)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
 	// insert photos into user photos table
 	err = os.profileService.UpsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToProfilePhotos(uploadedPhotos))
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to insert user photos: %w", err)
+		return domain.StepResult{}, fmt.Errorf("insert user photos: %w", err)
 	}
 
 	// generate prompt urls.
 	urls, err := os.mediaService.GenerateUploadURLsForProfilePrompts(ctx, uploadedPhotos.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to generate upload urls: %w", err)
+		return domain.StepResult{}, fmt.Errorf("generate upload urls: %w", err)
 	}
 
 	var voicePromptUploadUrls []domain.UploadUrl
@@ -655,12 +655,12 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	// get prompts
 	prompts, err := os.getPrompts(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get prompts: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get prompts: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPhotos.UserID, StepForPhotos)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -677,19 +677,19 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 
 	err := os.ensureStep(ctx, uploadedPrompts.UserID, StepForPrompts)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
 	// todo: ensure count is min 4
 	// insert prompts into user prompts table
 	err = os.profileService.UpsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToProfileVoicePrompts(uploadedPrompts))
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to insert user prompts: %w", err)
+		return domain.StepResult{}, fmt.Errorf("insert user prompts: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID, StepForPrompts)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
@@ -702,29 +702,29 @@ func (os *onboardingService) Profile(ctx context.Context, profileDetails domain.
 
 	err := os.ensureStep(ctx, profileDetails.UserID, StepForProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to ensure step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, profileDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to get user profile by userID: %w", err)
+		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
 	}
 
 	userProfile.CoverPhotoURL = &profileDetails.ProfileCoverPhotoURL
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to update user profile: %w", err)
+		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
 	}
 
 	err = os.profileService.UpsertUserTheme(ctx, profileDetails.UserID, profileDetails.ProfileBaseColour)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to upsert user theme: %w", err)
+		return domain.StepResult{}, fmt.Errorf("upsert user theme: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, profileDetails.UserID, StepForProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("failed to bump onboarding step: %w", err)
+		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
 	}
 
 	return domain.StepResult{
