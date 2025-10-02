@@ -2,10 +2,7 @@ package profile
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -15,7 +12,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
 )
 
 type Service interface {
@@ -47,6 +43,8 @@ func NewProfileService(
 		lookupRepo:  lookupRepository,
 	}
 }
+
+var ErrContainsSocialMediaPromotion = fmt.Errorf("this field cannot contain social media promotion")
 
 func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error) {
 	userProfile, err := s.getUserProfile(ctx, userID)
@@ -112,7 +110,36 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 
 	// Basic
 	if up.DisplayName != nil {
+		if s.containsSocialMediaPromotion(*up.DisplayName) {
+			return fmt.Errorf("%w : field=display_name, value=%s", ErrContainsSocialMediaPromotion, *up.DisplayName)
+		}
+
 		prof.DisplayName = *up.DisplayName
+	}
+
+	// Work / education text fields
+	if up.Work != nil {
+		if s.containsSocialMediaPromotion(*up.Work) {
+			return fmt.Errorf("%w : field=work, value=%s", ErrContainsSocialMediaPromotion, *up.Work)
+		}
+
+		prof.Work = up.Work
+	}
+
+	if up.JobTitle != nil {
+		if s.containsSocialMediaPromotion(*up.JobTitle) {
+			return fmt.Errorf("%w : field=work, value=%s", ErrContainsSocialMediaPromotion, *up.JobTitle)
+		}
+
+		prof.JobTitle = up.JobTitle
+	}
+
+	if up.University != nil {
+		if s.containsSocialMediaPromotion(*up.University) {
+			return fmt.Errorf("%w : field=university, value=%s", ErrContainsSocialMediaPromotion, *up.University)
+		}
+
+		prof.University = up.University
 	}
 
 	if up.Birthdate != nil {
@@ -194,19 +221,6 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 
 	if up.EthnicityID != nil {
 		prof.EthnicityID = *up.EthnicityID
-	}
-
-	// Work / education text fields
-	if up.Work != nil {
-		prof.Work = up.Work
-	}
-
-	if up.JobTitle != nil {
-		prof.JobTitle = up.JobTitle
-	}
-
-	if up.University != nil {
-		prof.University = up.University
 	}
 
 	// Persist
@@ -400,20 +414,6 @@ func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string
 	return nil
 }
 
-func (s *service) generatePaletteJsonFromBaseColour(baseColour string) ([]byte, error) {
-	palette, err := theme.GeneratePalette9(baseColour)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate palette: %w", err)
-	}
-
-	palJSON, err := json.Marshal(palette)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal palette: %w", err)
-	}
-
-	return palJSON, nil
-}
-
 func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error {
 	// todo: check if position values are unique
 	// todo: ensure count is max 6
@@ -428,304 +428,4 @@ func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []
 
 func (s *service) UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error {
 	return s.profileRepo.UpsertUserSpokenLanguages(ctx, userID, languages)
-}
-
-func (s *service) getUserTheme(ctx context.Context, userID string) (domain.UserTheme, error) {
-	userThemeEntity, err := s.profileRepo.GetUserTheme(ctx, userID)
-	if err != nil {
-		return domain.UserTheme{}, fmt.Errorf("failed to get user theme: %w", err)
-	}
-
-	if userThemeEntity == nil {
-		return domain.UserTheme{}, nil
-	}
-
-	result := domain.UserTheme{
-		BaseHex: userThemeEntity.BaseHex,
-	}
-
-	err = userThemeEntity.Palette.Unmarshal(&result.Palette)
-	if err != nil {
-		return domain.UserTheme{}, fmt.Errorf("failed to unmarshal palette: %w", err)
-	}
-
-	return result, nil
-}
-
-func (s *service) getUserPhotos(ctx context.Context, userID string) ([]domain.Photo, error) {
-	photos, err := s.profileRepo.GetUserPhotos(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user photos: %w", err)
-	}
-
-	var photosList []domain.Photo
-
-	for _, photo := range photos {
-		photosList = append(photosList, domain.Photo{
-			URL:       photo.URL,
-			IsPrimary: photo.IsPrimary,
-			Position:  photo.Position.Int16,
-		})
-	}
-
-	return photosList, nil
-}
-
-func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]domain.VoicePrompt, error) {
-	voicePromptEntities, err := s.profileRepo.GetUserVoicePrompts(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user voice prompts: %w", err)
-	}
-
-	var voicePrompts []domain.VoicePrompt
-
-	for _, vpe := range voicePromptEntities {
-		if !vpe.PromptType.Valid {
-			return nil, fmt.Errorf("invalid prompt type: promptType=%v", vpe.PromptType.Int16)
-		}
-
-		var vpeErr error
-
-		promptType, vpeErr := s.lookupRepo.GetPromptTypeByID(ctx, vpe.PromptType.Int16)
-		if vpeErr != nil {
-			return nil, fmt.Errorf("failed to get prompt type by ID: %w", vpeErr)
-		}
-
-		var promptCoverURL string
-		if vpe.CoverPhotoURL.Valid {
-			promptCoverURL = vpe.CoverPhotoURL.String
-		}
-
-		voicePrompts = append(voicePrompts, domain.VoicePrompt{
-			URL: vpe.AudioURL,
-			PromptType: domain.Prompt{
-				ID:       promptType.ID,
-				Label:    promptType.Label,
-				Key:      promptType.Key,
-				Category: promptType.Category,
-			},
-			IsPrimary:      vpe.IsPrimary,
-			Position:       vpe.Position.Int16,
-			DurationMs:     vpe.DurationMS,
-			PromptCoverURL: promptCoverURL,
-		})
-	}
-
-	return voicePrompts, nil
-}
-
-func (s *service) getUserVoicePromptsForUpdate(ctx context.Context, userID string) ([]domain.VoicePromptUpdate, error) {
-	vps, err := s.getUserVoicePrompts(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user voice prompts: %w", err)
-	}
-
-	var result []domain.VoicePromptUpdate
-	for _, vp := range vps {
-		result = append(result, domain.VoicePromptUpdate{
-			URL:            vp.URL,
-			PromptTypeID:   vp.PromptType.ID,
-			IsPrimary:      vp.IsPrimary,
-			Position:       vp.Position,
-			DurationMs:     vp.DurationMs,
-			PromptCoverURL: vp.PromptCoverURL,
-		})
-	}
-
-	return result, nil
-}
-
-func (s *service) getUserProfile(ctx context.Context, userID string) (*domain.Profile, error) {
-	userProfileEntity, err := s.profileRepo.GetUserProfileByUserID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return mapper.MapProfileToDomain(userProfileEntity), nil
-}
-
-func (s *service) getUserSpokenLanguages(ctx context.Context, userID string) ([]domain.Language, error) {
-	languageIds, err := s.profileRepo.GetUserSpokenLanguages(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user spoken languages: %w", err)
-	}
-
-	var languages []domain.Language
-
-	for _, languageID := range languageIds {
-		var langErr error
-
-		languageEntity, langErr := s.lookupRepo.GetLanguageByID(ctx, languageID)
-		if langErr != nil {
-			return nil, fmt.Errorf("failed to get language by ID: %w", langErr)
-		}
-
-		languages = append(languages, domain.Language{
-			ID:    languageEntity.ID,
-			Label: languageEntity.Label,
-		})
-	}
-
-	return languages, nil
-}
-
-func (s *service) getGenderByID(ctx context.Context, genderID int16) (domain.Gender, error) {
-	genderEntity, err := s.lookupRepo.GetGenderByID(ctx, genderID)
-	if err != nil {
-		return domain.Gender{}, fmt.Errorf("failed to get gender by ID: %w", err)
-	}
-
-	if genderEntity == nil {
-		return domain.Gender{}, errors.New("gender not found")
-	}
-
-	return domain.Gender{
-		ID:    genderEntity.ID,
-		Label: genderEntity.Label,
-	}, nil
-}
-
-func (s *service) getDatingIntentionByID(ctx context.Context, datingIntentionID int16) (domain.DatingIntention, error) {
-	datingIntentionEntity, err := s.lookupRepo.GetDatingIntentionByID(ctx, datingIntentionID)
-	if err != nil {
-		return domain.DatingIntention{}, fmt.Errorf("failed to get dating intention by ID: %w", err)
-	}
-
-	if datingIntentionEntity == nil {
-		return domain.DatingIntention{}, errors.New("dating intention not found")
-	}
-
-	return domain.DatingIntention{
-		ID:    datingIntentionEntity.ID,
-		Label: datingIntentionEntity.Label,
-	}, nil
-}
-
-func (s *service) getReligionByID(ctx context.Context, religionID int16) (domain.Religion, error) {
-	religionEntity, err := s.lookupRepo.GetReligionByID(ctx, religionID)
-	if err != nil {
-		return domain.Religion{}, fmt.Errorf("failed to get religion by ID: %w", err)
-	}
-
-	if religionEntity == nil {
-		return domain.Religion{}, errors.New("religion not found")
-	}
-
-	return domain.Religion{
-		ID:    religionEntity.ID,
-		Label: religionEntity.Label,
-	}, nil
-}
-
-func (s *service) getEducationLevelByID(ctx context.Context, educationLevelID int16) (domain.EducationLevel, error) {
-	educationLevelEntity, err := s.lookupRepo.GetEducationLevelByID(ctx, educationLevelID)
-	if err != nil {
-		return domain.EducationLevel{}, fmt.Errorf("failed to get education level by ID: %w", err)
-	}
-
-	if educationLevelEntity == nil {
-		return domain.EducationLevel{}, errors.New("education level not found")
-	}
-
-	return domain.EducationLevel{
-		ID:    educationLevelEntity.ID,
-		Label: educationLevelEntity.Label,
-	}, nil
-}
-
-func (s *service) getPoliticalBeliefByID(ctx context.Context, politicalBeliefID int16) (domain.PoliticalBelief, error) {
-	politicalBeliefEntity, err := s.lookupRepo.GetPoliticalBeliefByID(ctx, politicalBeliefID)
-	if err != nil {
-		return domain.PoliticalBelief{}, fmt.Errorf("failed to get political belief by ID: %w", err)
-	}
-
-	if politicalBeliefEntity == nil {
-		return domain.PoliticalBelief{}, errors.New("political belief not found")
-	}
-
-	return domain.PoliticalBelief{
-		ID:    politicalBeliefEntity.ID,
-		Label: politicalBeliefEntity.Label,
-	}, err
-}
-
-func (s *service) getHabitByID(ctx context.Context, habitID int16) (domain.Habit, error) {
-	habitEntity, err := s.lookupRepo.GetHabitByID(ctx, habitID)
-	if err != nil {
-		return domain.Habit{}, fmt.Errorf("failed to get habit by ID: %w", err)
-	}
-
-	if habitEntity == nil {
-		return domain.Habit{}, errors.New("habit not found")
-	}
-
-	return domain.Habit{
-		ID:    habitEntity.ID,
-		Label: habitEntity.Label,
-	}, nil
-}
-
-func (s *service) getFamilyStatusByID(ctx context.Context, id int16) (*domain.Status, error) {
-	statusEntity, err := s.lookupRepo.GetFamilyStatusByID(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get family status by ID: %w", err)
-	}
-
-	if statusEntity == nil {
-		return nil, errors.New("family status not found")
-	}
-
-	return &domain.Status{
-		ID:    statusEntity.ID,
-		Label: statusEntity.Label,
-		Key:   statusEntity.Key.String,
-	}, nil
-}
-
-func (s *service) getFamilyPlanByID(ctx context.Context, id int16) (*domain.Status, error) {
-	statusEntity, err := s.lookupRepo.GetFamilyPlanByID(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get family plan by ID: %w", err)
-	}
-
-	if statusEntity == nil {
-		return nil, errors.New("family plan not found")
-	}
-
-	return &domain.Status{
-		ID:    statusEntity.ID,
-		Label: statusEntity.Label,
-		Key:   statusEntity.Key.String,
-	}, nil
-}
-
-func (s *service) getEthnicityByID(ctx context.Context, id int16) (domain.Ethnicity, error) {
-	ethnicityEntity, err := s.lookupRepo.GetEthnicityByID(ctx, id)
-	if err != nil {
-		return domain.Ethnicity{}, fmt.Errorf("failed to get ethnicity by ID: %w", err)
-	}
-
-	if ethnicityEntity == nil {
-		return domain.Ethnicity{}, errors.New("ethnicity not found")
-	}
-
-	return domain.Ethnicity{
-		ID:    ethnicityEntity.ID,
-		Label: ethnicityEntity.Label,
-	}, nil
-}
-
-// calculateAge returns the age in years given a birthdate.
-func calculateAge(birthdate time.Time) int {
-	now := time.Now()
-
-	years := now.Year() - birthdate.Year()
-
-	// If the birthday hasn't occurred yet this year, subtract 1
-	if now.Month() < birthdate.Month() ||
-		(now.Month() == birthdate.Month() && now.Day() < birthdate.Day()) {
-		years--
-	}
-
-	return years
 }

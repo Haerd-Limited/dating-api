@@ -147,6 +147,8 @@ func (h *handler) UpdateMyProfile() http.HandlerFunc {
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, profile.ErrContainsSocialMediaPromotion):
+		return http.StatusBadRequest, messages.SocialsNotAllowedMsg
 	case errors.Is(err, storage.ErrUserDoesNotExists):
 		return http.StatusNotFound, "User does not exist"
 	case errors.Is(err, commonErrors.ErrInvalidDOBFormat):

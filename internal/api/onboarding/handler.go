@@ -11,6 +11,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
+	"github.com/Haerd-Limited/dating-api/internal/profile"
 	userstorage "github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
@@ -826,6 +827,9 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return constants.StatusClientClosedRequest, messages.RequestCancelledMsg
 	case errors.Is(err, standardcontext.DeadlineExceeded):
 		return http.StatusRequestTimeout, messages.RequestTimeoutMsg
+
+	case errors.Is(err, profile.ErrContainsSocialMediaPromotion):
+		return http.StatusBadRequest, messages.SocialsNotAllowedMsg
 
 	case errors.Is(err, onboarding.ErrIncorrectStepCalled):
 		return http.StatusBadRequest, "Incorrect step called"
