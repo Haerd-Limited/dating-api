@@ -177,7 +177,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 			return nil, fmt.Errorf("failed to create user: %w", regErr)
 		}
 
-		tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, *userID)
+		tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userID)
 		if tokenErr != nil {
 			return nil, fmt.Errorf("failed to generate tokens: %w", tokenErr)
 		}
@@ -186,7 +186,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 			RefreshToken: tokens.RefreshToken,
 			AccessToken:  tokens.AccessToken,
 			User: &domain.User{
-				ID:             *userID,
+				ID:             userID,
 				OnboardingStep: onboardingdomain.OnboardingStepsIntro,
 			},
 		}, nil

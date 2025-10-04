@@ -3,13 +3,15 @@ package lookup
 import (
 	"context"
 	"errors"
+	"net/http"
+
+	"go.uber.org/zap"
+
 	"github.com/Haerd-Limited/dating-api/internal/api/lookup/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/lookup"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
-	"go.uber.org/zap"
-	"net/http"
 )
 
 type Handler interface {

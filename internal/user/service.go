@@ -11,6 +11,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/aws"
+	"github.com/Haerd-Limited/dating-api/internal/preference"
+	"github.com/Haerd-Limited/dating-api/internal/profile"
+	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/internal/user/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -20,7 +23,8 @@ import (
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=user
 type Service interface {
-	CreateUser(ctx context.Context, user domain.User) (userID *string, err error)
+	// CreateUser creates a new user and scaffolds a profile and user preferences in a single transaction.
+	CreateUser(ctx context.Context, user domain.User) (string, error)
 	GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (*domain.User, error)
 	GetUser(ctx context.Context, id string) (*domain.User, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
@@ -29,10 +33,13 @@ type Service interface {
 }
 
 type userService struct {
-	logger     *zap.Logger
-	userRepo   storage.UserRepository
-	awsService aws.Service
-	cache      *freecache.Cache
+	logger            *zap.Logger
+	userRepo          storage.UserRepository
+	awsService        aws.Service
+	cache             *freecache.Cache
+	uow               uow.UoW
+	profileService    profile.Service
+	preferenceService preference.Service
 }
 
 func NewUserService(
@@ -40,12 +47,18 @@ func NewUserService(
 	userRepo storage.UserRepository,
 	awsService aws.Service,
 	cache *freecache.Cache,
+	uow uow.UoW,
+	profileService profile.Service,
+	preferenceService preference.Service,
 ) Service {
 	return &userService{
-		logger:     logger,
-		userRepo:   userRepo,
-		awsService: awsService,
-		cache:      cache,
+		logger:            logger,
+		userRepo:          userRepo,
+		awsService:        awsService,
+		cache:             cache,
+		uow:               uow,
+		profileService:    profileService,
+		preferenceService: preferenceService,
 	}
 }
 
@@ -60,10 +73,34 @@ const (
 	maxNameLen = 20
 )
 
-func (us *userService) CreateUser(ctx context.Context, user domain.User) (userID *string, err error) {
-	userID, err = us.userRepo.InsertUser(ctx, mapper.ToUserEntity(user))
+// CreateUser creates a new user and scaffolds a profile and user preferences in a single transaction.
+func (us *userService) CreateUser(ctx context.Context, user domain.User) (string, error) {
+	tx, err := us.uow.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return "", fmt.Errorf("begin tx: %w", err)
+	}
+	defer func(tx uow.Tx) {
+		err = tx.Rollback()
+	}(tx)
+
+	userID, err := us.userRepo.InsertUser(ctx, mapper.ToUserEntity(user), tx.Raw())
+	if err != nil {
+		return "", fmt.Errorf("insert user: %w", err)
+	}
+
+	err = us.profileService.ScaffoldProfile(ctx, tx.Raw(), userID)
+	if err != nil {
+		return "", fmt.Errorf("create new default profile: %w", err)
+	}
+
+	err = us.preferenceService.ScaffoldUserPreferences(ctx, tx.Raw(), userID)
+	if err != nil {
+		return "", fmt.Errorf("create new default preference: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return "", fmt.Errorf("commit tx: %w", err)
 	}
 
 	return userID, nil

@@ -2,9 +2,11 @@ package profile
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
+	"github.com/aarondl/null/v8"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
@@ -12,6 +14,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
@@ -20,6 +23,7 @@ type Service interface {
 	GetProfileCard(ctx context.Context, userID string) (profilecard.ProfileCard, error)
 	GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error)
 	UpdateProfile(ctx context.Context, updatedProfile domain.UpdateProfile) error
+	ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string) error
 
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error
@@ -50,25 +54,40 @@ var (
 	ErrInvalidID                    = errors.New("id must be greater than 0")
 )
 
+func (s *service) ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string) error {
+	err := s.profileRepo.InsertProfile(ctx,
+		&entity.UserProfile{
+			UserID: userID,
+			Emoji:  null.StringFrom(constants.DefaultEmoji),
+		},
+		tx,
+	)
+	if err != nil {
+		return fmt.Errorf("insert profile: %w", err)
+	}
+
+	return nil
+}
+
 func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error) {
 	userProfile, err := s.getUserProfile(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("failed to get user profile: %w", err)
+		return domain.UpdateProfile{}, fmt.Errorf("get user profile: %w", err)
 	}
 
 	languageIds, err := s.profileRepo.GetUserSpokenLanguages(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("failed to get user spoken languages: %w", err)
+		return domain.UpdateProfile{}, fmt.Errorf("get user spoken languages: %w", err)
 	}
 
 	VoicePrompts, err := s.getUserVoicePromptsForUpdate(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("failed to get user voice prompts: %w", err)
+		return domain.UpdateProfile{}, fmt.Errorf("get user voice prompts: %w", err)
 	}
 
 	Photos, err := s.getUserPhotos(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("failed to get user photos: %w", err)
+		return domain.UpdateProfile{}, fmt.Errorf("get user photos: %w", err)
 	}
 
 	return domain.UpdateProfile{
@@ -109,7 +128,7 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	// Load current profile
 	prof, err := s.getUserProfile(ctx, up.UserID)
 	if err != nil {
-		return fmt.Errorf("failed to get user profile: %w", err)
+		return fmt.Errorf("get user profile: %w", err)
 	}
 
 	// Basic
@@ -180,147 +199,85 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	if up.GenderID != nil {
-		if *up.GenderID == 0 {
-			return fmt.Errorf("invalid gender id: %w", ErrInvalidID)
-		}
-
 		prof.GenderID = *up.GenderID
 	}
 
 	if up.DatingIntentionID != nil {
-		if *up.DatingIntentionID == 0 {
-			return fmt.Errorf("invalid dating intention id: %w", ErrInvalidID)
-		}
-
 		prof.DatingIntentionID = *up.DatingIntentionID
 	}
 
 	if up.ReligionID != nil {
-		if *up.ReligionID == 0 {
-			return fmt.Errorf("invalid religion id: %w", ErrInvalidID)
-		}
-
 		prof.ReligionID = *up.ReligionID
 	}
 
 	if up.EducationLevelID != nil {
-		if *up.EducationLevelID == 0 {
-			return fmt.Errorf("invalid education level id: %w", ErrInvalidID)
-		}
-
 		prof.EducationLevelID = *up.EducationLevelID
 	}
 
 	if up.PoliticalBeliefID != nil {
-		if *up.PoliticalBeliefID == 0 {
-			return fmt.Errorf("invalid political belief id: %w", ErrInvalidID)
-		}
-
 		prof.PoliticalBeliefID = *up.PoliticalBeliefID
 	}
 
 	if up.DrinkingID != nil {
-		if *up.DrinkingID == 0 {
-			return fmt.Errorf("invalid drinking habit id: %w", ErrInvalidID)
-		}
-
 		prof.DrinkingID = *up.DrinkingID
 	}
 
 	if up.SmokingID != nil {
-		if *up.SmokingID == 0 {
-			return fmt.Errorf("invalid smoking habit id: %w", ErrInvalidID)
-		}
-
 		prof.SmokingID = *up.SmokingID
 	}
 
 	if up.MarijuanaID != nil {
-		if *up.MarijuanaID == 0 {
-			return fmt.Errorf("invalid marijuanna habit id: %w", ErrInvalidID)
-		}
-
 		prof.MarijuanaID = *up.MarijuanaID
 	}
 
 	if up.DrugsID != nil {
-		if *up.DrugsID == 0 {
-			return fmt.Errorf("invalid drugs habit id: %w", ErrInvalidID)
-		}
-
 		prof.DrugsID = *up.DrugsID
 	}
 
 	if up.ChildrenStatusID != nil {
-		if *up.ChildrenStatusID == 0 {
-			return fmt.Errorf("invalid children status id: %w", ErrInvalidID)
-		}
-
 		prof.ChildrenStatusID = up.ChildrenStatusID
 	}
 
 	if up.FamilyPlanID != nil {
-		if *up.FamilyPlanID == 0 {
-			return fmt.Errorf("invalid family plan id: %w", ErrInvalidID)
-		}
-
 		prof.FamilyPlanID = up.FamilyPlanID
 	}
 
 	if up.EthnicityID != nil {
-		if *up.EthnicityID == 0 {
-			return fmt.Errorf("invalid ethnicity id: %w", ErrInvalidID)
-		}
-
 		prof.EthnicityID = *up.EthnicityID
 	}
 
 	// Persist
 	err = s.updateUserProfile(ctx, prof)
 	if err != nil {
-		return fmt.Errorf("failed to update user profile: %w", err)
+		return fmt.Errorf("update user profile: %w", err)
 	}
 
 	if up.BaseColour != nil {
 		err = s.UpsertUserTheme(ctx, up.UserID, *up.BaseColour)
 		if err != nil {
-			return fmt.Errorf("failed to upsert user theme: %w", err)
+			return fmt.Errorf("upsert user theme: %w", err)
 		}
 	}
 
 	if len(up.SpokenLanguages) > 0 {
 		err = s.profileRepo.UpsertUserSpokenLanguages(ctx, up.UserID, up.SpokenLanguages)
 		if err != nil {
-			return fmt.Errorf("failed to upsert user spoken languages: %w", err)
+			return fmt.Errorf("upsert user spoken languages: %w", err)
 		}
 	}
 
 	if len(up.Photos) > 0 {
 		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID))
 		if err != nil {
-			return fmt.Errorf("failed to insert user photos: %w", err)
+			return fmt.Errorf("insert user photos: %w", err)
 		}
 	}
 
 	if len(up.VoicePrompts) > 0 {
 		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, up.UserID))
 		if err != nil {
-			return fmt.Errorf("failed to insert user voice prompts: %w", err)
+			return fmt.Errorf("insert user voice prompts: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Profile) error {
-	updatedUserProfileEntity, whitelist, err := mapper.MapProfileToEntityForUpdate(userProfile)
-	if err != nil {
-		return fmt.Errorf("failed to map user profile to entity: %w", err)
-	}
-
-	err = s.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity, whitelist)
-	if err != nil {
-		return fmt.Errorf("failed to update user profile: %w", err)
 	}
 
 	return nil
@@ -329,7 +286,7 @@ func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Pro
 func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error) {
 	userProfile, err := s.getUserProfile(ctx, userID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user profile: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get user profile: %w", err)
 	}
 
 	result := domain.EnrichedProfile{
@@ -353,86 +310,86 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 
 	result.Theme, err = s.getUserTheme(ctx, userID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user theme: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get user theme: %w", err)
 	}
 
 	result.Gender, err = s.getGenderByID(ctx, userProfile.GenderID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get gender: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get gender: %w", err)
 	}
 
 	result.Ethnicity, err = s.getEthnicityByID(ctx, userProfile.EthnicityID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get ethnicity: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get ethnicity: %w", err)
 	}
 
 	result.DatingIntention, err = s.getDatingIntentionByID(ctx, userProfile.DatingIntentionID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get dating intention: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get dating intention: %w", err)
 	}
 
 	result.Religion, err = s.getReligionByID(ctx, userProfile.ReligionID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get religion: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get religion: %w", err)
 	}
 
 	result.EducationLevel, err = s.getEducationLevelByID(ctx, userProfile.EducationLevelID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get education level: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get education level: %w", err)
 	}
 
 	result.PoliticalBelief, err = s.getPoliticalBeliefByID(ctx, userProfile.PoliticalBeliefID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get political belief: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get political belief: %w", err)
 	}
 
 	result.Drinking, err = s.getHabitByID(ctx, userProfile.DrinkingID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get drinking habit: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get drinking habit: %w", err)
 	}
 
 	result.Smoking, err = s.getHabitByID(ctx, userProfile.SmokingID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get smoking habit: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get smoking habit: %w", err)
 	}
 
 	result.Marijuana, err = s.getHabitByID(ctx, userProfile.MarijuanaID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get marijuana habit: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get marijuana habit: %w", err)
 	}
 
 	result.Drugs, err = s.getHabitByID(ctx, userProfile.DrugsID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get drugs habit: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get drugs habit: %w", err)
 	}
 
 	if userProfile.ChildrenStatusID != nil {
 		result.ChildrenStatus, err = s.getFamilyStatusByID(ctx, *userProfile.ChildrenStatusID)
 		if err != nil {
-			return domain.EnrichedProfile{}, fmt.Errorf("failed to get children status: %w", err)
+			return domain.EnrichedProfile{}, fmt.Errorf("get children status: %w", err)
 		}
 	}
 
 	if userProfile.FamilyPlanID != nil {
 		result.FamilyPlan, err = s.getFamilyPlanByID(ctx, *userProfile.FamilyPlanID)
 		if err != nil {
-			return domain.EnrichedProfile{}, fmt.Errorf("failed to get family plan: %w", err)
+			return domain.EnrichedProfile{}, fmt.Errorf("get family plan: %w", err)
 		}
 	}
 
 	result.SpokenLanguages, err = s.getUserSpokenLanguages(ctx, userID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user spoken languages: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get user spoken languages: %w", err)
 	}
 
 	result.VoicePrompts, err = s.getUserVoicePrompts(ctx, userID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user voice prompts: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get user voice prompts: %w", err)
 	}
 
 	result.Photos, err = s.getUserPhotos(ctx, userID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("failed to get user photos: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get user photos: %w", err)
 	}
 
 	return result, nil
@@ -441,7 +398,7 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 func (s *service) GetProfileCard(ctx context.Context, userID string) (profilecard.ProfileCard, error) {
 	enrichedProfile, err := s.GetEnrichedProfile(ctx, userID)
 	if err != nil {
-		return profilecard.ProfileCard{}, fmt.Errorf("failed to get enriched profile: %w", err)
+		return profilecard.ProfileCard{}, fmt.Errorf("get enriched profile: %w", err)
 	}
 
 	return mapper.MapEnrichedProfileToProfileCard(enrichedProfile), nil
@@ -451,7 +408,7 @@ func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string
 	// generate colours
 	palJSON, err := s.generatePaletteJsonFromBaseColour(baseColour)
 	if err != nil {
-		return fmt.Errorf("failed to generate palette json: %w", err)
+		return fmt.Errorf("generate palette json: %w", err)
 	}
 	// store colours.
 	err = s.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
@@ -460,7 +417,7 @@ func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string
 		Palette: palJSON,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to upsert user theme: %w", err)
+		return fmt.Errorf("upsert user theme: %w", err)
 	}
 
 	return nil

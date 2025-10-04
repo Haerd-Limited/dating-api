@@ -38,6 +38,22 @@ func (s *service) generatePaletteJsonFromBaseColour(baseColour string) ([]byte, 
 	return palJSON, nil
 }
 
+func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Profile) error {
+	updatedUserProfileEntity, whitelist, err := mapper.MapProfileToEntityForUpdate(userProfile)
+	if err != nil {
+		return fmt.Errorf("failed to map user profile to entity: %w", err)
+	}
+
+	s.logger.Sugar().Infof("long: %v lat: %v geo:%s", userProfile.Longitude, userProfile.Latitude, updatedUserProfileEntity.Geo)
+
+	err = s.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity, whitelist)
+	if err != nil {
+		return fmt.Errorf("failed to update user profile: %w", err)
+	}
+
+	return nil
+}
+
 func (s *service) getUserTheme(ctx context.Context, userID string) (domain.UserTheme, error) {
 	userThemeEntity, err := s.profileRepo.GetUserTheme(ctx, userID)
 	if err != nil {

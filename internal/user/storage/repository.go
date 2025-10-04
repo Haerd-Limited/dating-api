@@ -16,7 +16,7 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type UserRepository interface {
-	InsertUser(ctx context.Context, user *entity.User) (*string, error)
+	InsertUser(ctx context.Context, user *entity.User, tx *sql.Tx) (string, error)
 	GetByPhoneNumber(ctx context.Context, number string) (*entity.User, error)
 	CheckUserExistenceByPhoneNumber(ctx context.Context, number string) (bool, error)
 	GetUserByID(ctx context.Context, id string) (*entity.User, error)
@@ -63,72 +63,31 @@ func (r *userRepository) UpdateUser(ctx context.Context, e *entity.User, cols []
 	return nil
 }
 
-func (r *userRepository) InsertUser(ctx context.Context, user *entity.User) (*string, error) {
-	// Start a transaction so user and scaffold are atomic
-	tx, err := r.db.BeginTxx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("begin tx: %w", err)
-	}
-
-	rollback := func(e error) (*string, error) {
-		_ = tx.Rollback()
-		return nil, e
-	}
-
-	// 1) Insert user
-	err = user.Insert(ctx, tx, boil.Infer())
+func (r *userRepository) InsertUser(ctx context.Context, user *entity.User, tx *sql.Tx) (string, error) {
+	err := user.Insert(ctx, tx, boil.Infer())
 	if err != nil {
 		// Check if the error is a unique constraint violation (email already exists)
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			switch pqErr.Constraint {
 			case "users_email_key":
-				return rollback(ErrEmailAlreadyExists)
+				return "", ErrEmailAlreadyExists
 			default:
-				return rollback(ErrUserDetailsAlreadyExists)
+				return "", ErrUserDetailsAlreadyExists
 			}
 		}
 
-		return rollback(fmt.Errorf("failed inserting user entity: %w", err))
+		return "", fmt.Errorf("failed inserting user entity: %w", err)
 	}
 
 	// If ID is DB-generated (DEFAULT gen_random_uuid()), make sure we have it loaded
 	if user.ID == "" {
 		if err = user.Reload(ctx, tx); err != nil {
-			return rollback(fmt.Errorf("reload user after insert: %w", err))
+			return "", fmt.Errorf("reload user after insert: %w", err)
 		}
 	}
 
-	// 2) Scaffold empty profile
-	profile := &entity.UserProfile{
-		UserID: user.ID,
-	}
-	if user.FirstName != "" {
-		profile.DisplayName = fmt.Sprintf("%s %s", user.FirstName, user.LastName.String)
-	}
-
-	err = profile.Insert(ctx, tx, boil.Infer())
-	if err != nil {
-		return rollback(fmt.Errorf("insert user_profile: %w", err))
-	}
-
-	// 3) Scaffold preferences row (timestamps have DEFAULT now())
-	prefs := &entity.UserPreference{
-		UserID: user.ID,
-	}
-
-	err = prefs.Insert(ctx, tx, boil.Infer())
-	if err != nil {
-		return rollback(fmt.Errorf("insert user_preferences: %w", err))
-	}
-
-	// 4) Commit
-	err = tx.Commit()
-	if err != nil {
-		return nil, fmt.Errorf("commit tx: %w", err)
-	}
-
-	return &user.ID, nil
+	return user.ID, nil
 }
 
 // GetByPhoneNumber retrieves a user by their phoneNumber.

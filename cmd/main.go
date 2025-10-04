@@ -31,8 +31,11 @@ import (
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
+	"github.com/Haerd-Limited/dating-api/internal/preference"
+	storage2 "github.com/Haerd-Limited/dating-api/internal/preference/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
-	storage2 "github.com/Haerd-Limited/dating-api/internal/profile/storage"
+	profilestorage "github.com/Haerd-Limited/dating-api/internal/profile/storage"
+	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commondb "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/db"
@@ -89,8 +92,13 @@ func main() {
 	lookupRepo := lookupstorage.NewLookupRepository(db)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
 
-	profileRepo := storage2.NewProfileRepository(db)
+	profileRepo := profilestorage.NewProfileRepository(db)
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo)
+
+	unitOfWork := uow.New(db.DB)
+
+	preferenceRepo := storage2.NewPreferenceRepository(db)
+	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
 
 	discoverRepo := storage3.NewDiscoverRepository(db)
 	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
@@ -103,7 +111,7 @@ func main() {
 	interactionService := interaction.NewInteractionService(logger, interactionRepo, profileService, conversationService)
 
 	userRepo := storage.NewUserRepository(db)
-	userService := user.NewUserService(logger, userRepo, awsService, cache)
+	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
 
 	communicationService := communication.NewService(
 		cfg.TwilioAccountSID,

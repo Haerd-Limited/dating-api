@@ -18,6 +18,7 @@ import (
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type ProfileRepository interface {
+	InsertProfile(ctx context.Context, userProfile *entity.UserProfile, tx *sql.Tx) error
 	UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
@@ -38,6 +39,15 @@ func NewProfileRepository(db *sqlx.DB) ProfileRepository {
 	return &profileRepository{
 		db: db,
 	}
+}
+
+func (pr *profileRepository) InsertProfile(ctx context.Context, userProfile *entity.UserProfile, tx *sql.Tx) error {
+	err := userProfile.Insert(ctx, tx, boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (pr *profileRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error {

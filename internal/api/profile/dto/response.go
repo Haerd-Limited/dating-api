@@ -5,7 +5,7 @@ type GetProfileResponse struct {
 }
 
 type Profile struct {
-	DisplayName   string `json:"display_name,omitempty"`
+	DisplayName   string `json:"display_name"`
 	Birthdate     string `json:"birthdate"`
 	Age           int    `json:"age"`
 	HeightCM      int16  `json:"height_cm"`
@@ -14,12 +14,12 @@ type Profile struct {
 	Emoji         string `json:"emoji"`
 
 	// Location
-	Latitude  float64 `json:"latitude,omitempty"`
-	Longitude float64 `json:"longitude,omitempty"`
-	City      string  `json:"home_town,omitempty"`
-	Country   string  `json:"country,omitempty"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	City      string  `json:"home_town"`
+	Country   string  `json:"country"`
 
-	Gender          Gender          `json:"gender,omitempty"`
+	Gender          Gender          `json:"gender"`
 	DatingIntention DatingIntention `json:"dating_intention"`
 	Religion        Religion        `json:"religion"`
 	EducationLevel  EducationLevel  `json:"education_level"`
@@ -28,16 +28,16 @@ type Profile struct {
 	Smoking         Habit           `json:"smoking"`
 	Marijuana       Habit           `json:"marijuana"`
 	Drugs           Habit           `json:"drugs"`
-	ChildrenStatus  *Status         `json:"children_status,omitempty"`
-	FamilyPlan      *Status         `json:"family_plan,omitempty"`
+	ChildrenStatus  *Status         `json:"children_status"`
+	FamilyPlan      *Status         `json:"family_plan"`
 	Ethnicity       Ethnicity       `json:"ethnicity"`
 	SpokenLanguages []Language      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt   `json:"voice_prompts"`
 	Photos          []Photo         `json:"photos"`
 
-	Work       *string   `json:"work,omitempty"`
-	JobTitle   *string   `json:"job_title,omitempty"`
-	University *string   `json:"university,omitempty"`
+	Work       *string   `json:"work"`
+	JobTitle   *string   `json:"job_title"`
+	University *string   `json:"university"`
 	Theme      UserTheme `json:"theme"`
 
 	CreatedAt string `json:"created_at"`

@@ -9,12 +9,12 @@ type ProfileCard struct {
 	Emoji       string `json:"emoji"`
 
 	// Location
-	Latitude  float64 `json:"latitude,omitempty"`
-	Longitude float64 `json:"longitude,omitempty"`
-	City      string  `json:"home_town,omitempty"`
-	Country   string  `json:"country,omitempty"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	City      string  `json:"home_town"`
+	Country   string  `json:"country"`
 
-	Gender          string        `json:"gender,omitempty"`
+	Gender          string        `json:"gender"`
 	DatingIntention string        `json:"dating_intention"`
 	Religion        string        `json:"religion"`
 	EducationLevel  string        `json:"education_level"`
@@ -23,8 +23,8 @@ type ProfileCard struct {
 	Smoking         string        `json:"smoking"`
 	Marijuana       string        `json:"marijuana"`
 	Drugs           string        `json:"drugs"`
-	ChildrenStatus  *string       `json:"children_status,omitempty"`
-	FamilyPlan      *string       `json:"family_plan,omitempty"`
+	ChildrenStatus  *string       `json:"children_status"`
+	FamilyPlan      *string       `json:"family_plan"`
 	Ethnicity       string        `json:"ethnicity"`
 	SpokenLanguages []string      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt `json:"voice_prompts"`
@@ -33,9 +33,9 @@ type ProfileCard struct {
 
 	Verified bool `json:"verified"`
 
-	Work       *string `json:"work,omitempty"`
-	JobTitle   *string `json:"job_title,omitempty"`
-	University *string `json:"university,omitempty"`
+	Work       *string `json:"work"`
+	JobTitle   *string `json:"job_title"`
+	University *string `json:"university"`
 
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
