@@ -16,3 +16,8 @@ type Religion struct {
 	ID    int16
 	Label string
 }
+
+type PoliticalBelief struct {
+	ID    int16
+	Label string
+}

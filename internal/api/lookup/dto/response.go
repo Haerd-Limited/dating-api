@@ -27,3 +27,12 @@ type Religion struct {
 	ID    int16  `json:"id"`
 	Label string `json:"label"`
 }
+
+type GetPoliticalBeliefsResponse struct {
+	PoliticalBeliefs []PoliticalBelief `json:"political_beliefs"`
+}
+
+type PoliticalBelief struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}

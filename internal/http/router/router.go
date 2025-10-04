@@ -77,6 +77,7 @@ func New(
 					r.Get("/prompts", lookupHandler.GetPrompts())
 					r.Get("/languages", lookupHandler.GetLanguages())
 					r.Get("/religions", lookupHandler.GetReligions())
+					r.Get("/political-beliefs", lookupHandler.GetPoliticalBeliefs())
 				})
 
 				r.Route(

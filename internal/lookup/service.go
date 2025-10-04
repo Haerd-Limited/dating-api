@@ -14,6 +14,7 @@ type Service interface {
 	GetPrompts(ctx context.Context) ([]domain.Prompt, error)
 	GetLanguages(ctx context.Context) ([]domain.Language, error)
 	GetReligions(ctx context.Context) ([]domain.Religion, error)
+	GetPoliticalBeliefs(ctx context.Context) ([]domain.PoliticalBelief, error)
 }
 
 type lookupService struct {
@@ -56,4 +57,13 @@ func (s *lookupService) GetReligions(ctx context.Context) ([]domain.Religion, er
 	}
 
 	return mapper.MapReligionsToDomain(religionsEntities), nil
+}
+
+func (s *lookupService) GetPoliticalBeliefs(ctx context.Context) ([]domain.PoliticalBelief, error) {
+	politicalBeliefsEntities, err := s.lookupRepo.GetPoliticalBeliefs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapPoliticalBeliefsToDomain(politicalBeliefsEntities), nil
 }

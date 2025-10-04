@@ -48,3 +48,17 @@ func MapToGetReligionsResponse(domainReligions []domain.Religion) dto.GetReligio
 		Religions: religions,
 	}
 }
+
+func MapToGetPoliticalBeliefsResponse(domainPoliticalBeliefs []domain.PoliticalBelief) dto.GetPoliticalBeliefsResponse {
+	var politicalBeliefs []dto.PoliticalBelief
+	for _, politicalBelief := range domainPoliticalBeliefs {
+		politicalBeliefs = append(politicalBeliefs, dto.PoliticalBelief{
+			ID:    politicalBelief.ID,
+			Label: politicalBelief.Label,
+		})
+	}
+
+	return dto.GetPoliticalBeliefsResponse{
+		PoliticalBeliefs: politicalBeliefs,
+	}
+}

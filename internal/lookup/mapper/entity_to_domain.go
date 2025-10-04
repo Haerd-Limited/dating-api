@@ -57,3 +57,20 @@ func MapReligionsToDomain(g []*entity.Religion) []domain.Religion {
 
 	return result
 }
+
+func MapPoliticalBeliefsToDomain(g []*entity.PoliticalBelief) []domain.PoliticalBelief {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.PoliticalBelief
+
+	for _, e := range g {
+		result = append(result, domain.PoliticalBelief{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
