@@ -6,4 +6,7 @@ const (
 	EmailChannel    = "email"
 	LoginPurpose    = "login"
 	RegisterPurpose = "register"
+	ActionLike      = "like"
+	ActionPass      = "pass"
+	ActionSuperlike = "superlike"
 )

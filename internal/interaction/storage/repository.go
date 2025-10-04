@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -34,17 +35,11 @@ func NewInteractionRepository(db *sqlx.DB) InteractionRepository {
 
 var ErrAlreadySwiped = errors.New("you've already swiped on this user.")
 
-const (
-	actionLike      = "like"
-	actionPass      = "pass"
-	actionSuperlike = "superlike"
-)
-
 // GetIncomingLikes returns profiles of users who have liked/superliked `userID`.
 func (is *repository) GetIncomingLikes(ctx context.Context, userID string, limit, offset int) ([]string, error) {
 	swipes, err := entity.Swipes(
 		entity.SwipeWhere.TargetID.EQ(userID),
-		qm.Where("action IN (?, ?)", actionLike, actionSuperlike),
+		qm.Where("action IN (?, ?)", constants.ActionLike, constants.ActionSuperlike),
 		qm.Limit(limit),
 		qm.Offset(offset),
 		qm.OrderBy("created_at ASC"),
@@ -84,7 +79,7 @@ func (is *repository) CheckIfMatchable(ctx context.Context, userID string, targe
 	ok, err := entity.Swipes(
 		entity.SwipeWhere.ActorID.EQ(targetUserID), // they swiped
 		entity.SwipeWhere.TargetID.EQ(userID),      // on me
-		qm.Where("action IN (?, ?)", actionLike, actionSuperlike),
+		qm.Where("action IN (?, ?)", constants.ActionLike, constants.ActionSuperlike),
 	).Exists(ctx, is.db)
 	if err != nil {
 		return false, err
