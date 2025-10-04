@@ -12,6 +12,7 @@ import (
 
 type Service interface {
 	GetPrompts(ctx context.Context) ([]domain.Prompt, error)
+	GetLanguages(ctx context.Context) ([]domain.Language, error)
 }
 
 type lookupService struct {
@@ -36,4 +37,13 @@ func (s *lookupService) GetPrompts(ctx context.Context) ([]domain.Prompt, error)
 	}
 
 	return mapper.MapPromptsToDomain(prompts), nil
+}
+
+func (s *lookupService) GetLanguages(ctx context.Context) ([]domain.Language, error) {
+	languageEntities, err := s.lookupRepo.GetLanguages(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapLanguagesToDomain(languageEntities), nil
 }

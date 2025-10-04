@@ -20,3 +20,17 @@ func MapToGetPromptsResponse(domainPrompts []domain.Prompt) dto.GetPromptsRespon
 		Prompts: prompts,
 	}
 }
+
+func MapToGetLanguagesResponse(domainLangs []domain.Language) dto.GetLanguagesResponse {
+	var languages []dto.Language
+	for _, lang := range domainLangs {
+		languages = append(languages, dto.Language{
+			ID:    lang.ID,
+			Label: lang.Label,
+		})
+	}
+
+	return dto.GetLanguagesResponse{
+		Languages: languages,
+	}
+}

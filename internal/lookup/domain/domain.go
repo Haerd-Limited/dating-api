@@ -6,3 +6,8 @@ type Prompt struct {
 	Label    string
 	Category string
 }
+
+type Language struct {
+	ID    int16
+	Label string
+}

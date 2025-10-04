@@ -23,3 +23,20 @@ func MapPromptsToDomain(g []*entity.PromptType) []domain.Prompt {
 
 	return result
 }
+
+func MapLanguagesToDomain(g []*entity.Language) []domain.Language {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Language
+
+	for _, e := range g {
+		result = append(result, domain.Language{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}

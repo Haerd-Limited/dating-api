@@ -9,3 +9,12 @@ type Prompt struct {
 	Label    string `json:"label"`
 	Category string `json:"category"`
 }
+
+type GetLanguagesResponse struct {
+	Languages []Language `json:"languages"`
+}
+
+type Language struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
