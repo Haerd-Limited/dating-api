@@ -117,15 +117,18 @@ var VoicePromptWhere = struct {
 var VoicePromptRels = struct {
 	VoicePromptPromptType string
 	User                  string
+	PromptSwipes          string
 }{
 	VoicePromptPromptType: "VoicePromptPromptType",
 	User:                  "User",
+	PromptSwipes:          "PromptSwipes",
 }
 
 // voicePromptR is where relationships are stored.
 type voicePromptR struct {
 	VoicePromptPromptType *PromptType `boil:"VoicePromptPromptType" json:"VoicePromptPromptType" toml:"VoicePromptPromptType" yaml:"VoicePromptPromptType"`
 	User                  *User       `boil:"User" json:"User" toml:"User" yaml:"User"`
+	PromptSwipes          SwipeSlice  `boil:"PromptSwipes" json:"PromptSwipes" toml:"PromptSwipes" yaml:"PromptSwipes"`
 }
 
 // NewStruct creates a new relationship struct
@@ -163,6 +166,22 @@ func (r *voicePromptR) GetUser() *User {
 	}
 
 	return r.User
+}
+
+func (o *VoicePrompt) GetPromptSwipes() SwipeSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetPromptSwipes()
+}
+
+func (r *voicePromptR) GetPromptSwipes() SwipeSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.PromptSwipes
 }
 
 // voicePromptL is where Load methods for each relationship are stored.
@@ -503,6 +522,20 @@ func (o *VoicePrompt) User(mods ...qm.QueryMod) userQuery {
 	return Users(queryMods...)
 }
 
+// PromptSwipes retrieves all the swipe's Swipes with an executor via prompt_id column.
+func (o *VoicePrompt) PromptSwipes(mods ...qm.QueryMod) swipeQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"swipes\".\"prompt_id\"=?", o.ID),
+	)
+
+	return Swipes(queryMods...)
+}
+
 // LoadVoicePromptPromptType allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (voicePromptL) LoadVoicePromptPromptType(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVoicePrompt interface{}, mods queries.Applicator) error {
@@ -751,6 +784,119 @@ func (voicePromptL) LoadUser(ctx context.Context, e boil.ContextExecutor, singul
 	return nil
 }
 
+// LoadPromptSwipes allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (voicePromptL) LoadPromptSwipes(ctx context.Context, e boil.ContextExecutor, singular bool, maybeVoicePrompt interface{}, mods queries.Applicator) error {
+	var slice []*VoicePrompt
+	var object *VoicePrompt
+
+	if singular {
+		var ok bool
+		object, ok = maybeVoicePrompt.(*VoicePrompt)
+		if !ok {
+			object = new(VoicePrompt)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeVoicePrompt)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeVoicePrompt))
+			}
+		}
+	} else {
+		s, ok := maybeVoicePrompt.(*[]*VoicePrompt)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeVoicePrompt)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeVoicePrompt))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &voicePromptR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &voicePromptR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`swipes`),
+		qm.WhereIn(`swipes.prompt_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load swipes")
+	}
+
+	var resultSlice []*Swipe
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice swipes")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on swipes")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for swipes")
+	}
+
+	if len(swipeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.PromptSwipes = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &swipeR{}
+			}
+			foreign.R.Prompt = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.PromptID) {
+				local.R.PromptSwipes = append(local.R.PromptSwipes, foreign)
+				if foreign.R == nil {
+					foreign.R = &swipeR{}
+				}
+				foreign.R.Prompt = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetVoicePromptPromptType of the voicePrompt to the related item.
 // Sets o.R.VoicePromptPromptType to related.
 // Adds o to related.R.VoicePrompts.
@@ -908,6 +1054,133 @@ func (o *VoicePrompt) RemoveUser(ctx context.Context, exec boil.ContextExecutor,
 		related.R.VoicePrompts = related.R.VoicePrompts[:ln-1]
 		break
 	}
+	return nil
+}
+
+// AddPromptSwipes adds the given related objects to the existing relationships
+// of the voice_prompt, optionally inserting them as new records.
+// Appends related to o.R.PromptSwipes.
+// Sets related.R.Prompt appropriately.
+func (o *VoicePrompt) AddPromptSwipes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Swipe) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.PromptID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"swipes\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"prompt_id"}),
+				strmangle.WhereClause("\"", "\"", 2, swipePrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.PromptID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &voicePromptR{
+			PromptSwipes: related,
+		}
+	} else {
+		o.R.PromptSwipes = append(o.R.PromptSwipes, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &swipeR{
+				Prompt: o,
+			}
+		} else {
+			rel.R.Prompt = o
+		}
+	}
+	return nil
+}
+
+// SetPromptSwipes removes all previously related items of the
+// voice_prompt replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Prompt's PromptSwipes accordingly.
+// Replaces o.R.PromptSwipes with related.
+// Sets related.R.Prompt's PromptSwipes accordingly.
+func (o *VoicePrompt) SetPromptSwipes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Swipe) error {
+	query := "update \"swipes\" set \"prompt_id\" = null where \"prompt_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.PromptSwipes {
+			queries.SetScanner(&rel.PromptID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.Prompt = nil
+		}
+		o.R.PromptSwipes = nil
+	}
+
+	return o.AddPromptSwipes(ctx, exec, insert, related...)
+}
+
+// RemovePromptSwipes relationships from objects passed in.
+// Removes related items from R.PromptSwipes (uses pointer comparison, removal does not keep order)
+// Sets related.R.Prompt.
+func (o *VoicePrompt) RemovePromptSwipes(ctx context.Context, exec boil.ContextExecutor, related ...*Swipe) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.PromptID, nil)
+		if rel.R != nil {
+			rel.R.Prompt = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("prompt_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.PromptSwipes {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.PromptSwipes)
+			if ln > 1 && i < ln-1 {
+				o.R.PromptSwipes[i] = o.R.PromptSwipes[ln-1]
+			}
+			o.R.PromptSwipes = o.R.PromptSwipes[:ln-1]
+			break
+		}
+	}
+
 	return nil
 }
 

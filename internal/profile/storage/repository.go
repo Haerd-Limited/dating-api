@@ -29,6 +29,7 @@ type ProfileRepository interface {
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
 	GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error)
 	GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error)
+	GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error)
 }
 
 type profileRepository struct {
@@ -39,6 +40,15 @@ func NewProfileRepository(db *sqlx.DB) ProfileRepository {
 	return &profileRepository{
 		db: db,
 	}
+}
+
+func (pr *profileRepository) GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error) {
+	vp, err := entity.VoicePrompts(entity.VoicePromptWhere.ID.EQ(id)).One(ctx, pr.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return vp, nil
 }
 
 func (pr *profileRepository) InsertProfile(ctx context.Context, userProfile *entity.UserProfile, tx *sql.Tx) error {

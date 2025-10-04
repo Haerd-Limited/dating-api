@@ -93,13 +93,13 @@ func (s *service) getUserPhotos(ctx context.Context, userID string) ([]domain.Ph
 	return photosList, nil
 }
 
-func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]domain.VoicePrompt, error) {
+func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]domain.ProfileVoicePrompt, error) {
 	voicePromptEntities, err := s.profileRepo.GetUserVoicePrompts(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user voice prompts: %w", err)
 	}
 
-	var voicePrompts []domain.VoicePrompt
+	var voicePrompts []domain.ProfileVoicePrompt
 
 	for _, vpe := range voicePromptEntities {
 		if !vpe.PromptType.Valid {
@@ -118,7 +118,8 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 			promptCoverURL = vpe.CoverPhotoURL.String
 		}
 
-		voicePrompts = append(voicePrompts, domain.VoicePrompt{
+		voicePrompts = append(voicePrompts, domain.ProfileVoicePrompt{
+			ID:  vpe.ID,
 			URL: vpe.AudioURL,
 			PromptType: domain.Prompt{
 				ID:       promptType.ID,

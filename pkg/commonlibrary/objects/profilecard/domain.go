@@ -50,6 +50,7 @@ type UserTheme struct {
 }
 
 type VoicePrompt struct {
+	ID            int64
 	URL           string
 	PromptType    Prompt
 	IsPrimary     bool

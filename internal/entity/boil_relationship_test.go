@@ -21,6 +21,7 @@ func TestToOne(t *testing.T) {
 	t.Run("PhotoToUserUsingUser", testPhotoToOneUserUsingUser)
 	t.Run("RefreshTokenToUserUsingUser", testRefreshTokenToOneUserUsingUser)
 	t.Run("SwipeToUserUsingActor", testSwipeToOneUserUsingActor)
+	t.Run("SwipeToVoicePromptUsingPrompt", testSwipeToOneVoicePromptUsingPrompt)
 	t.Run("SwipeToUserUsingTarget", testSwipeToOneUserUsingTarget)
 	t.Run("UserPreferenceToUserUsingUser", testUserPreferenceToOneUserUsingUser)
 	t.Run("UserProfileVisibilityToUserUsingUser", testUserProfileVisibilityToOneUserUsingUser)
@@ -86,6 +87,7 @@ func TestToMany(t *testing.T) {
 	t.Run("UserToLanguages", testUserToManyLanguages)
 	t.Run("UserToUserProfileVisibilities", testUserToManyUserProfileVisibilities)
 	t.Run("UserToVoicePrompts", testUserToManyVoicePrompts)
+	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyPromptSwipes)
 }
 
 // TestToOneSet tests cannot be run in parallel
@@ -104,6 +106,7 @@ func TestToOneSet(t *testing.T) {
 	t.Run("PhotoToUserUsingPhotos", testPhotoToOneSetOpUserUsingUser)
 	t.Run("RefreshTokenToUserUsingRefreshTokens", testRefreshTokenToOneSetOpUserUsingUser)
 	t.Run("SwipeToUserUsingActorSwipes", testSwipeToOneSetOpUserUsingActor)
+	t.Run("SwipeToVoicePromptUsingPromptSwipes", testSwipeToOneSetOpVoicePromptUsingPrompt)
 	t.Run("SwipeToUserUsingTargetSwipes", testSwipeToOneSetOpUserUsingTarget)
 	t.Run("UserPreferenceToUserUsingUserPreference", testUserPreferenceToOneSetOpUserUsingUser)
 	t.Run("UserProfileVisibilityToUserUsingUserProfileVisibilities", testUserProfileVisibilityToOneSetOpUserUsingUser)
@@ -130,6 +133,7 @@ func TestToOneSet(t *testing.T) {
 func TestToOneRemove(t *testing.T) {
 	t.Run("ConversationToMessageUsingLastMessageConversations", testConversationToOneRemoveOpMessageUsingLastMessage)
 	t.Run("PhotoToUserUsingPhotos", testPhotoToOneRemoveOpUserUsingUser)
+	t.Run("SwipeToVoicePromptUsingPromptSwipes", testSwipeToOneRemoveOpVoicePromptUsingPrompt)
 	t.Run("UserProfileToFamilyStatusUsingChildrenStatusUserProfiles", testUserProfileToOneRemoveOpFamilyStatusUsingChildrenStatus)
 	t.Run("UserProfileToDatingIntentionUsingUserProfiles", testUserProfileToOneRemoveOpDatingIntentionUsingDatingIntention)
 	t.Run("UserProfileToHabitUsingDrinkingUserProfiles", testUserProfileToOneRemoveOpHabitUsingDrinking)
@@ -194,6 +198,7 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("UserToLanguages", testUserToManyAddOpLanguages)
 	t.Run("UserToUserProfileVisibilities", testUserToManyAddOpUserProfileVisibilities)
 	t.Run("UserToVoicePrompts", testUserToManyAddOpVoicePrompts)
+	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyAddOpPromptSwipes)
 }
 
 // TestToManySet tests cannot be run in parallel
@@ -219,6 +224,7 @@ func TestToManySet(t *testing.T) {
 	t.Run("UserToInterests", testUserToManySetOpInterests)
 	t.Run("UserToLanguages", testUserToManySetOpLanguages)
 	t.Run("UserToVoicePrompts", testUserToManySetOpVoicePrompts)
+	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManySetOpPromptSwipes)
 }
 
 // TestToManyRemove tests cannot be run in parallel
@@ -244,4 +250,5 @@ func TestToManyRemove(t *testing.T) {
 	t.Run("UserToInterests", testUserToManyRemoveOpInterests)
 	t.Run("UserToLanguages", testUserToManyRemoveOpLanguages)
 	t.Run("UserToVoicePrompts", testUserToManyRemoveOpVoicePrompts)
+	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyRemoveOpPromptSwipes)
 }

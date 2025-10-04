@@ -24,6 +24,7 @@ type Service interface {
 	GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error)
 	UpdateProfile(ctx context.Context, updatedProfile domain.UpdateProfile) error
 	ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string) error
+	GetVoicePromptByID(ctx context.Context, id int64) (domain.VoicePrompt, error)
 
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error
@@ -53,6 +54,29 @@ var (
 	ErrContainsSocialMediaPromotion = fmt.Errorf("this field cannot contain social media promotion")
 	ErrInvalidID                    = errors.New("id must be greater than 0")
 )
+
+func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.VoicePrompt, error) {
+	vp, err := s.profileRepo.GetVoicePromptByID(ctx, id)
+	if err != nil {
+		return domain.VoicePrompt{}, fmt.Errorf("get voice prompt: %w", err)
+	}
+
+	prompt, err := s.lookupRepo.GetPromptTypeByID(ctx, vp.PromptType.Int16)
+	if err != nil {
+		return domain.VoicePrompt{}, fmt.Errorf("get prompt type: %w", err)
+	}
+
+	var coverPhotoUrl string
+	if vp.CoverPhotoURL.Valid {
+		coverPhotoUrl = vp.CoverPhotoURL.String
+	}
+	return domain.VoicePrompt{
+		PromptID:      vp.ID,
+		VoiceNoteURL:  vp.AudioURL,
+		CoverPhotoUrl: coverPhotoUrl,
+		Prompt:        prompt.Label,
+	}, nil
+}
 
 func (s *service) ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string) error {
 	err := s.profileRepo.InsertProfile(ctx,

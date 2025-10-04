@@ -110,7 +110,7 @@ type EnrichedProfile struct {
 	FamilyPlan      *Status
 	Ethnicity       Ethnicity
 	SpokenLanguages []Language
-	VoicePrompts    []VoicePrompt
+	VoicePrompts    []ProfileVoicePrompt
 	Photos          []Photo
 	Theme           UserTheme
 	Work            *string
@@ -127,6 +127,14 @@ type UserTheme struct {
 }
 
 type VoicePrompt struct {
+	PromptID      int64
+	Prompt        string
+	VoiceNoteURL  string
+	CoverPhotoUrl string
+}
+
+type ProfileVoicePrompt struct {
+	ID             int64
 	URL            string
 	PromptType     Prompt
 	IsPrimary      bool

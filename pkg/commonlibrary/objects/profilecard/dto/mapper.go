@@ -25,6 +25,7 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 	var voicePrompts []VoicePrompt
 	for _, vp := range profile.VoicePrompts {
 		voicePrompts = append(voicePrompts, VoicePrompt{
+			ID:  vp.ID,
 			URL: vp.URL,
 			PromptType: Prompt{
 				ID:       vp.PromptType.ID,

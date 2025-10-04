@@ -494,6 +494,334 @@ func testVoicePromptsInsertWhitelist(t *testing.T) {
 	}
 }
 
+func testVoicePromptToManyPromptSwipes(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a VoicePrompt
+	var b, c Swipe
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, voicePromptDBTypes, true, voicePromptColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize VoicePrompt struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, swipeDBTypes, false, swipeColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, swipeDBTypes, false, swipeColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	queries.Assign(&b.PromptID, a.ID)
+	queries.Assign(&c.PromptID, a.ID)
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.PromptSwipes().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if queries.Equal(v.PromptID, b.PromptID) {
+			bFound = true
+		}
+		if queries.Equal(v.PromptID, c.PromptID) {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := VoicePromptSlice{&a}
+	if err = a.L.LoadPromptSwipes(ctx, tx, false, (*[]*VoicePrompt)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.PromptSwipes); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.PromptSwipes = nil
+	if err = a.L.LoadPromptSwipes(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.PromptSwipes); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
+func testVoicePromptToManyAddOpPromptSwipes(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a VoicePrompt
+	var b, c, d, e Swipe
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, voicePromptDBTypes, false, strmangle.SetComplement(voicePromptPrimaryKeyColumns, voicePromptColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*Swipe{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, swipeDBTypes, false, strmangle.SetComplement(swipePrimaryKeyColumns, swipeColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*Swipe{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddPromptSwipes(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if !queries.Equal(a.ID, first.PromptID) {
+			t.Error("foreign key was wrong value", a.ID, first.PromptID)
+		}
+		if !queries.Equal(a.ID, second.PromptID) {
+			t.Error("foreign key was wrong value", a.ID, second.PromptID)
+		}
+
+		if first.R.Prompt != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.Prompt != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.PromptSwipes[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.PromptSwipes[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.PromptSwipes().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+
+func testVoicePromptToManySetOpPromptSwipes(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a VoicePrompt
+	var b, c, d, e Swipe
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, voicePromptDBTypes, false, strmangle.SetComplement(voicePromptPrimaryKeyColumns, voicePromptColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*Swipe{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, swipeDBTypes, false, strmangle.SetComplement(swipePrimaryKeyColumns, swipeColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err = a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	err = a.SetPromptSwipes(ctx, tx, false, &b, &c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err := a.PromptSwipes().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	err = a.SetPromptSwipes(ctx, tx, true, &d, &e)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err = a.PromptSwipes().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	if !queries.IsValuerNil(b.PromptID) {
+		t.Error("want b's foreign key value to be nil")
+	}
+	if !queries.IsValuerNil(c.PromptID) {
+		t.Error("want c's foreign key value to be nil")
+	}
+	if !queries.Equal(a.ID, d.PromptID) {
+		t.Error("foreign key was wrong value", a.ID, d.PromptID)
+	}
+	if !queries.Equal(a.ID, e.PromptID) {
+		t.Error("foreign key was wrong value", a.ID, e.PromptID)
+	}
+
+	if b.R.Prompt != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if c.R.Prompt != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if d.R.Prompt != &a {
+		t.Error("relationship was not added properly to the foreign struct")
+	}
+	if e.R.Prompt != &a {
+		t.Error("relationship was not added properly to the foreign struct")
+	}
+
+	if a.R.PromptSwipes[0] != &d {
+		t.Error("relationship struct slice not set to correct value")
+	}
+	if a.R.PromptSwipes[1] != &e {
+		t.Error("relationship struct slice not set to correct value")
+	}
+}
+
+func testVoicePromptToManyRemoveOpPromptSwipes(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a VoicePrompt
+	var b, c, d, e Swipe
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, voicePromptDBTypes, false, strmangle.SetComplement(voicePromptPrimaryKeyColumns, voicePromptColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*Swipe{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, swipeDBTypes, false, strmangle.SetComplement(swipePrimaryKeyColumns, swipeColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	err = a.AddPromptSwipes(ctx, tx, true, foreigners...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err := a.PromptSwipes().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 4 {
+		t.Error("count was wrong:", count)
+	}
+
+	err = a.RemovePromptSwipes(ctx, tx, foreigners[:2]...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err = a.PromptSwipes().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	if !queries.IsValuerNil(b.PromptID) {
+		t.Error("want b's foreign key value to be nil")
+	}
+	if !queries.IsValuerNil(c.PromptID) {
+		t.Error("want c's foreign key value to be nil")
+	}
+
+	if b.R.Prompt != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if c.R.Prompt != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if d.R.Prompt != &a {
+		t.Error("relationship to a should have been preserved")
+	}
+	if e.R.Prompt != &a {
+		t.Error("relationship to a should have been preserved")
+	}
+
+	if len(a.R.PromptSwipes) != 2 {
+		t.Error("should have preserved two relationships")
+	}
+
+	// Removal doesn't do a stable deletion for performance so we have to flip the order
+	if a.R.PromptSwipes[1] != &d {
+		t.Error("relationship to d should have been preserved")
+	}
+	if a.R.PromptSwipes[0] != &e {
+		t.Error("relationship to e should have been preserved")
+	}
+}
+
 func testVoicePromptToOnePromptTypeUsingVoicePromptPromptType(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))

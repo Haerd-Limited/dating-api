@@ -67,6 +67,7 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 		fp.VoicePrompts = make([]profilecard.VoicePrompt, 0, len(ep.VoicePrompts))
 		for _, vp := range ep.VoicePrompts {
 			fp.VoicePrompts = append(fp.VoicePrompts, profilecard.VoicePrompt{
+				ID:  vp.ID,
 				URL: vp.URL,
 				PromptType: profilecard.Prompt{
 					ID:       vp.PromptType.ID,

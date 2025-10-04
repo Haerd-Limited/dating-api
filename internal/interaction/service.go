@@ -12,6 +12,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
+	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
@@ -59,6 +60,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 	if err != nil {
 		return "", fmt.Errorf("begin tx: %w", err)
 	}
+
 	defer func() { _ = tx.Rollback() }()
 
 	switch swipe.Action {
@@ -80,6 +82,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			if err != nil {
 				return "", fmt.Errorf("commit tx: %w", err)
 			}
+
 			return ResultSent, nil
 		}
 		// Create a match (normalize order to keep uniqueness deterministic)
@@ -169,6 +172,20 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		like := domain.Like{
 			Profile: p,
 			Message: &domain.Message{},
+			Prompt:  &domain.Prompt{},
+		}
+
+		var voicePrompt profiledomain.VoicePrompt
+		if swipe.PromptID.Valid {
+			voicePrompt, likesErr = is.profileService.GetVoicePromptByID(ctx, swipe.PromptID.Int64)
+			if likesErr != nil {
+				return nil, fmt.Errorf("get voice prompt by ID userID=%s targetUserID=%s: %w", userID, id, likesErr)
+			}
+
+			like.Prompt.PromptID = voicePrompt.PromptID
+			like.Prompt.Prompt = voicePrompt.Prompt
+			like.Prompt.VoiceNoteURL = voicePrompt.VoiceNoteURL
+			like.Prompt.CoverPhotoUrl = voicePrompt.CoverPhotoUrl
 		}
 
 		if swipe.Message.Valid && swipe.MessageType.Valid {

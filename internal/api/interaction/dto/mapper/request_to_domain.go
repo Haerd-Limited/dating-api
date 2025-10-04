@@ -9,6 +9,7 @@ func SwipesRequestToDomain(swipesReq dto.SwipesRequest, userID string) domain.Sw
 	return domain.Swipe{
 		TargetUserID:   swipesReq.TargetUserID,
 		Action:         swipesReq.Action,
+		PromptID:       swipesReq.PromptID,
 		UserID:         userID,
 		IdempotencyKey: swipesReq.IdempotencyKey,
 		Message:        swipesReq.Message,

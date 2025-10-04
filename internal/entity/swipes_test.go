@@ -555,6 +555,67 @@ func testSwipeToOneUserUsingActor(t *testing.T) {
 	}
 }
 
+func testSwipeToOneVoicePromptUsingPrompt(t *testing.T) {
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var local Swipe
+	var foreign VoicePrompt
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, swipeDBTypes, true, swipeColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Swipe struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, voicePromptDBTypes, false, voicePromptColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize VoicePrompt struct: %s", err)
+	}
+
+	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	queries.Assign(&local.PromptID, foreign.ID)
+	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.Prompt().One(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !queries.Equal(check.ID, foreign.ID) {
+		t.Errorf("want: %v, got %v", foreign.ID, check.ID)
+	}
+
+	ranAfterSelectHook := false
+	AddVoicePromptHook(boil.AfterSelectHook, func(ctx context.Context, e boil.ContextExecutor, o *VoicePrompt) error {
+		ranAfterSelectHook = true
+		return nil
+	})
+
+	slice := SwipeSlice{&local}
+	if err = local.L.LoadPrompt(ctx, tx, false, (*[]*Swipe)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Prompt == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.Prompt = nil
+	if err = local.L.LoadPrompt(ctx, tx, true, &local, nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Prompt == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	if !ranAfterSelectHook {
+		t.Error("failed to run AfterSelect hook for relationship")
+	}
+}
+
 func testSwipeToOneUserUsingTarget(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
@@ -673,6 +734,115 @@ func testSwipeToOneSetOpUserUsingActor(t *testing.T) {
 		}
 	}
 }
+func testSwipeToOneSetOpVoicePromptUsingPrompt(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Swipe
+	var b, c VoicePrompt
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, swipeDBTypes, false, strmangle.SetComplement(swipePrimaryKeyColumns, swipeColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, voicePromptDBTypes, false, strmangle.SetComplement(voicePromptPrimaryKeyColumns, voicePromptColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, voicePromptDBTypes, false, strmangle.SetComplement(voicePromptPrimaryKeyColumns, voicePromptColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*VoicePrompt{&b, &c} {
+		err = a.SetPrompt(ctx, tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.Prompt != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.PromptSwipes[0] != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if !queries.Equal(a.PromptID, x.ID) {
+			t.Error("foreign key was wrong value", a.PromptID)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(a.PromptID))
+		reflect.Indirect(reflect.ValueOf(&a.PromptID)).Set(zero)
+
+		if err = a.Reload(ctx, tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if !queries.Equal(a.PromptID, x.ID) {
+			t.Error("foreign key was wrong value", a.PromptID, x.ID)
+		}
+	}
+}
+
+func testSwipeToOneRemoveOpVoicePromptUsingPrompt(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Swipe
+	var b VoicePrompt
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, swipeDBTypes, false, strmangle.SetComplement(swipePrimaryKeyColumns, swipeColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, voicePromptDBTypes, false, strmangle.SetComplement(voicePromptPrimaryKeyColumns, voicePromptColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.SetPrompt(ctx, tx, true, &b); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.RemovePrompt(ctx, tx, &b); err != nil {
+		t.Error("failed to remove relationship")
+	}
+
+	count, err := a.Prompt().Count(ctx, tx)
+	if err != nil {
+		t.Error(err)
+	}
+	if count != 0 {
+		t.Error("want no relationships remaining")
+	}
+
+	if a.R.Prompt != nil {
+		t.Error("R struct entry should be nil")
+	}
+
+	if !queries.IsValuerNil(a.PromptID) {
+		t.Error("foreign key value should be nil")
+	}
+
+	if len(b.R.PromptSwipes) != 0 {
+		t.Error("failed to remove a from b's relationships")
+	}
+}
+
 func testSwipeToOneSetOpUserUsingTarget(t *testing.T) {
 	var err error
 
@@ -805,7 +975,7 @@ func testSwipesSelect(t *testing.T) {
 }
 
 var (
-	swipeDBTypes = map[string]string{`ID`: `bigint`, `ActorID`: `uuid`, `TargetID`: `uuid`, `Action`: `text`, `IdempotencyKey`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `MessageType`: `text`, `Message`: `text`, `VoicenoteURL`: `text`}
+	swipeDBTypes = map[string]string{`ID`: `bigint`, `ActorID`: `uuid`, `TargetID`: `uuid`, `Action`: `text`, `IdempotencyKey`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `MessageType`: `text`, `Message`: `text`, `VoicenoteURL`: `text`, `PromptID`: `bigint`}
 	_            = bytes.MinRead
 )
 

@@ -22,6 +22,14 @@ type GetLikesResponse struct {
 type Like struct {
 	Profile dto.ProfileCard `json:"profile"`
 	Message *Message        `json:"message"`
+	Prompt  *Prompt         `json:"prompt"`
+}
+
+type Prompt struct {
+	PromptID      int64  `json:"prompt_id"`
+	Prompt        string `json:"prompt"`
+	VoiceNoteURL  string `json:"voice_note_url"`
+	CoverPhotoUrl string `json:"cover_photo_url"`
 }
 
 type Message struct {

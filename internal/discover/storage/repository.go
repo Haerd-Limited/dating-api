@@ -77,7 +77,7 @@ func (r *discoverRepository) GetCandidates(
 ) (entity.UserProfileSlice, error) {
 	oppositeGender, err := r.getOppositeGender(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get opposite gender: %w", err)
+		return nil, fmt.Errorf("get opposite gender: %w", err)
 	}
 
 	const stepComplete = "COMPLETE"
@@ -109,14 +109,14 @@ func (r *discoverRepository) GetCandidates(
                   FROM swipes s
                  WHERE s.actor_id = user_profiles.user_id
                    AND s.target_id = ?
-                   AND s.type IN ('like', 'superlike')
+                   AND s.action IN ('like', 'superlike')
             )`, userID),
 
 		qm.Limit(limit),
 		qm.Offset(offset),
 	).All(ctx, r.db)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get candidates: %w", err)
+		return nil, fmt.Errorf("get user profiles: %w", err)
 	}
 
 	return users, nil

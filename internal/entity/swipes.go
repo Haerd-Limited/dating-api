@@ -34,6 +34,7 @@ type Swipe struct {
 	MessageType    null.String `boil:"message_type" json:"message_type,omitempty" toml:"message_type" yaml:"message_type,omitempty"`
 	Message        null.String `boil:"message" json:"message,omitempty" toml:"message" yaml:"message,omitempty"`
 	VoicenoteURL   null.String `boil:"voicenote_url" json:"voicenote_url,omitempty" toml:"voicenote_url" yaml:"voicenote_url,omitempty"`
+	PromptID       null.Int64  `boil:"prompt_id" json:"prompt_id,omitempty" toml:"prompt_id" yaml:"prompt_id,omitempty"`
 
 	R *swipeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L swipeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -50,6 +51,7 @@ var SwipeColumns = struct {
 	MessageType    string
 	Message        string
 	VoicenoteURL   string
+	PromptID       string
 }{
 	ID:             "id",
 	ActorID:        "actor_id",
@@ -61,6 +63,7 @@ var SwipeColumns = struct {
 	MessageType:    "message_type",
 	Message:        "message",
 	VoicenoteURL:   "voicenote_url",
+	PromptID:       "prompt_id",
 }
 
 var SwipeTableColumns = struct {
@@ -74,6 +77,7 @@ var SwipeTableColumns = struct {
 	MessageType    string
 	Message        string
 	VoicenoteURL   string
+	PromptID       string
 }{
 	ID:             "swipes.id",
 	ActorID:        "swipes.actor_id",
@@ -85,6 +89,7 @@ var SwipeTableColumns = struct {
 	MessageType:    "swipes.message_type",
 	Message:        "swipes.message",
 	VoicenoteURL:   "swipes.voicenote_url",
+	PromptID:       "swipes.prompt_id",
 }
 
 // Generated where
@@ -100,6 +105,7 @@ var SwipeWhere = struct {
 	MessageType    whereHelpernull_String
 	Message        whereHelpernull_String
 	VoicenoteURL   whereHelpernull_String
+	PromptID       whereHelpernull_Int64
 }{
 	ID:             whereHelperint64{field: "\"swipes\".\"id\""},
 	ActorID:        whereHelperstring{field: "\"swipes\".\"actor_id\""},
@@ -111,21 +117,25 @@ var SwipeWhere = struct {
 	MessageType:    whereHelpernull_String{field: "\"swipes\".\"message_type\""},
 	Message:        whereHelpernull_String{field: "\"swipes\".\"message\""},
 	VoicenoteURL:   whereHelpernull_String{field: "\"swipes\".\"voicenote_url\""},
+	PromptID:       whereHelpernull_Int64{field: "\"swipes\".\"prompt_id\""},
 }
 
 // SwipeRels is where relationship names are stored.
 var SwipeRels = struct {
 	Actor  string
+	Prompt string
 	Target string
 }{
 	Actor:  "Actor",
+	Prompt: "Prompt",
 	Target: "Target",
 }
 
 // swipeR is where relationships are stored.
 type swipeR struct {
-	Actor  *User `boil:"Actor" json:"Actor" toml:"Actor" yaml:"Actor"`
-	Target *User `boil:"Target" json:"Target" toml:"Target" yaml:"Target"`
+	Actor  *User        `boil:"Actor" json:"Actor" toml:"Actor" yaml:"Actor"`
+	Prompt *VoicePrompt `boil:"Prompt" json:"Prompt" toml:"Prompt" yaml:"Prompt"`
+	Target *User        `boil:"Target" json:"Target" toml:"Target" yaml:"Target"`
 }
 
 // NewStruct creates a new relationship struct
@@ -149,6 +159,22 @@ func (r *swipeR) GetActor() *User {
 	return r.Actor
 }
 
+func (o *Swipe) GetPrompt() *VoicePrompt {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetPrompt()
+}
+
+func (r *swipeR) GetPrompt() *VoicePrompt {
+	if r == nil {
+		return nil
+	}
+
+	return r.Prompt
+}
+
 func (o *Swipe) GetTarget() *User {
 	if o == nil {
 		return nil
@@ -169,9 +195,9 @@ func (r *swipeR) GetTarget() *User {
 type swipeL struct{}
 
 var (
-	swipeAllColumns            = []string{"id", "actor_id", "target_id", "action", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url"}
+	swipeAllColumns            = []string{"id", "actor_id", "target_id", "action", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url", "prompt_id"}
 	swipeColumnsWithoutDefault = []string{"actor_id", "target_id", "action"}
-	swipeColumnsWithDefault    = []string{"id", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url"}
+	swipeColumnsWithDefault    = []string{"id", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url", "prompt_id"}
 	swipePrimaryKeyColumns     = []string{"id"}
 	swipeGeneratedColumns      = []string{}
 )
@@ -492,6 +518,17 @@ func (o *Swipe) Actor(mods ...qm.QueryMod) userQuery {
 	return Users(queryMods...)
 }
 
+// Prompt pointed to by the foreign key.
+func (o *Swipe) Prompt(mods ...qm.QueryMod) voicePromptQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.PromptID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return VoicePrompts(queryMods...)
+}
+
 // Target pointed to by the foreign key.
 func (o *Swipe) Target(mods ...qm.QueryMod) userQuery {
 	queryMods := []qm.QueryMod{
@@ -615,6 +652,130 @@ func (swipeL) LoadActor(ctx context.Context, e boil.ContextExecutor, singular bo
 					foreign.R = &userR{}
 				}
 				foreign.R.ActorSwipes = append(foreign.R.ActorSwipes, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadPrompt allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (swipeL) LoadPrompt(ctx context.Context, e boil.ContextExecutor, singular bool, maybeSwipe interface{}, mods queries.Applicator) error {
+	var slice []*Swipe
+	var object *Swipe
+
+	if singular {
+		var ok bool
+		object, ok = maybeSwipe.(*Swipe)
+		if !ok {
+			object = new(Swipe)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeSwipe)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeSwipe))
+			}
+		}
+	} else {
+		s, ok := maybeSwipe.(*[]*Swipe)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeSwipe)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeSwipe))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &swipeR{}
+		}
+		if !queries.IsNil(object.PromptID) {
+			args[object.PromptID] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &swipeR{}
+			}
+
+			if !queries.IsNil(obj.PromptID) {
+				args[obj.PromptID] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`voice_prompts`),
+		qm.WhereIn(`voice_prompts.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load VoicePrompt")
+	}
+
+	var resultSlice []*VoicePrompt
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice VoicePrompt")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for voice_prompts")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for voice_prompts")
+	}
+
+	if len(voicePromptAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Prompt = foreign
+		if foreign.R == nil {
+			foreign.R = &voicePromptR{}
+		}
+		foreign.R.PromptSwipes = append(foreign.R.PromptSwipes, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.PromptID, foreign.ID) {
+				local.R.Prompt = foreign
+				if foreign.R == nil {
+					foreign.R = &voicePromptR{}
+				}
+				foreign.R.PromptSwipes = append(foreign.R.PromptSwipes, local)
 				break
 			}
 		}
@@ -787,6 +948,86 @@ func (o *Swipe) SetActor(ctx context.Context, exec boil.ContextExecutor, insert 
 		related.R.ActorSwipes = append(related.R.ActorSwipes, o)
 	}
 
+	return nil
+}
+
+// SetPrompt of the swipe to the related item.
+// Sets o.R.Prompt to related.
+// Adds o to related.R.PromptSwipes.
+func (o *Swipe) SetPrompt(ctx context.Context, exec boil.ContextExecutor, insert bool, related *VoicePrompt) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"swipes\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"prompt_id"}),
+		strmangle.WhereClause("\"", "\"", 2, swipePrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.PromptID, related.ID)
+	if o.R == nil {
+		o.R = &swipeR{
+			Prompt: related,
+		}
+	} else {
+		o.R.Prompt = related
+	}
+
+	if related.R == nil {
+		related.R = &voicePromptR{
+			PromptSwipes: SwipeSlice{o},
+		}
+	} else {
+		related.R.PromptSwipes = append(related.R.PromptSwipes, o)
+	}
+
+	return nil
+}
+
+// RemovePrompt relationship.
+// Sets o.R.Prompt to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *Swipe) RemovePrompt(ctx context.Context, exec boil.ContextExecutor, related *VoicePrompt) error {
+	var err error
+
+	queries.SetScanner(&o.PromptID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("prompt_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Prompt = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.PromptSwipes {
+		if queries.Equal(o.PromptID, ri.PromptID) {
+			continue
+		}
+
+		ln := len(related.R.PromptSwipes)
+		if ln > 1 && i < ln-1 {
+			related.R.PromptSwipes[i] = related.R.PromptSwipes[ln-1]
+		}
+		related.R.PromptSwipes = related.R.PromptSwipes[:ln-1]
+		break
+	}
 	return nil
 }
 
