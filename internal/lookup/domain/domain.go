@@ -21,3 +21,28 @@ type PoliticalBelief struct {
 	ID    int16
 	Label string
 }
+
+type Gender struct {
+	ID    int16
+	Label string
+}
+
+type DatingIntention struct {
+	ID    int16
+	Label string
+}
+
+type Habit struct {
+	ID    int16
+	Label string
+}
+
+type Ethnicity struct {
+	ID    int16
+	Label string
+}
+
+type EducationLevel struct {
+	ID    int16
+	Label string
+}

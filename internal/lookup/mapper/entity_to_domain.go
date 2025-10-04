@@ -74,3 +74,87 @@ func MapPoliticalBeliefsToDomain(g []*entity.PoliticalBelief) []domain.Political
 
 	return result
 }
+
+func MapEthnicityToDomain(g []*entity.Ethnicity) []domain.Ethnicity {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Ethnicity
+
+	for _, e := range g {
+		result = append(result, domain.Ethnicity{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
+func MapEducationLevelsToDomain(g []*entity.EducationLevel) []domain.EducationLevel {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.EducationLevel
+
+	for _, e := range g {
+		result = append(result, domain.EducationLevel{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
+func MapHabitsToDomain(g []*entity.Habit) []domain.Habit {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Habit
+
+	for _, e := range g {
+		result = append(result, domain.Habit{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
+func MapGendersToDomain(g []*entity.Gender) []domain.Gender {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Gender
+
+	for _, e := range g {
+		result = append(result, domain.Gender{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
+func MapDatingIntentionsToDomain(di []*entity.DatingIntention) []domain.DatingIntention {
+	if di == nil {
+		return nil
+	}
+
+	var result []domain.DatingIntention
+	for _, e := range di {
+		result = append(result, domain.DatingIntention{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}

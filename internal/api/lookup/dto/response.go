@@ -36,3 +36,48 @@ type PoliticalBelief struct {
 	ID    int16  `json:"id"`
 	Label string `json:"label"`
 }
+
+type GetHabitsResponse struct {
+	Habits []Habit `json:"habits"`
+}
+
+type Habit struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type GetGendersResponse struct {
+	Genders []Gender `json:"genders"`
+}
+
+type Gender struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type GetDatingIntentionsResponse struct {
+	DatingIntentions []DatingIntention `json:"dating_intentions"`
+}
+
+type DatingIntention struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type GetEthnicitiesResponse struct {
+	Ethnicities []Ethnicity `json:"ethnicities"`
+}
+
+type Ethnicity struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type GetEducationLevelsResponse struct {
+	EducationLevels []EducationLevel `json:"education_levels"`
+}
+
+type EducationLevel struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}

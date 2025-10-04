@@ -78,6 +78,11 @@ func New(
 					r.Get("/languages", lookupHandler.GetLanguages())
 					r.Get("/religions", lookupHandler.GetReligions())
 					r.Get("/political-beliefs", lookupHandler.GetPoliticalBeliefs())
+					r.Get("/ethnicities", lookupHandler.GetEthnicities())
+					r.Get("/genders", lookupHandler.GetGenders())
+					r.Get("/habits", lookupHandler.GetHabits())
+					r.Get("/dating-intentions", lookupHandler.GetDatingIntentions())
+					r.Get("/education-levels", lookupHandler.GetEducationLevels())
 				})
 
 				r.Route(

@@ -62,3 +62,73 @@ func MapToGetPoliticalBeliefsResponse(domainPoliticalBeliefs []domain.PoliticalB
 		PoliticalBeliefs: politicalBeliefs,
 	}
 }
+
+func MapToGetEthnicitiesResponse(domainEthnicities []domain.Ethnicity) dto.GetEthnicitiesResponse {
+	var ethnicities []dto.Ethnicity
+	for _, ethnicity := range domainEthnicities {
+		ethnicities = append(ethnicities, dto.Ethnicity{
+			ID:    ethnicity.ID,
+			Label: ethnicity.Label,
+		})
+	}
+
+	return dto.GetEthnicitiesResponse{
+		Ethnicities: ethnicities,
+	}
+}
+
+func MapToGetGendersResponse(domainGenders []domain.Gender) dto.GetGendersResponse {
+	var genders []dto.Gender
+	for _, gender := range domainGenders {
+		genders = append(genders, dto.Gender{
+			ID:    gender.ID,
+			Label: gender.Label,
+		})
+	}
+
+	return dto.GetGendersResponse{
+		Genders: genders,
+	}
+}
+
+func MapToGetDatingIntentionsResponse(domainDatingIntentions []domain.DatingIntention) dto.GetDatingIntentionsResponse {
+	var datingIntentions []dto.DatingIntention
+	for _, datingIntention := range domainDatingIntentions {
+		datingIntentions = append(datingIntentions, dto.DatingIntention{
+			ID:    datingIntention.ID,
+			Label: datingIntention.Label,
+		})
+	}
+
+	return dto.GetDatingIntentionsResponse{
+		DatingIntentions: datingIntentions,
+	}
+}
+
+func MapToGetEducationLevelsResponse(domainEducationLevels []domain.EducationLevel) dto.GetEducationLevelsResponse {
+	var educationLevels []dto.EducationLevel
+	for _, educationLevel := range domainEducationLevels {
+		educationLevels = append(educationLevels, dto.EducationLevel{
+			ID:    educationLevel.ID,
+			Label: educationLevel.Label,
+		})
+	}
+
+	return dto.GetEducationLevelsResponse{
+		EducationLevels: educationLevels,
+	}
+}
+
+func MapToGetHabitsResponse(domainHabits []domain.Habit) dto.GetHabitsResponse {
+	var habits []dto.Habit
+	for _, habit := range domainHabits {
+		habits = append(habits, dto.Habit{
+			ID:    habit.ID,
+			Label: habit.Label,
+		})
+	}
+
+	return dto.GetHabitsResponse{
+		Habits: habits,
+	}
+}

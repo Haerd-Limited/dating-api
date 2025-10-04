@@ -15,6 +15,11 @@ type Service interface {
 	GetLanguages(ctx context.Context) ([]domain.Language, error)
 	GetReligions(ctx context.Context) ([]domain.Religion, error)
 	GetPoliticalBeliefs(ctx context.Context) ([]domain.PoliticalBelief, error)
+	GetEducationLevels(ctx context.Context) ([]domain.EducationLevel, error)
+	GetEthnicities(ctx context.Context) ([]domain.Ethnicity, error)
+	GetHabits(ctx context.Context) ([]domain.Habit, error)
+	GetGenders(ctx context.Context) ([]domain.Gender, error)
+	GetDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error)
 }
 
 type lookupService struct {
@@ -66,4 +71,49 @@ func (s *lookupService) GetPoliticalBeliefs(ctx context.Context) ([]domain.Polit
 	}
 
 	return mapper.MapPoliticalBeliefsToDomain(politicalBeliefsEntities), nil
+}
+
+func (s *lookupService) GetEducationLevels(ctx context.Context) ([]domain.EducationLevel, error) {
+	educationLevelEntities, err := s.lookupRepo.GetEducationLevels(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapEducationLevelsToDomain(educationLevelEntities), nil
+}
+
+func (s *lookupService) GetEthnicities(ctx context.Context) ([]domain.Ethnicity, error) {
+	ethnicityEntities, err := s.lookupRepo.GetEthnicities(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapEthnicityToDomain(ethnicityEntities), nil
+}
+
+func (s *lookupService) GetHabits(ctx context.Context) ([]domain.Habit, error) {
+	habitEntities, err := s.lookupRepo.GetHabits(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapHabitsToDomain(habitEntities), nil
+}
+
+func (s *lookupService) GetGenders(ctx context.Context) ([]domain.Gender, error) {
+	genderEntities, err := s.lookupRepo.GetGenders(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapGendersToDomain(genderEntities), nil
+}
+
+func (s *lookupService) GetDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error) {
+	datingIntentionsEntities, err := s.lookupRepo.GetDatingIntentions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapDatingIntentionsToDomain(datingIntentionsEntities), nil
 }
