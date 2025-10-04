@@ -239,6 +239,7 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		if *up.MarijuanaID == 0 {
 			return fmt.Errorf("invalid marijuanna habit id: %w", ErrInvalidID)
 		}
+
 		prof.MarijuanaID = *up.MarijuanaID
 	}
 

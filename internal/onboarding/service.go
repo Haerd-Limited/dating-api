@@ -368,7 +368,7 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 	habits, err := os.getHabits(ctx)
 	if err != nil {
-		return domain.StepResult{}, err
+		return domain.StepResult{}, fmt.Errorf("get habits: %w", err)
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, locationDetails.UserID, StepForLocation)

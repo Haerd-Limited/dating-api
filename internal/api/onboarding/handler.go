@@ -3,7 +3,6 @@ package onboarding
 import (
 	standardcontext "context"
 	"errors"
-	"github.com/Haerd-Limited/dating-api/internal/user"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -13,6 +12,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
+	"github.com/Haerd-Limited/dating-api/internal/user"
 	userstorage "github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"

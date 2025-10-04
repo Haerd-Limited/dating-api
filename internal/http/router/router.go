@@ -11,6 +11,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction"
+	"github.com/Haerd-Limited/dating-api/internal/api/lookup"
 	"github.com/Haerd-Limited/dating-api/internal/api/media"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile"
@@ -18,6 +19,7 @@ import (
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
 	internalinteraction "github.com/Haerd-Limited/dating-api/internal/interaction"
+	internallookup "github.com/Haerd-Limited/dating-api/internal/lookup"
 	internalmedia "github.com/Haerd-Limited/dating-api/internal/media"
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
@@ -35,6 +37,7 @@ func New(
 	interactionService internalinteraction.Service,
 	conversationService internalconversation.Service,
 	mediaService internalmedia.Service,
+	lookupService internallookup.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -50,6 +53,7 @@ func New(
 	interactionHandler := interaction.NewInteractionHandler(logger, interactionService)
 	conversationHandler := conversation.NewConversationHandler(logger, conversationService)
 	mediaHandler := media.NewMediaHandler(logger, mediaService)
+	lookupHandler := lookup.NewLookupHandler(logger, lookupService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
@@ -68,6 +72,11 @@ func New(
 			// --- Protected (must be logged in)
 			r.Group(func(r chi.Router) {
 				r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
+
+				r.Route("/lookup", func(r chi.Router) {
+					r.Get("/prompts", lookupHandler.GetPrompts())
+				})
+
 				r.Route(
 					"/onboarding", func(r chi.Router) {
 						r.Get("/step", onboardingHandler.GetStep())

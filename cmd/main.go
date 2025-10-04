@@ -27,6 +27,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/http/router"
 	"github.com/Haerd-Limited/dating-api/internal/interaction"
 	storage4 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/internal/lookup"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
@@ -86,6 +87,7 @@ func main() {
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner)
 
 	lookupRepo := lookupstorage.NewLookupRepository(db)
+	lookupService := lookup.NewLookupService(logger, lookupRepo)
 
 	profileRepo := storage2.NewProfileRepository(db)
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo)
@@ -131,6 +133,7 @@ func main() {
 		interactionService,
 		conversationService,
 		mediaService,
+		lookupService,
 	)
 
 	// Start server with context
