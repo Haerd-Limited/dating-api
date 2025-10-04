@@ -13,6 +13,7 @@ import (
 type Service interface {
 	GetPrompts(ctx context.Context) ([]domain.Prompt, error)
 	GetLanguages(ctx context.Context) ([]domain.Language, error)
+	GetReligions(ctx context.Context) ([]domain.Religion, error)
 }
 
 type lookupService struct {
@@ -46,4 +47,13 @@ func (s *lookupService) GetLanguages(ctx context.Context) ([]domain.Language, er
 	}
 
 	return mapper.MapLanguagesToDomain(languageEntities), nil
+}
+
+func (s *lookupService) GetReligions(ctx context.Context) ([]domain.Religion, error) {
+	religionsEntities, err := s.lookupRepo.GetReligions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapReligionsToDomain(religionsEntities), nil
 }

@@ -18,3 +18,12 @@ type Language struct {
 	ID    int16  `json:"id"`
 	Label string `json:"label"`
 }
+
+type GetReligionsResponse struct {
+	Religions []Religion `json:"religions"`
+}
+
+type Religion struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}

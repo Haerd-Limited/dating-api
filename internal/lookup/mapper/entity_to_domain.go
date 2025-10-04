@@ -40,3 +40,20 @@ func MapLanguagesToDomain(g []*entity.Language) []domain.Language {
 
 	return result
 }
+
+func MapReligionsToDomain(g []*entity.Religion) []domain.Religion {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.Religion
+
+	for _, e := range g {
+		result = append(result, domain.Religion{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}

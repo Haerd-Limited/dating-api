@@ -34,3 +34,17 @@ func MapToGetLanguagesResponse(domainLangs []domain.Language) dto.GetLanguagesRe
 		Languages: languages,
 	}
 }
+
+func MapToGetReligionsResponse(domainReligions []domain.Religion) dto.GetReligionsResponse {
+	var religions []dto.Religion
+	for _, religion := range domainReligions {
+		religions = append(religions, dto.Religion{
+			ID:    religion.ID,
+			Label: religion.Label,
+		})
+	}
+
+	return dto.GetReligionsResponse{
+		Religions: religions,
+	}
+}

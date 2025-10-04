@@ -11,3 +11,8 @@ type Language struct {
 	ID    int16
 	Label string
 }
+
+type Religion struct {
+	ID    int16
+	Label string
+}

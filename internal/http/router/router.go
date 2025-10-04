@@ -76,6 +76,7 @@ func New(
 				r.Route("/lookup", func(r chi.Router) {
 					r.Get("/prompts", lookupHandler.GetPrompts())
 					r.Get("/languages", lookupHandler.GetLanguages())
+					r.Get("/religions", lookupHandler.GetReligions())
 				})
 
 				r.Route(

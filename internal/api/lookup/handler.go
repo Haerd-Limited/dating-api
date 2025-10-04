@@ -15,6 +15,7 @@ import (
 type Handler interface {
 	GetPrompts() http.HandlerFunc
 	GetLanguages() http.HandlerFunc
+	GetReligions() http.HandlerFunc
 }
 
 type handler struct {
@@ -79,5 +80,30 @@ func (h *handler) GetLanguages() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetLanguagesResponse(languages))
+	}
+}
+
+func (h *handler) GetReligions() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		religions, err := h.lookupService.GetReligions(ctx)
+		if err != nil {
+			switch {
+			case errors.Is(err, context.Canceled):
+				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+				return // no need to return a response. Client socket is closed.
+			case errors.Is(err, context.DeadlineExceeded):
+				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
+				return
+			default:
+				h.logger.Sugar().Errorw("Error getting religions", "error", err)
+				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
+
+				return
+			}
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapToGetReligionsResponse(religions))
 	}
 }
