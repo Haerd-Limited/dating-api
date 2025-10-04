@@ -44,8 +44,6 @@ func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Pro
 		return fmt.Errorf("failed to map user profile to entity: %w", err)
 	}
 
-	s.logger.Sugar().Infof("long: %v lat: %v geo:%s", userProfile.Longitude, userProfile.Latitude, updatedUserProfileEntity.Geo)
-
 	err = s.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity, whitelist)
 	if err != nil {
 		return fmt.Errorf("failed to update user profile: %w", err)

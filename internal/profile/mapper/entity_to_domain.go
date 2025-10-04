@@ -1,12 +1,9 @@
 package mapper
 
 import (
-	"regexp"
-	"strconv"
-	"strings"
-
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/geo"
 )
 
 // MapProfileToDomain maps an entity.UserProfile (DB model) to a domain.UserProfile.
@@ -42,10 +39,7 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 
 	// Location
 	if up.Geo != "" {
-		// Parse WKT-like value: "SRID=4326;POINT(lon lat)"
-		// Example: "SRID=4326;POINT(-73.9857 40.7484)"
-
-		d.Longitude, d.Latitude = ParseLonLat(up.Geo)
+		d.Longitude, d.Latitude, _ = geo.ParseEWKBLonLatHex(up.Geo)
 	}
 
 	if up.City.Valid {
@@ -127,24 +121,6 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 	}
 
 	return d
-}
-
-var pointRe = regexp.MustCompile(`(?i)POINT\s*$begin:math:text$\\s*([+-]?\\d+(?:\\.\\d+)?)\\s+([+-]?\\d+(?:\\.\\d+)?)\\s*$end:math:text$`)
-
-// ParseLonLat extracts lon/lat from strings like:
-// "SRID=4326;POINT(0.138696 51.580757)" or "POINT(0.138696 51.580757)"
-func ParseLonLat(s string) (lon, lat float64) {
-	s = strings.TrimSpace(s)
-	m := pointRe.FindStringSubmatch(s)
-	if m == nil {
-		return 0, 0
-	}
-
-	lon, _ = strconv.ParseFloat(m[1], 64)
-
-	lat, _ = strconv.ParseFloat(m[2], 64)
-
-	return lon, lat
 }
 
 func MapLanguagesToDomain(g []*entity.Language) []domain.Language {
