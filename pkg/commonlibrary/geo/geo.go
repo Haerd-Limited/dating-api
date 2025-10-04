@@ -15,12 +15,14 @@ func ParseEWKBLonLatHex(s string) (lon, lat float64, err error) {
 	if err != nil {
 		return 0, 0, err
 	}
+
 	if len(buf) < 1+4+16 { // byte order + type + x/y
 		return 0, 0, errors.New("ewkb: too short")
 	}
 
 	// 1) Byte order
 	var ord binary.ByteOrder
+
 	switch buf[0] {
 	case 0:
 		ord = binary.BigEndian
@@ -32,6 +34,7 @@ func ParseEWKBLonLatHex(s string) (lon, lat float64, err error) {
 
 	// 2) Type/flags (EWKB)
 	typ := ord.Uint32(buf[1:5])
+
 	const sridFlag uint32 = 0x20000000
 	hasSRID := (typ & sridFlag) != 0
 
@@ -42,6 +45,7 @@ func ParseEWKBLonLatHex(s string) (lon, lat float64, err error) {
 		if len(buf) < off+4 {
 			return 0, 0, errors.New("ewkb: missing srid")
 		}
+
 		_ = ord.Uint32(buf[off : off+4]) // srid
 		off += 4
 	}
@@ -50,8 +54,10 @@ func ParseEWKBLonLatHex(s string) (lon, lat float64, err error) {
 	if len(buf) < off+16 {
 		return 0, 0, errors.New("ewkb: missing coordinates")
 	}
+
 	lon = math.Float64frombits(ord.Uint64(buf[off : off+8]))
 	off += 8
 	lat = math.Float64frombits(ord.Uint64(buf[off : off+8]))
+
 	return lon, lat, nil
 }

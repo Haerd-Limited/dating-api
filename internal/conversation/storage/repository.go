@@ -18,7 +18,7 @@ import (
 type ConversationRepository interface {
 	GetConversationByUserIDs(ctx context.Context, userA, userB string) (*entity.Conversation, error)
 	GetLastMessageByID(ctx context.Context, lastMessageID int64) (*entity.Message, error)
-	CreateConversation(ctx context.Context, userA, userB string) (*entity.Conversation, error)
+	CreateConversation(ctx context.Context, userA, userB string, tx *sql.Tx) (*entity.Conversation, error)
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
 	SendMessageViaTx(ctx context.Context, msg entity.Message) (*entity.Message, error)
 	GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error)
@@ -190,7 +190,7 @@ func (r *repository) GetLastMessageByID(ctx context.Context, lastMessageID int64
 
 // CreateConversation inserts a new conversation between two users.
 // If a conversation already exists (userA↔userB), it returns that instead.
-func (r *repository) CreateConversation(ctx context.Context, userA, userB string) (*entity.Conversation, error) {
+func (r *repository) CreateConversation(ctx context.Context, userA, userB string, tx *sql.Tx) (*entity.Conversation, error) {
 	// Guard: no self-conversation
 	if userA == userB {
 		return nil, fmt.Errorf("cannot create conversation with self: %s", userA)
@@ -222,7 +222,14 @@ func (r *repository) CreateConversation(ctx context.Context, userA, userB string
 		LastActivityAt: now,
 	}
 
-	err = c.Insert(ctx, r.db, boil.Infer())
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
+	err = c.Insert(ctx, exec, boil.Infer())
 	if err != nil {
 		return nil, fmt.Errorf("insert conversation failed: %w", err)
 	}

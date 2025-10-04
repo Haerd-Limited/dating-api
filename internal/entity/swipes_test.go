@@ -805,7 +805,7 @@ func testSwipesSelect(t *testing.T) {
 }
 
 var (
-	swipeDBTypes = map[string]string{`ID`: `bigint`, `ActorID`: `uuid`, `TargetID`: `uuid`, `Action`: `text`, `IdempotencyKey`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`}
+	swipeDBTypes = map[string]string{`ID`: `bigint`, `ActorID`: `uuid`, `TargetID`: `uuid`, `Action`: `text`, `IdempotencyKey`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `MessageType`: `text`, `Message`: `text`, `VoicenoteURL`: `text`}
 	_            = bytes.MinRead
 )
 

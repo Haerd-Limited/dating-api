@@ -12,12 +12,13 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
+	"github.com/Haerd-Limited/dating-api/internal/uow"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
 type Service interface {
-	CreateSwipe(ctx context.Context, swipe domain.Swipe) error
-	GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]profilecard.ProfileCard, error)
+	CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error)
+	GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]domain.Like, error)
 }
 
 type service struct {
@@ -25,6 +26,7 @@ type service struct {
 	profileService      profile.Service
 	interactionRepo     storage.InteractionRepository
 	conversationService conversation.Service
+	uow                 uow.UoW
 }
 
 func NewInteractionService(
@@ -32,60 +34,102 @@ func NewInteractionService(
 	interactionRepo storage.InteractionRepository,
 	profileService profile.Service,
 	conversationService conversation.Service,
+	uow uow.UoW,
 ) Service {
 	return &service{
 		logger:              logger,
 		interactionRepo:     interactionRepo,
 		profileService:      profileService,
 		conversationService: conversationService,
+		uow:                 uow,
 	}
 }
 
 var ErrInvalidDirection = fmt.Errorf("invalid direction")
 
-func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) error {
-	//todo:if like or super like, notifiy
-	err := is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe))
+const (
+	ResultMatched = "MATCHED"
+	ResultSent    = "SENT"
+	ResultPassed  = "PASSED"
+)
+
+func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error) {
+	// this should all be a single transaction
+	tx, err := is.uow.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to insert swipe userID=%s : %w", swipe.UserID, err)
+		return "", fmt.Errorf("begin tx: %w", err)
 	}
+	defer func() { _ = tx.Rollback() }()
 
-	matchable, err := is.interactionRepo.CheckIfMatchable(ctx, swipe.UserID, swipe.TargetUserID)
-	if err != nil {
-		return fmt.Errorf("failed to check if matchable userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+	switch swipe.Action {
+	case constants.ActionLike, constants.ActionSuperlike:
+		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
+		if err != nil {
+			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
+		}
+
+		var matchErr error
+
+		matchable, matchErr := is.interactionRepo.CheckIfMatchable(ctx, swipe.UserID, swipe.TargetUserID)
+		if matchErr != nil {
+			return "", fmt.Errorf("check if matchable userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, matchErr)
+		}
+
+		if !matchable {
+			err = tx.Commit()
+			if err != nil {
+				return "", fmt.Errorf("commit tx: %w", err)
+			}
+			return ResultSent, nil
+		}
+		// Create a match (normalize order to keep uniqueness deterministic)
+		a, b := swipe.UserID, swipe.TargetUserID
+		if b < a {
+			a, b = b, a
+		}
+
+		err = is.interactionRepo.CreateMatch(ctx, entity.Match{
+			UserA: a,
+			UserB: b,
+		},
+			tx.Raw(),
+		)
+		if err != nil {
+			return "", fmt.Errorf("create match userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+		}
+
+		err = is.conversationService.CreateConversationViaTx(ctx, swipe.UserID, swipe.TargetUserID, tx.Raw())
+		if err != nil {
+			return "", fmt.Errorf("create conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+		}
+		// todo: think about if we need to add some logic where if you've already been liked and that user sent a message, then include that message in the convo
+
+		err = tx.Commit()
+		if err != nil {
+			return "", fmt.Errorf("commit tx: %w", err)
+		}
+
+		return ResultMatched, nil
+
+	case constants.ActionPass:
+		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
+		if err != nil {
+			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			return "", fmt.Errorf("commit tx: %w", err)
+		}
+
+		return ResultPassed, nil
+	default:
+		return "", fmt.Errorf("invalid action: %s", swipe.Action)
 	}
-
-	if !matchable {
-		return nil
-	}
-
-	// Create a match (normalize order to keep uniqueness deterministic)
-	a, b := swipe.UserID, swipe.TargetUserID
-	if b < a {
-		a, b = b, a
-	}
-
-	err = is.interactionRepo.CreateMatch(ctx, entity.Match{
-		UserA: a,
-		UserB: b,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to created match userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
-	}
-
-	err = is.conversationService.CreateConversation(ctx, swipe.UserID, swipe.TargetUserID)
-	if err != nil {
-		return fmt.Errorf("failed to create conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
-	}
-	//todo:send notification to targetuser
-
-	return nil
 }
 
-func (is *service) GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]profilecard.ProfileCard, error) {
+func (is *service) GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]domain.Like, error) {
 	var likesUserIDs []string
-
-	var profiles []profilecard.ProfileCard
 
 	var err error
 
@@ -100,23 +144,39 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		return nil, err
 	}
 
+	var likes []domain.Like
+
 	for _, id := range likesUserIDs {
-		alreadyMatched, matchedErr := is.interactionRepo.AlreadyMatched(ctx, userID, id)
-		if matchedErr != nil {
-			return nil, fmt.Errorf("failed to check if already matched userID=%s targetUserID=%s: %w", userID, id, err)
+		alreadyMatched, likesErr := is.interactionRepo.AlreadyMatched(ctx, userID, id)
+		if likesErr != nil {
+			return nil, fmt.Errorf("check if already matched userID=%s targetUserID=%s: %w", userID, id, likesErr)
 		}
 
 		if alreadyMatched {
 			continue
 		}
 
-		p, profileErr := is.profileService.GetProfileCard(ctx, id)
-		if profileErr != nil {
-			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, id, profileErr)
+		p, likesErr := is.profileService.GetProfileCard(ctx, id)
+		if likesErr != nil {
+			return nil, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, id, likesErr)
 		}
 
-		profiles = append(profiles, p)
+		swipe, likesErr := is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, id, userID)
+		if likesErr != nil {
+			return nil, fmt.Errorf("get swipe by actorID and targetID userID=%s targetUserID=%s: %w", userID, id, likesErr)
+		}
+
+		like := domain.Like{
+			Profile: p,
+			Message: &domain.Message{},
+		}
+
+		if swipe.Message.Valid && swipe.MessageType.Valid {
+			like.Message.MessageText, like.Message.MessageType = swipe.Message.Ptr(), swipe.MessageType.Ptr()
+		}
+
+		likes = append(likes, like)
 	}
 
-	return profiles, nil
+	return likes, nil
 }

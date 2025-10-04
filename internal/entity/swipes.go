@@ -31,6 +31,9 @@ type Swipe struct {
 	IdempotencyKey null.String `boil:"idempotency_key" json:"idempotency_key,omitempty" toml:"idempotency_key" yaml:"idempotency_key,omitempty"`
 	CreatedAt      time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt      time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	MessageType    null.String `boil:"message_type" json:"message_type,omitempty" toml:"message_type" yaml:"message_type,omitempty"`
+	Message        null.String `boil:"message" json:"message,omitempty" toml:"message" yaml:"message,omitempty"`
+	VoicenoteURL   null.String `boil:"voicenote_url" json:"voicenote_url,omitempty" toml:"voicenote_url" yaml:"voicenote_url,omitempty"`
 
 	R *swipeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L swipeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,6 +47,9 @@ var SwipeColumns = struct {
 	IdempotencyKey string
 	CreatedAt      string
 	UpdatedAt      string
+	MessageType    string
+	Message        string
+	VoicenoteURL   string
 }{
 	ID:             "id",
 	ActorID:        "actor_id",
@@ -52,6 +58,9 @@ var SwipeColumns = struct {
 	IdempotencyKey: "idempotency_key",
 	CreatedAt:      "created_at",
 	UpdatedAt:      "updated_at",
+	MessageType:    "message_type",
+	Message:        "message",
+	VoicenoteURL:   "voicenote_url",
 }
 
 var SwipeTableColumns = struct {
@@ -62,6 +71,9 @@ var SwipeTableColumns = struct {
 	IdempotencyKey string
 	CreatedAt      string
 	UpdatedAt      string
+	MessageType    string
+	Message        string
+	VoicenoteURL   string
 }{
 	ID:             "swipes.id",
 	ActorID:        "swipes.actor_id",
@@ -70,6 +82,9 @@ var SwipeTableColumns = struct {
 	IdempotencyKey: "swipes.idempotency_key",
 	CreatedAt:      "swipes.created_at",
 	UpdatedAt:      "swipes.updated_at",
+	MessageType:    "swipes.message_type",
+	Message:        "swipes.message",
+	VoicenoteURL:   "swipes.voicenote_url",
 }
 
 // Generated where
@@ -82,6 +97,9 @@ var SwipeWhere = struct {
 	IdempotencyKey whereHelpernull_String
 	CreatedAt      whereHelpertime_Time
 	UpdatedAt      whereHelpertime_Time
+	MessageType    whereHelpernull_String
+	Message        whereHelpernull_String
+	VoicenoteURL   whereHelpernull_String
 }{
 	ID:             whereHelperint64{field: "\"swipes\".\"id\""},
 	ActorID:        whereHelperstring{field: "\"swipes\".\"actor_id\""},
@@ -90,6 +108,9 @@ var SwipeWhere = struct {
 	IdempotencyKey: whereHelpernull_String{field: "\"swipes\".\"idempotency_key\""},
 	CreatedAt:      whereHelpertime_Time{field: "\"swipes\".\"created_at\""},
 	UpdatedAt:      whereHelpertime_Time{field: "\"swipes\".\"updated_at\""},
+	MessageType:    whereHelpernull_String{field: "\"swipes\".\"message_type\""},
+	Message:        whereHelpernull_String{field: "\"swipes\".\"message\""},
+	VoicenoteURL:   whereHelpernull_String{field: "\"swipes\".\"voicenote_url\""},
 }
 
 // SwipeRels is where relationship names are stored.
@@ -148,9 +169,9 @@ func (r *swipeR) GetTarget() *User {
 type swipeL struct{}
 
 var (
-	swipeAllColumns            = []string{"id", "actor_id", "target_id", "action", "idempotency_key", "created_at", "updated_at"}
+	swipeAllColumns            = []string{"id", "actor_id", "target_id", "action", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url"}
 	swipeColumnsWithoutDefault = []string{"actor_id", "target_id", "action"}
-	swipeColumnsWithDefault    = []string{"id", "idempotency_key", "created_at", "updated_at"}
+	swipeColumnsWithDefault    = []string{"id", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url"}
 	swipePrimaryKeyColumns     = []string{"id"}
 	swipeGeneratedColumns      = []string{}
 )

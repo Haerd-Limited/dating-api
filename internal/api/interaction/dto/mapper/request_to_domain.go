@@ -11,5 +11,7 @@ func SwipesRequestToDomain(swipesReq dto.SwipesRequest, userID string) domain.Sw
 		Action:         swipesReq.Action,
 		UserID:         userID,
 		IdempotencyKey: swipesReq.IdempotencyKey,
+		Message:        swipesReq.Message,
+		MessageType:    swipesReq.MessageType,
 	}
 }

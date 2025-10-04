@@ -3,6 +3,7 @@ package interaction
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -12,11 +13,11 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction"
 	storage2 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
-	cardsdto "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
@@ -69,13 +70,20 @@ func (h *handler) Create() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse("All fields are required and action field must be one of 'like','pass' or 'superlike'"),
+				commonMappers.ToSimpleErrorResponse(
+					fmt.Sprintf("target_user_id and action are required and action field must be one of '%s','%s' or '%s'. message_type if optional and must be one of '%s' or '%s' if provided",
+						constants.ActionLike,
+						constants.ActionPass,
+						constants.ActionSuperlike,
+						constants.MessageTypeText,
+						constants.MessageTypeVoice,
+					)),
 			)
 
 			return
 		}
 
-		err = h.interactionService.CreateSwipe(ctx, mapper.SwipesRequestToDomain(req, userID))
+		result, err := h.interactionService.CreateSwipe(ctx, mapper.SwipesRequestToDomain(req, userID))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -93,7 +101,7 @@ func (h *handler) Create() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusCreated, commonMappers.ToSimpleMessageResponse("Successfully created"))
+		render.Json(w, http.StatusCreated, mapper.MapToSwipesResponse(result))
 	}
 }
 
@@ -138,7 +146,7 @@ func (h *handler) GetLikes() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusOK, cardsdto.ProfileCardsToDto(profiles))
+		render.Json(w, http.StatusOK, mapper.MapToGetLikesResponse(profiles))
 	}
 }
 

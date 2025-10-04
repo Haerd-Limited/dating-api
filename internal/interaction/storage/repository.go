@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -12,15 +12,17 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
 type InteractionRepository interface {
-	InsertSwipe(ctx context.Context, swipe entity.Swipe) error
+	InsertSwipe(ctx context.Context, swipe entity.Swipe, tx *sql.Tx) error
 	CheckIfMatchable(ctx context.Context, userID string, targetUserID string) (bool, error)
-	CreateMatch(ctx context.Context, match entity.Match) error
+	CreateMatch(ctx context.Context, match entity.Match, tx *sql.Tx) error
 	GetIncomingLikes(ctx context.Context, userID string, limit, offset int) ([]string, error)
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
 	AlreadyMatched(ctx context.Context, userID string, targetUserID string) (bool, error)
+	GetSwipeByActorIDAndTargetID(ctx context.Context, actorID, targetID string) (*entity.Swipe, error)
 }
 
 type repository struct {
@@ -35,11 +37,30 @@ func NewInteractionRepository(db *sqlx.DB) InteractionRepository {
 
 var ErrAlreadySwiped = errors.New("you've already swiped on this user.")
 
+func (is *repository) GetSwipeByActorIDAndTargetID(ctx context.Context, actorID, targetID string) (*entity.Swipe, error) {
+	s, err := entity.Swipes(
+		entity.SwipeWhere.ActorID.EQ(actorID),
+		entity.SwipeWhere.TargetID.EQ(targetID),
+	).One(ctx, is.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
+
 // GetIncomingLikes returns profiles of users who have liked/superliked `userID`.
 func (is *repository) GetIncomingLikes(ctx context.Context, userID string, limit, offset int) ([]string, error) {
 	swipes, err := entity.Swipes(
 		entity.SwipeWhere.TargetID.EQ(userID),
 		qm.Where("action IN (?, ?)", constants.ActionLike, constants.ActionSuperlike),
+		qm.Where(`NOT EXISTS (
+		SELECT 1 FROM swipes s2 
+		WHERE s2.actor_id = ? 
+		AND s2.target_id = swipes.actor_id 
+		AND s2.action = ?
+	)`, userID, constants.ActionPass),
+
 		qm.Limit(limit),
 		qm.Offset(offset),
 		qm.OrderBy("created_at ASC"),
@@ -56,8 +77,8 @@ func (is *repository) GetIncomingLikes(ctx context.Context, userID string, limit
 	return userIDs, nil
 }
 
-func (is *repository) InsertSwipe(ctx context.Context, swipe entity.Swipe) error {
-	err := swipe.Insert(ctx, is.db, boil.Infer())
+func (is *repository) InsertSwipe(ctx context.Context, swipe entity.Swipe, tx *sql.Tx) error {
+	err := swipe.Insert(ctx, tx, boil.Infer())
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
@@ -92,8 +113,8 @@ func (is *repository) CheckIfMatchable(ctx context.Context, userID string, targe
 	return true, nil
 }
 
-func (is *repository) CreateMatch(ctx context.Context, match entity.Match) error {
-	err := match.Insert(ctx, is.db, boil.Infer())
+func (is *repository) CreateMatch(ctx context.Context, match entity.Match, tx *sql.Tx) error {
+	err := match.Insert(ctx, tx, boil.Infer())
 	if err != nil {
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {

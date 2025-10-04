@@ -2,6 +2,7 @@ package conversation
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -15,6 +16,7 @@ import (
 type Service interface {
 	GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error)
 	CreateConversation(ctx context.Context, userID, matchUserID string) error
+	CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) error
 	SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error)
 	GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error)
 }
@@ -97,7 +99,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 
 		if conversation == nil {
 			// create convo
-			_, createConvoErr := s.conversationRepo.CreateConversation(ctx, userID, matchUserID)
+			_, createConvoErr := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, nil)
 			if createConvoErr != nil {
 				return nil, fmt.Errorf("failed to create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, createConvoErr)
 			}
@@ -165,9 +167,18 @@ func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID 
 }
 
 func (s *service) CreateConversation(ctx context.Context, userID, matchUserID string) error {
-	_, err := s.conversationRepo.CreateConversation(ctx, userID, matchUserID)
+	_, err := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, err)
+		return fmt.Errorf("create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, err)
+	}
+
+	return nil
+}
+
+func (s *service) CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) error {
+	_, err := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, tx)
+	if err != nil {
+		return fmt.Errorf("create conversation via tx userID=%s matchUserID=%s: %w", userID, matchUserID, err)
 	}
 
 	return nil
