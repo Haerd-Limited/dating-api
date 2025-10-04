@@ -12,7 +12,7 @@ func SwipeToEntity(s domain.Swipe) entity.Swipe {
 		ActorID:        s.UserID,
 		TargetID:       s.TargetUserID,
 		Action:         s.Action,
-		PromptID:       null.Int64From(s.PromptID),
+		PromptID:       null.Int64FromPtr(s.PromptID),
 		Message:        null.StringFromPtr(s.Message),
 		MessageType:    null.StringFromPtr(s.MessageType),
 		VoicenoteURL:   null.StringFromPtr(s.VoiceNoteURL),

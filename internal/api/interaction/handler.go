@@ -71,7 +71,7 @@ func (h *handler) Create() http.HandlerFunc {
 				w,
 				http.StatusBadRequest,
 				commonMappers.ToSimpleErrorResponse(
-					fmt.Sprintf("target_user_id,prompt_id and action are required and action field must be one of '%s','%s' or '%s'. message_type if optional and must be one of '%s' or '%s' if provided",
+					fmt.Sprintf("target_user_id and action are required and action field must be one of '%s','%s' or '%s'. message_type is optional and must be one of '%s' or '%s' if provided",
 						constants.ActionLike,
 						constants.ActionPass,
 						constants.ActionSuperlike,

@@ -5,9 +5,9 @@ import "github.com/go-playground/validator/v10"
 type SwipesRequest struct {
 	TargetUserID   string  `json:"target_user_id" validate:"required"`
 	Action         string  `json:"action" validate:"oneof=like pass superlike"`
-	PromptID       int64   `json:"prompt_id" validate:"required"`
+	PromptID       *int64  `json:"prompt_id"`
 	Message        *string `json:"message"`
-	MessageType    *string `json:"message_type" validate:"oneof=text voicenote"`
+	MessageType    *string `json:"message_type"`
 	IdempotencyKey *string `json:"idempotency_key"`
 }
 

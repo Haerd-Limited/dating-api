@@ -16,7 +16,7 @@ import (
 type Service interface {
 	GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error)
 	CreateConversation(ctx context.Context, userID, matchUserID string) error
-	CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) error
+	CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) (string, error)
 	SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error)
 	GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error)
 }
@@ -175,13 +175,13 @@ func (s *service) CreateConversation(ctx context.Context, userID, matchUserID st
 	return nil
 }
 
-func (s *service) CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) error {
-	_, err := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, tx)
+func (s *service) CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) (string, error) {
+	convoEntity, err := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, tx)
 	if err != nil {
-		return fmt.Errorf("create conversation via tx userID=%s matchUserID=%s: %w", userID, matchUserID, err)
+		return "", fmt.Errorf("create conversation via tx userID=%s matchUserID=%s: %w", userID, matchUserID, err)
 	}
 
-	return nil
+	return convoEntity.ID, nil
 }
 
 func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID string, lastMessageID int64) (*domain.Message, error) {

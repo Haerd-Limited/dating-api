@@ -70,6 +70,7 @@ func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.Voic
 	if vp.CoverPhotoURL.Valid {
 		coverPhotoUrl = vp.CoverPhotoURL.String
 	}
+
 	return domain.VoicePrompt{
 		PromptID:      vp.ID,
 		VoiceNoteURL:  vp.AudioURL,

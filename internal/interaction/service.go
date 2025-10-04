@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
+	conversationDomain "github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
@@ -101,11 +102,31 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return "", fmt.Errorf("create match userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 		}
 
-		err = is.conversationService.CreateConversationViaTx(ctx, swipe.UserID, swipe.TargetUserID, tx.Raw())
+		convoID, err := is.conversationService.CreateConversationViaTx(ctx, swipe.UserID, swipe.TargetUserID, tx.Raw())
 		if err != nil {
 			return "", fmt.Errorf("create conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 		}
 		// todo: think about if we need to add some logic where if you've already been liked and that user sent a message, then include that message in the convo
+
+		targetUserSwipe, err := is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, swipe.TargetUserID, swipe.UserID)
+		if err != nil {
+			return "", fmt.Errorf("get swipe by actorID and targetID actorID=%s targetUserID=%s: %w", swipe.TargetUserID, swipe.UserID, err)
+		}
+
+		if targetUserSwipe.Message.Valid && targetUserSwipe.MessageType.Valid {
+			_, err = is.conversationService.SendMessage(ctx, conversationDomain.Message{
+				ConversationID: convoID,
+				SenderID:       swipe.TargetUserID,
+				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
+				TextBody:       targetUserSwipe.Message.Ptr(),
+				MediaKey:       nil,
+				MediaSeconds:   nil,
+				ClientMsgID:    *swipe.IdempotencyKey,
+			})
+			if err != nil {
+				return "", fmt.Errorf("create message userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+			}
+		}
 
 		err = tx.Commit()
 		if err != nil {

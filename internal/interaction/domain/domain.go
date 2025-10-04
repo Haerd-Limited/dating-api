@@ -5,7 +5,7 @@ import "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecar
 type Swipe struct {
 	TargetUserID   string
 	Action         string
-	PromptID       int64
+	PromptID       *int64
 	UserID         string
 	Message        *string
 	MessageType    *string

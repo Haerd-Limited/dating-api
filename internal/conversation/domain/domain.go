@@ -1,12 +1,16 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+)
 
 type MessageType string
 
 const (
-	MessageTypeText   MessageType = "text"
-	MessageTypeVoice  MessageType = "voice"
+	MessageTypeText   MessageType = constants.MessageTypeText
+	MessageTypeVoice  MessageType = constants.MessageTypeVoice
 	MessageTypeSystem MessageType = "system"
 )
 
