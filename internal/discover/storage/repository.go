@@ -102,6 +102,16 @@ func (r *discoverRepository) GetCandidates(
                    AND s.target_id = user_profiles.user_id
             )`, userID),
 
+		// exclude users who have already liked or superliked me
+		qm.Where(`
+            NOT EXISTS (
+                SELECT 1
+                  FROM swipes s
+                 WHERE s.actor_id = user_profiles.user_id
+                   AND s.target_id = ?
+                   AND s.type IN ('like', 'superlike')
+            )`, userID),
+
 		qm.Limit(limit),
 		qm.Offset(offset),
 	).All(ctx, r.db)
