@@ -109,6 +109,9 @@ func New(
 				r.Route("/discover", func(r chi.Router) {
 					r.Get("/", discoverHandler.GetDiscover())
 				})
+				r.Route("/vwh", func(r chi.Router) {
+					r.Get("/", discoverHandler.GetVoiceWorthHearing())
+				})
 				r.Route("/swipes", func(r chi.Router) {
 					r.Post("/", interactionHandler.Create())
 				})

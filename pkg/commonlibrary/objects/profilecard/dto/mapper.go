@@ -7,6 +7,10 @@ import (
 )
 
 func ProfileCardsToDto(profiles []profilecard.ProfileCard) []ProfileCard {
+	if profiles == nil {
+		return []ProfileCard{}
+	}
+
 	var result []ProfileCard
 	for _, profile := range profiles {
 		result = append(result, ProfileCardToDto(profile))
@@ -73,6 +77,7 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		Ethnicity:       profile.Ethnicity,
 		SpokenLanguages: profile.SpokenLanguages,
 		VoicePrompts:    voicePrompts,
+		LikeCount:       profile.LikeCount,
 		Verified:        profile.Verified,
 		Theme: UserTheme{
 			BaseHex: profile.Theme.BaseHex,

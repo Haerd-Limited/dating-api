@@ -83,15 +83,18 @@ func (r *repository) SendMessage(ctx context.Context, msg entity.Message) (*enti
 	if err != nil {
 		return nil, fmt.Errorf("begin: %w", err)
 	}
+
 	defer func() { _ = tx.Rollback() }()
 
 	out, err := r.SendMessageViaTx(ctx, tx.Tx, msg)
 	if err != nil {
 		return nil, err
 	}
+
 	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("commit: %w", err)
 	}
+
 	return out, nil
 }
 
@@ -106,6 +109,7 @@ func (r *repository) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entit
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNonExistentConversation
 		}
+
 		return nil, fmt.Errorf("get conversation: %w", err)
 	}
 
@@ -124,8 +128,10 @@ func (r *repository) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entit
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNonExistentMatch
 		}
+
 		return nil, fmt.Errorf("get match: %w", err)
 	}
+
 	if match.Status != entity.MatchStatusActive {
 		return nil, fmt.Errorf("%w: status=%s", ErrMatchNotActive, match.Status)
 	}

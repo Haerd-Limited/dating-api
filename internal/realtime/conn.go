@@ -92,5 +92,6 @@ func (c *Conn) Close() {
 	for id := range c.rooms {
 		c.hub.LeaveConversation(c, id)
 	}
+
 	_ = c.ws.Close(websocket.StatusNormalClosure, "")
 }

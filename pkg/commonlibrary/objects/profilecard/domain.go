@@ -40,6 +40,8 @@ type ProfileCard struct {
 	Verified   bool // todo: implement logic
 	DistanceKm int  // todo: implement logic
 
+	LikeCount *int64
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

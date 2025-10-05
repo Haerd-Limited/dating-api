@@ -13,6 +13,7 @@ import (
 
 type Service interface {
 	GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]profilecard.ProfileCard, error)
+	GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error)
 }
 
 type service struct {
@@ -35,7 +36,7 @@ func NewDiscoverService(
 
 // todo: add filters like  age, race, distance, age
 func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]profilecard.ProfileCard, error) {
-	candidates, err := s.discoverRepo.GetCandidates(ctx, userID, limit, offset)
+	candidates, err := s.discoverRepo.GetDiscoverFeedCandidates(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get candidate IDs userID=%s limit=%v offset=%v: %w", userID, limit, offset, err)
 	}
@@ -49,6 +50,46 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
+
+		profiles = append(profiles, p)
+	}
+
+	return profiles, nil
+}
+
+// todo: update to refresh weekly
+func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error) {
+	candidates, err := s.discoverRepo.GetVoiceWorthHearing(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get candidates userID=%s: %w", userID, err)
+	}
+
+	var profiles []profilecard.ProfileCard
+
+	for _, candidate := range candidates {
+		var profileErr error
+
+		alreadyInteracted, profileErr := s.discoverRepo.AlreadyInteracted(ctx, userID, candidate.UserID)
+		if profileErr != nil {
+			return nil, fmt.Errorf("already interacted userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		}
+		if alreadyInteracted {
+			continue
+		}
+
+		p, profileErr := s.profileService.GetProfileCard(ctx, candidate.UserID)
+		if profileErr != nil {
+			return nil, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		}
+
+		var likeCount int64
+
+		likeCount, profileErr = s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
+		if profileErr != nil {
+			return nil, fmt.Errorf("get like and superlike count userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		}
+
+		p.LikeCount = &likeCount
 
 		profiles = append(profiles, p)
 	}
