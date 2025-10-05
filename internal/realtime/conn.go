@@ -51,13 +51,6 @@ func (c *Conn) writeLoop() {
 }
 
 func (c *Conn) ReadLoop(ctx context.Context) {
-	defer func(ws *websocket.Conn, code websocket.StatusCode, reason string) {
-		err := ws.Close(code, reason)
-		if err != nil {
-			c.log.Error("failed to close websocket connection", zap.Error(err))
-		}
-	}(c.ws, websocket.StatusNormalClosure, "")
-
 	for {
 		_, data, err := c.ws.Read(ctx)
 		if err != nil {
