@@ -57,7 +57,8 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 	return profiles, nil
 }
 
-// todo: update to refresh weekly
+// todo: update to refresh weekly. maybe make a table to store user's voices to be heard. then have cron job recalculate and update weekly
+// todo: update to be more tailored to user's preferences e.g. race age etc
 func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error) {
 	candidates, err := s.discoverRepo.GetVoiceWorthHearing(ctx, userID)
 	if err != nil {
@@ -73,6 +74,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		if profileErr != nil {
 			return nil, fmt.Errorf("already interacted userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
+
 		if alreadyInteracted {
 			continue
 		}

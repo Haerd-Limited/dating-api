@@ -18,6 +18,7 @@ type DiscoverRepository interface {
 	GetVoiceWorthHearing(ctx context.Context, userID string) ([]*entity.UserProfile, error)
 	GetLikeAndSuperlikeCount(ctx context.Context, userID string) (int64, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
+	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
 }
 
 type discoverRepository struct {
@@ -56,6 +57,7 @@ func (r *discoverRepository) AlreadyInteracted(ctx context.Context, userID strin
 	if err != nil {
 		return false, fmt.Errorf("check interactions (%s <-> %s): %w", userID, targetUserID, err)
 	}
+
 	return exists, nil
 }
 
@@ -130,7 +132,7 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
             )`, userID, constants.ActionLike, constants.ActionSuperlike),
 	}
 
-	excludeIDs, err := r.getVoiceWorthHearingIDs(ctx, userID)
+	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
 	}
@@ -139,10 +141,12 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
 	if len(excludeIDs) > 0 {
 		ph := make([]string, len(excludeIDs))
 		args := make([]interface{}, len(excludeIDs))
+
 		for i, id := range excludeIDs {
 			ph[i] = "?"
 			args[i] = id
 		}
+
 		mods = append(mods, qm.Where(
 			"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
 			args...,
@@ -155,6 +159,7 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
 	if err != nil {
 		return nil, fmt.Errorf("get user profiles: %w", err)
 	}
+
 	return users, nil
 }
 
@@ -203,14 +208,16 @@ func (r *discoverRepository) getOppositeGender(ctx context.Context, userID strin
 	return opposite, nil
 }
 
-func (r *discoverRepository) getVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
+func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
 	profiles, err := r.GetVoiceWorthHearing(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
+
 	ids := make([]string, 0, len(profiles))
 	for _, p := range profiles {
 		ids = append(ids, p.UserID)
 	}
+
 	return ids, nil
 }

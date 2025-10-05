@@ -152,8 +152,12 @@ func (h *handler) GetLikes() http.HandlerFunc {
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, interaction.ErrInvalidAction):
+		return http.StatusBadRequest, fmt.Sprintf("Invalid action. Action must be '%s','%s' or '%s'", constants.ActionLike, constants.ActionPass, constants.ActionSuperlike)
 	case errors.Is(err, interaction.ErrMissingRequiredFieldsForLikeWithMessage):
 		return http.StatusBadRequest, "Sending a like with a message also requires message_type, message,prompt_id and a generated client_msg_id"
+	case errors.Is(err, interaction.ErrLikedAVhwUser):
+		return http.StatusBadRequest, "You can only superlike a Voices Worth Hearing user"
 	case errors.Is(err, interaction.ErrInvalidDirection):
 		return http.StatusBadRequest, "Invalid direction. Direction must be 'incoming'"
 	case errors.Is(err, storage.ErrUserDoesNotExists):

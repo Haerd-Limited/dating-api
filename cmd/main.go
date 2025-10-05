@@ -111,7 +111,7 @@ func main() {
 	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub)
 
 	interactionRepo := storage4.NewInteractionRepository(db)
-	interactionService := interaction.NewInteractionService(logger, interactionRepo, profileService, conversationService, unitOfWork)
+	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverRepo, unitOfWork)
 
 	userRepo := storage.NewUserRepository(db)
 	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)

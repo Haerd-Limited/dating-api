@@ -3,6 +3,8 @@ package interaction
 import (
 	"context"
 	"fmt"
+	storage2 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
+	"slices"
 
 	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
@@ -27,16 +29,18 @@ type Service interface {
 type service struct {
 	logger              *zap.Logger
 	profileService      profile.Service
-	interactionRepo     storage.InteractionRepository
 	conversationService conversation.Service
+	interactionRepo     storage.InteractionRepository
+	discoverRepo        storage2.DiscoverRepository
 	uow                 uow.UoW
 }
 
 func NewInteractionService(
 	logger *zap.Logger,
-	interactionRepo storage.InteractionRepository,
 	profileService profile.Service,
 	conversationService conversation.Service,
+	interactionRepo storage.InteractionRepository,
+	discoverRepo storage2.DiscoverRepository,
 	uow uow.UoW,
 ) Service {
 	return &service{
@@ -45,11 +49,14 @@ func NewInteractionService(
 		profileService:      profileService,
 		conversationService: conversationService,
 		uow:                 uow,
+		discoverRepo:        discoverRepo,
 	}
 }
 
 var (
 	ErrInvalidDirection                        = errors.New("invalid direction")
+	ErrInvalidAction                           = errors.New("invalid action")
+	ErrLikedAVhwUser                           = errors.New("user did not super like a voice worth hearing user")
 	ErrMissingRequiredFieldsForLikeWithMessage = errors.New("message, message type, prompt id and idempotency key are required for like with message")
 )
 
@@ -59,6 +66,7 @@ const (
 	ResultPassed  = "PASSED"
 )
 
+// todo: implement only one superlike a week unless they buy more.
 func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error) {
 	// this should all be a single transaction
 	tx, err := is.uow.Begin(ctx)
@@ -68,18 +76,13 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 	defer func() { _ = tx.Rollback() }()
 
+	err = is.validateSwipe(ctx, swipe)
+	if err != nil {
+		return "", fmt.Errorf("validate swipe userID=%s : %w", swipe.UserID, err)
+	}
+
 	switch swipe.Action {
 	case constants.ActionLike, constants.ActionSuperlike:
-		isMissingOnlyIdempotencyKey := swipe.Message != nil && swipe.MessageType != nil && swipe.PromptID != nil && swipe.IdempotencyKey == nil
-		isMissingOnlyPromptID := swipe.Message != nil && swipe.MessageType != nil && swipe.PromptID == nil && swipe.IdempotencyKey != nil
-		isMissingOnlyMessageType := swipe.Message != nil && swipe.MessageType == nil && swipe.PromptID != nil && swipe.IdempotencyKey != nil
-		isMissingOnlyMessage := swipe.Message == nil && swipe.MessageType != nil && swipe.PromptID != nil && swipe.IdempotencyKey == nil
-
-		unableToSendMessageLike := isMissingOnlyIdempotencyKey || isMissingOnlyPromptID || isMissingOnlyMessageType || isMissingOnlyMessage
-		if unableToSendMessageLike {
-			return "", ErrMissingRequiredFieldsForLikeWithMessage
-		}
-
 		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
 		if err != nil {
 			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
@@ -166,9 +169,9 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		}
 
 		return ResultPassed, nil
-	default:
-		return "", fmt.Errorf("invalid action: %s", swipe.Action)
 	}
+
+	return "", fmt.Errorf("invalid action: %s", swipe.Action)
 }
 
 func (is *service) GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]domain.Like, error) {
@@ -236,4 +239,35 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 	}
 
 	return likes, nil
+}
+
+func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error {
+	//Ensure frontend/client sent a valid action
+	if swipe.Action != constants.ActionLike && swipe.Action != constants.ActionSuperlike && swipe.Action != constants.ActionPass {
+		return fmt.Errorf("%w : action=%s", ErrInvalidAction, swipe.Action)
+	}
+
+	//Check is frontend attempted to send a like with a message but is missing required fields
+	if swipe.Action == constants.ActionSuperlike || swipe.Action == constants.ActionLike {
+		MissingIdempotencyKey := swipe.Message != nil && swipe.MessageType != nil && swipe.PromptID != nil && swipe.IdempotencyKey == nil
+		MissingPromptID := swipe.Message != nil && swipe.MessageType != nil && swipe.PromptID == nil && swipe.IdempotencyKey != nil
+		MissingMessageType := swipe.Message != nil && swipe.MessageType == nil && swipe.PromptID != nil && swipe.IdempotencyKey != nil
+		MissingMessage := swipe.Message == nil && swipe.MessageType != nil && swipe.PromptID != nil && swipe.IdempotencyKey == nil
+		unableToSendLikeWithMessage := MissingIdempotencyKey || MissingPromptID || MissingMessageType || MissingMessage
+		if unableToSendLikeWithMessage {
+			return ErrMissingRequiredFieldsForLikeWithMessage
+		}
+	}
+
+	//Ensure that a user can only superlike a vwh user
+	vwhIDs, err := is.discoverRepo.GetVoiceWorthHearingIDs(ctx, swipe.UserID)
+	if err != nil {
+		return fmt.Errorf("get voice worth hearing ids userID=%s: %w", swipe.UserID, err)
+	}
+	userDidNotSuperLikeAVwhUser := len(vwhIDs) != 0 && swipe.Action == constants.ActionLike && slices.Contains(vwhIDs, swipe.TargetUserID)
+	if userDidNotSuperLikeAVwhUser {
+		return ErrLikedAVhwUser
+	}
+
+	return nil
 }
