@@ -56,8 +56,8 @@ func NewInteractionService(
 var (
 	ErrInvalidDirection                        = errors.New("invalid direction")
 	ErrInvalidAction                           = errors.New("invalid action")
-	ErrLikedAVhwUser                           = errors.New("user did not super like a voice worth hearing user")
-	ErrMissingRequiredFieldsForLikeWithMessage = errors.New("message, message type, prompt id and idempotency key are required for like with message")
+	ErrLikedAVhwUser                           = errors.New("user liked a vhw user")
+	ErrMissingRequiredFieldsForLikeWithMessage = errors.New("message, message type, prompt id and idempotency key are required for sending a like with a message")
 )
 
 const (
@@ -249,23 +249,24 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error 
 
 	//Check is frontend attempted to send a like with a message but is missing required fields
 	if swipe.Action == constants.ActionSuperlike || swipe.Action == constants.ActionLike {
-		MissingIdempotencyKey := swipe.Message != nil && swipe.MessageType != nil && swipe.PromptID != nil && swipe.IdempotencyKey == nil
-		MissingPromptID := swipe.Message != nil && swipe.MessageType != nil && swipe.PromptID == nil && swipe.IdempotencyKey != nil
-		MissingMessageType := swipe.Message != nil && swipe.MessageType == nil && swipe.PromptID != nil && swipe.IdempotencyKey != nil
-		MissingMessage := swipe.Message == nil && swipe.MessageType != nil && swipe.PromptID != nil && swipe.IdempotencyKey == nil
-		unableToSendLikeWithMessage := MissingIdempotencyKey || MissingPromptID || MissingMessageType || MissingMessage
+		hasAny := swipe.Message != nil || swipe.MessageType != nil || swipe.PromptID != nil || swipe.IdempotencyKey != nil
+
+		atleastOneIsMissing := swipe.Message == nil || swipe.MessageType == nil || swipe.PromptID == nil || swipe.IdempotencyKey == nil
+
+		unableToSendLikeWithMessage := hasAny && atleastOneIsMissing
+
 		if unableToSendLikeWithMessage {
 			return ErrMissingRequiredFieldsForLikeWithMessage
 		}
 	}
 
-	//Ensure that a user can only superlike a vwh user
+	//Ensure that a user can only superlike or pass a vwh user
 	vwhIDs, err := is.discoverRepo.GetVoiceWorthHearingIDs(ctx, swipe.UserID)
 	if err != nil {
 		return fmt.Errorf("get voice worth hearing ids userID=%s: %w", swipe.UserID, err)
 	}
-	userDidNotSuperLikeAVwhUser := len(vwhIDs) != 0 && swipe.Action == constants.ActionLike && slices.Contains(vwhIDs, swipe.TargetUserID)
-	if userDidNotSuperLikeAVwhUser {
+	userLikedAVwhUser := len(vwhIDs) != 0 && swipe.Action == constants.ActionLike && slices.Contains(vwhIDs, swipe.TargetUserID)
+	if userLikedAVwhUser {
 		return ErrLikedAVhwUser
 	}
 
