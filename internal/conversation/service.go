@@ -242,24 +242,7 @@ func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.M
 		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
 
-	// Build server event (use your DTO for payload)
-	evt := dto.ServerMsg{
-		Type:           "message.new",
-		ConversationID: result.ConversationID,
-		Payload: map[string]any{
-			"id":              result.ID,
-			"conversation_id": result.ConversationID,
-			"sender_id":       result.SenderID,
-			"text_body":       result.TextBody,
-			"type":            result.Type,
-			"media_key":       result.MediaKey,
-			"media_seconds":   result.MediaSeconds,
-			"created_at":      result.CreatedAt,
-			"client_msg_id":   result.ClientMsgID,
-		},
-	}
-	b, _ := json.Marshal(evt)
-	s.hub.BroadcastToConversation(result.ConversationID, b)
+	s.sendMessageToConversation(result)
 
 	return result, nil
 }
@@ -279,24 +262,28 @@ func (s *service) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.M
 		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
 
+	s.sendMessageToConversation(result)
+
+	return result, nil
+}
+
+func (s *service) sendMessageToConversation(msg domain.Message) {
 	// Build server event (use your DTO for payload)
 	evt := dto.ServerMsg{
 		Type:           "message.new",
-		ConversationID: result.ConversationID,
+		ConversationID: msg.ConversationID,
 		Payload: map[string]any{
-			"id":              result.ID,
-			"conversation_id": result.ConversationID,
-			"sender_id":       result.SenderID,
-			"text_body":       result.TextBody,
-			"type":            result.Type,
-			"media_key":       result.MediaKey,
-			"media_seconds":   result.MediaSeconds,
-			"created_at":      result.CreatedAt,
-			"client_msg_id":   result.ClientMsgID,
+			"id":              msg.ID,
+			"conversation_id": msg.ConversationID,
+			"sender_id":       msg.SenderID,
+			"text_body":       msg.TextBody,
+			"type":            msg.Type,
+			"media_key":       msg.MediaKey,
+			"media_seconds":   msg.MediaSeconds,
+			"created_at":      msg.CreatedAt,
+			"client_msg_id":   msg.ClientMsgID,
 		},
 	}
 	b, _ := json.Marshal(evt)
-	s.hub.BroadcastToConversation(result.ConversationID, b)
-
-	return result, nil
+	s.hub.BroadcastToConversation(msg.ConversationID, b)
 }
