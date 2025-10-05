@@ -152,6 +152,8 @@ func (h *handler) GetLikes() http.HandlerFunc {
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, interaction.ErrSelfLike):
+		return http.StatusBadRequest, "As much as we promote self love, you cannot like yourself"
 	case errors.Is(err, interaction.ErrInvalidAction):
 		return http.StatusBadRequest, fmt.Sprintf("Invalid action. Action must be '%s','%s' or '%s'", constants.ActionLike, constants.ActionPass, constants.ActionSuperlike)
 	case errors.Is(err, interaction.ErrMissingRequiredFieldsForLikeWithMessage):

@@ -54,6 +54,7 @@ func NewInteractionService(
 }
 
 var (
+	ErrSelfLike                                = errors.New("user cannot like themselves")
 	ErrInvalidDirection                        = errors.New("invalid direction")
 	ErrInvalidAction                           = errors.New("invalid action")
 	ErrLikedAVhwUser                           = errors.New("user liked a vhw user")
@@ -258,6 +259,11 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error 
 		if unableToSendLikeWithMessage {
 			return ErrMissingRequiredFieldsForLikeWithMessage
 		}
+	}
+
+	//block self like
+	if swipe.UserID == swipe.TargetUserID {
+		return ErrSelfLike
 	}
 
 	//Ensure that a user can only superlike or pass a vwh user
