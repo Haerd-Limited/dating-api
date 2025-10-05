@@ -59,16 +59,7 @@ func (h *handler) GetStep() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -100,16 +91,7 @@ func (h *handler) Intro() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -156,16 +138,7 @@ func (h *handler) Basics() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -211,16 +184,7 @@ func (h *handler) Location() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -267,16 +231,7 @@ func (h *handler) Lifestyle() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -323,16 +278,7 @@ func (h *handler) Beliefs() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -379,16 +325,7 @@ func (h *handler) Background() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -435,16 +372,7 @@ func (h *handler) WorkAndEducation() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -502,16 +430,7 @@ func (h *handler) Languages() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -569,16 +488,7 @@ func (h *handler) Photos() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -636,16 +546,7 @@ func (h *handler) Prompts() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -703,16 +604,7 @@ func (h *handler) Profile() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 

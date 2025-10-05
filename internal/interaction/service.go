@@ -3,7 +3,6 @@ package interaction
 import (
 	"context"
 	"fmt"
-	storage2 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"slices"
 
 	"github.com/friendsofgo/errors"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
 	conversationDomain "github.com/Haerd-Limited/dating-api/internal/conversation/domain"
+	storage2 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
@@ -110,12 +110,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			a, b = b, a
 		}
 
-		err = is.interactionRepo.CreateMatch(ctx, entity.Match{
-			UserA: a,
-			UserB: b,
-		},
-			tx.Raw(),
-		)
+		err = is.interactionRepo.CreateMatch(ctx, entity.Match{UserA: a, UserB: b}, tx.Raw())
 		if err != nil {
 			return "", fmt.Errorf("create match userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 		}
@@ -172,7 +167,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		return ResultPassed, nil
 	}
 
-	return "", fmt.Errorf("invalid action: %s", swipe.Action)
+	return "", fmt.Errorf("%w: %s", ErrInvalidAction, swipe.Action)
 }
 
 func (is *service) GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]domain.Like, error) {
@@ -243,12 +238,12 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 }
 
 func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error {
-	//Ensure frontend/client sent a valid action
+	// Ensure frontend/client sent a valid action
 	if swipe.Action != constants.ActionLike && swipe.Action != constants.ActionSuperlike && swipe.Action != constants.ActionPass {
 		return fmt.Errorf("%w : action=%s", ErrInvalidAction, swipe.Action)
 	}
 
-	//Check is frontend attempted to send a like with a message but is missing required fields
+	// Check is frontend attempted to send a like with a message but is missing required fields
 	if swipe.Action == constants.ActionSuperlike || swipe.Action == constants.ActionLike {
 		hasAny := swipe.Message != nil || swipe.MessageType != nil || swipe.PromptID != nil || swipe.IdempotencyKey != nil
 
@@ -261,16 +256,17 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error 
 		}
 	}
 
-	//block self like
+	// block self like
 	if swipe.UserID == swipe.TargetUserID {
 		return ErrSelfLike
 	}
 
-	//Ensure that a user can only superlike or pass a vwh user
+	// Ensure that a user can only superlike or pass a vwh user
 	vwhIDs, err := is.discoverRepo.GetVoiceWorthHearingIDs(ctx, swipe.UserID)
 	if err != nil {
 		return fmt.Errorf("get voice worth hearing ids userID=%s: %w", swipe.UserID, err)
 	}
+
 	userLikedAVwhUser := len(vwhIDs) != 0 && swipe.Action == constants.ActionLike && slices.Contains(vwhIDs, swipe.TargetUserID)
 	if userLikedAVwhUser {
 		return ErrLikedAVhwUser

@@ -4,6 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"go.uber.org/zap"
+
+	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 )
 
 const (
@@ -22,4 +27,10 @@ func Json(w http.ResponseWriter, statusCode int, payload any) {
 
 	w.WriteHeader(statusCode)
 	_, _ = w.Write(body)
+}
+
+func UnauthorizedResponse(w http.ResponseWriter, r *http.Request, logger *zap.Logger) {
+	authHeader := r.Header.Get("Authorization")
+	logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
+	Json(w, http.StatusUnauthorized, commonMappers.ToSimpleErrorResponse(messages.AuthenticationRequiredMsg))
 }

@@ -43,16 +43,7 @@ func (h *handler) GeneratePhotoUploadUrl() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -84,16 +75,7 @@ func (h *handler) GenerateVoiceNoteUploadUrl() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 

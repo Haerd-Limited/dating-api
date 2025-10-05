@@ -127,8 +127,9 @@ func New(
 
 				r.Route("/conversations", func(r chi.Router) {
 					r.Get("/", conversationHandler.GetConversations())
-					r.Post("/{id}/messages", conversationHandler.SendMessage())
+					r.Get("/{id}/score", conversationHandler.GetConversationScore())
 					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
+					r.Post("/{id}/messages", conversationHandler.SendMessage())
 				})
 
 				r.Route("/media", func(r chi.Router) {
@@ -138,7 +139,6 @@ func New(
 					// r.Delete("/media/photos/{id}", mediaHandler.DeletePhoto())
 
 					r.Get("/voice/presign", mediaHandler.GenerateVoiceNoteUploadUrl())
-					// r.Post("/media/voice", mediaHandler.AttachVoice())#
 					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
 				})
 

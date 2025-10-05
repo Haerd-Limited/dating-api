@@ -243,6 +243,7 @@ func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.M
 	}
 
 	s.sendMessageToConversation(result)
+	// todo: update score realtime
 
 	return result, nil
 }

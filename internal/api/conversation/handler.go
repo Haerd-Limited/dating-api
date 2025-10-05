@@ -26,6 +26,7 @@ type Handler interface {
 	GetConversations() http.HandlerFunc
 	SendMessage() http.HandlerFunc
 	GetConversationMessages() http.HandlerFunc
+	GetConversationScore() http.HandlerFunc
 }
 
 type handler struct {
@@ -43,22 +44,18 @@ func NewConversationHandler(
 	}
 }
 
+func (h *handler) GetConversationScore() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
+
 func (h *handler) GetConversations() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -90,15 +87,7 @@ func (h *handler) SendMessage() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
@@ -156,15 +145,7 @@ func (h *handler) GetConversationMessages() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 
