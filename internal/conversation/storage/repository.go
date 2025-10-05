@@ -20,7 +20,8 @@ type ConversationRepository interface {
 	GetLastMessageByID(ctx context.Context, lastMessageID int64) (*entity.Message, error)
 	CreateConversation(ctx context.Context, userA, userB string, tx *sql.Tx) (*entity.Conversation, error)
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
-	SendMessageViaTx(ctx context.Context, msg entity.Message) (*entity.Message, error)
+	SendMessage(ctx context.Context, msg entity.Message) (*entity.Message, error)
+	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entity.Message) (*entity.Message, error)
 	GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error)
 	GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error)
 }
@@ -75,17 +76,27 @@ func (r *repository) GetMessagesByConversationID(ctx context.Context, conversati
 	return messages, nil
 }
 
-func (r *repository) SendMessageViaTx(ctx context.Context, msg entity.Message) (*entity.Message, error) {
+// Standalone version that manages its own tx for non-aggregate use
+func (r *repository) SendMessage(ctx context.Context, msg entity.Message) (*entity.Message, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+		return nil, fmt.Errorf("begin: %w", err)
 	}
+	defer func() { _ = tx.Rollback() }()
 
-	defer func() {
-		_ = tx.Rollback()
-	}()
+	out, err := r.SendMessageViaTx(ctx, tx.Tx, msg)
+	if err != nil {
+		return nil, err
+	}
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+	return out, nil
+}
 
-	// 1. check if conversation exists.
+// True “ViaTx” – uses caller’s tx
+func (r *repository) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entity.Message) (*entity.Message, error) {
+	// 1) Lock conversation
 	convo, err := entity.Conversations(
 		entity.ConversationWhere.ID.EQ(msg.ConversationID),
 		qm.For("UPDATE"),
@@ -94,49 +105,45 @@ func (r *repository) SendMessageViaTx(ctx context.Context, msg entity.Message) (
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNonExistentConversation
 		}
-
-		return nil, fmt.Errorf("failed to get conversation: %w", err)
+		return nil, fmt.Errorf("get conversation: %w", err)
 	}
 
+	// 2) Participant guard
 	if msg.SenderID != convo.UserA && msg.SenderID != convo.UserB {
-		return nil, ErrNotConversationParticipant // not a participant
+		return nil, ErrNotConversationParticipant
 	}
-	// 2. if conversation exists, get and then check matches to see if status is active. if not, return forbidden
+
+	// 3) Match status (optional FOR UPDATE if you need to lock it)
 	match, err := entity.Matches(
-		qm.Where("user_a = ? AND user_b = ? OR user_a = ? AND user_b = ?",
+		qm.Where("(user_a = ? AND user_b = ?) OR (user_a = ? AND user_b = ?)",
 			convo.UserA, convo.UserB, convo.UserB, convo.UserA),
+		qm.For("UPDATE"),
 	).One(ctx, tx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNonExistentMatch
 		}
-
-		return nil, fmt.Errorf("failed to get match: %w", err)
+		return nil, fmt.Errorf("get match: %w", err)
 	}
-
 	if match.Status != entity.MatchStatusActive {
-		return nil, fmt.Errorf("%w : status=%s", ErrMatchNotActive, match.Status)
+		return nil, fmt.Errorf("%w: status=%s", ErrMatchNotActive, match.Status)
 	}
 	// 3. Insert message in message table and get messageID,
 	err = msg.Insert(ctx, tx, boil.Infer())
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert message: %w", err)
 	}
-	// 4. Set messageID as conversations messageID
+
+	// 5) Update conversation tail
 	convo.LastMessageID = null.Int64From(msg.ID)
-	convo.LastActivityAt = time.Now()
+	convo.LastActivityAt = time.Now().UTC()
 
 	_, err = convo.Update(ctx, tx, boil.Whitelist(
 		entity.ConversationColumns.LastMessageID,
 		entity.ConversationColumns.LastActivityAt,
 	))
 	if err != nil {
-		return nil, fmt.Errorf("failed to update conversation: %w", err)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return nil, fmt.Errorf("commit failed: %w", err)
+		return nil, fmt.Errorf("update conversation: %w", err)
 	}
 
 	return &msg, nil

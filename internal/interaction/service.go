@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
@@ -47,7 +48,10 @@ func NewInteractionService(
 	}
 }
 
-var ErrInvalidDirection = fmt.Errorf("invalid direction")
+var (
+	ErrInvalidDirection                        = errors.New("invalid direction")
+	ErrMissingRequiredFieldsForLikeWithMessage = errors.New("message, message type, prompt id and idempotency key are required for like with message")
+)
 
 const (
 	ResultMatched = "MATCHED"
@@ -66,6 +70,16 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 	switch swipe.Action {
 	case constants.ActionLike, constants.ActionSuperlike:
+		isMissingOnlyIdempotencyKey := swipe.Message != nil && swipe.MessageType != nil && swipe.PromptID != nil && swipe.IdempotencyKey == nil
+		isMissingOnlyPromptID := swipe.Message != nil && swipe.MessageType != nil && swipe.PromptID == nil && swipe.IdempotencyKey != nil
+		isMissingOnlyMessageType := swipe.Message != nil && swipe.MessageType == nil && swipe.PromptID != nil && swipe.IdempotencyKey != nil
+		isMissingOnlyMessage := swipe.Message == nil && swipe.MessageType != nil && swipe.PromptID != nil && swipe.IdempotencyKey == nil
+
+		unableToSendMessageLike := isMissingOnlyIdempotencyKey || isMissingOnlyPromptID || isMissingOnlyMessageType || isMissingOnlyMessage
+		if unableToSendMessageLike {
+			return "", ErrMissingRequiredFieldsForLikeWithMessage
+		}
+
 		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
 		if err != nil {
 			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
@@ -102,29 +116,34 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return "", fmt.Errorf("create match userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 		}
 
-		convoID, err := is.conversationService.CreateConversationViaTx(ctx, swipe.UserID, swipe.TargetUserID, tx.Raw())
+		var convoID string
+
+		convoID, err = is.conversationService.CreateConversationViaTx(ctx, swipe.UserID, swipe.TargetUserID, tx.Raw())
 		if err != nil {
 			return "", fmt.Errorf("create conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 		}
-		// todo: think about if we need to add some logic where if you've already been liked and that user sent a message, then include that message in the convo
 
-		targetUserSwipe, err := is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, swipe.TargetUserID, swipe.UserID)
+		var targetUserSwipe *entity.Swipe
+
+		targetUserSwipe, err = is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, swipe.TargetUserID, swipe.UserID)
 		if err != nil {
 			return "", fmt.Errorf("get swipe by actorID and targetID actorID=%s targetUserID=%s: %w", swipe.TargetUserID, swipe.UserID, err)
 		}
 
-		if targetUserSwipe.Message.Valid && targetUserSwipe.MessageType.Valid {
-			_, err = is.conversationService.SendMessage(ctx, conversationDomain.Message{
+		targetUserSentMeALikeWithAMessage := targetUserSwipe.Message.Valid && targetUserSwipe.MessageType.Valid && targetUserSwipe.IdempotencyKey.Valid
+		if targetUserSentMeALikeWithAMessage {
+			// if the user i'm about to match, sent me a like with a message, we want to include that message as the first message in our conversation.
+			_, err = is.conversationService.SendMessageViaTx(ctx, tx.Raw(), conversationDomain.Message{
 				ConversationID: convoID,
 				SenderID:       swipe.TargetUserID,
 				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
 				TextBody:       targetUserSwipe.Message.Ptr(),
 				MediaKey:       nil,
 				MediaSeconds:   nil,
-				ClientMsgID:    *swipe.IdempotencyKey,
+				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
 			})
 			if err != nil {
-				return "", fmt.Errorf("create message userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+				return "", fmt.Errorf("send message userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 			}
 		}
 

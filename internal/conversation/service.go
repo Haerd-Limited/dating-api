@@ -18,6 +18,7 @@ type Service interface {
 	CreateConversation(ctx context.Context, userID, matchUserID string) error
 	CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) (string, error)
 	SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error)
+	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error)
 	GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error)
 }
 
@@ -45,7 +46,7 @@ func NewConversationService(
 func (s *service) GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error) {
 	messageEntities, err := s.conversationRepo.GetMessagesByConversationID(ctx, convoID, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get messages userID=%s convoID=%s: %w", userID, convoID, err)
+		return nil, fmt.Errorf("get messages userID=%s convoID=%s: %w", userID, convoID, err)
 	}
 
 	if len(messageEntities) == 0 {
@@ -58,7 +59,7 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 	for _, messageEntity := range messageEntities {
 		msg, err = mapper.MapMessageEntityToDomain(*messageEntity)
 		if err != nil {
-			return nil, fmt.Errorf("failed to map message entity userID=%s convoID=%s: %w", userID, convoID, err)
+			return nil, fmt.Errorf("map message entity userID=%s convoID=%s: %w", userID, convoID, err)
 		}
 
 		messages = append(messages, msg)
@@ -72,7 +73,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 	// this is to make sure user's are matched since a user can't have a convo before matching. and if unmatched, convo should be gone
 	matches, err := s.getMatches(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get matches userID=%s: %w", userID, err)
+		return nil, fmt.Errorf("get matches userID=%s: %w", userID, err)
 	}
 
 	if len(matches) == 0 {
@@ -94,19 +95,19 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 
 		conversation, convoErr := s.GetConversationByUserIds(ctx, userID, matchUserID)
 		if convoErr != nil {
-			return nil, fmt.Errorf("failed to get conversation userID=%s matchUserID=%s: %w", userID, matchUserID, convoErr)
+			return nil, fmt.Errorf("get conversation userID=%s matchUserID=%s: %w", userID, matchUserID, convoErr)
 		}
 
 		if conversation == nil {
 			// create convo
 			_, createConvoErr := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, nil)
 			if createConvoErr != nil {
-				return nil, fmt.Errorf("failed to create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, createConvoErr)
+				return nil, fmt.Errorf("create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, createConvoErr)
 			}
 
 			conversation, convoErr = s.GetConversationByUserIds(ctx, userID, matchUserID)
 			if convoErr != nil {
-				return nil, fmt.Errorf("failed to get conversation userID=%s matchUserID=%s: %w", userID, matchUserID, convoErr)
+				return nil, fmt.Errorf("get conversation userID=%s matchUserID=%s: %w", userID, matchUserID, convoErr)
 			}
 		}
 
@@ -120,7 +121,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID string) (*domain.Conversation, error) {
 	conversationEntity, err := s.conversationRepo.GetConversationByUserIDs(ctx, userID, matchID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get conversation userID=%s matchID=%s: %w", userID, matchID, err)
+		return nil, fmt.Errorf("get conversation userID=%s matchID=%s: %w", userID, matchID, err)
 	}
 
 	if conversationEntity == nil {
@@ -130,7 +131,7 @@ func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID 
 	// todo: might be overkill. might be better to just make a get profile/displayname repo method
 	matchProfile, err := s.profileService.GetProfileCard(ctx, matchID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get match profile userID=%s matchID=%s: %w", userID, matchID, err)
+		return nil, fmt.Errorf("get match profile userID=%s matchID=%s: %w", userID, matchID, err)
 	}
 
 	var lastMessage *domain.Message
@@ -140,7 +141,7 @@ func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID 
 
 		lastMessage, lmErr = s.getLastMessageByID(ctx, userID, matchID, conversationEntity.LastMessageID.Int64)
 		if lmErr != nil {
-			return nil, fmt.Errorf("failed to get last message userID=%s matchID=%s: %w", userID, matchID, lmErr)
+			return nil, fmt.Errorf("get last message userID=%s matchID=%s: %w", userID, matchID, lmErr)
 		}
 	} else {
 		systemMsg := fmt.Sprintf("Start the chat with %s", matchProfile.DisplayName)
@@ -187,7 +188,7 @@ func (s *service) CreateConversationViaTx(ctx context.Context, userID, matchUser
 func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID string, lastMessageID int64) (*domain.Message, error) {
 	lastMessageEntity, err := s.conversationRepo.GetLastMessageByID(ctx, lastMessageID)
 	if err != nil {
-		return &domain.Message{}, fmt.Errorf("failed to get last message entity userID=%s matchID=%s: %w", userID, matchID, err)
+		return &domain.Message{}, fmt.Errorf("get last message entity userID=%s matchID=%s: %w", userID, matchID, err)
 	}
 
 	if lastMessageEntity == nil {
@@ -196,7 +197,7 @@ func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID
 
 	msg, err := mapper.MapMessageEntityToDomain(*lastMessageEntity)
 	if err != nil {
-		return &domain.Message{}, fmt.Errorf("failed to map message entity userID=%s matchID=%s: %w", userID, matchID, err)
+		return &domain.Message{}, fmt.Errorf("map message entity userID=%s matchID=%s: %w", userID, matchID, err)
 	}
 
 	return &msg, nil
@@ -205,7 +206,7 @@ func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID
 func (s *service) getMatches(ctx context.Context, userID string) ([]domain.Match, error) {
 	matchEntities, err := s.conversationRepo.GetMatches(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get matches userID=%s: %w", userID, err)
+		return nil, fmt.Errorf("get matches userID=%s: %w", userID, err)
 	}
 
 	if len(matchEntities) == 0 {
@@ -215,17 +216,37 @@ func (s *service) getMatches(ctx context.Context, userID string) ([]domain.Match
 	return mapper.MapMatchEntitiesToDomain(matchEntities), nil
 }
 
+// For general API calls
 func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error) {
 	msg.ID = s.flake.Next()
-	msgEntity, err := s.conversationRepo.SendMessageViaTx(ctx, mapper.MapMessageDomainToEntity(msg))
+	ent := mapper.MapMessageDomainToEntity(msg)
 
+	e, err := s.conversationRepo.SendMessage(ctx, ent) // standalone version
 	if err != nil {
-		return domain.Message{}, fmt.Errorf("failed to send message userID=%s: %w", msg.SenderID, err)
+		return domain.Message{}, fmt.Errorf("send message userID=%s conversationID=%s: %w", msg.SenderID, msg.ConversationID, err)
 	}
 
-	result, err := mapper.MapMessageEntityToDomain(*msgEntity)
+	result, err := mapper.MapMessageEntityToDomain(*e)
 	if err != nil {
-		return domain.Message{}, fmt.Errorf("failed to map message entity userID=%s: %w", msg.SenderID, err)
+		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
+	}
+
+	return result, nil
+}
+
+// For aggregate flows (e.g., called from CreateSwipe)
+func (s *service) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error) {
+	msg.ID = s.flake.Next()
+	ent := mapper.MapMessageDomainToEntity(msg)
+
+	e, err := s.conversationRepo.SendMessageViaTx(ctx, tx, ent)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("send message via tx userID=%s conversationID=%s: %w", msg.SenderID, msg.ConversationID, err)
+	}
+
+	result, err := mapper.MapMessageEntityToDomain(*e)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
 
 	return result, nil
