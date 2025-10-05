@@ -15,6 +15,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/media"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile"
+	"github.com/Haerd-Limited/dating-api/internal/api/realtime"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
@@ -24,6 +25,7 @@ import (
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
+	internalrealtime "github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
 
@@ -38,6 +40,7 @@ func New(
 	conversationService internalconversation.Service,
 	mediaService internalmedia.Service,
 	lookupService internallookup.Service,
+	hub *internalrealtime.Hub,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -54,6 +57,7 @@ func New(
 	conversationHandler := conversation.NewConversationHandler(logger, conversationService)
 	mediaHandler := media.NewMediaHandler(logger, mediaService)
 	lookupHandler := lookup.NewLookupHandler(logger, lookupService)
+	wsHandler := realtime.NewWsHandler(logger, hub, conversationService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
@@ -112,6 +116,12 @@ func New(
 				r.Route("/likes", func(r chi.Router) {
 					r.Get("/", interactionHandler.GetLikes())
 				})
+
+				// router.go
+				r.Route("/rt", func(r chi.Router) {
+					r.Get("/ws", wsHandler.ServeWS())
+				})
+
 				r.Route("/conversations", func(r chi.Router) {
 					r.Get("/", conversationHandler.GetConversations())
 					r.Post("/{id}/messages", conversationHandler.SendMessage())

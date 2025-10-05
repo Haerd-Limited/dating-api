@@ -3,14 +3,17 @@ package conversation
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
+	"github.com/Haerd-Limited/dating-api/internal/realtime"
 )
 
 type Service interface {
@@ -20,6 +23,7 @@ type Service interface {
 	SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error)
 	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error)
 	GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error)
+	IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error)
 }
 
 type service struct {
@@ -27,6 +31,7 @@ type service struct {
 	conversationRepo storage.ConversationRepository
 	profileService   profile.Service
 	flake            interface{ Next() int64 }
+	hub              realtime.Broadcaster
 }
 
 func NewConversationService(
@@ -34,13 +39,19 @@ func NewConversationService(
 	conversationRepo storage.ConversationRepository,
 	profileService profile.Service,
 	flake interface{ Next() int64 },
+	hub realtime.Broadcaster,
 ) Service {
 	return &service{
 		logger:           logger,
 		conversationRepo: conversationRepo,
 		profileService:   profileService,
 		flake:            flake,
+		hub:              hub,
 	}
+}
+
+func (s *service) IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
+	return s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
 }
 
 func (s *service) GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error) {
@@ -231,6 +242,25 @@ func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.M
 		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
 
+	// Build server event (use your DTO for payload)
+	evt := dto.ServerMsg{
+		Type:           "message.new",
+		ConversationID: result.ConversationID,
+		Payload: map[string]any{
+			"id":              result.ID,
+			"conversation_id": result.ConversationID,
+			"sender_id":       result.SenderID,
+			"text_body":       result.TextBody,
+			"type":            result.Type,
+			"media_key":       result.MediaKey,
+			"media_seconds":   result.MediaSeconds,
+			"created_at":      result.CreatedAt,
+			"client_msg_id":   result.ClientMsgID,
+		},
+	}
+	b, _ := json.Marshal(evt)
+	s.hub.BroadcastToConversation(result.ConversationID, b)
+
 	return result, nil
 }
 
@@ -248,6 +278,25 @@ func (s *service) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.M
 	if err != nil {
 		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
+
+	// Build server event (use your DTO for payload)
+	evt := dto.ServerMsg{
+		Type:           "message.new",
+		ConversationID: result.ConversationID,
+		Payload: map[string]any{
+			"id":              result.ID,
+			"conversation_id": result.ConversationID,
+			"sender_id":       result.SenderID,
+			"text_body":       result.TextBody,
+			"type":            result.Type,
+			"media_key":       result.MediaKey,
+			"media_seconds":   result.MediaSeconds,
+			"created_at":      result.CreatedAt,
+			"client_msg_id":   result.ClientMsgID,
+		},
+	}
+	b, _ := json.Marshal(evt)
+	s.hub.BroadcastToConversation(result.ConversationID, b)
 
 	return result, nil
 }

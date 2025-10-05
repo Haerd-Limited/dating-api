@@ -35,6 +35,7 @@ import (
 	storage2 "github.com/Haerd-Limited/dating-api/internal/preference/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profilestorage "github.com/Haerd-Limited/dating-api/internal/profile/storage"
+	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -103,9 +104,11 @@ func main() {
 	discoverRepo := storage3.NewDiscoverRepository(db)
 	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
 
+	hub := realtime.NewHub()
+
 	flake := ids.NewSnowflake(1)
 	conversationRepo := storage5.NewConversationRepository(db)
-	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake)
+	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub)
 
 	interactionRepo := storage4.NewInteractionRepository(db)
 	interactionService := interaction.NewInteractionService(logger, interactionRepo, profileService, conversationService, unitOfWork)
@@ -142,6 +145,7 @@ func main() {
 		conversationService,
 		mediaService,
 		lookupService,
+		hub,
 	)
 
 	// Start server with context

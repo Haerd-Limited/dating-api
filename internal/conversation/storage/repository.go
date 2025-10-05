@@ -24,6 +24,7 @@ type ConversationRepository interface {
 	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entity.Message) (*entity.Message, error)
 	GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error)
 	GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error)
+	IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error)
 }
 
 type repository struct {
@@ -43,7 +44,7 @@ var (
 	ErrNotConversationParticipant = errors.New("user is not a participant in the conversation")
 )
 
-func (r *repository) isConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
+func (r *repository) IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
 	isParticipant, err := entity.Conversations(
 		entity.ConversationWhere.ID.EQ(conversationID),
 		qm.Where("user_a = ? OR user_b = ?", userID, userID),
@@ -56,7 +57,7 @@ func (r *repository) isConversationParticipant(ctx context.Context, conversation
 }
 
 func (r *repository) GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error) {
-	isParticipant, err := r.isConversationParticipant(ctx, conversationID, userID)
+	isParticipant, err := r.IsConversationParticipant(ctx, conversationID, userID)
 	if err != nil {
 		return nil, err
 	}
