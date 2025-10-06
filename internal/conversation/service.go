@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
@@ -14,6 +14,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
+	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
 )
@@ -55,9 +56,7 @@ func NewConversationService(
 	}
 }
 
-var (
-	ErrFirstMessageMissingPromptID = errors.New("first message missing prompt id")
-)
+var ErrFirstMessageMissingPromptID = errors.New("first message missing prompt id")
 
 func (s *service) IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
 	return s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
@@ -69,13 +68,15 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 		return nil, fmt.Errorf("get messages userID=%s convoID=%s: %w", userID, convoID, err)
 	}
 
-	//Assuming that both participants simply liked each-other.
+	// Assuming that both participants simply liked each-other.
 	if len(messageEntities) == 0 {
 		var firstLike domain.Swipe
+
 		firstLike, err = s.getFirstLikeByConvoID(ctx, convoID)
 		if err != nil {
 			return nil, fmt.Errorf("get first like by convo id userID=%s convoID=%s: %w", userID, convoID, err)
 		}
+
 		_, err = s.SendMessage(ctx, domain.Message{
 			ConversationID: convoID,
 			SenderID:       firstLike.ActorID,
@@ -86,13 +87,14 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 		if err != nil {
 			return nil, fmt.Errorf("send message userID=%s convoID=%s: %w", userID, convoID, err)
 		}
+
 		messageEntities, err = s.conversationRepo.GetMessagesByConversationID(ctx, convoID, userID)
 		if err != nil {
 			return nil, fmt.Errorf("get messages userID=%s convoID=%s: %w", userID, convoID, err)
 		}
 	}
 
-	//determine first sent message
+	// determine first sent message
 	firstSentMessageIndex := 0
 	for i := 1; i < len(messageEntities); i++ {
 		if messageEntities[i].CreatedAt.Before(messageEntities[firstSentMessageIndex].CreatedAt) {
@@ -109,12 +111,13 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 			return nil, fmt.Errorf("map message entity userID=%s convoID=%s: %w", userID, convoID, err)
 		}
 
-		//get prompt for first message
+		// get prompt for first message
 		if index == firstSentMessageIndex {
 			msg.LikedPrompt, err = s.getLikedVoicePromptByConvoID(ctx, convoID, userID)
 			if err != nil {
 				return nil, fmt.Errorf("get liked prompt by convo id userID=%s convoID=%s: %w", userID, convoID, err)
 			}
+
 			msg.IsFirstMessage = true
 		}
 
@@ -129,10 +132,12 @@ func (s *service) getLikedVoicePromptByConvoID(ctx context.Context, convoID stri
 	if err != nil {
 		return nil, fmt.Errorf("get first like by convo id userID=%s convoID=%s: %w", userID, convoID, err)
 	}
+
 	vp, err := s.profileService.GetVoicePromptByID(ctx, *firstLike.PromptID)
 	if err != nil {
 		return nil, fmt.Errorf("get voice prompt by id userID=%s convoID=%s swipeID=%v: %w", userID, convoID, firstLike.ID, err)
 	}
+
 	return &domain.VoicePrompt{
 		ID:            vp.PromptID,
 		Prompt:        vp.Prompt,
@@ -146,13 +151,16 @@ func (s *service) getFirstLikeByConvoID(ctx context.Context, convoID string) (do
 	if err != nil {
 		return domain.Swipe{}, fmt.Errorf("get conversation entity by id convoID=%s: %w", convoID, err)
 	}
+
 	firstLike, err := s.interactionRepo.GetFirstLikeSwipeByBetweenUsers(ctx, convo.UserA, convo.UserB)
 	if err != nil {
 		return domain.Swipe{}, fmt.Errorf("get first like swipe by between users convoID=%s: %w", convoID, err)
 	}
+
 	if !firstLike.PromptID.Valid {
 		return domain.Swipe{}, ErrFirstMessageMissingPromptID
 	}
+
 	return mapper.MapSwipeToDomain(firstLike), nil
 }
 
@@ -202,7 +210,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 		conversations = append(conversations, *conversation)
 	}
 
-	//order by latest match/message
+	// order by latest match/message
 	for i := 0; i < len(conversations); i++ {
 		for j := i + 1; j < len(conversations); j++ {
 			if conversations[i].LastMessage.CreatedAt.Before(conversations[j].LastMessage.CreatedAt) {

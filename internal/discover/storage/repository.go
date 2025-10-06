@@ -19,6 +19,7 @@ type DiscoverRepository interface {
 	GetLikeAndSuperlikeCount(ctx context.Context, userID string) (int64, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
+	GetNumberOfCompleteProfilesOfOppositeGender(ctx context.Context, userID string) (int64, error)
 }
 
 type discoverRepository struct {
@@ -62,6 +63,15 @@ func (r *discoverRepository) AlreadyInteracted(ctx context.Context, userID strin
 }
 
 func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID string) ([]*entity.UserProfile, error) {
+	numberOfOppositeGenderProfiles, err := r.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
+	}
+
+	if numberOfOppositeGenderProfiles < constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
+		return nil, nil
+	}
+
 	oppositeGender, err := r.getOppositeGender(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get opposite gender: %w", err)
@@ -94,6 +104,25 @@ func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID st
 	}
 
 	return users, nil
+}
+
+func (r *discoverRepository) GetNumberOfCompleteProfilesOfOppositeGender(ctx context.Context, userID string) (int64, error) {
+	oppositeGender, err := r.getOppositeGender(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("get opposite gender: %w", err)
+	}
+
+	count, err := entity.UserProfiles(
+		entity.UserProfileWhere.UserID.NEQ(userID),
+		entity.UserProfileWhere.GenderID.EQ(null.Int16From(oppositeGender.ID)),
+		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
+		qm.Where("u.onboarding_step = ?", stepComplete),
+	).Count(ctx, r.db)
+	if err != nil {
+		return 0, fmt.Errorf("get user profiles: %w", err)
+	}
+
+	return count, nil
 }
 
 func (r *discoverRepository) GetDiscoverFeedCandidates(
@@ -132,25 +161,32 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
             )`, userID, constants.ActionLike, constants.ActionSuperlike),
 	}
 
-	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
+	count, err := r.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
+		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
 	}
 
-	// exclude Voice Worth Hearing candidates
-	if len(excludeIDs) > 0 {
-		ph := make([]string, len(excludeIDs))
-		args := make([]interface{}, len(excludeIDs))
-
-		for i, id := range excludeIDs {
-			ph[i] = "?"
-			args[i] = id
+	if count > constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
+		excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
+		if err != nil {
+			return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
 		}
 
-		mods = append(mods, qm.Where(
-			"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
-			args...,
-		))
+		// exclude Voice Worth Hearing candidates
+		if len(excludeIDs) > 0 {
+			ph := make([]string, len(excludeIDs))
+			args := make([]interface{}, len(excludeIDs))
+
+			for i, id := range excludeIDs {
+				ph[i] = "?"
+				args[i] = id
+			}
+
+			mods = append(mods, qm.Where(
+				"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
+				args...,
+			))
+		}
 	}
 
 	mods = append(mods, qm.Limit(limit), qm.Offset(offset))

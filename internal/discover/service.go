@@ -8,6 +8,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
@@ -64,6 +65,15 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 }
 
 func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
+	numberOfOppositeGenderProfiles, err := s.discoverRepo.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
+	}
+
+	if numberOfOppositeGenderProfiles < constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
+		return nil, nil
+	}
+
 	profiles, err := s.GetVoiceWorthHearing(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get voice worth hearing userID=%s: %w", userID, err)
@@ -83,6 +93,10 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 	candidates, err := s.discoverRepo.GetVoiceWorthHearing(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get candidates userID=%s: %w", userID, err)
+	}
+
+	if len(candidates) == 0 {
+		return nil, nil
 	}
 
 	var profiles []profilecard.ProfileCard

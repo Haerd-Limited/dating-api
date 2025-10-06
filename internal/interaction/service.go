@@ -79,6 +79,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 	defer func() { _ = tx.Rollback() }()
 
+	//todo: allow voice note swipes
 	err = is.validateSwipe(ctx, swipe)
 	if err != nil {
 		return "", fmt.Errorf("validate swipe userID=%s : %w", swipe.UserID, err)
