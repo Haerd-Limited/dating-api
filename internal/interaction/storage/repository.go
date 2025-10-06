@@ -144,8 +144,7 @@ func (is *repository) GetMatches(ctx context.Context, userID string) ([]*entity.
 
 func (is *repository) AlreadyMatched(ctx context.Context, userID string, targetUserID string) (bool, error) {
 	ok, err := entity.Matches(
-		entity.MatchWhere.UserA.EQ(userID),
-		entity.MatchWhere.UserB.EQ(targetUserID),
+		qm.Where("(user_a = ? AND user_b = ?) OR (user_a = ? AND user_b = ?) ", userID, targetUserID, targetUserID, userID),
 	).Exists(ctx, is.db)
 	if err != nil {
 		return false, err
