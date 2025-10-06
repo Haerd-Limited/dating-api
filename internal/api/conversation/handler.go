@@ -17,7 +17,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
+	commonMessages "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
@@ -137,13 +137,13 @@ func (h *handler) GetConversationMessages() http.HandlerFunc {
 			return
 		}
 
-		msgs, err := h.conversationService.GetMessages(ctx, convoID, userID)
+		messages, err := h.conversationService.GetMessages(ctx, convoID, userID)
 		if err != nil {
 			h.handleServiceErrorResponse(w, r, "GetConversationMessages", err)
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.MapMessagesToResponse(msgs))
+		render.Json(w, http.StatusOK, mapper.MapToGetConversationMessagesResponse(messages))
 	}
 }
 
@@ -170,6 +170,6 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	case errors.Is(err, interactionstorage.ErrAlreadySwiped):
 		return http.StatusConflict, "You've already swiped on this user"
 	default:
-		return http.StatusInternalServerError, messages.InternalServerErrorMsg
+		return http.StatusInternalServerError, commonMessages.InternalServerErrorMsg
 	}
 }
