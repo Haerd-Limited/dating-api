@@ -6,6 +6,10 @@ type GetConversationMessagesResponse struct {
 	Messages []Message `json:"messages"`
 }
 
+type GetConversationsResponse struct {
+	Conversations []Conversation `json:"conversations"`
+}
+
 type Conversation struct {
 	ID string `json:"id"`
 	// Match the user/person you matched with
@@ -23,13 +27,22 @@ type Match struct {
 }
 
 type Message struct {
-	ID             int64     `json:"id"`
-	ConversationID string    `json:"conversation_id"`
-	SenderID       string    `json:"sender_id"`
-	Type           string    `json:"type"`
-	TextBody       *string   `json:"text_body"`
-	MediaKey       *string   `json:"media_key"`
-	MediaSeconds   *float64  `json:"media_seconds"`
-	CreatedAt      time.Time `json:"created_at"`
-	ClientMsgID    string    `json:"client_msg_id"`
+	ID             int64        `json:"id"`
+	ConversationID string       `json:"conversation_id"`
+	SenderID       string       `json:"sender_id"`
+	Type           string       `json:"type"`
+	TextBody       *string      `json:"text_body"`
+	MediaKey       *string      `json:"media_key"`
+	MediaSeconds   *float64     `json:"media_seconds"`
+	CreatedAt      time.Time    `json:"created_at"`
+	ClientMsgID    string       `json:"client_msg_id"`
+	IsFirstMessage bool         `json:"is_first_message"`
+	LikedPrompt    *VoicePrompt `json:"liked_prompt"` // populated if IsFirstMessage is true
+}
+
+type VoicePrompt struct {
+	ID            int64  `json:"id"`
+	Prompt        string `json:"prompt"`
+	CoverPhotoURL string `json:"cover_photo_url"`
+	VoiceNoteURL  string `json:"voice_note_url"`
 }

@@ -23,6 +23,7 @@ type InteractionRepository interface {
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
 	AlreadyMatched(ctx context.Context, userID string, targetUserID string) (bool, error)
 	GetSwipeByActorIDAndTargetID(ctx context.Context, actorID, targetID string) (*entity.Swipe, error)
+	GetFirstLikeSwipeByBetweenUsers(ctx context.Context, userA, userB string) (*entity.Swipe, error)
 }
 
 type repository struct {
@@ -36,6 +37,23 @@ func NewInteractionRepository(db *sqlx.DB) InteractionRepository {
 }
 
 var ErrAlreadySwiped = errors.New("you've already swiped on this user.")
+
+func (is *repository) GetFirstLikeSwipeByBetweenUsers(ctx context.Context, userA, userB string) (*entity.Swipe, error) {
+	s, err := entity.Swipes(
+		// (A -> B) OR (B -> A)
+		qm.Where("(actor_id = ? AND target_id = ?) OR (actor_id = ? AND target_id = ?)",
+			userA, userB, userB, userA),
+		// action in ('like', 'superlike')
+		qm.Where("action IN (?, ?)", constants.ActionLike, constants.ActionSuperlike),
+		qm.OrderBy("created_at ASC"),
+		qm.Limit(1),
+	).One(ctx, is.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return s, nil
+}
 
 func (is *repository) GetSwipeByActorIDAndTargetID(ctx context.Context, actorID, targetID string) (*entity.Swipe, error) {
 	s, err := entity.Swipes(

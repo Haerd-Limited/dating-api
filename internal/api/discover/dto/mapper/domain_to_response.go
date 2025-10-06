@@ -7,12 +7,24 @@ import (
 )
 
 func MapToGetVoicesWorthHearingResponse(models []profilecard.ProfileCard) dto.GetVoicesWorthHearingResponse {
+	if models == nil {
+		return dto.GetVoicesWorthHearingResponse{
+			Profiles: []dto2.ProfileCard{},
+		}
+	}
+
 	return dto.GetVoicesWorthHearingResponse{
 		Profiles: dto2.ProfileCardsToDto(models),
 	}
 }
 
 func MapToGetDiscoverResponse(models []profilecard.ProfileCard) dto.GetDiscoverResponse {
+	if models == nil {
+		return dto.GetDiscoverResponse{
+			Profiles: []dto2.ProfileCard{},
+		}
+	}
+
 	return dto.GetDiscoverResponse{
 		Profiles: dto2.ProfileCardsToDto(models),
 	}

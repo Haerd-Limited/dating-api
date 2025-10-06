@@ -5,9 +5,11 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 )
 
-func MapMessagesToResponse(domainMessages []domain.Message) dto.GetConversationMessagesResponse {
+func MapToGetConversationMessagesResponse(domainMessages []domain.Message) dto.GetConversationMessagesResponse {
 	if domainMessages == nil {
-		return dto.GetConversationMessagesResponse{}
+		return dto.GetConversationMessagesResponse{
+			Messages: []dto.Message{},
+		}
 	}
 
 	var messages []dto.Message
@@ -25,6 +27,16 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 		return dto.Message{}
 	}
 
+	var likedVoicePrompt *dto.VoicePrompt
+	if msg.LikedPrompt != nil {
+		likedVoicePrompt = &dto.VoicePrompt{
+			ID:            msg.LikedPrompt.ID,
+			Prompt:        msg.LikedPrompt.Prompt,
+			CoverPhotoURL: msg.LikedPrompt.CoverPhotoURL,
+			VoiceNoteURL:  msg.LikedPrompt.VoiceNoteURL,
+		}
+	}
+
 	return dto.Message{
 		ID:             msg.ID,
 		ConversationID: msg.ConversationID,
@@ -35,12 +47,16 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 		MediaSeconds:   msg.MediaSeconds,
 		CreatedAt:      msg.CreatedAt,
 		ClientMsgID:    msg.ClientMsgID,
+		IsFirstMessage: msg.IsFirstMessage,
+		LikedPrompt:    likedVoicePrompt,
 	}
 }
 
-func MapConversationsToDtos(conversations []domain.Conversation) []dto.Conversation {
+func MapToGetConversationsResponse(conversations []domain.Conversation) dto.GetConversationsResponse {
 	if conversations == nil {
-		return []dto.Conversation{}
+		return dto.GetConversationsResponse{
+			Conversations: []dto.Conversation{},
+		}
 	}
 
 	var dtos []dto.Conversation
@@ -48,7 +64,9 @@ func MapConversationsToDtos(conversations []domain.Conversation) []dto.Conversat
 		dtos = append(dtos, MapConversationToDto(convo))
 	}
 
-	return dtos
+	return dto.GetConversationsResponse{
+		Conversations: dtos,
+	}
 }
 
 func MapConversationToDto(convo domain.Conversation) dto.Conversation {

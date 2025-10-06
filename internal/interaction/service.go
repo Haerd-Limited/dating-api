@@ -246,7 +246,7 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error 
 
 	// Check is frontend attempted to send a like with a message but is missing required fields
 	if swipe.Action == constants.ActionSuperlike || swipe.Action == constants.ActionLike {
-		hasAny := swipe.Message != nil || swipe.MessageType != nil || swipe.PromptID != nil || swipe.IdempotencyKey != nil
+		hasAny := swipe.Message != nil || swipe.MessageType != nil || swipe.IdempotencyKey != nil
 
 		atleastOneIsMissing := swipe.Message == nil || swipe.MessageType == nil || swipe.PromptID == nil || swipe.IdempotencyKey == nil
 

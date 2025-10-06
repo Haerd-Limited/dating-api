@@ -108,9 +108,9 @@ func main() {
 
 	flake := ids.NewSnowflake(1)
 	conversationRepo := storage5.NewConversationRepository(db)
-	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub)
-
 	interactionRepo := storage4.NewInteractionRepository(db)
+	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo)
+
 	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, unitOfWork)
 
 	userRepo := storage.NewUserRepository(db)

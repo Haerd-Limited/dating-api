@@ -13,6 +13,12 @@ func MapToSwipesResponse(result string) dto.SwipesResponse {
 }
 
 func MapToGetLikesResponse(domainLikes []domain.Like) dto.GetLikesResponse {
+	if domainLikes == nil {
+		return dto.GetLikesResponse{
+			Likes: []dto.Like{},
+		}
+	}
+
 	var likes []dto.Like
 
 	for _, domainLike := range domainLikes {

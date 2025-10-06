@@ -9,6 +9,38 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 )
 
+func MapSwipeToDomain(swipe *entity.Swipe) domain.Swipe {
+	result := domain.Swipe{
+		ID:        swipe.ID,
+		ActorID:   swipe.ActorID,
+		TargetID:  swipe.TargetID,
+		Action:    swipe.Action,
+		CreatedAt: swipe.CreatedAt,
+		UpdatedAt: swipe.UpdatedAt,
+	}
+	if swipe.PromptID.Valid {
+		result.PromptID = swipe.PromptID.Ptr()
+	}
+
+	if swipe.Message.Valid {
+		result.Message = swipe.Message.Ptr()
+	}
+
+	if swipe.VoicenoteURL.Valid {
+		result.VoicenoteURL = swipe.VoicenoteURL.Ptr()
+	}
+
+	if swipe.IdempotencyKey.Valid {
+		result.IdempotencyKey = swipe.IdempotencyKey.Ptr()
+	}
+
+	if swipe.MessageType.Valid {
+		result.MessageType = swipe.MessageType.Ptr()
+	}
+
+	return result
+}
+
 func MapMatchEntitiesToDomain(matchEntities []*entity.Match) []domain.Match {
 	var matches []domain.Match
 	for _, matchEntity := range matchEntities {

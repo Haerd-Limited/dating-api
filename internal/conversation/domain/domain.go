@@ -40,6 +40,29 @@ type Message struct {
 	MediaSeconds   *float64
 	CreatedAt      time.Time
 	ClientMsgID    string
+	IsFirstMessage bool
+	LikedPrompt    *VoicePrompt // populated if IsFirstMessage is true
+}
+
+type VoicePrompt struct {
+	ID            int64
+	Prompt        string
+	CoverPhotoURL string
+	VoiceNoteURL  string
+}
+
+type Swipe struct {
+	ID             int64
+	ActorID        string
+	TargetID       string
+	Action         string
+	IdempotencyKey *string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	MessageType    *string
+	Message        *string
+	VoicenoteURL   *string
+	PromptID       *int64
 }
 
 type MatchStatus string

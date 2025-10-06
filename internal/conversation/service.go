@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
-
+	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
@@ -32,6 +33,7 @@ type service struct {
 	profileService   profile.Service
 	flake            interface{ Next() int64 }
 	hub              realtime.Broadcaster
+	interactionRepo  storage3.InteractionRepository
 }
 
 func NewConversationService(
@@ -40,6 +42,7 @@ func NewConversationService(
 	profileService profile.Service,
 	flake interface{ Next() int64 },
 	hub realtime.Broadcaster,
+	interactionRepo storage3.InteractionRepository,
 ) Service {
 	return &service{
 		logger:           logger,
@@ -47,8 +50,13 @@ func NewConversationService(
 		profileService:   profileService,
 		flake:            flake,
 		hub:              hub,
+		interactionRepo:  interactionRepo,
 	}
 }
+
+var (
+	ErrFirstMessageMissingPromptID = errors.New("first message missing prompt id")
+)
 
 func (s *service) IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
 	return s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
@@ -60,23 +68,95 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 		return nil, fmt.Errorf("get messages userID=%s convoID=%s: %w", userID, convoID, err)
 	}
 
+	//Assuming that both participants simply liked each-other.
 	if len(messageEntities) == 0 {
-		return []domain.Message{}, nil
+		var firstLike domain.Swipe
+		firstLike, err = s.getFirstLikeByConvoID(ctx, convoID)
+		if err != nil {
+			return nil, fmt.Errorf("get first like by convo id userID=%s convoID=%s: %w", userID, convoID, err)
+		}
+
+		systemMsg := "Liked your prompt"
+		msg := domain.Message{
+			ConversationID: convoID,
+			Type:           domain.MessageTypeSystem,
+			TextBody:       &systemMsg,
+			SenderID:       firstLike.ActorID,
+			CreatedAt:      firstLike.CreatedAt,
+			IsFirstMessage: false,
+		}
+		msg.LikedPrompt, err = s.getLikedVoicePromptByConvoID(ctx, convoID, userID)
+		if err != nil {
+			return nil, fmt.Errorf("get liked prompt by convo id userID=%s convoID=%s: %w", userID, convoID, err)
+		}
+
+		return []domain.Message{
+			msg,
+		}, nil
+	}
+
+	//determine first sent message
+	firstSentMessageIndex := 0
+	for i := 1; i < len(messageEntities); i++ {
+		if messageEntities[i].CreatedAt.Before(messageEntities[firstSentMessageIndex].CreatedAt) {
+			firstSentMessageIndex = i
+		}
 	}
 
 	var messages []domain.Message
 
 	var msg domain.Message
-	for _, messageEntity := range messageEntities {
+	for index, messageEntity := range messageEntities {
 		msg, err = mapper.MapMessageEntityToDomain(*messageEntity)
 		if err != nil {
 			return nil, fmt.Errorf("map message entity userID=%s convoID=%s: %w", userID, convoID, err)
+		}
+
+		//get prompt for first message
+		if index == firstSentMessageIndex {
+			msg.LikedPrompt, err = s.getLikedVoicePromptByConvoID(ctx, convoID, userID)
+			if err != nil {
+				return nil, fmt.Errorf("get liked prompt by convo id userID=%s convoID=%s: %w", userID, convoID, err)
+			}
+			msg.IsFirstMessage = true
 		}
 
 		messages = append(messages, msg)
 	}
 
 	return messages, nil
+}
+
+func (s *service) getLikedVoicePromptByConvoID(ctx context.Context, convoID string, userID string) (*domain.VoicePrompt, error) {
+	firstLike, err := s.getFirstLikeByConvoID(ctx, convoID)
+	if err != nil {
+		return nil, fmt.Errorf("get first like by convo id userID=%s convoID=%s: %w", userID, convoID, err)
+	}
+	vp, err := s.profileService.GetVoicePromptByID(ctx, *firstLike.PromptID)
+	if err != nil {
+		return nil, fmt.Errorf("get voice prompt by id userID=%s convoID=%s swipeID=%v: %w", userID, convoID, firstLike.ID, err)
+	}
+	return &domain.VoicePrompt{
+		ID:            vp.PromptID,
+		Prompt:        vp.Prompt,
+		CoverPhotoURL: vp.CoverPhotoUrl,
+		VoiceNoteURL:  vp.VoiceNoteURL,
+	}, nil
+}
+
+func (s *service) getFirstLikeByConvoID(ctx context.Context, convoID string) (domain.Swipe, error) {
+	convo, err := s.conversationRepo.GetConversationByID(ctx, convoID)
+	if err != nil {
+		return domain.Swipe{}, fmt.Errorf("get conversation entity by id convoID=%s: %w", convoID, err)
+	}
+	firstLike, err := s.interactionRepo.GetFirstLikeSwipeByBetweenUsers(ctx, convo.UserA, convo.UserB)
+	if err != nil {
+		return domain.Swipe{}, fmt.Errorf("get first like swipe by between users convoID=%s: %w", convoID, err)
+	}
+	if !firstLike.PromptID.Valid {
+		return domain.Swipe{}, ErrFirstMessageMissingPromptID
+	}
+	return mapper.MapSwipeToDomain(firstLike), nil
 }
 
 func (s *service) GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error) {
@@ -124,6 +204,15 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 
 		conversations = append(conversations, *conversation)
 	}
+
+	//order by latest match/message
+	for i := 0; i < len(conversations); i++ {
+		for j := i + 1; j < len(conversations); j++ {
+			if conversations[i].LastMessage.CreatedAt.Before(conversations[j].LastMessage.CreatedAt) {
+				conversations[i], conversations[j] = conversations[j], conversations[i]
+			}
+		}
+	}
 	// todo: implement score/points system
 
 	return conversations, nil
@@ -160,6 +249,7 @@ func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID 
 			ConversationID: conversationEntity.ID,
 			Type:           domain.MessageTypeSystem,
 			TextBody:       &systemMsg,
+			CreatedAt:      conversationEntity.CreatedAt,
 		}
 	}
 
