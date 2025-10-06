@@ -23,5 +23,6 @@ const (
 	RequestTimeoutMsg           = "Request timed out"
 	RequestCancelledMsg         = "Request cancelled"
 	AllFieldsRequiredMsg        = "All fields are required"
+	InvalidRequestBodyMsg       = "Failed to validate and decode request body. Please double check your request body"
 	SocialsNotAllowedMsg        = "To keep Haerd personality-first, socials aren’t allowed in your display name, job title, work place or university. Please remove @handles, links, or “dot com” text."
 )

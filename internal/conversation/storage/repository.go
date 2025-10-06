@@ -59,7 +59,7 @@ func (r *repository) IsConversationParticipant(ctx context.Context, conversation
 func (r *repository) GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error) {
 	isParticipant, err := r.IsConversationParticipant(ctx, conversationID, userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("is conversation participant: %w", err)
 	}
 
 	if !isParticipant {
@@ -71,7 +71,7 @@ func (r *repository) GetMessagesByConversationID(ctx context.Context, conversati
 		qm.OrderBy(entity.MessageColumns.CreatedAt+" ASC"),
 	).All(ctx, r.db)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get messages: %w", err)
 	}
 
 	return messages, nil

@@ -109,6 +109,8 @@ func (h *handler) GetLikes() http.HandlerFunc {
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, interaction.ErrPromptIDRequiredToLikeUser):
+		return http.StatusBadRequest, "Prompt ID is required to like a profile"
 	case errors.Is(err, interaction.ErrSelfLike):
 		return http.StatusBadRequest, "As much as we promote self love, you cannot like yourself"
 	case errors.Is(err, interaction.ErrInvalidAction):

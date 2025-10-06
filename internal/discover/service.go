@@ -14,6 +14,8 @@ import (
 type Service interface {
 	GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]profilecard.ProfileCard, error)
 	GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error)
+	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
+	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
 }
 
 type service struct {
@@ -32,6 +34,10 @@ func NewDiscoverService(
 		profileService: profileService,
 		discoverRepo:   discoverRepo,
 	}
+}
+
+func (s *service) AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error) {
+	return s.discoverRepo.AlreadyInteracted(ctx, userID, targetUserID)
 }
 
 // todo: add filters like  age, race, distance, age
@@ -55,6 +61,20 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 	}
 
 	return profiles, nil
+}
+
+func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
+	profiles, err := s.GetVoiceWorthHearing(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get voice worth hearing userID=%s: %w", userID, err)
+	}
+
+	ids := make([]string, 0, len(profiles))
+	for _, p := range profiles {
+		ids = append(ids, p.UserID)
+	}
+
+	return ids, nil
 }
 
 // todo: update to refresh weekly. maybe make a table to store user's voices to be heard. then have cron job recalculate and update weekly

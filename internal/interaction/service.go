@@ -10,7 +10,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
 	conversationDomain "github.com/Haerd-Limited/dating-api/internal/conversation/domain"
-	storage2 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
+	"github.com/Haerd-Limited/dating-api/internal/discover"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
@@ -31,7 +31,7 @@ type service struct {
 	profileService      profile.Service
 	conversationService conversation.Service
 	interactionRepo     storage.InteractionRepository
-	discoverRepo        storage2.DiscoverRepository
+	discoverService     discover.Service
 	uow                 uow.UoW
 }
 
@@ -40,7 +40,7 @@ func NewInteractionService(
 	profileService profile.Service,
 	conversationService conversation.Service,
 	interactionRepo storage.InteractionRepository,
-	discoverRepo storage2.DiscoverRepository,
+	discoverService discover.Service,
 	uow uow.UoW,
 ) Service {
 	return &service{
@@ -48,13 +48,14 @@ func NewInteractionService(
 		interactionRepo:     interactionRepo,
 		profileService:      profileService,
 		conversationService: conversationService,
+		discoverService:     discoverService,
 		uow:                 uow,
-		discoverRepo:        discoverRepo,
 	}
 }
 
 var (
 	ErrSelfLike                                = errors.New("user cannot like themselves")
+	ErrPromptIDRequiredToLikeUser              = errors.New("prompt id is required to like a user")
 	ErrInvalidDirection                        = errors.New("invalid direction")
 	ErrInvalidAction                           = errors.New("invalid action")
 	ErrLikedAVhwUser                           = errors.New("user liked a vhw user")
@@ -262,7 +263,7 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error 
 	}
 
 	// Ensure that a user can only superlike or pass a vwh user
-	vwhIDs, err := is.discoverRepo.GetVoiceWorthHearingIDs(ctx, swipe.UserID)
+	vwhIDs, err := is.discoverService.GetVoiceWorthHearingIDs(ctx, swipe.UserID)
 	if err != nil {
 		return fmt.Errorf("get voice worth hearing ids userID=%s: %w", swipe.UserID, err)
 	}
@@ -270,6 +271,17 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error 
 	userLikedAVwhUser := len(vwhIDs) != 0 && swipe.Action == constants.ActionLike && slices.Contains(vwhIDs, swipe.TargetUserID)
 	if userLikedAVwhUser {
 		return ErrLikedAVhwUser
+	}
+
+	// If User is sending a like/superlike to someone who hasn't liked them back, then you must provide a promptID.
+	alreadyInteracted, err := is.discoverService.AlreadyInteracted(ctx, swipe.UserID, swipe.TargetUserID)
+	if err != nil {
+		return fmt.Errorf("already interacted userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+	}
+
+	sendingFirstLikeWithoutPromptID := (!alreadyInteracted && swipe.Action == constants.ActionLike && swipe.PromptID == nil) || (!alreadyInteracted && swipe.Action == constants.ActionSuperlike && swipe.PromptID == nil)
+	if sendingFirstLikeWithoutPromptID {
+		return ErrPromptIDRequiredToLikeUser
 	}
 
 	return nil
