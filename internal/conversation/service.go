@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
@@ -75,24 +76,20 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 		if err != nil {
 			return nil, fmt.Errorf("get first like by convo id userID=%s convoID=%s: %w", userID, convoID, err)
 		}
-
-		systemMsg := "Liked your prompt"
-		msg := domain.Message{
+		_, err = s.SendMessage(ctx, domain.Message{
 			ConversationID: convoID,
-			Type:           domain.MessageTypeSystem,
-			TextBody:       &systemMsg,
 			SenderID:       firstLike.ActorID,
-			CreatedAt:      firstLike.CreatedAt,
-			IsFirstMessage: false,
-		}
-		msg.LikedPrompt, err = s.getLikedVoicePromptByConvoID(ctx, convoID, userID)
+			Type:           domain.MessageType(*firstLike.MessageType),
+			TextBody:       firstLike.Message,
+			ClientMsgID:    uuid.New().String(),
+		})
 		if err != nil {
-			return nil, fmt.Errorf("get liked prompt by convo id userID=%s convoID=%s: %w", userID, convoID, err)
+			return nil, fmt.Errorf("send message userID=%s convoID=%s: %w", userID, convoID, err)
 		}
-
-		return []domain.Message{
-			msg,
-		}, nil
+		messageEntities, err = s.conversationRepo.GetMessagesByConversationID(ctx, convoID, userID)
+		if err != nil {
+			return nil, fmt.Errorf("get messages userID=%s convoID=%s: %w", userID, convoID, err)
+		}
 	}
 
 	//determine first sent message
@@ -332,7 +329,9 @@ func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.M
 		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
 
-	s.sendMessageToConversation(result)
+	if msg.Type != domain.MessageTypeSystem {
+		s.sendMessageToConversation(result)
+	}
 	// todo: update score realtime
 
 	return result, nil

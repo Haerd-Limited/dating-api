@@ -19,6 +19,7 @@ import (
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 )
 
 type Service interface {
@@ -85,11 +86,6 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 	switch swipe.Action {
 	case constants.ActionLike, constants.ActionSuperlike:
-		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
-		if err != nil {
-			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
-		}
-
 		var matchErr error
 
 		matchable, matchErr := is.interactionRepo.CheckIfMatchable(ctx, swipe.UserID, swipe.TargetUserID)
@@ -98,6 +94,18 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		}
 
 		if !matchable {
+			if swipe.Message == nil {
+				systemMsg := messages.LikedYourPromptMsg
+				swipe.Message = &systemMsg
+				systemMessageType := string(conversationDomain.MessageTypeSystem)
+				swipe.MessageType = &systemMessageType
+			}
+
+			err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
+			if err != nil {
+				return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
+			}
+
 			err = tx.Commit()
 			if err != nil {
 				return "", fmt.Errorf("commit tx: %w", err)
@@ -105,6 +113,12 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 			return ResultSent, nil
 		}
+
+		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
+		if err != nil {
+			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
+		}
+
 		// Create a match (normalize order to keep uniqueness deterministic)
 		a, b := swipe.UserID, swipe.TargetUserID
 		if b < a {
