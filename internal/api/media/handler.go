@@ -1,8 +1,7 @@
 package media
 
 import (
-	"context"
-	"errors"
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -49,20 +48,8 @@ func (h *handler) GeneratePhotoUploadUrl() http.HandlerFunc {
 
 		url, err := h.mediaService.GeneratePhotoUploadUrl(ctx, userID)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error generating photo upload url", "error", err)
-				// statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GeneratePhotoUploadUrl", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapUploadURLToResponse(url))
@@ -95,22 +82,19 @@ func (h *handler) GenerateVoiceNoteUploadUrl() http.HandlerFunc {
 
 		url, err := h.mediaService.GenerateVoiceNoteUploadUrl(ctx, userID, req.Purpose)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error generating voicenote upload url", "error", err)
-				// statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GenerateVoiceNoteUploadUrl", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapUploadURLToResponse(url))
 	}
+}
+
+func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
+	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
+		return
+	}
+
+	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err)
+	render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
 }

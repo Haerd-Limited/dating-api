@@ -1,8 +1,8 @@
 package discover
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -52,20 +52,8 @@ func (h *handler) GetDiscover() http.HandlerFunc {
 
 		result, err := h.discoverService.GetDiscoverFeed(ctx, userID, limit, offset)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting user discover feed", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetDiscoverFeed", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetDiscoverResponse(result))
@@ -84,20 +72,8 @@ func (h *handler) GetVoiceWorthHearing() http.HandlerFunc {
 
 		result, err := h.discoverService.GetVoiceWorthHearing(ctx, userID)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting voices worth hearing", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetVoiceWorthHearing", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetVoicesWorthHearingResponse(result))
@@ -111,4 +87,14 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}
+}
+
+func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
+	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
+		return
+	}
+
+	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err)
+	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }

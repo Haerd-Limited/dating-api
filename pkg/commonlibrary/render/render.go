@@ -1,7 +1,9 @@
 package render
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -33,4 +35,17 @@ func UnauthorizedResponse(w http.ResponseWriter, r *http.Request, logger *zap.Lo
 	authHeader := r.Header.Get("Authorization")
 	logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
 	Json(w, http.StatusUnauthorized, commonMappers.ToSimpleErrorResponse(messages.AuthenticationRequiredMsg))
+}
+
+func ErrorCausedByTimeoutOrClientCancellation(w http.ResponseWriter, r *http.Request, logger *zap.Logger, err error) bool {
+	switch {
+	case errors.Is(err, context.Canceled):
+		logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
+		return true // no need to return a response. Client socket is closed.
+	case errors.Is(err, context.DeadlineExceeded):
+		Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
+		return true
+	default:
+		return false
+	}
 }

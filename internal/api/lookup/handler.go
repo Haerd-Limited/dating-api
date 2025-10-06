@@ -1,8 +1,7 @@
 package lookup
 
 import (
-	"context"
-	"errors"
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -47,19 +46,8 @@ func (h *handler) GetPrompts() http.HandlerFunc {
 
 		prompts, err := h.lookupService.GetPrompts(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting prompts", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetPrompts", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetPromptsResponse(prompts))
@@ -72,19 +60,8 @@ func (h *handler) GetLanguages() http.HandlerFunc {
 
 		languages, err := h.lookupService.GetLanguages(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting languages", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetLanguages", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetLanguagesResponse(languages))
@@ -97,19 +74,8 @@ func (h *handler) GetReligions() http.HandlerFunc {
 
 		religions, err := h.lookupService.GetReligions(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting religions", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetReligions", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetReligionsResponse(religions))
@@ -122,19 +88,8 @@ func (h *handler) GetPoliticalBeliefs() http.HandlerFunc {
 
 		beliefs, err := h.lookupService.GetPoliticalBeliefs(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting political beliefs", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetPoliticalBeliefs", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetPoliticalBeliefsResponse(beliefs))
@@ -147,19 +102,8 @@ func (h *handler) GetEthnicities() http.HandlerFunc {
 
 		ethnicities, err := h.lookupService.GetEthnicities(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting ethnicities", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetEthnicities", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetEthnicitiesResponse(ethnicities))
@@ -172,19 +116,8 @@ func (h *handler) GetGenders() http.HandlerFunc {
 
 		genders, err := h.lookupService.GetGenders(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting genders", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetGenders", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetGendersResponse(genders))
@@ -197,19 +130,8 @@ func (h *handler) GetDatingIntentions() http.HandlerFunc {
 
 		intentions, err := h.lookupService.GetDatingIntentions(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting dating intentions", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetDatingIntentions", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetDatingIntentionsResponse(intentions))
@@ -222,19 +144,8 @@ func (h *handler) GetHabits() http.HandlerFunc {
 
 		habits, err := h.lookupService.GetHabits(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting habits", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetHabits", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetHabitsResponse(habits))
@@ -247,21 +158,19 @@ func (h *handler) GetEducationLevels() http.HandlerFunc {
 
 		levels, err := h.lookupService.GetEducationLevels(ctx)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting education levels", "error", err)
-				render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetEducationLevels", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetEducationLevelsResponse(levels))
 	}
+}
+
+func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
+	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
+		return
+	}
+
+	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err)
+	render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
 }

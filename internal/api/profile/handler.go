@@ -1,8 +1,8 @@
 package profile
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -51,20 +51,8 @@ func (h *handler) GetMyProfile() http.HandlerFunc {
 
 		userProfile, err := h.profileService.GetEnrichedProfile(ctx, userID)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting user profile", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetMyProfile", err)
+			return
 		}
 
 		//todo:update to use a toresponse mapper
@@ -107,24 +95,22 @@ func (h *handler) UpdateMyProfile() http.HandlerFunc {
 
 		err = h.profileService.UpdateProfile(ctx, model)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating user profile", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "UpdateMyProfile", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Profile successfully updated"))
 	}
+}
+
+func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
+	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
+		return
+	}
+
+	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err)
+	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {

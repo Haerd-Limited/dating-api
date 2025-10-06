@@ -1,8 +1,8 @@
 package conversation
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -61,20 +61,8 @@ func (h *handler) GetConversations() http.HandlerFunc {
 
 		conversations, err := h.conversationService.GetConversations(ctx, userID)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting conversations", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetConversations", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapConversationsToDtos(conversations))
@@ -119,20 +107,8 @@ func (h *handler) SendMessage() http.HandlerFunc {
 
 		msg, err := h.conversationService.SendMessage(ctx, mapper.MapSendMessageRequestToDomain(req, convoID, userID))
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error sending message", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "SendMessage", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapMessageToDto(&msg)) // todo: update to response
@@ -163,24 +139,22 @@ func (h *handler) GetConversationMessages() http.HandlerFunc {
 
 		msgs, err := h.conversationService.GetMessages(ctx, convoID, userID)
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting conversation messages", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetConversationMessages", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapMessagesToResponse(msgs))
 	}
+}
+
+func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
+	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
+		return
+	}
+
+	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err)
+	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {

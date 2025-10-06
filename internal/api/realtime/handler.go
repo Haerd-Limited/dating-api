@@ -8,8 +8,6 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
-	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
 
@@ -41,16 +39,7 @@ func (h *wsHandler) ServeWS() http.HandlerFunc {
 
 		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
-			authHeader := r.Header.Get("Authorization")
-			h.logger.Sugar().Errorw("missing user ID", "authHeader", authHeader)
-
-			render.Json(
-				w,
-				http.StatusUnauthorized,
-				commonMappers.ToSimpleErrorResponse(
-					messages.AuthenticationRequiredMsg,
-				))
-
+			render.UnauthorizedResponse(w, r, h.logger)
 			return
 		}
 

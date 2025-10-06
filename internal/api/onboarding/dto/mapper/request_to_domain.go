@@ -60,23 +60,23 @@ func MapBeliefsRequestToDomain(req dto.BeliefsRequest, userID string) domain.Bel
 	}
 }
 
-func MapLanguagesRequestToDomain(req dto.LanguagesRequest, userID string) (domain.Languages, error) {
+func MapLanguagesRequestToDomain(req dto.LanguagesRequest, userID string) domain.Languages {
 	return domain.Languages{
 		UserID:      userID,
 		LanguageIDs: req.LanguageIDs,
-	}, nil
+	}
 }
 
-func MapWorkAndEducationRequestToDomain(req dto.WorkAndEducationRequest, userID string) (domain.WorkAndEducation, error) {
+func MapWorkAndEducationRequestToDomain(req dto.WorkAndEducationRequest, userID string) domain.WorkAndEducation {
 	return domain.WorkAndEducation{
 		UserID:     userID,
 		Workplace:  req.Workplace,
 		JobTitle:   req.JobTitle,
 		University: req.University,
-	}, nil
+	}
 }
 
-func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) (domain.UploadedPhotos, error) {
+func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) domain.UploadedPhotos {
 	var photos []domain.Photo
 
 	for _, p := range req.UploadedPhotos {
@@ -90,7 +90,7 @@ func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) (domain.Uplo
 	return domain.UploadedPhotos{
 		UserID: userID,
 		Photos: photos,
-	}, nil
+	}
 }
 
 func MapProfileToDomain(req dto.ProfileRequest, userID string) domain.Profile {
@@ -101,7 +101,7 @@ func MapProfileToDomain(req dto.ProfileRequest, userID string) domain.Profile {
 	}
 }
 
-func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Prompts, error) {
+func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) domain.Prompts {
 	var voicePrompts []domain.VoicePrompt
 
 	for _, p := range req.UploadedPrompts {
@@ -117,5 +117,5 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) (domain.Pr
 	return domain.Prompts{
 		UserID:          userID,
 		UploadedPrompts: voicePrompts,
-	}, nil
+	}
 }

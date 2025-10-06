@@ -3,10 +3,10 @@ package onboarding
 import (
 	standardcontext "context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
-	"golang.org/x/net/context"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto/mapper"
@@ -65,20 +65,8 @@ func (h *handler) GetStep() http.HandlerFunc {
 
 		result, err := h.onboardingService.GetUserCurrentStep(ctx, userID)
 		if err != nil {
-			switch { // todo: refactor and move to common library
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error getting user current step", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "GetStep", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -112,20 +100,8 @@ func (h *handler) Intro() http.HandlerFunc {
 
 		result, err := h.onboardingService.Intro(ctx, mapper.MapIntroRequestToDomain(req, userID))
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error registering user", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Intro", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -158,20 +134,8 @@ func (h *handler) Basics() http.HandlerFunc {
 
 		result, err := h.onboardingService.Basics(ctx, mapper.MapBasicRequestToDomain(req, userID))
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating basics", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Basics", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -205,20 +169,8 @@ func (h *handler) Location() http.HandlerFunc {
 
 		result, err := h.onboardingService.Location(ctx, mapper.MapLocationRequestToDomain(req, userID))
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating location details", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Location", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -252,20 +204,8 @@ func (h *handler) Lifestyle() http.HandlerFunc {
 
 		result, err := h.onboardingService.Lifestyle(ctx, mapper.MapLifestyleRequestToDomain(req, userID))
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating lifestyle details", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Lifestyle", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -299,20 +239,8 @@ func (h *handler) Beliefs() http.HandlerFunc {
 
 		result, err := h.onboardingService.Beliefs(ctx, mapper.MapBeliefsRequestToDomain(req, userID))
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating beliefs details", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Beliefs", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -346,20 +274,8 @@ func (h *handler) Background() http.HandlerFunc {
 
 		result, err := h.onboardingService.Background(ctx, mapper.MapBackgroundRequestToDomain(req, userID))
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating background details", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Background", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -391,33 +307,10 @@ func (h *handler) WorkAndEducation() http.HandlerFunc {
 			return
 		}
 
-		workAndEducationDetails, err := mapper.MapWorkAndEducationRequestToDomain(req, userID)
+		result, err := h.onboardingService.WorkAndEducation(ctx, mapper.MapWorkAndEducationRequestToDomain(req, userID))
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to map work and education request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
+			h.handleServiceErrorResponse(w, r, "WorkAndEducation", err)
 			return
-		}
-
-		result, err := h.onboardingService.WorkAndEducation(ctx, workAndEducationDetails)
-		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating work and education details", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -449,33 +342,10 @@ func (h *handler) Languages() http.HandlerFunc {
 			return
 		}
 
-		spokenLanguages, err := mapper.MapLanguagesRequestToDomain(req, userID)
+		result, err := h.onboardingService.Languages(ctx, mapper.MapLanguagesRequestToDomain(req, userID))
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to map languages request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
+			h.handleServiceErrorResponse(w, r, "Languages", err)
 			return
-		}
-
-		result, err := h.onboardingService.Languages(ctx, spokenLanguages)
-		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating languages details", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -507,33 +377,10 @@ func (h *handler) Photos() http.HandlerFunc {
 			return
 		}
 
-		userPhotos, err := mapper.MapPhotosRequestToDomain(req, userID)
+		result, err := h.onboardingService.Photos(ctx, mapper.MapPhotosRequestToDomain(req, userID))
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to map photos request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
+			h.handleServiceErrorResponse(w, r, "Photos", err)
 			return
-		}
-
-		result, err := h.onboardingService.Photos(ctx, userPhotos)
-		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating photos", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -565,33 +412,10 @@ func (h *handler) Prompts() http.HandlerFunc {
 			return
 		}
 
-		userPrompts, err := mapper.MapPromptsRequestToDomain(req, userID)
+		result, err := h.onboardingService.Prompts(ctx, mapper.MapPromptsRequestToDomain(req, userID))
 		if err != nil {
-			h.logger.Sugar().Errorw("failed to map prompts request to domain", "error", err)
-			statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-			render.Json(w, statusCode,
-				commonMappers.ToSimpleErrorResponse(errMsg),
-			)
-
+			h.handleServiceErrorResponse(w, r, "Prompts", err)
 			return
-		}
-
-		result, err := h.onboardingService.Prompts(ctx, userPrompts)
-		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating prompts", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
@@ -625,24 +449,22 @@ func (h *handler) Profile() http.HandlerFunc {
 
 		result, err := h.onboardingService.Profile(ctx, mapper.MapProfileToDomain(req, userID))
 		if err != nil {
-			switch {
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // no need to return a response. Client socket is closed.
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error updating prompts", "error", err)
-				statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Profile", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
 	}
+}
+
+func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
+	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
+		return
+	}
+
+	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err)
+	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 const (
