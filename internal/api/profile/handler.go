@@ -77,8 +77,8 @@ func (h *handler) UpdateMyProfile() http.HandlerFunc {
 			h.logger.Sugar().Warnw("failed to decode and validate update profile request body", "error", err)
 			render.Json(
 				w,
-				http.StatusInternalServerError,
-				commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg),
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(messages.InvalidRequestBodyMsg),
 			)
 
 			return
