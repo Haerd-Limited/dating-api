@@ -12,6 +12,11 @@ type FamilyPlan struct {
 	Label string
 }
 
+type FamilyStatus struct {
+	ID    int16
+	Label string
+}
+
 type Language struct {
 	ID    int16
 	Label string

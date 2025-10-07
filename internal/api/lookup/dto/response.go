@@ -4,6 +4,15 @@ type GetPromptsResponse struct {
 	Prompts []Prompt `json:"prompts"`
 }
 
+type GetFamilyStatusResponse struct {
+	FamilyStatus []FamilyStatus `json:"family_status`
+}
+
+type FamilyStatus struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
 type GetFamilyPlansResponse struct {
 	FamilyPlans []FamilyPlan `json:"family_plans"`
 }

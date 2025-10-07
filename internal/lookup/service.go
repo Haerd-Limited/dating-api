@@ -21,6 +21,7 @@ type Service interface {
 	GetHabits(ctx context.Context) ([]domain.Habit, error)
 	GetGenders(ctx context.Context) ([]domain.Gender, error)
 	GetDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error)
+	GetFamilyStatus(ctx context.Context) ([]domain.FamilyStatus, error)
 }
 
 type lookupService struct {
@@ -36,6 +37,15 @@ func NewLookupService(
 		logger:     logger,
 		lookupRepo: lookupRepo,
 	}
+}
+
+func (s *lookupService) GetFamilyStatus(ctx context.Context) ([]domain.FamilyStatus, error) {
+	familyStatusEntities, err := s.lookupRepo.GetFamilyStatus(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapFamilyStatusEntitiesToDomain(familyStatusEntities), nil
 }
 
 func (s *lookupService) GetFamilyPlans(ctx context.Context) ([]domain.FamilyPlan, error) {

@@ -31,6 +31,7 @@ type LookupRepository interface {
 	GetGenders(ctx context.Context) (entity.GenderSlice, error)
 	GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error)
 	GetFamilyPlans(ctx context.Context) (entity.FamilyPlanSlice, error)
+	GetFamilyStatus(ctx context.Context) (entity.FamilyStatusSlice, error)
 }
 
 type lookupRepository struct {
@@ -41,6 +42,14 @@ func NewLookupRepository(db *sqlx.DB) LookupRepository {
 	return &lookupRepository{
 		db: db,
 	}
+}
+
+func (lr *lookupRepository) GetFamilyStatus(ctx context.Context) (entity.FamilyStatusSlice, error) {
+	familyStatus, err := entity.FamilyStatuses().All(ctx, lr.db)
+	if err != nil {
+		return nil, err
+	}
+	return familyStatus, nil
 }
 
 func (lr *lookupRepository) GetFamilyPlans(ctx context.Context) (entity.FamilyPlanSlice, error) {

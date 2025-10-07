@@ -5,6 +5,20 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/lookup/domain"
 )
 
+func MapToGetFamilyStatusResponse(domainFamilyPlans []domain.FamilyStatus) dto.GetFamilyStatusResponse {
+	var familyPlans []dto.FamilyStatus
+	for _, familyPlan := range domainFamilyPlans {
+		familyPlans = append(familyPlans, dto.FamilyStatus{
+			ID:    familyPlan.ID,
+			Label: familyPlan.Label,
+		})
+	}
+
+	return dto.GetFamilyStatusResponse{
+		FamilyStatus: familyPlans,
+	}
+}
+
 func MapToGetFamilyPlansResponse(domainFamilyPlans []domain.FamilyPlan) dto.GetFamilyPlansResponse {
 	var familyPlans []dto.FamilyPlan
 	for _, familyPlan := range domainFamilyPlans {

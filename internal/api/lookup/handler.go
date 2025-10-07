@@ -24,6 +24,7 @@ type Handler interface {
 	GetHabits() http.HandlerFunc
 	GetEducationLevels() http.HandlerFunc
 	GetFamilyPlans() http.HandlerFunc
+	GetFamilyStatus() http.HandlerFunc
 }
 
 type handler struct {
@@ -38,6 +39,20 @@ func NewLookupHandler(
 	return &handler{
 		logger:        logger,
 		lookupService: lookupService,
+	}
+}
+
+func (h *handler) GetFamilyStatus() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		familyPlans, err := h.lookupService.GetFamilyStatus(ctx)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GetFamilyStatus", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapToGetFamilyStatusResponse(familyPlans))
 	}
 }
 
