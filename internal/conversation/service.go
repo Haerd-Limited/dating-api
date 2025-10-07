@@ -224,10 +224,12 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 		}
 
 		var snapShot scoredomain.ScoreSnapshot
+
 		snapShot, err = s.scoreService.GetSnapshot(ctx, conversation.ID, userID)
 		if err != nil {
 			return nil, fmt.Errorf("get score snapshot userID=%s convoID=%s: %w", userID, conversation.ID, err)
 		}
+
 		temp := mapper.MapScoreDomainSnapShotToConversationDomain(snapShot)
 		conversation.Score = *temp
 
@@ -422,8 +424,8 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 
 		result = mapper.MapScoreDomainSnapShotToConversationDomain(snap)
 
-		//todo: implement voicenote scoring
-		//todo: implement calls scoring
+		// todo: implement voicenote scoring
+		// todo: implement calls scoring
 	case domain.MessageTypeSystem:
 		// no scoring
 	default:

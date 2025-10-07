@@ -26,10 +26,12 @@ func MapToSendMessageResponse(domainMessage *domain.Message) dto.SendMessageResp
 	if domainMessage == nil {
 		return dto.SendMessageResponse{}
 	}
+
 	return dto.SendMessageResponse{
 		Messages: MapMessageToDto(domainMessage),
 	}
 }
+
 func MapMessageToDto(msg *domain.Message) dto.Message {
 	if msg == nil {
 		return dto.Message{}
