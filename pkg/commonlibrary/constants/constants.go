@@ -12,4 +12,6 @@ const (
 	MessageTypeText                             = "text"
 	MessageTypeVoice                            = "voicenote"
 	MinimumNumberOfUsersRequiredToBuildVwhUsers = 5
+	VisibilityStateHidden                       = "HIDDEN"
+	VisibilityStateVisible                      = "VISIBLE"
 )

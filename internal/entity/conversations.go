@@ -24,101 +24,80 @@ import (
 
 // Conversation is an object representing the database table.
 type Conversation struct {
-	ID             string     `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserA          string     `boil:"user_a" json:"user_a" toml:"user_a" yaml:"user_a"`
-	UserB          string     `boil:"user_b" json:"user_b" toml:"user_b" yaml:"user_b"`
-	CreatedAt      time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	LastActivityAt time.Time  `boil:"last_activity_at" json:"last_activity_at" toml:"last_activity_at" yaml:"last_activity_at"`
-	ALastReadID    null.Int64 `boil:"a_last_read_id" json:"a_last_read_id,omitempty" toml:"a_last_read_id" yaml:"a_last_read_id,omitempty"`
-	BLastReadID    null.Int64 `boil:"b_last_read_id" json:"b_last_read_id,omitempty" toml:"b_last_read_id" yaml:"b_last_read_id,omitempty"`
-	AMuted         bool       `boil:"a_muted" json:"a_muted" toml:"a_muted" yaml:"a_muted"`
-	BMuted         bool       `boil:"b_muted" json:"b_muted" toml:"b_muted" yaml:"b_muted"`
-	LastMessageID  null.Int64 `boil:"last_message_id" json:"last_message_id,omitempty" toml:"last_message_id" yaml:"last_message_id,omitempty"`
+	ID              string     `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserA           string     `boil:"user_a" json:"user_a" toml:"user_a" yaml:"user_a"`
+	UserB           string     `boil:"user_b" json:"user_b" toml:"user_b" yaml:"user_b"`
+	CreatedAt       time.Time  `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	LastActivityAt  time.Time  `boil:"last_activity_at" json:"last_activity_at" toml:"last_activity_at" yaml:"last_activity_at"`
+	ALastReadID     null.Int64 `boil:"a_last_read_id" json:"a_last_read_id,omitempty" toml:"a_last_read_id" yaml:"a_last_read_id,omitempty"`
+	BLastReadID     null.Int64 `boil:"b_last_read_id" json:"b_last_read_id,omitempty" toml:"b_last_read_id" yaml:"b_last_read_id,omitempty"`
+	AMuted          bool       `boil:"a_muted" json:"a_muted" toml:"a_muted" yaml:"a_muted"`
+	BMuted          bool       `boil:"b_muted" json:"b_muted" toml:"b_muted" yaml:"b_muted"`
+	LastMessageID   null.Int64 `boil:"last_message_id" json:"last_message_id,omitempty" toml:"last_message_id" yaml:"last_message_id,omitempty"`
+	VisibilityState string     `boil:"visibility_state" json:"visibility_state" toml:"visibility_state" yaml:"visibility_state"`
+	RevealAt        null.Time  `boil:"reveal_at" json:"reveal_at,omitempty" toml:"reveal_at" yaml:"reveal_at,omitempty"`
 
 	R *conversationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L conversationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var ConversationColumns = struct {
-	ID             string
-	UserA          string
-	UserB          string
-	CreatedAt      string
-	LastActivityAt string
-	ALastReadID    string
-	BLastReadID    string
-	AMuted         string
-	BMuted         string
-	LastMessageID  string
+	ID              string
+	UserA           string
+	UserB           string
+	CreatedAt       string
+	LastActivityAt  string
+	ALastReadID     string
+	BLastReadID     string
+	AMuted          string
+	BMuted          string
+	LastMessageID   string
+	VisibilityState string
+	RevealAt        string
 }{
-	ID:             "id",
-	UserA:          "user_a",
-	UserB:          "user_b",
-	CreatedAt:      "created_at",
-	LastActivityAt: "last_activity_at",
-	ALastReadID:    "a_last_read_id",
-	BLastReadID:    "b_last_read_id",
-	AMuted:         "a_muted",
-	BMuted:         "b_muted",
-	LastMessageID:  "last_message_id",
+	ID:              "id",
+	UserA:           "user_a",
+	UserB:           "user_b",
+	CreatedAt:       "created_at",
+	LastActivityAt:  "last_activity_at",
+	ALastReadID:     "a_last_read_id",
+	BLastReadID:     "b_last_read_id",
+	AMuted:          "a_muted",
+	BMuted:          "b_muted",
+	LastMessageID:   "last_message_id",
+	VisibilityState: "visibility_state",
+	RevealAt:        "reveal_at",
 }
 
 var ConversationTableColumns = struct {
-	ID             string
-	UserA          string
-	UserB          string
-	CreatedAt      string
-	LastActivityAt string
-	ALastReadID    string
-	BLastReadID    string
-	AMuted         string
-	BMuted         string
-	LastMessageID  string
+	ID              string
+	UserA           string
+	UserB           string
+	CreatedAt       string
+	LastActivityAt  string
+	ALastReadID     string
+	BLastReadID     string
+	AMuted          string
+	BMuted          string
+	LastMessageID   string
+	VisibilityState string
+	RevealAt        string
 }{
-	ID:             "conversations.id",
-	UserA:          "conversations.user_a",
-	UserB:          "conversations.user_b",
-	CreatedAt:      "conversations.created_at",
-	LastActivityAt: "conversations.last_activity_at",
-	ALastReadID:    "conversations.a_last_read_id",
-	BLastReadID:    "conversations.b_last_read_id",
-	AMuted:         "conversations.a_muted",
-	BMuted:         "conversations.b_muted",
-	LastMessageID:  "conversations.last_message_id",
+	ID:              "conversations.id",
+	UserA:           "conversations.user_a",
+	UserB:           "conversations.user_b",
+	CreatedAt:       "conversations.created_at",
+	LastActivityAt:  "conversations.last_activity_at",
+	ALastReadID:     "conversations.a_last_read_id",
+	BLastReadID:     "conversations.b_last_read_id",
+	AMuted:          "conversations.a_muted",
+	BMuted:          "conversations.b_muted",
+	LastMessageID:   "conversations.last_message_id",
+	VisibilityState: "conversations.visibility_state",
+	RevealAt:        "conversations.reveal_at",
 }
 
 // Generated where
-
-type whereHelperstring struct{ field string }
-
-func (w whereHelperstring) EQ(x string) qm.QueryMod      { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperstring) NEQ(x string) qm.QueryMod     { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperstring) LT(x string) qm.QueryMod      { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperstring) LTE(x string) qm.QueryMod     { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperstring) GT(x string) qm.QueryMod      { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperstring) GTE(x string) qm.QueryMod     { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-func (w whereHelperstring) LIKE(x string) qm.QueryMod    { return qm.Where(w.field+" LIKE ?", x) }
-func (w whereHelperstring) NLIKE(x string) qm.QueryMod   { return qm.Where(w.field+" NOT LIKE ?", x) }
-func (w whereHelperstring) ILIKE(x string) qm.QueryMod   { return qm.Where(w.field+" ILIKE ?", x) }
-func (w whereHelperstring) NILIKE(x string) qm.QueryMod  { return qm.Where(w.field+" NOT ILIKE ?", x) }
-func (w whereHelperstring) SIMILAR(x string) qm.QueryMod { return qm.Where(w.field+" SIMILAR TO ?", x) }
-func (w whereHelperstring) NSIMILAR(x string) qm.QueryMod {
-	return qm.Where(w.field+" NOT SIMILAR TO ?", x)
-}
-func (w whereHelperstring) IN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
 
 type whereHelpertime_Time struct{ field string }
 
@@ -189,48 +168,55 @@ func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field
 func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
 var ConversationWhere = struct {
-	ID             whereHelperstring
-	UserA          whereHelperstring
-	UserB          whereHelperstring
-	CreatedAt      whereHelpertime_Time
-	LastActivityAt whereHelpertime_Time
-	ALastReadID    whereHelpernull_Int64
-	BLastReadID    whereHelpernull_Int64
-	AMuted         whereHelperbool
-	BMuted         whereHelperbool
-	LastMessageID  whereHelpernull_Int64
+	ID              whereHelperstring
+	UserA           whereHelperstring
+	UserB           whereHelperstring
+	CreatedAt       whereHelpertime_Time
+	LastActivityAt  whereHelpertime_Time
+	ALastReadID     whereHelpernull_Int64
+	BLastReadID     whereHelpernull_Int64
+	AMuted          whereHelperbool
+	BMuted          whereHelperbool
+	LastMessageID   whereHelpernull_Int64
+	VisibilityState whereHelperstring
+	RevealAt        whereHelpernull_Time
 }{
-	ID:             whereHelperstring{field: "\"conversations\".\"id\""},
-	UserA:          whereHelperstring{field: "\"conversations\".\"user_a\""},
-	UserB:          whereHelperstring{field: "\"conversations\".\"user_b\""},
-	CreatedAt:      whereHelpertime_Time{field: "\"conversations\".\"created_at\""},
-	LastActivityAt: whereHelpertime_Time{field: "\"conversations\".\"last_activity_at\""},
-	ALastReadID:    whereHelpernull_Int64{field: "\"conversations\".\"a_last_read_id\""},
-	BLastReadID:    whereHelpernull_Int64{field: "\"conversations\".\"b_last_read_id\""},
-	AMuted:         whereHelperbool{field: "\"conversations\".\"a_muted\""},
-	BMuted:         whereHelperbool{field: "\"conversations\".\"b_muted\""},
-	LastMessageID:  whereHelpernull_Int64{field: "\"conversations\".\"last_message_id\""},
+	ID:              whereHelperstring{field: "\"conversations\".\"id\""},
+	UserA:           whereHelperstring{field: "\"conversations\".\"user_a\""},
+	UserB:           whereHelperstring{field: "\"conversations\".\"user_b\""},
+	CreatedAt:       whereHelpertime_Time{field: "\"conversations\".\"created_at\""},
+	LastActivityAt:  whereHelpertime_Time{field: "\"conversations\".\"last_activity_at\""},
+	ALastReadID:     whereHelpernull_Int64{field: "\"conversations\".\"a_last_read_id\""},
+	BLastReadID:     whereHelpernull_Int64{field: "\"conversations\".\"b_last_read_id\""},
+	AMuted:          whereHelperbool{field: "\"conversations\".\"a_muted\""},
+	BMuted:          whereHelperbool{field: "\"conversations\".\"b_muted\""},
+	LastMessageID:   whereHelpernull_Int64{field: "\"conversations\".\"last_message_id\""},
+	VisibilityState: whereHelperstring{field: "\"conversations\".\"visibility_state\""},
+	RevealAt:        whereHelpernull_Time{field: "\"conversations\".\"reveal_at\""},
 }
 
 // ConversationRels is where relationship names are stored.
 var ConversationRels = struct {
-	LastMessage string
-	UserAUser   string
-	UserBUser   string
-	Messages    string
+	LastMessage              string
+	UserAUser                string
+	UserBUser                string
+	ConversationParticipants string
+	Messages                 string
 }{
-	LastMessage: "LastMessage",
-	UserAUser:   "UserAUser",
-	UserBUser:   "UserBUser",
-	Messages:    "Messages",
+	LastMessage:              "LastMessage",
+	UserAUser:                "UserAUser",
+	UserBUser:                "UserBUser",
+	ConversationParticipants: "ConversationParticipants",
+	Messages:                 "Messages",
 }
 
 // conversationR is where relationships are stored.
 type conversationR struct {
-	LastMessage *Message     `boil:"LastMessage" json:"LastMessage" toml:"LastMessage" yaml:"LastMessage"`
-	UserAUser   *User        `boil:"UserAUser" json:"UserAUser" toml:"UserAUser" yaml:"UserAUser"`
-	UserBUser   *User        `boil:"UserBUser" json:"UserBUser" toml:"UserBUser" yaml:"UserBUser"`
-	Messages    MessageSlice `boil:"Messages" json:"Messages" toml:"Messages" yaml:"Messages"`
+	LastMessage              *Message                     `boil:"LastMessage" json:"LastMessage" toml:"LastMessage" yaml:"LastMessage"`
+	UserAUser                *User                        `boil:"UserAUser" json:"UserAUser" toml:"UserAUser" yaml:"UserAUser"`
+	UserBUser                *User                        `boil:"UserBUser" json:"UserBUser" toml:"UserBUser" yaml:"UserBUser"`
+	ConversationParticipants ConversationParticipantSlice `boil:"ConversationParticipants" json:"ConversationParticipants" toml:"ConversationParticipants" yaml:"ConversationParticipants"`
+	Messages                 MessageSlice                 `boil:"Messages" json:"Messages" toml:"Messages" yaml:"Messages"`
 }
 
 // NewStruct creates a new relationship struct
@@ -286,6 +272,22 @@ func (r *conversationR) GetUserBUser() *User {
 	return r.UserBUser
 }
 
+func (o *Conversation) GetConversationParticipants() ConversationParticipantSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetConversationParticipants()
+}
+
+func (r *conversationR) GetConversationParticipants() ConversationParticipantSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.ConversationParticipants
+}
+
 func (o *Conversation) GetMessages() MessageSlice {
 	if o == nil {
 		return nil
@@ -306,9 +308,9 @@ func (r *conversationR) GetMessages() MessageSlice {
 type conversationL struct{}
 
 var (
-	conversationAllColumns            = []string{"id", "user_a", "user_b", "created_at", "last_activity_at", "a_last_read_id", "b_last_read_id", "a_muted", "b_muted", "last_message_id"}
+	conversationAllColumns            = []string{"id", "user_a", "user_b", "created_at", "last_activity_at", "a_last_read_id", "b_last_read_id", "a_muted", "b_muted", "last_message_id", "visibility_state", "reveal_at"}
 	conversationColumnsWithoutDefault = []string{"user_a", "user_b"}
-	conversationColumnsWithDefault    = []string{"id", "created_at", "last_activity_at", "a_last_read_id", "b_last_read_id", "a_muted", "b_muted", "last_message_id"}
+	conversationColumnsWithDefault    = []string{"id", "created_at", "last_activity_at", "a_last_read_id", "b_last_read_id", "a_muted", "b_muted", "last_message_id", "visibility_state", "reveal_at"}
 	conversationPrimaryKeyColumns     = []string{"id"}
 	conversationGeneratedColumns      = []string{}
 )
@@ -649,6 +651,20 @@ func (o *Conversation) UserBUser(mods ...qm.QueryMod) userQuery {
 	queryMods = append(queryMods, mods...)
 
 	return Users(queryMods...)
+}
+
+// ConversationParticipants retrieves all the conversation_participant's ConversationParticipants with an executor.
+func (o *Conversation) ConversationParticipants(mods ...qm.QueryMod) conversationParticipantQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"conversation_participants\".\"conversation_id\"=?", o.ID),
+	)
+
+	return ConversationParticipants(queryMods...)
 }
 
 // Messages retrieves all the message's Messages with an executor.
@@ -1029,6 +1045,119 @@ func (conversationL) LoadUserBUser(ctx context.Context, e boil.ContextExecutor, 
 	return nil
 }
 
+// LoadConversationParticipants allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (conversationL) LoadConversationParticipants(ctx context.Context, e boil.ContextExecutor, singular bool, maybeConversation interface{}, mods queries.Applicator) error {
+	var slice []*Conversation
+	var object *Conversation
+
+	if singular {
+		var ok bool
+		object, ok = maybeConversation.(*Conversation)
+		if !ok {
+			object = new(Conversation)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeConversation)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeConversation))
+			}
+		}
+	} else {
+		s, ok := maybeConversation.(*[]*Conversation)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeConversation)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeConversation))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &conversationR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &conversationR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`conversation_participants`),
+		qm.WhereIn(`conversation_participants.conversation_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load conversation_participants")
+	}
+
+	var resultSlice []*ConversationParticipant
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice conversation_participants")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on conversation_participants")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for conversation_participants")
+	}
+
+	if len(conversationParticipantAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.ConversationParticipants = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &conversationParticipantR{}
+			}
+			foreign.R.Conversation = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.ConversationID {
+				local.R.ConversationParticipants = append(local.R.ConversationParticipants, foreign)
+				if foreign.R == nil {
+					foreign.R = &conversationParticipantR{}
+				}
+				foreign.R.Conversation = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadMessages allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (conversationL) LoadMessages(ctx context.Context, e boil.ContextExecutor, singular bool, maybeConversation interface{}, mods queries.Applicator) error {
@@ -1313,6 +1442,59 @@ func (o *Conversation) SetUserBUser(ctx context.Context, exec boil.ContextExecut
 		related.R.UserBConversations = append(related.R.UserBConversations, o)
 	}
 
+	return nil
+}
+
+// AddConversationParticipants adds the given related objects to the existing relationships
+// of the conversation, optionally inserting them as new records.
+// Appends related to o.R.ConversationParticipants.
+// Sets related.R.Conversation appropriately.
+func (o *Conversation) AddConversationParticipants(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*ConversationParticipant) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.ConversationID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"conversation_participants\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"conversation_id"}),
+				strmangle.WhereClause("\"", "\"", 2, conversationParticipantPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ConversationID, rel.UserID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.ConversationID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &conversationR{
+			ConversationParticipants: related,
+		}
+	} else {
+		o.R.ConversationParticipants = append(o.R.ConversationParticipants, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &conversationParticipantR{
+				Conversation: o,
+			}
+		} else {
+			rel.R.Conversation = o
+		}
+	}
 	return nil
 }
 

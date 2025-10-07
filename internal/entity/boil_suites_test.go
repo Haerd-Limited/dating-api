@@ -12,6 +12,7 @@ import "testing"
 // It does NOT run each operation group in parallel.
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipants)
 	t.Run("Conversations", testConversations)
 	t.Run("DatingIntentions", testDatingIntentions)
 	t.Run("DeviceTokens", testDeviceTokens)
@@ -32,6 +33,12 @@ func TestParent(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypes)
 	t.Run("RefreshTokens", testRefreshTokens)
 	t.Run("Religions", testReligions)
+	t.Run("ScoringBonuses", testScoringBonuses)
+	t.Run("ScoringCalls", testScoringCalls)
+	t.Run("ScoringPenalties", testScoringPenalties)
+	t.Run("ScoringSettings", testScoringSettings)
+	t.Run("ScoringTexts", testScoringTexts)
+	t.Run("ScoringVoices", testScoringVoices)
 	t.Run("SpatialRefSys", testSpatialRefSys)
 	t.Run("Swipes", testSwipes)
 	t.Run("UserPreferences", testUserPreferences)
@@ -44,6 +51,7 @@ func TestParent(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsDelete)
 	t.Run("Conversations", testConversationsDelete)
 	t.Run("DatingIntentions", testDatingIntentionsDelete)
 	t.Run("DeviceTokens", testDeviceTokensDelete)
@@ -64,6 +72,12 @@ func TestDelete(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesDelete)
 	t.Run("RefreshTokens", testRefreshTokensDelete)
 	t.Run("Religions", testReligionsDelete)
+	t.Run("ScoringBonuses", testScoringBonusesDelete)
+	t.Run("ScoringCalls", testScoringCallsDelete)
+	t.Run("ScoringPenalties", testScoringPenaltiesDelete)
+	t.Run("ScoringSettings", testScoringSettingsDelete)
+	t.Run("ScoringTexts", testScoringTextsDelete)
+	t.Run("ScoringVoices", testScoringVoicesDelete)
 	t.Run("SpatialRefSys", testSpatialRefSysDelete)
 	t.Run("Swipes", testSwipesDelete)
 	t.Run("UserPreferences", testUserPreferencesDelete)
@@ -76,6 +90,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestQueryDeleteAll(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsQueryDeleteAll)
 	t.Run("Conversations", testConversationsQueryDeleteAll)
 	t.Run("DatingIntentions", testDatingIntentionsQueryDeleteAll)
 	t.Run("DeviceTokens", testDeviceTokensQueryDeleteAll)
@@ -96,6 +111,12 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesQueryDeleteAll)
 	t.Run("RefreshTokens", testRefreshTokensQueryDeleteAll)
 	t.Run("Religions", testReligionsQueryDeleteAll)
+	t.Run("ScoringBonuses", testScoringBonusesQueryDeleteAll)
+	t.Run("ScoringCalls", testScoringCallsQueryDeleteAll)
+	t.Run("ScoringPenalties", testScoringPenaltiesQueryDeleteAll)
+	t.Run("ScoringSettings", testScoringSettingsQueryDeleteAll)
+	t.Run("ScoringTexts", testScoringTextsQueryDeleteAll)
+	t.Run("ScoringVoices", testScoringVoicesQueryDeleteAll)
 	t.Run("SpatialRefSys", testSpatialRefSysQueryDeleteAll)
 	t.Run("Swipes", testSwipesQueryDeleteAll)
 	t.Run("UserPreferences", testUserPreferencesQueryDeleteAll)
@@ -108,6 +129,7 @@ func TestQueryDeleteAll(t *testing.T) {
 }
 
 func TestSliceDeleteAll(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsSliceDeleteAll)
 	t.Run("Conversations", testConversationsSliceDeleteAll)
 	t.Run("DatingIntentions", testDatingIntentionsSliceDeleteAll)
 	t.Run("DeviceTokens", testDeviceTokensSliceDeleteAll)
@@ -128,6 +150,12 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesSliceDeleteAll)
 	t.Run("RefreshTokens", testRefreshTokensSliceDeleteAll)
 	t.Run("Religions", testReligionsSliceDeleteAll)
+	t.Run("ScoringBonuses", testScoringBonusesSliceDeleteAll)
+	t.Run("ScoringCalls", testScoringCallsSliceDeleteAll)
+	t.Run("ScoringPenalties", testScoringPenaltiesSliceDeleteAll)
+	t.Run("ScoringSettings", testScoringSettingsSliceDeleteAll)
+	t.Run("ScoringTexts", testScoringTextsSliceDeleteAll)
+	t.Run("ScoringVoices", testScoringVoicesSliceDeleteAll)
 	t.Run("SpatialRefSys", testSpatialRefSysSliceDeleteAll)
 	t.Run("Swipes", testSwipesSliceDeleteAll)
 	t.Run("UserPreferences", testUserPreferencesSliceDeleteAll)
@@ -140,6 +168,7 @@ func TestSliceDeleteAll(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsExists)
 	t.Run("Conversations", testConversationsExists)
 	t.Run("DatingIntentions", testDatingIntentionsExists)
 	t.Run("DeviceTokens", testDeviceTokensExists)
@@ -160,6 +189,12 @@ func TestExists(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesExists)
 	t.Run("RefreshTokens", testRefreshTokensExists)
 	t.Run("Religions", testReligionsExists)
+	t.Run("ScoringBonuses", testScoringBonusesExists)
+	t.Run("ScoringCalls", testScoringCallsExists)
+	t.Run("ScoringPenalties", testScoringPenaltiesExists)
+	t.Run("ScoringSettings", testScoringSettingsExists)
+	t.Run("ScoringTexts", testScoringTextsExists)
+	t.Run("ScoringVoices", testScoringVoicesExists)
 	t.Run("SpatialRefSys", testSpatialRefSysExists)
 	t.Run("Swipes", testSwipesExists)
 	t.Run("UserPreferences", testUserPreferencesExists)
@@ -172,6 +207,7 @@ func TestExists(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsFind)
 	t.Run("Conversations", testConversationsFind)
 	t.Run("DatingIntentions", testDatingIntentionsFind)
 	t.Run("DeviceTokens", testDeviceTokensFind)
@@ -192,6 +228,12 @@ func TestFind(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesFind)
 	t.Run("RefreshTokens", testRefreshTokensFind)
 	t.Run("Religions", testReligionsFind)
+	t.Run("ScoringBonuses", testScoringBonusesFind)
+	t.Run("ScoringCalls", testScoringCallsFind)
+	t.Run("ScoringPenalties", testScoringPenaltiesFind)
+	t.Run("ScoringSettings", testScoringSettingsFind)
+	t.Run("ScoringTexts", testScoringTextsFind)
+	t.Run("ScoringVoices", testScoringVoicesFind)
 	t.Run("SpatialRefSys", testSpatialRefSysFind)
 	t.Run("Swipes", testSwipesFind)
 	t.Run("UserPreferences", testUserPreferencesFind)
@@ -204,6 +246,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestBind(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsBind)
 	t.Run("Conversations", testConversationsBind)
 	t.Run("DatingIntentions", testDatingIntentionsBind)
 	t.Run("DeviceTokens", testDeviceTokensBind)
@@ -224,6 +267,12 @@ func TestBind(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesBind)
 	t.Run("RefreshTokens", testRefreshTokensBind)
 	t.Run("Religions", testReligionsBind)
+	t.Run("ScoringBonuses", testScoringBonusesBind)
+	t.Run("ScoringCalls", testScoringCallsBind)
+	t.Run("ScoringPenalties", testScoringPenaltiesBind)
+	t.Run("ScoringSettings", testScoringSettingsBind)
+	t.Run("ScoringTexts", testScoringTextsBind)
+	t.Run("ScoringVoices", testScoringVoicesBind)
 	t.Run("SpatialRefSys", testSpatialRefSysBind)
 	t.Run("Swipes", testSwipesBind)
 	t.Run("UserPreferences", testUserPreferencesBind)
@@ -236,6 +285,7 @@ func TestBind(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsOne)
 	t.Run("Conversations", testConversationsOne)
 	t.Run("DatingIntentions", testDatingIntentionsOne)
 	t.Run("DeviceTokens", testDeviceTokensOne)
@@ -256,6 +306,12 @@ func TestOne(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesOne)
 	t.Run("RefreshTokens", testRefreshTokensOne)
 	t.Run("Religions", testReligionsOne)
+	t.Run("ScoringBonuses", testScoringBonusesOne)
+	t.Run("ScoringCalls", testScoringCallsOne)
+	t.Run("ScoringPenalties", testScoringPenaltiesOne)
+	t.Run("ScoringSettings", testScoringSettingsOne)
+	t.Run("ScoringTexts", testScoringTextsOne)
+	t.Run("ScoringVoices", testScoringVoicesOne)
 	t.Run("SpatialRefSys", testSpatialRefSysOne)
 	t.Run("Swipes", testSwipesOne)
 	t.Run("UserPreferences", testUserPreferencesOne)
@@ -268,6 +324,7 @@ func TestOne(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsAll)
 	t.Run("Conversations", testConversationsAll)
 	t.Run("DatingIntentions", testDatingIntentionsAll)
 	t.Run("DeviceTokens", testDeviceTokensAll)
@@ -288,6 +345,12 @@ func TestAll(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesAll)
 	t.Run("RefreshTokens", testRefreshTokensAll)
 	t.Run("Religions", testReligionsAll)
+	t.Run("ScoringBonuses", testScoringBonusesAll)
+	t.Run("ScoringCalls", testScoringCallsAll)
+	t.Run("ScoringPenalties", testScoringPenaltiesAll)
+	t.Run("ScoringSettings", testScoringSettingsAll)
+	t.Run("ScoringTexts", testScoringTextsAll)
+	t.Run("ScoringVoices", testScoringVoicesAll)
 	t.Run("SpatialRefSys", testSpatialRefSysAll)
 	t.Run("Swipes", testSwipesAll)
 	t.Run("UserPreferences", testUserPreferencesAll)
@@ -300,6 +363,7 @@ func TestAll(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsCount)
 	t.Run("Conversations", testConversationsCount)
 	t.Run("DatingIntentions", testDatingIntentionsCount)
 	t.Run("DeviceTokens", testDeviceTokensCount)
@@ -320,6 +384,12 @@ func TestCount(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesCount)
 	t.Run("RefreshTokens", testRefreshTokensCount)
 	t.Run("Religions", testReligionsCount)
+	t.Run("ScoringBonuses", testScoringBonusesCount)
+	t.Run("ScoringCalls", testScoringCallsCount)
+	t.Run("ScoringPenalties", testScoringPenaltiesCount)
+	t.Run("ScoringSettings", testScoringSettingsCount)
+	t.Run("ScoringTexts", testScoringTextsCount)
+	t.Run("ScoringVoices", testScoringVoicesCount)
 	t.Run("SpatialRefSys", testSpatialRefSysCount)
 	t.Run("Swipes", testSwipesCount)
 	t.Run("UserPreferences", testUserPreferencesCount)
@@ -332,6 +402,7 @@ func TestCount(t *testing.T) {
 }
 
 func TestHooks(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsHooks)
 	t.Run("Conversations", testConversationsHooks)
 	t.Run("DatingIntentions", testDatingIntentionsHooks)
 	t.Run("DeviceTokens", testDeviceTokensHooks)
@@ -352,6 +423,12 @@ func TestHooks(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesHooks)
 	t.Run("RefreshTokens", testRefreshTokensHooks)
 	t.Run("Religions", testReligionsHooks)
+	t.Run("ScoringBonuses", testScoringBonusesHooks)
+	t.Run("ScoringCalls", testScoringCallsHooks)
+	t.Run("ScoringPenalties", testScoringPenaltiesHooks)
+	t.Run("ScoringSettings", testScoringSettingsHooks)
+	t.Run("ScoringTexts", testScoringTextsHooks)
+	t.Run("ScoringVoices", testScoringVoicesHooks)
 	t.Run("SpatialRefSys", testSpatialRefSysHooks)
 	t.Run("Swipes", testSwipesHooks)
 	t.Run("UserPreferences", testUserPreferencesHooks)
@@ -364,6 +441,8 @@ func TestHooks(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsInsert)
+	t.Run("ConversationParticipants", testConversationParticipantsInsertWhitelist)
 	t.Run("Conversations", testConversationsInsert)
 	t.Run("Conversations", testConversationsInsertWhitelist)
 	t.Run("DatingIntentions", testDatingIntentionsInsert)
@@ -404,6 +483,18 @@ func TestInsert(t *testing.T) {
 	t.Run("RefreshTokens", testRefreshTokensInsertWhitelist)
 	t.Run("Religions", testReligionsInsert)
 	t.Run("Religions", testReligionsInsertWhitelist)
+	t.Run("ScoringBonuses", testScoringBonusesInsert)
+	t.Run("ScoringBonuses", testScoringBonusesInsertWhitelist)
+	t.Run("ScoringCalls", testScoringCallsInsert)
+	t.Run("ScoringCalls", testScoringCallsInsertWhitelist)
+	t.Run("ScoringPenalties", testScoringPenaltiesInsert)
+	t.Run("ScoringPenalties", testScoringPenaltiesInsertWhitelist)
+	t.Run("ScoringSettings", testScoringSettingsInsert)
+	t.Run("ScoringSettings", testScoringSettingsInsertWhitelist)
+	t.Run("ScoringTexts", testScoringTextsInsert)
+	t.Run("ScoringTexts", testScoringTextsInsertWhitelist)
+	t.Run("ScoringVoices", testScoringVoicesInsert)
+	t.Run("ScoringVoices", testScoringVoicesInsertWhitelist)
 	t.Run("SpatialRefSys", testSpatialRefSysInsert)
 	t.Run("SpatialRefSys", testSpatialRefSysInsertWhitelist)
 	t.Run("Swipes", testSwipesInsert)
@@ -425,6 +516,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestReload(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsReload)
 	t.Run("Conversations", testConversationsReload)
 	t.Run("DatingIntentions", testDatingIntentionsReload)
 	t.Run("DeviceTokens", testDeviceTokensReload)
@@ -445,6 +537,12 @@ func TestReload(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesReload)
 	t.Run("RefreshTokens", testRefreshTokensReload)
 	t.Run("Religions", testReligionsReload)
+	t.Run("ScoringBonuses", testScoringBonusesReload)
+	t.Run("ScoringCalls", testScoringCallsReload)
+	t.Run("ScoringPenalties", testScoringPenaltiesReload)
+	t.Run("ScoringSettings", testScoringSettingsReload)
+	t.Run("ScoringTexts", testScoringTextsReload)
+	t.Run("ScoringVoices", testScoringVoicesReload)
 	t.Run("SpatialRefSys", testSpatialRefSysReload)
 	t.Run("Swipes", testSwipesReload)
 	t.Run("UserPreferences", testUserPreferencesReload)
@@ -457,6 +555,7 @@ func TestReload(t *testing.T) {
 }
 
 func TestReloadAll(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsReloadAll)
 	t.Run("Conversations", testConversationsReloadAll)
 	t.Run("DatingIntentions", testDatingIntentionsReloadAll)
 	t.Run("DeviceTokens", testDeviceTokensReloadAll)
@@ -477,6 +576,12 @@ func TestReloadAll(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesReloadAll)
 	t.Run("RefreshTokens", testRefreshTokensReloadAll)
 	t.Run("Religions", testReligionsReloadAll)
+	t.Run("ScoringBonuses", testScoringBonusesReloadAll)
+	t.Run("ScoringCalls", testScoringCallsReloadAll)
+	t.Run("ScoringPenalties", testScoringPenaltiesReloadAll)
+	t.Run("ScoringSettings", testScoringSettingsReloadAll)
+	t.Run("ScoringTexts", testScoringTextsReloadAll)
+	t.Run("ScoringVoices", testScoringVoicesReloadAll)
 	t.Run("SpatialRefSys", testSpatialRefSysReloadAll)
 	t.Run("Swipes", testSwipesReloadAll)
 	t.Run("UserPreferences", testUserPreferencesReloadAll)
@@ -489,6 +594,7 @@ func TestReloadAll(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsSelect)
 	t.Run("Conversations", testConversationsSelect)
 	t.Run("DatingIntentions", testDatingIntentionsSelect)
 	t.Run("DeviceTokens", testDeviceTokensSelect)
@@ -509,6 +615,12 @@ func TestSelect(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesSelect)
 	t.Run("RefreshTokens", testRefreshTokensSelect)
 	t.Run("Religions", testReligionsSelect)
+	t.Run("ScoringBonuses", testScoringBonusesSelect)
+	t.Run("ScoringCalls", testScoringCallsSelect)
+	t.Run("ScoringPenalties", testScoringPenaltiesSelect)
+	t.Run("ScoringSettings", testScoringSettingsSelect)
+	t.Run("ScoringTexts", testScoringTextsSelect)
+	t.Run("ScoringVoices", testScoringVoicesSelect)
 	t.Run("SpatialRefSys", testSpatialRefSysSelect)
 	t.Run("Swipes", testSwipesSelect)
 	t.Run("UserPreferences", testUserPreferencesSelect)
@@ -521,6 +633,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsUpdate)
 	t.Run("Conversations", testConversationsUpdate)
 	t.Run("DatingIntentions", testDatingIntentionsUpdate)
 	t.Run("DeviceTokens", testDeviceTokensUpdate)
@@ -541,6 +654,12 @@ func TestUpdate(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesUpdate)
 	t.Run("RefreshTokens", testRefreshTokensUpdate)
 	t.Run("Religions", testReligionsUpdate)
+	t.Run("ScoringBonuses", testScoringBonusesUpdate)
+	t.Run("ScoringCalls", testScoringCallsUpdate)
+	t.Run("ScoringPenalties", testScoringPenaltiesUpdate)
+	t.Run("ScoringSettings", testScoringSettingsUpdate)
+	t.Run("ScoringTexts", testScoringTextsUpdate)
+	t.Run("ScoringVoices", testScoringVoicesUpdate)
 	t.Run("SpatialRefSys", testSpatialRefSysUpdate)
 	t.Run("Swipes", testSwipesUpdate)
 	t.Run("UserPreferences", testUserPreferencesUpdate)
@@ -553,6 +672,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestSliceUpdateAll(t *testing.T) {
+	t.Run("ConversationParticipants", testConversationParticipantsSliceUpdateAll)
 	t.Run("Conversations", testConversationsSliceUpdateAll)
 	t.Run("DatingIntentions", testDatingIntentionsSliceUpdateAll)
 	t.Run("DeviceTokens", testDeviceTokensSliceUpdateAll)
@@ -573,6 +693,12 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("PromptTypes", testPromptTypesSliceUpdateAll)
 	t.Run("RefreshTokens", testRefreshTokensSliceUpdateAll)
 	t.Run("Religions", testReligionsSliceUpdateAll)
+	t.Run("ScoringBonuses", testScoringBonusesSliceUpdateAll)
+	t.Run("ScoringCalls", testScoringCallsSliceUpdateAll)
+	t.Run("ScoringPenalties", testScoringPenaltiesSliceUpdateAll)
+	t.Run("ScoringSettings", testScoringSettingsSliceUpdateAll)
+	t.Run("ScoringTexts", testScoringTextsSliceUpdateAll)
+	t.Run("ScoringVoices", testScoringVoicesSliceUpdateAll)
 	t.Run("SpatialRefSys", testSpatialRefSysSliceUpdateAll)
 	t.Run("Swipes", testSwipesSliceUpdateAll)
 	t.Run("UserPreferences", testUserPreferencesSliceUpdateAll)

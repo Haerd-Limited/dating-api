@@ -21,6 +21,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"github.com/Haerd-Limited/dating-api/internal/config"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
+	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
 	storage5 "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	storage3 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
@@ -76,8 +77,6 @@ func main() {
 
 	debug.SetGCPercent(20)
 
-	// notificationRepo := notificationStorage.NewNotificationRepository(db)
-
 	s3Presigner, err := s3Storage.NewPresigner(ctx, cfg.AWSRegion, cfg.S3BucketName)
 	if err != nil {
 		logger.Sugar().Fatalf("failed to create S3 presigner: %v", err)
@@ -88,45 +87,31 @@ func main() {
 		logger.Sugar().Fatalf("failed to create S3 uploader: %v", err)
 	}
 
-	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner)
-
+	// notificationRepo := notificationStorage.NewNotificationRepository(db)
 	lookupRepo := lookupstorage.NewLookupRepository(db)
-	lookupService := lookup.NewLookupService(logger, lookupRepo)
-
 	profileRepo := profilestorage.NewProfileRepository(db)
-	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo)
-
-	unitOfWork := uow.New(db.DB)
-
 	preferenceRepo := storage2.NewPreferenceRepository(db)
-	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
-
 	discoverRepo := storage3.NewDiscoverRepository(db)
-	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
-
-	hub := realtime.NewHub()
-
-	flake := ids.NewSnowflake(1)
 	conversationRepo := storage5.NewConversationRepository(db)
 	interactionRepo := storage4.NewInteractionRepository(db)
-	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo)
-
-	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, unitOfWork)
-
 	userRepo := storage.NewUserRepository(db)
-	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
-
-	communicationService := communication.NewService(
-		cfg.TwilioAccountSID,
-		cfg.TwilioAuthToken,
-		cfg.TwilioNumber,
-	)
-
 	authRepo := authstorage.NewAuthRepository(db)
+	unitOfWork := uow.New(db.DB)
+
+	hub := realtime.NewHub()
+	flake := ids.NewSnowflake(1)
+	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner)
+	lookupService := lookup.NewLookupService(logger, lookupRepo)
+	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo)
+	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
+	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
+	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
+	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService)
+	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, unitOfWork)
+	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
+	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
-
 	mediaService := media.NewMediaService(logger, awsService)
-
 	onboardingService := onboarding.NewOnboardingService(logger, userService, authService, mediaService, profileService, lookupRepo)
 
 	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)

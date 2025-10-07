@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/lib/pq"
 	"time"
 
 	"github.com/aarondl/null/v8"
@@ -13,6 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
 type ConversationRepository interface {
@@ -25,6 +27,15 @@ type ConversationRepository interface {
 	GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error)
 	GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error)
 	IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error)
+	UpdateUserConversationScore(ctx context.Context, tx *sql.Tx, conversationID, userID string, earned int) error
+	GetScoreSettings(ctx context.Context) (entity.ScoringSetting, error)
+	GetScoringText(ctx context.Context) (entity.ScoringText, error)
+	GetScoringBonuses(ctx context.Context) (entity.ScoringBonuse, error)
+	GetScoringCall(ctx context.Context) (entity.ScoringCall, error)
+	GetScoringVoice(ctx context.Context) (entity.ScoringVoice, error)
+	GetUserConversationScore(ctx context.Context, userID, convoID string) (int, error)
+	GetOtherParticipantConversationScore(ctx context.Context, userID, convoID string) (int, error)
+	SetConversationToRevealed(ctx context.Context, tx *sql.Tx, conversationID string) error
 }
 
 type repository struct {
@@ -42,7 +53,151 @@ var (
 	ErrNonExistentMatch           = errors.New("match does not exist")
 	ErrMatchNotActive             = errors.New("match is not active")
 	ErrNotConversationParticipant = errors.New("user is not a participant in the conversation")
+	ErrClientMsgIDNotUnique       = errors.New("client message ID is not unique")
 )
+
+func (r *repository) SetConversationToRevealed(ctx context.Context, tx *sql.Tx, conversationID string) error {
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
+	convo, err := entity.Conversations(
+		entity.ConversationWhere.ID.EQ(conversationID),
+		entity.ConversationWhere.VisibilityState.EQ(constants.VisibilityStateHidden),
+		qm.For("UPDATE"),
+	).One(ctx, exec)
+	if err != nil {
+		return fmt.Errorf("get conversation: %w", err)
+	}
+
+	convo.RevealAt = null.TimeFrom(time.Now().UTC())
+	convo.VisibilityState = constants.VisibilityStateVisible
+
+	_, err = convo.Update(ctx, exec, boil.Whitelist(
+		entity.ConversationColumns.RevealAt,
+		entity.ConversationColumns.VisibilityState,
+	))
+	if err != nil {
+		return fmt.Errorf("update conversation: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) GetOtherParticipantConversationScore(ctx context.Context, userID, convoID string) (int, error) {
+	convoParticipants, err := entity.ConversationParticipants(
+		entity.ConversationParticipantWhere.UserID.NEQ(userID),
+		entity.ConversationParticipantWhere.ConversationID.EQ(convoID),
+	).One(ctx, r.db)
+	if err != nil {
+		return 0, err
+	}
+
+	return convoParticipants.Score, nil
+}
+
+func (r *repository) GetUserConversationScore(ctx context.Context, userID, convoID string) (int, error) {
+	convoParticipants, err := entity.ConversationParticipants(
+		entity.ConversationParticipantWhere.UserID.EQ(userID),
+		entity.ConversationParticipantWhere.ConversationID.EQ(convoID),
+	).One(ctx, r.db)
+	if err != nil {
+		return 0, err
+	}
+
+	return convoParticipants.Score, nil
+}
+
+func (r *repository) GetScoringVoice(ctx context.Context) (entity.ScoringVoice, error) {
+	setting, err := entity.ScoringVoices(
+		entity.ScoringVoiceWhere.ID.EQ(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return entity.ScoringVoice{}, err
+	}
+
+	return *setting, nil
+}
+
+func (r *repository) GetScoringCall(ctx context.Context) (entity.ScoringCall, error) {
+	setting, err := entity.ScoringCalls(
+		entity.ScoringCallWhere.ID.EQ(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return entity.ScoringCall{}, err
+	}
+
+	return *setting, nil
+}
+
+func (r *repository) GetScoringBonuses(ctx context.Context) (entity.ScoringBonuse, error) {
+	setting, err := entity.ScoringBonuses(
+		entity.ScoringBonuseWhere.ID.EQ(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return entity.ScoringBonuse{}, err
+	}
+
+	return *setting, nil
+}
+
+func (r *repository) GetScoringText(ctx context.Context) (entity.ScoringText, error) {
+	setting, err := entity.ScoringTexts(
+		entity.ScoringTextWhere.ID.EQ(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return entity.ScoringText{}, err
+	}
+
+	return *setting, nil
+}
+
+func (r *repository) GetScoreSettings(ctx context.Context) (entity.ScoringSetting, error) {
+	setting, err := entity.ScoringSettings(
+		entity.ScoringSettingWhere.ID.EQ(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return entity.ScoringSetting{}, err
+	}
+
+	return *setting, nil
+}
+
+func (r *repository) UpdateUserConversationScore(ctx context.Context, tx *sql.Tx, conversationID, userID string, earned int) error {
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
+	convoParticipant, err := entity.ConversationParticipants(
+		entity.ConversationParticipantWhere.ConversationID.EQ(conversationID),
+		entity.ConversationParticipantWhere.UserID.EQ(userID),
+		qm.For("UPDATE"),
+	).One(ctx, exec)
+	if err != nil {
+		return fmt.Errorf("get conversation participant: %w", err)
+	}
+
+	convoParticipant.Score += earned
+	convoParticipant.ScoreLifetime += earned
+	convoParticipant.LastContribAt = null.TimeFrom(time.Now().UTC())
+
+	_, err = convoParticipant.Update(ctx, exec, boil.Whitelist(
+		entity.ConversationParticipantColumns.Score,
+		entity.ConversationParticipantColumns.ScoreLifetime,
+		entity.ConversationParticipantColumns.LastContribAt,
+	))
+	if err != nil {
+		return fmt.Errorf("update conversation participant: %w", err)
+	}
+
+	return nil
+}
 
 func (r *repository) IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
 	isParticipant, err := entity.Conversations(
@@ -138,6 +293,15 @@ func (r *repository) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entit
 	// 3. Insert message in message table and get messageID,
 	err = msg.Insert(ctx, tx, boil.Infer())
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			switch pqErr.Constraint {
+			case "ux_messages_sender_clientmsg":
+				return nil, ErrClientMsgIDNotUnique
+			default:
+				return nil, fmt.Errorf("failed to insert message: %w", err)
+			}
+		}
 		return nil, fmt.Errorf("failed to insert message: %w", err)
 	}
 
@@ -246,6 +410,26 @@ func (r *repository) CreateConversation(ctx context.Context, userA, userB string
 	err = c.Insert(ctx, exec, boil.Infer())
 	if err != nil {
 		return nil, fmt.Errorf("insert conversation failed: %w", err)
+	}
+
+	cpA := &entity.ConversationParticipant{
+		ConversationID: c.ID,
+		UserID:         userA,
+	}
+
+	err = cpA.Insert(ctx, exec, boil.Infer())
+	if err != nil {
+		return nil, fmt.Errorf("insert conversation participant failed userA=%s convoID%s: %w", userA, c.ID, err)
+	}
+
+	cpB := &entity.ConversationParticipant{
+		ConversationID: c.ID,
+		UserID:         userB,
+	}
+
+	err = cpB.Insert(ctx, exec, boil.Infer())
+	if err != nil {
+		return nil, fmt.Errorf("insert conversation participant failed  userB=%s convoID%s: %w", userB, c.ID, err)
 	}
 
 	return c, nil

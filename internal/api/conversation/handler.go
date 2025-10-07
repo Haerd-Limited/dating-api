@@ -159,6 +159,8 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, convostorage.ErrClientMsgIDNotUnique):
+		return http.StatusBadRequest, "Client message ID must be unique. Please generate a new one"
 	case errors.Is(err, convostorage.ErrNotConversationParticipant):
 		return http.StatusForbidden, "You are not allowed to access this conversation"
 	case errors.Is(err, convostorage.ErrNonExistentConversation):

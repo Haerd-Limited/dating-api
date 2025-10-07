@@ -13,10 +13,13 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
+	domain2 "github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
 type Service interface {
@@ -36,6 +39,7 @@ type service struct {
 	flake            interface{ Next() int64 }
 	hub              realtime.Broadcaster
 	interactionRepo  storage3.InteractionRepository
+	scoreService     score.Service
 }
 
 func NewConversationService(
@@ -45,6 +49,7 @@ func NewConversationService(
 	flake interface{ Next() int64 },
 	hub realtime.Broadcaster,
 	interactionRepo storage3.InteractionRepository,
+	scoreService score.Service,
 ) Service {
 	return &service{
 		logger:           logger,
@@ -53,6 +58,7 @@ func NewConversationService(
 		flake:            flake,
 		hub:              hub,
 		interactionRepo:  interactionRepo,
+		scoreService:     scoreService,
 	}
 }
 
@@ -336,11 +342,15 @@ func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.M
 	if err != nil {
 		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
-
-	if msg.Type != domain.MessageTypeSystem {
-		s.sendMessageToConversation(result)
-	}
 	// todo: update score realtime
+
+	result.ResultingScoreSnapShot, err = s.ApplyScore(ctx, nil, result)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("apply score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+	}
+
+	s.sendMessageToConversation(result)
+	// todo: broadcast score update
 
 	return result, nil
 }
@@ -360,12 +370,62 @@ func (s *service) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.M
 		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
 
+	result.ResultingScoreSnapShot, err = s.ApplyScore(ctx, tx, result)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("apply score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+	}
+
 	s.sendMessageToConversation(result)
 
 	return result, nil
 }
 
+func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.ScoreSnapshot, error) {
+	var result domain.ScoreSnapshot
+
+	switch msg.Type {
+	case domain.MessageTypeText:
+		var snap domain2.ScoreSnapshot
+
+		var err error
+		if tx == nil {
+			snap, err = s.scoreService.Apply(ctx, msg.ConversationID, msg.SenderID, domain2.Contribution{
+				Type:    domain2.ContribText,
+				TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
+			})
+			if err != nil {
+				return domain.ScoreSnapshot{}, fmt.Errorf("apply score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+			}
+		} else {
+			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, domain2.Contribution{
+				Type:    domain2.ContribText,
+				TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
+			})
+			if err != nil {
+				return domain.ScoreSnapshot{}, fmt.Errorf("apply score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+			}
+		}
+
+		result = domain.ScoreSnapshot{
+			Threshold: snap.Threshold,
+			Me:        snap.Me,
+			Them:      snap.Them,
+			Revealed:  snap.Revealed,
+		}
+	case domain.MessageTypeSystem:
+		// no scoring
+	default:
+		return domain.ScoreSnapshot{}, fmt.Errorf("unsupported message type userID=%s convoID=%s: %s",
+			msg.SenderID, msg.ConversationID, msg.Type)
+	}
+
+	return result, nil
+}
+
 func (s *service) sendMessageToConversation(msg domain.Message) {
+	if msg.Type == domain.MessageTypeSystem {
+		return
+	}
 	// Build server event (use your DTO for payload)
 	evt := dto.ServerMsg{
 		Type:           "message.new",

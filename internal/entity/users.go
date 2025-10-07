@@ -101,65 +101,68 @@ var UserWhere = struct {
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-	UserPreference          string
-	UserProfile             string
-	UserTheme               string
-	UserAConversations      string
-	UserBConversations      string
-	DeviceTokens            string
-	UserAMatches            string
-	UserBMatches            string
-	MessageReceipts         string
-	SenderMessages          string
-	Photos                  string
-	RefreshTokens           string
-	ActorSwipes             string
-	TargetSwipes            string
-	Interests               string
-	Languages               string
-	UserProfileVisibilities string
-	VoicePrompts            string
+	UserPreference           string
+	UserProfile              string
+	UserTheme                string
+	ConversationParticipants string
+	UserAConversations       string
+	UserBConversations       string
+	DeviceTokens             string
+	UserAMatches             string
+	UserBMatches             string
+	MessageReceipts          string
+	SenderMessages           string
+	Photos                   string
+	RefreshTokens            string
+	ActorSwipes              string
+	TargetSwipes             string
+	Interests                string
+	Languages                string
+	UserProfileVisibilities  string
+	VoicePrompts             string
 }{
-	UserPreference:          "UserPreference",
-	UserProfile:             "UserProfile",
-	UserTheme:               "UserTheme",
-	UserAConversations:      "UserAConversations",
-	UserBConversations:      "UserBConversations",
-	DeviceTokens:            "DeviceTokens",
-	UserAMatches:            "UserAMatches",
-	UserBMatches:            "UserBMatches",
-	MessageReceipts:         "MessageReceipts",
-	SenderMessages:          "SenderMessages",
-	Photos:                  "Photos",
-	RefreshTokens:           "RefreshTokens",
-	ActorSwipes:             "ActorSwipes",
-	TargetSwipes:            "TargetSwipes",
-	Interests:               "Interests",
-	Languages:               "Languages",
-	UserProfileVisibilities: "UserProfileVisibilities",
-	VoicePrompts:            "VoicePrompts",
+	UserPreference:           "UserPreference",
+	UserProfile:              "UserProfile",
+	UserTheme:                "UserTheme",
+	ConversationParticipants: "ConversationParticipants",
+	UserAConversations:       "UserAConversations",
+	UserBConversations:       "UserBConversations",
+	DeviceTokens:             "DeviceTokens",
+	UserAMatches:             "UserAMatches",
+	UserBMatches:             "UserBMatches",
+	MessageReceipts:          "MessageReceipts",
+	SenderMessages:           "SenderMessages",
+	Photos:                   "Photos",
+	RefreshTokens:            "RefreshTokens",
+	ActorSwipes:              "ActorSwipes",
+	TargetSwipes:             "TargetSwipes",
+	Interests:                "Interests",
+	Languages:                "Languages",
+	UserProfileVisibilities:  "UserProfileVisibilities",
+	VoicePrompts:             "VoicePrompts",
 }
 
 // userR is where relationships are stored.
 type userR struct {
-	UserPreference          *UserPreference            `boil:"UserPreference" json:"UserPreference" toml:"UserPreference" yaml:"UserPreference"`
-	UserProfile             *UserProfile               `boil:"UserProfile" json:"UserProfile" toml:"UserProfile" yaml:"UserProfile"`
-	UserTheme               *UserTheme                 `boil:"UserTheme" json:"UserTheme" toml:"UserTheme" yaml:"UserTheme"`
-	UserAConversations      ConversationSlice          `boil:"UserAConversations" json:"UserAConversations" toml:"UserAConversations" yaml:"UserAConversations"`
-	UserBConversations      ConversationSlice          `boil:"UserBConversations" json:"UserBConversations" toml:"UserBConversations" yaml:"UserBConversations"`
-	DeviceTokens            DeviceTokenSlice           `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
-	UserAMatches            MatchSlice                 `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
-	UserBMatches            MatchSlice                 `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
-	MessageReceipts         MessageReceiptSlice        `boil:"MessageReceipts" json:"MessageReceipts" toml:"MessageReceipts" yaml:"MessageReceipts"`
-	SenderMessages          MessageSlice               `boil:"SenderMessages" json:"SenderMessages" toml:"SenderMessages" yaml:"SenderMessages"`
-	Photos                  PhotoSlice                 `boil:"Photos" json:"Photos" toml:"Photos" yaml:"Photos"`
-	RefreshTokens           RefreshTokenSlice          `boil:"RefreshTokens" json:"RefreshTokens" toml:"RefreshTokens" yaml:"RefreshTokens"`
-	ActorSwipes             SwipeSlice                 `boil:"ActorSwipes" json:"ActorSwipes" toml:"ActorSwipes" yaml:"ActorSwipes"`
-	TargetSwipes            SwipeSlice                 `boil:"TargetSwipes" json:"TargetSwipes" toml:"TargetSwipes" yaml:"TargetSwipes"`
-	Interests               InterestSlice              `boil:"Interests" json:"Interests" toml:"Interests" yaml:"Interests"`
-	Languages               LanguageSlice              `boil:"Languages" json:"Languages" toml:"Languages" yaml:"Languages"`
-	UserProfileVisibilities UserProfileVisibilitySlice `boil:"UserProfileVisibilities" json:"UserProfileVisibilities" toml:"UserProfileVisibilities" yaml:"UserProfileVisibilities"`
-	VoicePrompts            VoicePromptSlice           `boil:"VoicePrompts" json:"VoicePrompts" toml:"VoicePrompts" yaml:"VoicePrompts"`
+	UserPreference           *UserPreference              `boil:"UserPreference" json:"UserPreference" toml:"UserPreference" yaml:"UserPreference"`
+	UserProfile              *UserProfile                 `boil:"UserProfile" json:"UserProfile" toml:"UserProfile" yaml:"UserProfile"`
+	UserTheme                *UserTheme                   `boil:"UserTheme" json:"UserTheme" toml:"UserTheme" yaml:"UserTheme"`
+	ConversationParticipants ConversationParticipantSlice `boil:"ConversationParticipants" json:"ConversationParticipants" toml:"ConversationParticipants" yaml:"ConversationParticipants"`
+	UserAConversations       ConversationSlice            `boil:"UserAConversations" json:"UserAConversations" toml:"UserAConversations" yaml:"UserAConversations"`
+	UserBConversations       ConversationSlice            `boil:"UserBConversations" json:"UserBConversations" toml:"UserBConversations" yaml:"UserBConversations"`
+	DeviceTokens             DeviceTokenSlice             `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
+	UserAMatches             MatchSlice                   `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
+	UserBMatches             MatchSlice                   `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
+	MessageReceipts          MessageReceiptSlice          `boil:"MessageReceipts" json:"MessageReceipts" toml:"MessageReceipts" yaml:"MessageReceipts"`
+	SenderMessages           MessageSlice                 `boil:"SenderMessages" json:"SenderMessages" toml:"SenderMessages" yaml:"SenderMessages"`
+	Photos                   PhotoSlice                   `boil:"Photos" json:"Photos" toml:"Photos" yaml:"Photos"`
+	RefreshTokens            RefreshTokenSlice            `boil:"RefreshTokens" json:"RefreshTokens" toml:"RefreshTokens" yaml:"RefreshTokens"`
+	ActorSwipes              SwipeSlice                   `boil:"ActorSwipes" json:"ActorSwipes" toml:"ActorSwipes" yaml:"ActorSwipes"`
+	TargetSwipes             SwipeSlice                   `boil:"TargetSwipes" json:"TargetSwipes" toml:"TargetSwipes" yaml:"TargetSwipes"`
+	Interests                InterestSlice                `boil:"Interests" json:"Interests" toml:"Interests" yaml:"Interests"`
+	Languages                LanguageSlice                `boil:"Languages" json:"Languages" toml:"Languages" yaml:"Languages"`
+	UserProfileVisibilities  UserProfileVisibilitySlice   `boil:"UserProfileVisibilities" json:"UserProfileVisibilities" toml:"UserProfileVisibilities" yaml:"UserProfileVisibilities"`
+	VoicePrompts             VoicePromptSlice             `boil:"VoicePrompts" json:"VoicePrompts" toml:"VoicePrompts" yaml:"VoicePrompts"`
 }
 
 // NewStruct creates a new relationship struct
@@ -213,6 +216,22 @@ func (r *userR) GetUserTheme() *UserTheme {
 	}
 
 	return r.UserTheme
+}
+
+func (o *User) GetConversationParticipants() ConversationParticipantSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetConversationParticipants()
+}
+
+func (r *userR) GetConversationParticipants() ConversationParticipantSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.ConversationParticipants
 }
 
 func (o *User) GetUserAConversations() ConversationSlice {
@@ -804,6 +823,20 @@ func (o *User) UserTheme(mods ...qm.QueryMod) userThemeQuery {
 	return UserThemes(queryMods...)
 }
 
+// ConversationParticipants retrieves all the conversation_participant's ConversationParticipants with an executor.
+func (o *User) ConversationParticipants(mods ...qm.QueryMod) conversationParticipantQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"conversation_participants\".\"user_id\"=?", o.ID),
+	)
+
+	return ConversationParticipants(queryMods...)
+}
+
 // UserAConversations retrieves all the conversation's Conversations with an executor via user_a column.
 func (o *User) UserAConversations(mods ...qm.QueryMod) conversationQuery {
 	var queryMods []qm.QueryMod
@@ -1357,6 +1390,119 @@ func (userL) LoadUserTheme(ctx context.Context, e boil.ContextExecutor, singular
 				local.R.UserTheme = foreign
 				if foreign.R == nil {
 					foreign.R = &userThemeR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadConversationParticipants allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadConversationParticipants(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`conversation_participants`),
+		qm.WhereIn(`conversation_participants.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load conversation_participants")
+	}
+
+	var resultSlice []*ConversationParticipant
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice conversation_participants")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on conversation_participants")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for conversation_participants")
+	}
+
+	if len(conversationParticipantAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.ConversationParticipants = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &conversationParticipantR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.ConversationParticipants = append(local.R.ConversationParticipants, foreign)
+				if foreign.R == nil {
+					foreign.R = &conversationParticipantR{}
 				}
 				foreign.R.User = local
 				break
@@ -3242,6 +3388,59 @@ func (o *User) SetUserTheme(ctx context.Context, exec boil.ContextExecutor, inse
 		}
 	} else {
 		related.R.User = o
+	}
+	return nil
+}
+
+// AddConversationParticipants adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.ConversationParticipants.
+// Sets related.R.User appropriately.
+func (o *User) AddConversationParticipants(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*ConversationParticipant) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"conversation_participants\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, conversationParticipantPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ConversationID, rel.UserID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			ConversationParticipants: related,
+		}
+	} else {
+		o.R.ConversationParticipants = append(o.R.ConversationParticipants, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &conversationParticipantR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
 	}
 	return nil
 }

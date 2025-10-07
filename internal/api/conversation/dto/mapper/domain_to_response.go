@@ -49,6 +49,12 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 		ClientMsgID:    msg.ClientMsgID,
 		IsFirstMessage: msg.IsFirstMessage,
 		LikedPrompt:    likedVoicePrompt,
+		ResultingScoreSnapShot: dto.ScoreSnapshot{
+			Threshold: msg.ResultingScoreSnapShot.Threshold,
+			Me:        msg.ResultingScoreSnapShot.Me,
+			Them:      msg.ResultingScoreSnapShot.Them,
+			Revealed:  msg.ResultingScoreSnapShot.Revealed,
+		},
 	}
 }
 

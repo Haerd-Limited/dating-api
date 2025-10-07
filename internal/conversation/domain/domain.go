@@ -31,17 +31,25 @@ type MatchedUser struct {
 }
 
 type Message struct {
-	ID             int64
-	ConversationID string
-	SenderID       string
-	Type           MessageType
-	TextBody       *string
-	MediaKey       *string
-	MediaSeconds   *float64
-	CreatedAt      time.Time
-	ClientMsgID    string
-	IsFirstMessage bool
-	LikedPrompt    *VoicePrompt // populated if IsFirstMessage is true
+	ID                     int64
+	ConversationID         string
+	SenderID               string
+	Type                   MessageType
+	TextBody               *string
+	MediaKey               *string
+	MediaSeconds           *float64
+	CreatedAt              time.Time
+	ClientMsgID            string
+	IsFirstMessage         bool
+	LikedPrompt            *VoicePrompt // populated if IsFirstMessage is true
+	ResultingScoreSnapShot ScoreSnapshot
+}
+
+type ScoreSnapshot struct {
+	Threshold int
+	Me        int
+	Them      int
+	Revealed  bool
 }
 
 type VoicePrompt struct {

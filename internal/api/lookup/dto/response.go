@@ -5,7 +5,7 @@ type GetPromptsResponse struct {
 }
 
 type GetFamilyStatusResponse struct {
-	FamilyStatus []FamilyStatus `json:"family_status`
+	FamilyStatus []FamilyStatus `json:"family_status"`
 }
 
 type FamilyStatus struct {

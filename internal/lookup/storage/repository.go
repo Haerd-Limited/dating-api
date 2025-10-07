@@ -49,6 +49,7 @@ func (lr *lookupRepository) GetFamilyStatus(ctx context.Context) (entity.FamilyS
 	if err != nil {
 		return nil, err
 	}
+
 	return familyStatus, nil
 }
 

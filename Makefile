@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  add_prompt_id_to_swipes_table sql
+	@cd ./migrations && goose create  backfill_conversation_participants sql
 .PHONY: migrate-create
 
 
