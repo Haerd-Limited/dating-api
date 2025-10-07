@@ -342,7 +342,6 @@ func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.M
 	if err != nil {
 		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
 	}
-	// todo: update score realtime
 
 	result.ResultingScoreSnapShot, err = s.ApplyScore(ctx, nil, result)
 	if err != nil {
