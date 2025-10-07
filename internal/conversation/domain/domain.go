@@ -22,6 +22,7 @@ type Conversation struct {
 	LastActivityAt time.Time
 	LastMessage    *Message
 	UnreadCount    int
+	Score          ScoreSnapshot
 }
 
 type MatchedUser struct {

@@ -14,7 +14,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
-	domain2 "github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
+	scoredomain "github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
@@ -223,6 +223,14 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 			}
 		}
 
+		var snapShot scoredomain.ScoreSnapshot
+		snapShot, err = s.scoreService.GetSnapshot(ctx, conversation.ID, userID)
+		if err != nil {
+			return nil, fmt.Errorf("get score snapshot userID=%s convoID=%s: %w", userID, conversation.ID, err)
+		}
+		temp := mapper.MapScoreDomainSnapShotToConversationDomain(snapShot)
+		conversation.Score = *temp
+
 		conversations = append(conversations, *conversation)
 	}
 
@@ -394,20 +402,20 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 
 	switch msg.Type {
 	case domain.MessageTypeText:
-		var snap domain2.ScoreSnapshot
+		var snap scoredomain.ScoreSnapshot
 
 		var err error
 		if tx == nil {
-			snap, err = s.scoreService.Apply(ctx, msg.ConversationID, msg.SenderID, domain2.Contribution{
-				Type:    domain2.ContribText,
+			snap, err = s.scoreService.Apply(ctx, msg.ConversationID, msg.SenderID, scoredomain.Contribution{
+				Type:    scoredomain.ContribText,
 				TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
 			})
 			if err != nil {
 				return nil, fmt.Errorf("apply score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
 			}
 		} else {
-			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, domain2.Contribution{
-				Type:    domain2.ContribText,
+			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, scoredomain.Contribution{
+				Type:    scoredomain.ContribText,
 				TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
 			})
 			if err != nil {
@@ -415,14 +423,7 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 			}
 		}
 
-		result = &domain.ScoreSnapshot{
-			Threshold: snap.Threshold,
-			Me:        snap.Me,
-			Them:      snap.Them,
-			Revealed:  snap.Revealed,
-			Shared:    snap.Shared,
-			CanReveal: snap.CanReveal,
-		}
+		result = mapper.MapScoreDomainSnapShotToConversationDomain(snap)
 	case domain.MessageTypeSystem:
 		// no scoring
 	default:

@@ -115,5 +115,13 @@ func MapConversationToDto(convo domain.Conversation) dto.Conversation {
 		LastActivityAt: convo.LastActivityAt,
 		LastMessage:    message,
 		UnreadCount:    convo.UnreadCount,
+		Score: dto.ScoreSnapshot{
+			Threshold: convo.Score.Threshold,
+			Me:        convo.Score.Me,
+			Them:      convo.Score.Them,
+			Revealed:  convo.Score.Revealed,
+			CanReveal: convo.Score.CanReveal,
+			Shared:    convo.Score.Shared,
+		},
 	}
 }
