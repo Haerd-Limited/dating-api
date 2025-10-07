@@ -138,7 +138,7 @@ func (h *handler) SendMessage() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.MapMessageToDto(&msg)) // todo: update to response
+		render.Json(w, http.StatusOK, mapper.MapToSendMessageResponse(&msg)) // todo: update to response
 	}
 }
 

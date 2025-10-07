@@ -6,6 +6,10 @@ type GetConversationMessagesResponse struct {
 	Messages []Message `json:"messages"`
 }
 
+type SendMessageResponse struct {
+	Messages Message `json:"message"`
+}
+
 type GetConversationsResponse struct {
 	Conversations []Conversation `json:"conversations"`
 }

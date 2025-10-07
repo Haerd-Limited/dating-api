@@ -22,6 +22,14 @@ func MapToGetConversationMessagesResponse(domainMessages []domain.Message) dto.G
 	}
 }
 
+func MapToSendMessageResponse(domainMessage *domain.Message) dto.SendMessageResponse {
+	if domainMessage == nil {
+		return dto.SendMessageResponse{}
+	}
+	return dto.SendMessageResponse{
+		Messages: MapMessageToDto(domainMessage),
+	}
+}
 func MapMessageToDto(msg *domain.Message) dto.Message {
 	if msg == nil {
 		return dto.Message{}
