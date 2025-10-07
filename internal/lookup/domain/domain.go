@@ -7,6 +7,11 @@ type Prompt struct {
 	Category string
 }
 
+type FamilyPlan struct {
+	ID    int16
+	Label string
+}
+
 type Language struct {
 	ID    int16
 	Label string

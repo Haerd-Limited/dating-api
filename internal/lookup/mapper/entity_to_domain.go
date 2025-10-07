@@ -5,6 +5,23 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/lookup/domain"
 )
 
+func MapFamilyPlanEntitiesToDomain(g []*entity.FamilyPlan) []domain.FamilyPlan {
+	if g == nil {
+		return nil
+	}
+
+	var result []domain.FamilyPlan
+
+	for _, e := range g {
+		result = append(result, domain.FamilyPlan{
+			ID:    e.ID,
+			Label: e.Label,
+		})
+	}
+
+	return result
+}
+
 func MapPromptsToDomain(g []*entity.PromptType) []domain.Prompt {
 	if g == nil {
 		return nil

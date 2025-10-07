@@ -3,6 +3,16 @@ package dto
 type GetPromptsResponse struct {
 	Prompts []Prompt `json:"prompts"`
 }
+
+type GetFamilyPlansResponse struct {
+	FamilyPlans []FamilyPlan `json:"family_plans"`
+}
+
+type FamilyPlan struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
 type Prompt struct {
 	ID       int16  `json:"id"`
 	Key      string `json:"key"`

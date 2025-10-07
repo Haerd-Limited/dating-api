@@ -12,6 +12,7 @@ import (
 
 type Service interface {
 	GetPrompts(ctx context.Context) ([]domain.Prompt, error)
+	GetFamilyPlans(ctx context.Context) ([]domain.FamilyPlan, error)
 	GetLanguages(ctx context.Context) ([]domain.Language, error)
 	GetReligions(ctx context.Context) ([]domain.Religion, error)
 	GetPoliticalBeliefs(ctx context.Context) ([]domain.PoliticalBelief, error)
@@ -35,6 +36,15 @@ func NewLookupService(
 		logger:     logger,
 		lookupRepo: lookupRepo,
 	}
+}
+
+func (s *lookupService) GetFamilyPlans(ctx context.Context) ([]domain.FamilyPlan, error) {
+	familyPlanEntities, err := s.lookupRepo.GetFamilyPlans(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapFamilyPlanEntitiesToDomain(familyPlanEntities), nil
 }
 
 func (s *lookupService) GetPrompts(ctx context.Context) ([]domain.Prompt, error) {

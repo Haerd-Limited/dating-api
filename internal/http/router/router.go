@@ -87,6 +87,7 @@ func New(
 					r.Get("/habits", lookupHandler.GetHabits())
 					r.Get("/dating-intentions", lookupHandler.GetDatingIntentions())
 					r.Get("/education-levels", lookupHandler.GetEducationLevels())
+					r.Get("/family-plans", lookupHandler.GetFamilyPlans())
 				})
 
 				r.Route(
