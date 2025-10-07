@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -168,27 +169,22 @@ func (h *handler) Refresh() http.HandlerFunc {
 
 		result, err := h.authService.RefreshToken(ctx, mapper.MapRefreshRequestToDomain(req))
 		if err != nil {
-			switch { // todo: refactor this as it's repeated in all handlers
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // don't write a response
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error refreshing tokens", "error", err)
-				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, code, mapper.ToAuthResponse(
-					nil,
-					msg,
-				))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Refresh", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToAuthResponse(result, "Tokens refreshed successfully"))
 	}
+}
+
+func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
+	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
+		return
+	}
+
+	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err)
+	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func (h *handler) Logout() http.HandlerFunc {
@@ -215,22 +211,8 @@ func (h *handler) Logout() http.HandlerFunc {
 
 		err := h.authService.RevokeRefreshToken(ctx, logoutInput)
 		if err != nil {
-			switch { // todo: refactor this as it's repeated in all handlers
-			case errors.Is(err, context.Canceled):
-				h.logger.Sugar().Infow("client canceled request", "path", r.URL.Path)
-				return // don't write a response
-			case errors.Is(err, context.DeadlineExceeded):
-				render.Json(w, http.StatusGatewayTimeout, commonMappers.ToSimpleErrorResponse("request timed out"))
-				return
-			default:
-				h.logger.Sugar().Errorw("Error logging out", "error", err)
-				code, msg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-				render.Json(w, code, commonMappers.ToSimpleErrorResponse(
-					msg,
-				))
-
-				return
-			}
+			h.handleServiceErrorResponse(w, r, "Logout", err)
+			return
 		}
 
 		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Logged out successfully"))

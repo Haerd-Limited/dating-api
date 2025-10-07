@@ -20,7 +20,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 )
 
-// todo: update tests to follow Andres advice
+// update tests to follow Andres advice
 
 func TestRefreshHandler(t *testing.T) {
 	ctrl := gomock.NewController(t)
