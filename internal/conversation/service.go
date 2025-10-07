@@ -242,7 +242,6 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 			}
 		}
 	}
-	// todo: implement score/points system
 
 	return conversations, nil
 }
@@ -291,9 +290,7 @@ func (s *service) GetConversationByUserIds(ctx context.Context, userID, matchID 
 		},
 		CreatedAt:      conversationEntity.CreatedAt,
 		LastActivityAt: conversationEntity.LastActivityAt,
-		// todo: populate last message or default to new convo if no messages.
-		LastMessage: lastMessage,
-		UnreadCount: 0, // todo: figure out what this means
+		LastMessage:    lastMessage,
 	}, nil
 }
 

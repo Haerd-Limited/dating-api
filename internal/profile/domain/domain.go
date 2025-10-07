@@ -140,7 +140,7 @@ type ProfileVoicePrompt struct {
 	IsPrimary      bool
 	Position       int16
 	DurationMs     int
-	PromptCoverURL string // TODO: HAVE frontend provide this for BE to store
+	PromptCoverURL string
 }
 type VoicePromptUpdate struct {
 	URL            string
