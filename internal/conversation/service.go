@@ -424,6 +424,9 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 		}
 
 		result = mapper.MapScoreDomainSnapShotToConversationDomain(snap)
+
+		//todo: implement voicenote scoring
+		//todo: implement calls scoring
 	case domain.MessageTypeSystem:
 		// no scoring
 	default:
