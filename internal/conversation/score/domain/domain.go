@@ -25,7 +25,9 @@ type ScoreSnapshot struct {
 	Threshold int
 	Me        int
 	Them      int
-	Revealed  bool
+	Shared    int  // min(Me, Them)
+	CanReveal bool // Shared >= Threshold
+	Revealed  bool // actual state (only true after handshake)
 }
 
 // pseudo: load latest config once per minute

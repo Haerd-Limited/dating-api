@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/lib/pq"
 	"time"
 
 	"github.com/aarondl/null/v8"
@@ -12,6 +11,7 @@ import (
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/friendsofgo/errors"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
@@ -302,6 +302,7 @@ func (r *repository) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entit
 				return nil, fmt.Errorf("failed to insert message: %w", err)
 			}
 		}
+
 		return nil, fmt.Errorf("failed to insert message: %w", err)
 	}
 

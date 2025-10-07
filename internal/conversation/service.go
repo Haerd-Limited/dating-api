@@ -379,8 +379,8 @@ func (s *service) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.M
 	return result, nil
 }
 
-func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.ScoreSnapshot, error) {
-	var result domain.ScoreSnapshot
+func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message) (*domain.ScoreSnapshot, error) {
+	var result *domain.ScoreSnapshot
 
 	switch msg.Type {
 	case domain.MessageTypeText:
@@ -393,7 +393,7 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 				TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
 			})
 			if err != nil {
-				return domain.ScoreSnapshot{}, fmt.Errorf("apply score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+				return nil, fmt.Errorf("apply score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
 			}
 		} else {
 			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, domain2.Contribution{
@@ -401,11 +401,11 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 				TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
 			})
 			if err != nil {
-				return domain.ScoreSnapshot{}, fmt.Errorf("apply score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+				return nil, fmt.Errorf("apply score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
 			}
 		}
 
-		result = domain.ScoreSnapshot{
+		result = &domain.ScoreSnapshot{
 			Threshold: snap.Threshold,
 			Me:        snap.Me,
 			Them:      snap.Them,
@@ -414,7 +414,7 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 	case domain.MessageTypeSystem:
 		// no scoring
 	default:
-		return domain.ScoreSnapshot{}, fmt.Errorf("unsupported message type userID=%s convoID=%s: %s",
+		return nil, fmt.Errorf("unsupported message type userID=%s convoID=%s: %s",
 			msg.SenderID, msg.ConversationID, msg.Type)
 	}
 

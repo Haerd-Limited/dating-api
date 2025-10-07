@@ -42,7 +42,7 @@ type Message struct {
 	ClientMsgID            string
 	IsFirstMessage         bool
 	LikedPrompt            *VoicePrompt // populated if IsFirstMessage is true
-	ResultingScoreSnapShot ScoreSnapshot
+	ResultingScoreSnapShot *ScoreSnapshot
 }
 
 type ScoreSnapshot struct {
@@ -50,6 +50,8 @@ type ScoreSnapshot struct {
 	Me        int
 	Them      int
 	Revealed  bool
+	Shared    int  // min(Me, Them)
+	CanReveal bool // Shared >= Threshold
 }
 
 type VoicePrompt struct {

@@ -36,25 +36,31 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 			VoiceNoteURL:  msg.LikedPrompt.VoiceNoteURL,
 		}
 	}
-
-	return dto.Message{
-		ID:             msg.ID,
-		ConversationID: msg.ConversationID,
-		SenderID:       msg.SenderID,
-		Type:           string(msg.Type),
-		TextBody:       msg.TextBody,
-		MediaKey:       msg.MediaKey,
-		MediaSeconds:   msg.MediaSeconds,
-		CreatedAt:      msg.CreatedAt,
-		ClientMsgID:    msg.ClientMsgID,
-		IsFirstMessage: msg.IsFirstMessage,
-		LikedPrompt:    likedVoicePrompt,
-		ResultingScoreSnapShot: dto.ScoreSnapshot{
+	var snapshot *dto.ScoreSnapshot
+	if msg.ResultingScoreSnapShot != nil {
+		snapshot = &dto.ScoreSnapshot{
 			Threshold: msg.ResultingScoreSnapShot.Threshold,
 			Me:        msg.ResultingScoreSnapShot.Me,
 			Them:      msg.ResultingScoreSnapShot.Them,
 			Revealed:  msg.ResultingScoreSnapShot.Revealed,
-		},
+			CanReveal: msg.ResultingScoreSnapShot.CanReveal,
+			Shared:    msg.ResultingScoreSnapShot.Shared,
+		}
+	}
+
+	return dto.Message{
+		ID:                     msg.ID,
+		ConversationID:         msg.ConversationID,
+		SenderID:               msg.SenderID,
+		Type:                   string(msg.Type),
+		TextBody:               msg.TextBody,
+		MediaKey:               msg.MediaKey,
+		MediaSeconds:           msg.MediaSeconds,
+		CreatedAt:              msg.CreatedAt,
+		ClientMsgID:            msg.ClientMsgID,
+		IsFirstMessage:         msg.IsFirstMessage,
+		LikedPrompt:            likedVoicePrompt,
+		ResultingScoreSnapShot: snapshot,
 	}
 }
 

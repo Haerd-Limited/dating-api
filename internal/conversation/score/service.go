@@ -94,22 +94,30 @@ func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID st
 		return domain.ScoreSnapshot{}, fmt.Errorf("get other participant conversation score userID=%s convoID=%s: %w", userID, convoID, err)
 	}
 
-	revealed := false
-	if me >= cfg.Threshold && them >= cfg.Threshold {
-		// flip once
-		err = s.conversationRepo.SetConversationToRevealed(ctx, tx, convoID)
-		if err != nil {
-			return domain.ScoreSnapshot{}, fmt.Errorf("set conversation to revealed userID=%s convoID=%s: %w", userID, convoID, err)
-		}
-		revealed = true
+	shared := me
+	if them < shared {
+		shared = them
 	}
+	canReveal := shared >= cfg.Threshold
 
-	err = tx.Commit()
-	if err != nil {
+	// The reveal happens via the handshake endpoint when both confirm.
+
+	if err := tx.Commit(); err != nil {
 		return domain.ScoreSnapshot{}, fmt.Errorf("commit tx: %w", err)
 	}
 
-	return domain.ScoreSnapshot{Threshold: cfg.Threshold, Me: me, Them: them, Revealed: revealed}, nil
+	// Extend your snapshot to include shared/min & canReveal.
+	// If you can’t change the struct yet, repurpose 'Revealed' to carry 'canReveal' temporarily.
+	return domain.ScoreSnapshot{
+		Threshold: cfg.Threshold,
+		Me:        me,
+		Them:      them,
+		// Add these fields to your struct:
+		Shared:    shared,    // <-- int points (min of both)
+		CanReveal: canReveal, // <-- bool: UI shows Reveal button
+		// Keep this false; actual reveal flips later via /reveal
+		Revealed: false,
+	}, nil
 }
 
 func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Contribution) (domain.ScoreSnapshot, error) {
@@ -177,22 +185,30 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 		return domain.ScoreSnapshot{}, fmt.Errorf("get other participant conversation score userID=%s convoID=%s: %w", userID, convoID, err)
 	}
 
-	revealed := false
-	if me >= cfg.Threshold && them >= cfg.Threshold {
-		// flip once
-		err = s.conversationRepo.SetConversationToRevealed(ctx, tx.Raw(), convoID)
-		if err != nil {
-			return domain.ScoreSnapshot{}, fmt.Errorf("set conversation to revealed userID=%s convoID=%s: %w", userID, convoID, err)
-		}
-		revealed = true
+	shared := me
+	if them < shared {
+		shared = them
 	}
+	canReveal := shared >= cfg.Threshold
 
-	err = tx.Commit()
-	if err != nil {
+	// The reveal happens via the handshake endpoint when both confirm.
+
+	if err := tx.Commit(); err != nil {
 		return domain.ScoreSnapshot{}, fmt.Errorf("commit tx: %w", err)
 	}
 
-	return domain.ScoreSnapshot{Threshold: cfg.Threshold, Me: me, Them: them, Revealed: revealed}, nil
+	// Extend your snapshot to include shared/min & canReveal.
+	// If you can’t change the struct yet, repurpose 'Revealed' to carry 'canReveal' temporarily.
+	return domain.ScoreSnapshot{
+		Threshold: cfg.Threshold,
+		Me:        me,
+		Them:      them,
+		// Add these fields to your struct:
+		Shared:    shared,    // <-- int points (min of both)
+		CanReveal: canReveal, // <-- bool: UI shows Reveal button
+		// Keep this false; actual reveal flips later via /reveal
+		Revealed: false,
+	}, nil
 }
 
 func (s *service) GetSnapshot(ctx context.Context, convoID, userID string) (domain.ScoreSnapshot, error) {
