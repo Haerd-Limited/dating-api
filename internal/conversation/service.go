@@ -24,6 +24,7 @@ import (
 
 type Service interface {
 	GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error)
+	GetConversationScore(ctx context.Context, userID string, convoID string) (int, error)
 	CreateConversation(ctx context.Context, userID, matchUserID string) error
 	CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) (string, error)
 	SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error)
@@ -63,6 +64,15 @@ func NewConversationService(
 }
 
 var ErrFirstMessageMissingPromptID = errors.New("first message missing prompt id")
+
+func (s *service) GetConversationScore(ctx context.Context, userID string, convoID string) (int, error) {
+	_, _, shared, err := s.scoreService.GetScores(ctx, convoID, userID)
+	if err != nil {
+		return 0, fmt.Errorf("get scores userID= %s convoID= %s: %w", userID, convoID, err)
+	}
+
+	return shared, nil
+}
 
 func (s *service) IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
 	return s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)

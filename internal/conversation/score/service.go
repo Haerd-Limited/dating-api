@@ -4,18 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
+
+	"go.uber.org/zap"
+
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
-	"go.uber.org/zap"
-	"math"
 )
 
 type Service interface {
 	Apply(ctx context.Context, conversationID, userID string, c domain.Contribution) (domain.ScoreSnapshot, error)
 	GetSnapshot(ctx context.Context, conversationID, userID string) (domain.ScoreSnapshot, error)
 	ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID string, c domain.Contribution) (domain.ScoreSnapshot, error)
+	GetScores(ctx context.Context, convoID, userID string) (me int, them int, shared int, err error)
 }
 
 type service struct {
@@ -44,12 +47,14 @@ func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID st
 
 	// 1) compute raw points
 	var pts float64
+
 	switch c.Type {
 	case domain.ContribText:
 		p := cfg.TextBase + cfg.TextPerChar*float64(c.TextLen)
 		if p > cfg.TextMax {
 			p = cfg.TextMax
 		}
+
 		pts = p
 	case domain.ContribVoice:
 		if c.Seconds >= cfg.VoiceMinSec {
@@ -57,15 +62,18 @@ func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID st
 			if p > cfg.VoiceMax {
 				p = cfg.VoiceMax
 			}
+
 			pts = p
 		}
 	case domain.ContribCall:
 		if c.Seconds >= cfg.CallMinSec {
 			mins := float64(c.Seconds) / 60.0
+
 			p := cfg.CallPerMin * mins
 			if p > cfg.CallMax {
 				p = cfg.CallMax
 			}
+
 			pts = p
 		}
 	}
@@ -84,20 +92,11 @@ func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID st
 	}
 
 	// 4) read both scores
-	var me, them int
-	me, err = s.conversationRepo.GetUserConversationScore(ctx, userID, convoID)
+	me, them, shared, err := s.GetScores(ctx, convoID, userID)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get user conversation score userID=%s convoID=%s: %w", userID, convoID, err)
-	}
-	them, err = s.conversationRepo.GetOtherParticipantConversationScore(ctx, userID, convoID)
-	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get other participant conversation score userID=%s convoID=%s: %w", userID, convoID, err)
+		return domain.ScoreSnapshot{}, fmt.Errorf("get scores userID=%s convoID=%s: %w", userID, convoID, err)
 	}
 
-	shared := me
-	if them < shared {
-		shared = them
-	}
 	canReveal := shared >= cfg.Threshold
 
 	// The reveal happens via the handshake endpoint when both confirm.
@@ -127,6 +126,7 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 	}
 
 	defer func() { _ = tx.Rollback() }()
+
 	cfg, err := s.getScoreConfig(ctx)
 	if err != nil {
 		return domain.ScoreSnapshot{}, fmt.Errorf("get score config: %w", err)
@@ -134,12 +134,14 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 
 	// 1) compute raw points
 	var pts float64
+
 	switch c.Type {
 	case domain.ContribText:
 		p := cfg.TextBase + cfg.TextPerChar*float64(c.TextLen)
 		if p > cfg.TextMax {
 			p = cfg.TextMax
 		}
+
 		pts = p
 		s.logger.Info("text contribution", zap.Any("TextPerChar", cfg.TextPerChar), zap.Any("textMAx", cfg.TextMax), zap.Any("text length", c.TextLen), zap.Float64("pts", pts))
 	case domain.ContribVoice:
@@ -148,15 +150,18 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 			if p > cfg.VoiceMax {
 				p = cfg.VoiceMax
 			}
+
 			pts = p
 		}
 	case domain.ContribCall:
 		if c.Seconds >= cfg.CallMinSec {
 			mins := float64(c.Seconds) / 60.0
+
 			p := cfg.CallPerMin * mins
 			if p > cfg.CallMax {
 				p = cfg.CallMax
 			}
+
 			pts = p
 		}
 	}
@@ -174,21 +179,12 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 		return domain.ScoreSnapshot{}, fmt.Errorf("update user conversation score userID=%s convoID=%s earned=%v: %w", userID, convoID, earned, err)
 	}
 
-	// 4) read both scores
-	var me, them int
-	me, err = s.conversationRepo.GetUserConversationScore(ctx, userID, convoID)
+	// 4) read scores
+	me, them, shared, err := s.GetScores(ctx, convoID, userID)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get user conversation score userID=%s convoID=%s: %w", userID, convoID, err)
-	}
-	them, err = s.conversationRepo.GetOtherParticipantConversationScore(ctx, userID, convoID)
-	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get other participant conversation score userID=%s convoID=%s: %w", userID, convoID, err)
+		return domain.ScoreSnapshot{}, fmt.Errorf("get scores userID=%s convoID=%s: %w", userID, convoID, err)
 	}
 
-	shared := me
-	if them < shared {
-		shared = them
-	}
 	canReveal := shared >= cfg.Threshold
 
 	// The reveal happens via the handshake endpoint when both confirm.
@@ -212,6 +208,26 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 	}, nil
 }
 
+func (s *service) GetScores(ctx context.Context, convoID, userID string) (me int, them int, shared int, err error) {
+	// 4) read both scores
+	me, err = s.conversationRepo.GetUserConversationScore(ctx, userID, convoID)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("get user conversation score: %w", err)
+	}
+
+	them, err = s.conversationRepo.GetOtherParticipantConversationScore(ctx, userID, convoID)
+	if err != nil {
+		return 0, 0, 0, fmt.Errorf("get other participant conversation score: %w", err)
+	}
+
+	shared = me
+	if them < shared {
+		shared = them
+	}
+
+	return me, them, shared, nil
+}
+
 func (s *service) GetSnapshot(ctx context.Context, convoID, userID string) (domain.ScoreSnapshot, error) {
 	cfg, err := s.getScoreConfig(ctx)
 	if err != nil {
@@ -223,22 +239,19 @@ func (s *service) GetSnapshot(ctx context.Context, convoID, userID string) (doma
 		return domain.ScoreSnapshot{}, fmt.Errorf("get conversation by ID convoID=%s: %w", convoID, err)
 	}
 
-	var me, them int
-	me, err = s.conversationRepo.GetUserConversationScore(ctx, userID, convoID)
+	me, them, shared, err := s.GetScores(ctx, convoID, userID)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get user conversation score userID=%s convoID=%s: %w", userID, convoID, err)
+		return domain.ScoreSnapshot{}, fmt.Errorf("get scores : %w", err)
 	}
-	them, err = s.conversationRepo.GetOtherParticipantConversationScore(ctx, userID, convoID)
-	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get other participant conversation score userID=%s convoID=%s: %w", userID, convoID, err)
-	}
+
+	canReveal := shared >= cfg.Threshold
 
 	var revealed bool
 	if convo.VisibilityState == constants.VisibilityStateVisible {
 		revealed = true
 	}
 
-	return domain.ScoreSnapshot{Threshold: cfg.Threshold, Me: me, Them: them, Revealed: revealed}, nil
+	return domain.ScoreSnapshot{Threshold: cfg.Threshold, Me: me, Them: them, Revealed: revealed, Shared: shared, CanReveal: canReveal}, nil
 }
 
 func (s *service) getScoreConfig(ctx context.Context) (domain.ScoreCfg, error) {
@@ -246,18 +259,22 @@ func (s *service) getScoreConfig(ctx context.Context) (domain.ScoreCfg, error) {
 	if err != nil {
 		return domain.ScoreCfg{}, fmt.Errorf("get score settings: %w", err)
 	}
+
 	text, err := s.conversationRepo.GetScoringText(ctx)
 	if err != nil {
 		return domain.ScoreCfg{}, fmt.Errorf("get scoring text: %w", err)
 	}
+
 	bonuses, err := s.conversationRepo.GetScoringBonuses(ctx)
 	if err != nil {
 		return domain.ScoreCfg{}, fmt.Errorf("get scoring bonuses: %w", err)
 	}
+
 	call, err := s.conversationRepo.GetScoringCall(ctx)
 	if err != nil {
 		return domain.ScoreCfg{}, fmt.Errorf("get scoring call: %w", err)
 	}
+
 	voice, err := s.conversationRepo.GetScoringVoice(ctx)
 	if err != nil {
 		return domain.ScoreCfg{}, fmt.Errorf("get scoring voice: %w", err)
@@ -277,6 +294,7 @@ func (s *service) getScoreConfig(ctx context.Context) (domain.ScoreCfg, error) {
 	if !ok {
 		return domain.ScoreCfg{}, fmt.Errorf("convert text max to float64: %w", err)
 	}
+
 	voicePerSec, ok := voice.PerSecond.Float64()
 	if !ok {
 		return domain.ScoreCfg{}, fmt.Errorf("convert voice per second to float64: %w", err)

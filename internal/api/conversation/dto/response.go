@@ -10,6 +10,10 @@ type GetConversationsResponse struct {
 	Conversations []Conversation `json:"conversations"`
 }
 
+type GetConversationScoreResponse struct {
+	Score int `json:"score"`
+}
+
 type Conversation struct {
 	ID string `json:"id"`
 	// Match the user/person you matched with

@@ -36,6 +36,7 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 			VoiceNoteURL:  msg.LikedPrompt.VoiceNoteURL,
 		}
 	}
+
 	var snapshot *dto.ScoreSnapshot
 	if msg.ResultingScoreSnapShot != nil {
 		snapshot = &dto.ScoreSnapshot{
@@ -61,6 +62,12 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 		IsFirstMessage:         msg.IsFirstMessage,
 		LikedPrompt:            likedVoicePrompt,
 		ResultingScoreSnapShot: snapshot,
+	}
+}
+
+func MapToGetConversationScoreResponse(score int) dto.GetConversationScoreResponse {
+	return dto.GetConversationScoreResponse{
+		Score: score,
 	}
 }
 

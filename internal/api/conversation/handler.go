@@ -46,6 +46,33 @@ func NewConversationHandler(
 
 func (h *handler) GetConversationScore() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		convoID := chi.URLParam(r, "id")
+		if convoID == "" {
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(
+					"Conversation ID is required as a URL parameter",
+				))
+
+			return
+		}
+
+		sharedScore, err := h.conversationService.GetConversationScore(ctx, userID, convoID)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GetConversationScore", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapToGetConversationScoreResponse(sharedScore))
 	}
 }
 
