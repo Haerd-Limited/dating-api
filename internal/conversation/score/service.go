@@ -193,7 +193,8 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 
 	// The reveal happens via the handshake endpoint when both confirm.
 
-	if err := tx.Commit(); err != nil {
+	err = tx.Commit()
+	if err != nil {
 		return domain.ScoreSnapshot{}, fmt.Errorf("commit tx: %w", err)
 	}
 

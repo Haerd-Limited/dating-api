@@ -410,6 +410,8 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 			Me:        snap.Me,
 			Them:      snap.Them,
 			Revealed:  snap.Revealed,
+			Shared:    snap.Shared,
+			CanReveal: snap.CanReveal,
 		}
 	case domain.MessageTypeSystem:
 		// no scoring
