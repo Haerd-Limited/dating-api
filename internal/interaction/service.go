@@ -158,7 +158,23 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
 			})
 			if err != nil {
-				return "", fmt.Errorf("send message userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+				return "", fmt.Errorf("send target user's message to conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+			}
+		}
+
+		userRepliedToLiked := swipe.Message != nil
+		if userRepliedToLiked {
+			_, err = is.conversationService.SendMessageViaTx(ctx, tx.Raw(), conversationDomain.Message{
+				ConversationID: convoID,
+				SenderID:       swipe.UserID,
+				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
+				TextBody:       swipe.Message,
+				MediaKey:       nil,
+				MediaSeconds:   nil,
+				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
+			})
+			if err != nil {
+				return "", fmt.Errorf("user reply to like userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 			}
 		}
 

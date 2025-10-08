@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"

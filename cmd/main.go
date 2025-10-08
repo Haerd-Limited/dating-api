@@ -22,18 +22,18 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/config"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
-	storage5 "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
+	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
-	storage3 "github.com/Haerd-Limited/dating-api/internal/discover/storage"
+	discoverstorage "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/http/router"
 	"github.com/Haerd-Limited/dating-api/internal/interaction"
-	storage4 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	interactionstorage "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/lookup"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/preference"
-	storage2 "github.com/Haerd-Limited/dating-api/internal/preference/storage"
+	preferencestorage "github.com/Haerd-Limited/dating-api/internal/preference/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profilestorage "github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
@@ -90,10 +90,10 @@ func main() {
 	// notificationRepo := notificationStorage.NewNotificationRepository(db)
 	lookupRepo := lookupstorage.NewLookupRepository(db)
 	profileRepo := profilestorage.NewProfileRepository(db)
-	preferenceRepo := storage2.NewPreferenceRepository(db)
-	discoverRepo := storage3.NewDiscoverRepository(db)
-	conversationRepo := storage5.NewConversationRepository(db)
-	interactionRepo := storage4.NewInteractionRepository(db)
+	preferenceRepo := preferencestorage.NewPreferenceRepository(db)
+	discoverRepo := discoverstorage.NewDiscoverRepository(db)
+	conversationRepo := conversationstorage.NewConversationRepository(db)
+	interactionRepo := interactionstorage.NewInteractionRepository(db)
 	userRepo := storage.NewUserRepository(db)
 	authRepo := authstorage.NewAuthRepository(db)
 	unitOfWork := uow.New(db.DB)
