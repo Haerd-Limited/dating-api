@@ -172,6 +172,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 		}
 
 		if conversation == nil {
+			s.logger.Warn("convo_self_heal", zap.String("userID", userID), zap.String("matchUserID", matchUserID))
 			// create convo
 			_, createConvoErr := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, nil)
 			if createConvoErr != nil {
