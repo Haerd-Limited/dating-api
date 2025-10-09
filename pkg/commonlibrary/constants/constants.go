@@ -16,4 +16,9 @@ const (
 	VisibilityStateVisible                      = "VISIBLE"
 	MaxVoiceNoteLengthInSeconds                 = 60
 	MaxTextLengthRunes                          = 1000
+	MaximumNumberOfPrompts                      = 6
+	MaxAge                                      = 110
+	MinAge                                      = 18
+	MinHeight                                   = 100
+	MaxHeight                                   = 300
 )

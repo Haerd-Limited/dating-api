@@ -16,6 +16,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 )
 
@@ -72,7 +73,16 @@ func NewOnboardingService(
 	}
 }
 
-var ErrIncorrectStepCalled = errors.New("incorrect step called")
+var (
+	ErrIncorrectStepCalled      = errors.New("incorrect step called")
+	ErrMissingPrompts           = errors.New("missing prompts")
+	ErrNotEnoughPromptsProvided = errors.New("not enough prompts provided")
+	ErrTooManyPromptsProvided   = errors.New("too many prompts provided")
+)
+
+const (
+	MinimumNumberOfPrompts = 4
+)
 
 func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error) {
 	u, err := os.userService.GetUser(ctx, userID)
@@ -637,12 +647,33 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	}, nil
 }
 
+func (os *onboardingService) validatePrompts(uploadedPrompts domain.Prompts) error {
+	if len(uploadedPrompts.UploadedPrompts) == 0 {
+		return ErrMissingPrompts
+	}
+
+	if len(uploadedPrompts.UploadedPrompts) < MinimumNumberOfPrompts {
+		return fmt.Errorf("%w. please provide atleast %v", ErrNotEnoughPromptsProvided, MinimumNumberOfPrompts)
+	}
+
+	if len(uploadedPrompts.UploadedPrompts) > constants.MaximumNumberOfPrompts {
+		return fmt.Errorf("%w. please provide atmost %v", ErrTooManyPromptsProvided, constants.MaximumNumberOfPrompts)
+	}
+
+	return nil
+}
+
 func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.StepResult, error) {
 	const StepForPrompts = domain.OnboardingStepsPrompts
 
 	err := os.ensureStep(ctx, uploadedPrompts.UserID, StepForPrompts)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+	}
+
+	err = os.validatePrompts(uploadedPrompts)
+	if err != nil {
+		return domain.StepResult{}, fmt.Errorf("validate prompts: %w", err)
 	}
 
 	// todo: ensure count is min 4

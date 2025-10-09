@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/aarondl/null/v8"
 	"go.uber.org/zap"
@@ -15,7 +16,9 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
 type Service interface {
@@ -53,6 +56,10 @@ func NewProfileService(
 var (
 	ErrContainsSocialMediaPromotion = fmt.Errorf("this field cannot contain social media promotion")
 	ErrInvalidID                    = errors.New("id must be greater than 0")
+	ErrMissingPrompts               = errors.New("missing prompts")
+	ErrTooManyPromptsProvided       = errors.New("too many prompts provided")
+	ErrInvalidBirthdate             = errors.New("invalid birthdate")
+	ErrInvalidHeight                = errors.New("invalid height")
 )
 
 func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.VoicePrompt, error) {
@@ -149,7 +156,74 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 	}, nil
 }
 
+func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
+	if up.DisplayName != nil {
+		if s.containsSocialMediaPromotion(*up.DisplayName) {
+			return fmt.Errorf("%w : field=display_name, value=%s", ErrContainsSocialMediaPromotion, *up.DisplayName)
+		}
+	}
+
+	if up.Work != nil {
+		if s.containsSocialMediaPromotion(*up.Work) {
+			return fmt.Errorf("%w : field=work, value=%s", ErrContainsSocialMediaPromotion, *up.Work)
+		}
+	}
+
+	if up.JobTitle != nil {
+		if s.containsSocialMediaPromotion(*up.JobTitle) {
+			return fmt.Errorf("%w : field=work, value=%s", ErrContainsSocialMediaPromotion, *up.JobTitle)
+		}
+	}
+
+	if up.University != nil {
+		if s.containsSocialMediaPromotion(*up.University) {
+			return fmt.Errorf("%w : field=university, value=%s", ErrContainsSocialMediaPromotion, *up.University)
+		}
+	}
+	// birthdate
+	if up.Birthdate != nil {
+		bd := *up.Birthdate
+		today := time.Now().UTC()
+
+		if bd.After(today) {
+			return fmt.Errorf("%w: birthdate in future", ErrInvalidBirthdate)
+		}
+
+		age := utils.CalculateAge(bd)
+		if age < constants.MinAge {
+			return fmt.Errorf("%w: must be 18+", ErrInvalidBirthdate)
+		}
+
+		if age > constants.MaxAge {
+			return fmt.Errorf("%w: must be realistic age", ErrInvalidBirthdate)
+		}
+	}
+
+	// height
+	if up.HeightCM != nil {
+		h := *up.HeightCM
+		if h < constants.MinHeight || h > constants.MaxHeight {
+			return fmt.Errorf("%w: height_cm out of range", ErrInvalidHeight)
+		}
+	}
+
+	// URL
+	if up.CoverPhotoURL != nil {
+		if err := utils.ValidateHTTPURL(*up.CoverPhotoURL); err != nil {
+			return fmt.Errorf("%w: cover_photo_url invalid: %v", commonErrors.ErrInvalidMediaUrl, err)
+		}
+		// Optional: enforce your CDN domain
+		// if !strings.HasSuffix(u.Host, "your-cdn.com") { ... }
+	}
+
+	return nil
+}
+
 func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) error {
+	err := s.validateProfileUpdate(up)
+	if err != nil {
+		return fmt.Errorf("validate profile update: %w", err)
+	}
 	// Load current profile
 	prof, err := s.getUserProfile(ctx, up.UserID)
 	if err != nil {
@@ -158,35 +232,19 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 
 	// Basic
 	if up.DisplayName != nil {
-		if s.containsSocialMediaPromotion(*up.DisplayName) {
-			return fmt.Errorf("%w : field=display_name, value=%s", ErrContainsSocialMediaPromotion, *up.DisplayName)
-		}
-
 		prof.DisplayName = *up.DisplayName
 	}
 
 	// Work / education text fields
 	if up.Work != nil {
-		if s.containsSocialMediaPromotion(*up.Work) {
-			return fmt.Errorf("%w : field=work, value=%s", ErrContainsSocialMediaPromotion, *up.Work)
-		}
-
 		prof.Work = up.Work
 	}
 
 	if up.JobTitle != nil {
-		if s.containsSocialMediaPromotion(*up.JobTitle) {
-			return fmt.Errorf("%w : field=work, value=%s", ErrContainsSocialMediaPromotion, *up.JobTitle)
-		}
-
 		prof.JobTitle = up.JobTitle
 	}
 
 	if up.University != nil {
-		if s.containsSocialMediaPromotion(*up.University) {
-			return fmt.Errorf("%w : field=university, value=%s", ErrContainsSocialMediaPromotion, *up.University)
-		}
-
 		prof.University = up.University
 	}
 
@@ -317,7 +375,7 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	result := domain.EnrichedProfile{
 		DisplayName:   userProfile.DisplayName,
 		Birthdate:     userProfile.Birthdate,
-		Age:           calculateAge(userProfile.Birthdate),
+		Age:           utils.CalculateAge(userProfile.Birthdate),
 		HeightCM:      userProfile.HeightCM,
 		UserID:        userID,
 		Latitude:      userProfile.Latitude,
@@ -448,9 +506,23 @@ func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string
 	return nil
 }
 
+func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate) error {
+	if len(prompts) == 0 {
+		return ErrMissingPrompts
+	}
+
+	if len(prompts) > constants.MaximumNumberOfPrompts {
+		return fmt.Errorf("%w. please provide atmost %v", ErrTooManyPromptsProvided, constants.MaximumNumberOfPrompts)
+	}
+
+	return nil
+}
+
 func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error {
+	if err := validateUserPromptsUpsert(prompts); err != nil {
+		return fmt.Errorf("validate user prompts: %w", err)
+	}
 	// todo: check if position values are unique
-	// todo: ensure count is max 6
 	return s.profileRepo.UpsertUserPrompts(ctx, userID, mapper.MapVoicePromptsUpdateToEntity(prompts, userID))
 }
 

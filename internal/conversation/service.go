@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"net/url"
 	"strings"
 
 	"github.com/google/uuid"
@@ -21,6 +20,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
@@ -72,7 +72,6 @@ var (
 	ErrGifMessageMissingURL                = errors.New("gif message missing url")
 	ErrVoiceNoteTooLong                    = errors.New("voice note too long")
 	ErrInvalidMessage                      = errors.New("invalid message")
-	ErrInvalidMediaUrl                     = errors.New("invalid media url")
 	ErrInvalidVoiceNoteSeconds             = errors.New("invalid voice note seconds")
 	ErrTextTooLong                         = errors.New("text too long")
 	ErrInvalidTextMessage                  = errors.New("invalid text message")
@@ -301,8 +300,8 @@ func (s *service) validateMessage(msg domain.Message) error {
 				ErrVoiceNoteTooLong, constants.MaxVoiceNoteLengthInSeconds, secs)
 		}
 
-		if err := validateHTTPURL(*msg.MediaUrl); err != nil {
-			return fmt.Errorf("%w: media_url invalid: %v", ErrInvalidMediaUrl, err)
+		if err := utils.ValidateHTTPURL(*msg.MediaUrl); err != nil {
+			return fmt.Errorf("%w: media_url invalid: %v", commonErrors.ErrInvalidMediaUrl, err)
 		}
 		// Optional: enforce allowed MIME/container or extension
 
@@ -311,30 +310,13 @@ func (s *service) validateMessage(msg domain.Message) error {
 			return fmt.Errorf("%w: media_url is required", ErrGifMessageMissingURL)
 		}
 
-		if err := validateHTTPURL(*msg.MediaUrl); err != nil {
-			return fmt.Errorf("%w: media_url invalid: %v", ErrInvalidMediaUrl, err)
+		if err := utils.ValidateHTTPURL(*msg.MediaUrl); err != nil {
+			return fmt.Errorf("%w: media_url invalid: %v", commonErrors.ErrInvalidMediaUrl, err)
 		}
 		// Optional: allow-list providers (e.g., tenor, giphy)
 
 	default:
 		return fmt.Errorf("%w: type=%s", ErrInvalidMessageType, msg.Type)
-	}
-
-	return nil
-}
-
-func validateHTTPURL(raw string) error {
-	u, err := url.Parse(raw)
-	if err != nil {
-		return err
-	}
-
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return fmt.Errorf("unsupported scheme %q", u.Scheme)
-	}
-
-	if u.Host == "" {
-		return fmt.Errorf("empty host")
 	}
 
 	return nil

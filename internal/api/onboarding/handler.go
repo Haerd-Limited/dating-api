@@ -406,7 +406,7 @@ func (h *handler) Prompts() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse("Please provide at least 4 prompts. Maximum 6 prompts. Prompt type, url and position are required fields"),
+				commonMappers.ToSimpleErrorResponse(fmt.Sprintf("Please provide at least 4 prompts. Maximum %v prompts. Prompt type, url and position are required fields", constants.MaximumNumberOfPrompts)),
 			)
 
 			return

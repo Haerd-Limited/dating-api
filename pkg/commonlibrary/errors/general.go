@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	ErrInvalidMediaUrl      = errors.New("invalid media url")
 	ErrInvalidDob           = errors.New("invalid date_of_birth format, use YYYY-MM-DD")
 	ErrInvalidGender        = errors.New("invalid gender format")
 	ErrUnauthorisedDeletion = fmt.Errorf("unauthorised deletion")

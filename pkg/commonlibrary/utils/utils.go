@@ -2,12 +2,46 @@ package utils
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/rivo/uniseg"
 )
+
+// CalculateAge returns the age in years given a birthdate.
+func CalculateAge(birthdate time.Time) int {
+	now := time.Now()
+
+	years := now.Year() - birthdate.Year()
+
+	// If the birthday hasn't occurred yet this year, subtract 1
+	if now.Month() < birthdate.Month() ||
+		(now.Month() == birthdate.Month() && now.Day() < birthdate.Day()) {
+		years--
+	}
+
+	return years
+}
+
+func ValidateHTTPURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return err
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("unsupported scheme %q", u.Scheme)
+	}
+
+	if u.Host == "" {
+		return fmt.Errorf("empty host")
+	}
+
+	return nil
+}
 
 func Redacted(s string) string {
 	if len(s) <= 6 {

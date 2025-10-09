@@ -18,6 +18,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	commonMessages "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
@@ -198,7 +199,7 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Sending a voice note requires a media_url and media_seconds"
 	case errors.Is(err, conversation.ErrVoiceNoteTooLong):
 		return http.StatusBadRequest, fmt.Sprintf("Voice note too long. Must be less than %v seconds", constants.MaxVoiceNoteLengthInSeconds)
-	case errors.Is(err, conversation.ErrInvalidMediaUrl):
+	case errors.Is(err, commonErrors.ErrInvalidMediaUrl):
 		return http.StatusBadRequest, "Invalid media url"
 	case errors.Is(err, conversation.ErrGifMessageMissingURL):
 		return http.StatusBadRequest, "Invalid gif message. Make sure your gif url is not blank"

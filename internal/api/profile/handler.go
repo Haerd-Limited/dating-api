@@ -3,6 +3,7 @@ package profile
 import (
 	"errors"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -115,6 +116,12 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, commonErrors.ErrInvalidMediaUrl):
+		return http.StatusBadRequest, "Invalid media url"
+	case errors.Is(err, profile.ErrInvalidHeight):
+		return http.StatusBadRequest, "Please provide a realistic height"
+	case errors.Is(err, profile.ErrInvalidBirthdate):
+		return http.StatusBadRequest, fmt.Sprintf("Invalid birthdate. You must be at least %v and at most %v", constants.MinAge, constants.MaxAge)
 	case errors.Is(err, profile.ErrContainsSocialMediaPromotion):
 		return http.StatusBadRequest, messages.SocialsNotAllowedMsg
 	case errors.Is(err, storage.ErrUserDoesNotExists):

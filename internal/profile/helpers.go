@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/Haerd-Limited/dating-api/internal/profile/constant"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
@@ -336,19 +335,4 @@ func (s *service) getEthnicityByID(ctx context.Context, id int16) (domain.Ethnic
 		ID:    ethnicityEntity.ID,
 		Label: ethnicityEntity.Label,
 	}, nil
-}
-
-// calculateAge returns the age in years given a birthdate.
-func calculateAge(birthdate time.Time) int {
-	now := time.Now()
-
-	years := now.Year() - birthdate.Year()
-
-	// If the birthday hasn't occurred yet this year, subtract 1
-	if now.Month() < birthdate.Month() ||
-		(now.Month() == birthdate.Month() && now.Day() < birthdate.Day()) {
-		years--
-	}
-
-	return years
 }
