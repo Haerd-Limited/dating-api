@@ -148,6 +148,7 @@ func New(
 				r.Route("/users/me", func(r chi.Router) {
 					r.Get("/", profileHandler.GetMyProfile())
 					r.Patch("/", profileHandler.UpdateMyProfile())
+					r.Patch("/verify", profileHandler.Verify())
 					// TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})

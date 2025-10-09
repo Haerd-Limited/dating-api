@@ -24,6 +24,11 @@ func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []stri
 		ent.UserID = p.UserID
 	}
 
+	if p.Verified {
+		ent.Verified = p.Verified
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Verified)
+	}
+
 	if p.Emoji != "" && p.Emoji != constants.DefaultEmoji {
 		ent.Emoji = null.StringFrom(p.Emoji)
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Emoji)

@@ -19,6 +19,7 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		Longitude:   profile.Longitude,
 		City:        profile.City,
 		Country:     profile.Country,
+		Verified:    profile.Verified,
 		Theme: dto.UserTheme{
 			BaseHex: profile.Theme.BaseHex,
 			Palette: profile.Theme.Palette,

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
 	"github.com/aarondl/null/v8"
 	"go.uber.org/zap"
 
@@ -30,6 +31,7 @@ type Service interface {
 	UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error
 	UpsertUserTheme(ctx context.Context, userID, baseColour string) error
+	VerifyProfile(ctx context.Context, userID string) error
 }
 
 type service struct {
@@ -60,6 +62,24 @@ var (
 	ErrInvalidPromptPosition        = errors.New("invalid prompt position")
 	ErrDuplicatePromptPosition      = errors.New("duplicate prompt position")
 )
+
+// todo: use aws face recognitions
+func (s *service) VerifyProfile(ctx context.Context, userID string) error {
+	// Load current profile
+	prof, err := s.getUserProfile(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("get user profile: %w", err)
+	}
+
+	prof.Verified = true
+
+	err = s.updateUserProfile(ctx, prof)
+	if err != nil {
+		return fmt.Errorf("update user profile: %w", err)
+	}
+
+	return nil
+}
 
 func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.VoicePrompt, error) {
 	vp, err := s.profileRepo.GetVoicePromptByID(ctx, id)

@@ -115,6 +115,8 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return ResultSent, nil
 		}
 
+		//todo: block unverified users from matching
+
 		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
 		if err != nil {
 			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)

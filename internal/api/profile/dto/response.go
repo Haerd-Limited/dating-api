@@ -12,6 +12,7 @@ type Profile struct {
 	UserID        string `json:"user_id"`
 	CoverPhotoURL string `json:"cover_photo_url"`
 	Emoji         string `json:"emoji"`
+	Verified      bool   `json:"verified"`
 
 	// Location
 	Latitude  float64 `json:"latitude"`

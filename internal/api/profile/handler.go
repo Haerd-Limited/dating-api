@@ -23,6 +23,7 @@ import (
 type Handler interface {
 	GetMyProfile() http.HandlerFunc
 	UpdateMyProfile() http.HandlerFunc
+	Verify() http.HandlerFunc
 }
 
 type handler struct {
@@ -37,6 +38,26 @@ func NewProfileHandler(
 	return &handler{
 		logger:         logger,
 		profileService: profileService,
+	}
+}
+
+func (h *handler) Verify() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		err := h.profileService.VerifyProfile(ctx, userID)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "Verify", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Profile successfully verified"))
 	}
 }
 

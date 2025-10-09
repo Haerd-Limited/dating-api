@@ -30,6 +30,7 @@ type ProfileRepository interface {
 	GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error)
 	GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error)
 	GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error)
+	IsVerified(ctx context.Context, userID string) (bool, error)
 }
 
 type profileRepository struct {
@@ -40,6 +41,15 @@ func NewProfileRepository(db *sqlx.DB) ProfileRepository {
 	return &profileRepository{
 		db: db,
 	}
+}
+
+func (pr *profileRepository) IsVerified(ctx context.Context, userID string) (bool, error) {
+	profile, err := entity.UserProfiles(entity.UserWhere.ID.EQ(userID)).One(ctx, pr.db)
+	if err != nil {
+		return false, err
+	}
+
+	return profile.Verified, nil
 }
 
 func (pr *profileRepository) GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error) {
