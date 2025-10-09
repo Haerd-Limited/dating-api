@@ -13,6 +13,11 @@ type Swipe struct {
 	IdempotencyKey *string
 }
 
+type Likes struct {
+	Verified   []Like
+	Unverified []Like
+}
+
 type Like struct {
 	Profile profilecard.ProfileCard
 	Message *Message

@@ -2723,7 +2723,7 @@ func testUserProfilesSelect(t *testing.T) {
 }
 
 var (
-	userProfileDBTypes = map[string]string{`UserID`: `uuid`, `DisplayName`: `text`, `Birthdate`: `date`, `HeightCM`: `smallint`, `Geo`: `USER-DEFINED`, `City`: `text`, `Country`: `text`, `GenderID`: `smallint`, `DatingIntentionID`: `smallint`, `ReligionID`: `smallint`, `EducationLevelID`: `smallint`, `PoliticalBeliefID`: `smallint`, `DrinkingID`: `smallint`, `SmokingID`: `smallint`, `MarijuanaID`: `smallint`, `DrugsID`: `smallint`, `ChildrenStatusID`: `smallint`, `FamilyPlanID`: `smallint`, `EthnicityID`: `smallint`, `Work`: `text`, `JobTitle`: `text`, `University`: `text`, `ProfileMeta`: `jsonb`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `CoverPhotoURL`: `text`, `Emoji`: `text`}
+	userProfileDBTypes = map[string]string{`UserID`: `uuid`, `DisplayName`: `text`, `Birthdate`: `date`, `HeightCM`: `smallint`, `Geo`: `USER-DEFINED`, `City`: `text`, `Country`: `text`, `GenderID`: `smallint`, `DatingIntentionID`: `smallint`, `ReligionID`: `smallint`, `EducationLevelID`: `smallint`, `PoliticalBeliefID`: `smallint`, `DrinkingID`: `smallint`, `SmokingID`: `smallint`, `MarijuanaID`: `smallint`, `DrugsID`: `smallint`, `ChildrenStatusID`: `smallint`, `FamilyPlanID`: `smallint`, `EthnicityID`: `smallint`, `Work`: `text`, `JobTitle`: `text`, `University`: `text`, `ProfileMeta`: `jsonb`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `CoverPhotoURL`: `text`, `Emoji`: `text`, `Verified`: `boolean`}
 	_                  = bytes.MinRead
 )
 

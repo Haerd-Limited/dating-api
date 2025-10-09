@@ -16,6 +16,7 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 		UserID:    up.UserID,
 		CreatedAt: up.CreatedAt,
 		UpdatedAt: up.UpdatedAt,
+		Verified:  up.Verified,
 	}
 
 	if up.Emoji.Valid {

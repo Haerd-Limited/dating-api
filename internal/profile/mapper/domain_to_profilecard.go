@@ -14,6 +14,7 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 		UserID:        ep.UserID,
 		CoverPhotoUrl: ep.CoverPhotoURL,
 		Emoji:         ep.Emoji,
+		Verified:      ep.Verified,
 
 		Latitude:  ep.Latitude,
 		Longitude: ep.Longitude,

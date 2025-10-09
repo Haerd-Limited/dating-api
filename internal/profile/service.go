@@ -326,6 +326,7 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 		UpdatedAt:     userProfile.UpdatedAt,
 		CoverPhotoURL: userProfile.CoverPhotoURL,
 		Emoji:         userProfile.Emoji,
+		Verified:      userProfile.Verified,
 	}
 
 	result.Theme, err = s.getUserTheme(ctx, userID)

@@ -7,6 +7,7 @@ type Profile struct {
 	Birthdate   time.Time
 	HeightCM    int16
 	UserID      string
+	Verified    bool
 
 	// Location
 	Latitude  float64
@@ -116,6 +117,7 @@ type EnrichedProfile struct {
 	Work            *string
 	JobTitle        *string
 	University      *string
+	Verified        bool
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

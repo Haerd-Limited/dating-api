@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  backfill_conversation_participants sql
+	@cd ./migrations && goose create  add_verified_to_profiles sql
 .PHONY: migrate-create
 
 

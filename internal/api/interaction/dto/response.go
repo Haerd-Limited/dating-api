@@ -16,7 +16,8 @@ type SwipesResponse struct {
 }
 
 type GetLikesResponse struct {
-	Likes []Like `json:"likes"`
+	Verified   []Like `json:"verified"`
+	Unverified []Like `json:"unverified"`
 }
 
 type Like struct {

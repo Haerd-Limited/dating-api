@@ -3,7 +3,6 @@ package profile
 import (
 	"errors"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -12,6 +11,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"

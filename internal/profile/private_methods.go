@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
-	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 	"strings"
 	"time"
 
 	"github.com/Haerd-Limited/dating-api/internal/profile/constant"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
 func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {

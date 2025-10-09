@@ -103,7 +103,7 @@ func (h *handler) GetLikes() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.MapToGetLikesResponse(profiles))
+		render.Json(w, http.StatusOK, mapper.MapToGetLikesResponse(&profiles))
 	}
 }
 

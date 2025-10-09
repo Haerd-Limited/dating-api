@@ -24,7 +24,7 @@ import (
 
 type Service interface {
 	CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error)
-	GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]domain.Like, error)
+	GetLikes(ctx context.Context, userID, direction string, offset, limit int) (domain.Likes, error)
 }
 
 type service struct {
@@ -202,7 +202,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 	return "", fmt.Errorf("%w: %s", ErrInvalidAction, swipe.Action)
 }
 
-func (is *service) GetLikes(ctx context.Context, userID, direction string, offset, limit int) ([]domain.Like, error) {
+func (is *service) GetLikes(ctx context.Context, userID, direction string, offset, limit int) (domain.Likes, error) {
 	var likesUserIDs []string
 
 	var err error
@@ -211,19 +211,19 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 	case "incoming":
 		likesUserIDs, err = is.interactionRepo.GetIncomingLikes(ctx, userID, limit, offset)
 	default:
-		return nil, ErrInvalidDirection
+		return domain.Likes{}, ErrInvalidDirection
 	}
 
 	if err != nil {
-		return nil, err
+		return domain.Likes{}, err
 	}
 
-	var likes []domain.Like
+	var likes domain.Likes
 
 	for _, id := range likesUserIDs {
 		alreadyMatched, likesErr := is.interactionRepo.AlreadyMatched(ctx, userID, id)
 		if likesErr != nil {
-			return nil, fmt.Errorf("check if already matched userID=%s targetUserID=%s: %w", userID, id, likesErr)
+			return domain.Likes{}, fmt.Errorf("check if already matched userID=%s targetUserID=%s: %w", userID, id, likesErr)
 		}
 
 		if alreadyMatched {
@@ -232,12 +232,12 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 
 		p, likesErr := is.profileService.GetProfileCard(ctx, id)
 		if likesErr != nil {
-			return nil, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, id, likesErr)
+			return domain.Likes{}, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, id, likesErr)
 		}
 
 		swipe, likesErr := is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, id, userID)
 		if likesErr != nil {
-			return nil, fmt.Errorf("get swipe by actorID and targetID userID=%s targetUserID=%s: %w", userID, id, likesErr)
+			return domain.Likes{}, fmt.Errorf("get swipe by actorID and targetID userID=%s targetUserID=%s: %w", userID, id, likesErr)
 		}
 
 		like := domain.Like{
@@ -250,7 +250,7 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		if swipe.PromptID.Valid {
 			voicePrompt, likesErr = is.profileService.GetVoicePromptByID(ctx, swipe.PromptID.Int64)
 			if likesErr != nil {
-				return nil, fmt.Errorf("get voice prompt by ID userID=%s targetUserID=%s: %w", userID, id, likesErr)
+				return domain.Likes{}, fmt.Errorf("get voice prompt by ID userID=%s targetUserID=%s: %w", userID, id, likesErr)
 			}
 
 			like.Prompt.PromptID = voicePrompt.PromptID
@@ -263,7 +263,11 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 			like.Message.MessageText, like.Message.MessageType = swipe.Message.Ptr(), swipe.MessageType.Ptr()
 		}
 
-		likes = append(likes, like)
+		if p.Verified {
+			likes.Verified = append(likes.Verified, like)
+		} else {
+			likes.Unverified = append(likes.Unverified, like)
+		}
 	}
 
 	return likes, nil
