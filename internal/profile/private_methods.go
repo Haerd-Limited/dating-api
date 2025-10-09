@@ -5,13 +5,108 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 	"strings"
+	"time"
 
 	"github.com/Haerd-Limited/dating-api/internal/profile/constant"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
 )
+
+func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
+	if up.DisplayName != nil {
+		if s.containsSocialMediaPromotion(*up.DisplayName) {
+			return fmt.Errorf("%w : field=display_name, value=%s", ErrContainsSocialMediaPromotion, *up.DisplayName)
+		}
+	}
+
+	if up.Work != nil {
+		if s.containsSocialMediaPromotion(*up.Work) {
+			return fmt.Errorf("%w : field=work, value=%s", ErrContainsSocialMediaPromotion, *up.Work)
+		}
+	}
+
+	if up.JobTitle != nil {
+		if s.containsSocialMediaPromotion(*up.JobTitle) {
+			return fmt.Errorf("%w : field=work, value=%s", ErrContainsSocialMediaPromotion, *up.JobTitle)
+		}
+	}
+
+	if up.University != nil {
+		if s.containsSocialMediaPromotion(*up.University) {
+			return fmt.Errorf("%w : field=university, value=%s", ErrContainsSocialMediaPromotion, *up.University)
+		}
+	}
+	// birthdate
+	if up.Birthdate != nil {
+		bd := *up.Birthdate
+		today := time.Now().UTC()
+
+		if bd.After(today) {
+			return fmt.Errorf("%w: birthdate in future", ErrInvalidBirthdate)
+		}
+
+		age := utils.CalculateAge(bd)
+		if age < constants.MinAge {
+			return fmt.Errorf("%w: must be 18+", ErrInvalidBirthdate)
+		}
+
+		if age > constants.MaxAge {
+			return fmt.Errorf("%w: must be realistic age", ErrInvalidBirthdate)
+		}
+	}
+
+	// height
+	if up.HeightCM != nil {
+		h := *up.HeightCM
+		if h < constants.MinHeight || h > constants.MaxHeight {
+			return fmt.Errorf("%w: height_cm out of range", ErrInvalidHeight)
+		}
+	}
+
+	// URL
+	if up.CoverPhotoURL != nil {
+		if err := utils.ValidateHTTPURL(*up.CoverPhotoURL); err != nil {
+			return fmt.Errorf("%w: cover_photo_url invalid: %v", commonErrors.ErrInvalidMediaUrl, err)
+		}
+		// Optional: enforce your CDN domain
+		// if !strings.HasSuffix(u.Host, "your-cdn.com") { ... }
+	}
+
+	return nil
+}
+
+func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate) error {
+	if len(prompts) == 0 {
+		return ErrMissingPrompts
+	}
+
+	if len(prompts) > constants.MaximumNumberOfPrompts {
+		return fmt.Errorf("%w. please provide atmost %v", ErrTooManyPromptsProvided, constants.MaximumNumberOfPrompts)
+	}
+
+	// positions: unique, 1..max
+	seen := make(map[int16]struct{}, len(prompts))
+
+	for i, p := range prompts {
+		if p.Position <= 0 || p.Position > constants.MaximumNumberOfPrompts {
+			return fmt.Errorf("%w: item[%d] position=%d must be 1..%d",
+				ErrInvalidPromptPosition, i, p.Position, constants.MaximumNumberOfPrompts)
+		}
+
+		if _, dup := seen[p.Position]; dup {
+			return fmt.Errorf("%w: duplicate position=%d", ErrDuplicatePromptPosition, p.Position)
+		}
+
+		seen[p.Position] = struct{}{}
+	}
+
+	return nil
+}
 
 func (s *service) containsSocialMediaPromotion(input string) bool {
 	for _, token := range constant.BlockedTokens {

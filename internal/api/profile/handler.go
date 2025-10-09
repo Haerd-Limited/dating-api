@@ -116,6 +116,10 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, profile.ErrInvalidPromptPosition):
+		return http.StatusBadRequest, "Invalid prompt position"
+	case errors.Is(err, profile.ErrDuplicatePromptPosition):
+		return http.StatusBadRequest, "Duplicate prompt position"
 	case errors.Is(err, commonErrors.ErrInvalidMediaUrl):
 		return http.StatusBadRequest, "Invalid media url"
 	case errors.Is(err, profile.ErrInvalidHeight):

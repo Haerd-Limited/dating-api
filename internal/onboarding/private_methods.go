@@ -6,6 +6,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
 // todo: call of below through lookup service if logic gets involved
@@ -16,6 +17,22 @@ func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Languag
 	}
 
 	return mapper.MapLanguagesToDomain(languageEntities), nil
+}
+
+func (os *onboardingService) validatePrompts(uploadedPrompts domain.Prompts) error {
+	if len(uploadedPrompts.UploadedPrompts) == 0 {
+		return ErrMissingPrompts
+	}
+
+	if len(uploadedPrompts.UploadedPrompts) < MinimumNumberOfPrompts {
+		return fmt.Errorf("%w. please provide atleast %v", ErrNotEnoughPromptsProvided, MinimumNumberOfPrompts)
+	}
+
+	if len(uploadedPrompts.UploadedPrompts) > constants.MaximumNumberOfPrompts {
+		return fmt.Errorf("%w. please provide atmost %v", ErrTooManyPromptsProvided, constants.MaximumNumberOfPrompts)
+	}
+
+	return nil
 }
 
 func (os *onboardingService) getEducationLevels(ctx context.Context) ([]domain.EducationLevel, error) {

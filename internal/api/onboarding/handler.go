@@ -1,7 +1,6 @@
 package onboarding
 
 import (
-	standardcontext "context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -474,14 +473,12 @@ const (
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
-	case errors.Is(err, standardcontext.Canceled):
-		return constants.StatusClientClosedRequest, messages.RequestCancelledMsg
-	case errors.Is(err, standardcontext.DeadlineExceeded):
-		return http.StatusRequestTimeout, messages.RequestTimeoutMsg
-
 	case errors.Is(err, profile.ErrContainsSocialMediaPromotion):
 		return http.StatusBadRequest, messages.SocialsNotAllowedMsg
-
+	case errors.Is(err, profile.ErrInvalidPromptPosition):
+		return http.StatusBadRequest, "Invalid prompt position"
+	case errors.Is(err, profile.ErrDuplicatePromptPosition):
+		return http.StatusBadRequest, "Duplicate prompt position"
 	case errors.Is(err, commonErrors.ErrInvalidEmail):
 		return http.StatusBadRequest, messages.InvalidEmailMsg
 	case errors.Is(err, onboarding.ErrIncorrectStepCalled):
