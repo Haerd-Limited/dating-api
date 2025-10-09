@@ -151,7 +151,7 @@ func (s *service) sendMessageToConversation(msg domain.Message) {
 			"sender_id":       msg.SenderID,
 			"text_body":       msg.TextBody,
 			"type":            msg.Type,
-			"media_key":       msg.MediaKey,
+			"media_key":       msg.MediaUrl,
 			"media_seconds":   msg.MediaSeconds,
 			"created_at":      msg.CreatedAt,
 			"client_msg_id":   msg.ClientMsgID,

@@ -14,4 +14,6 @@ const (
 	MinimumNumberOfUsersRequiredToBuildVwhUsers = 5
 	VisibilityStateHidden                       = "HIDDEN"
 	VisibilityStateVisible                      = "VISIBLE"
+	MaxVoiceNoteLengthInSeconds                 = 60
+	MaxTextLengthRunes                          = 1000
 )

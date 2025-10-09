@@ -10,7 +10,7 @@ func MapSendMessageRequestToDomain(req dto.SendMessageRequest, convoID string, u
 		ClientMsgID:    req.ClientMsgID,
 		Type:           domain.MessageType(req.Type),
 		TextBody:       req.TextBody,
-		MediaKey:       req.MediaKey,
+		MediaUrl:       req.MediaUrl,
 		MediaSeconds:   req.MediaSeconds,
 		ConversationID: convoID,
 		SenderID:       userID,

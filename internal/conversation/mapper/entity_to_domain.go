@@ -97,7 +97,7 @@ func MapMessageEntityToDomain(msg entity.Message) (domain.Message, error) {
 		SenderID:       msg.SenderID,
 		Type:           domain.MessageType(msg.Type),
 		TextBody:       textBody,
-		MediaKey:       mediaKey,
+		MediaUrl:       mediaKey,
 		MediaSeconds:   &mediaSeconds,
 		CreatedAt:      msg.CreatedAt,
 		ClientMsgID:    clientMSGID,

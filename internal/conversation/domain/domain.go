@@ -12,6 +12,7 @@ const (
 	MessageTypeText   MessageType = constants.MessageTypeText
 	MessageTypeVoice  MessageType = constants.MessageTypeVoice
 	MessageTypeSystem MessageType = "system"
+	MessageTypeGif    MessageType = "gif"
 )
 
 type Conversation struct {
@@ -37,7 +38,7 @@ type Message struct {
 	SenderID               string
 	Type                   MessageType
 	TextBody               *string
-	MediaKey               *string
+	MediaUrl               *string
 	MediaSeconds           *float64
 	CreatedAt              time.Time
 	ClientMsgID            string

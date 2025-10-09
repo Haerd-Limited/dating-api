@@ -153,7 +153,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 				SenderID:       swipe.TargetUserID,
 				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
 				TextBody:       targetUserSwipe.Message.Ptr(),
-				MediaKey:       nil,
+				MediaUrl:       nil,
 				MediaSeconds:   nil,
 				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
 			})
@@ -169,7 +169,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 				SenderID:       swipe.UserID,
 				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
 				TextBody:       swipe.Message,
-				MediaKey:       nil,
+				MediaUrl:       nil,
 				MediaSeconds:   nil,
 				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
 			})

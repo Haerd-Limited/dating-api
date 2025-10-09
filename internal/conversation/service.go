@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
+	"net/url"
+	"strings"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -17,6 +20,7 @@ import (
 	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
@@ -61,7 +65,18 @@ func NewConversationService(
 	}
 }
 
-var ErrFirstMessageMissingPromptID = errors.New("first message missing prompt id")
+var (
+	ErrFirstMessageMissingPromptID         = errors.New("first message missing prompt id")
+	ErrInvalidMessageType                  = errors.New("invalid message type")
+	ErrMissingRequiredFieldToSendVoicenote = errors.New("missing required field to send voice note")
+	ErrGifMessageMissingURL                = errors.New("gif message missing url")
+	ErrVoiceNoteTooLong                    = errors.New("voice note too long")
+	ErrInvalidMessage                      = errors.New("invalid message")
+	ErrInvalidMediaUrl                     = errors.New("invalid media url")
+	ErrInvalidVoiceNoteSeconds             = errors.New("invalid voice note seconds")
+	ErrTextTooLong                         = errors.New("text too long")
+	ErrInvalidTextMessage                  = errors.New("invalid text message")
+)
 
 func (s *service) GetConversationScore(ctx context.Context, userID string, convoID string) (int, error) {
 	_, _, shared, err := s.scoreService.GetScores(ctx, convoID, userID)
@@ -220,6 +235,11 @@ func (s *service) CreateConversationViaTx(ctx context.Context, userID, matchUser
 
 // For general API calls
 func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error) {
+	err := s.validateMessage(msg)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("validate message userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+	}
+
 	msg.ID = s.flake.Next()
 	ent := mapper.MapMessageDomainToEntity(msg)
 
@@ -242,6 +262,82 @@ func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.M
 	// todo: broadcast score update
 
 	return result, nil
+}
+
+func (s *service) validateMessage(msg domain.Message) error {
+	// Basic invariants common to all messages
+	if msg.ConversationID == "" {
+		return fmt.Errorf("%w: missing conversation_id", ErrInvalidMessage)
+	}
+
+	if msg.SenderID == "" {
+		return fmt.Errorf("%w: missing sender_id", ErrInvalidMessage)
+	}
+
+	switch msg.Type {
+	case domain.MessageTypeText:
+		// Require non-empty text (adjust per your product rules)
+		if msg.TextBody == nil || strings.TrimSpace(*msg.TextBody) == "" {
+			return fmt.Errorf("%w: empty text body", ErrInvalidTextMessage)
+		}
+		// Optional: length cap
+		if len([]rune(*msg.TextBody)) > constants.MaxTextLengthRunes {
+			return fmt.Errorf("%w: text length exceeds %d characters", ErrTextTooLong, constants.MaxTextLengthRunes)
+		}
+
+	case domain.MessageTypeVoice:
+		// Require BOTH url and seconds
+		if msg.MediaUrl == nil || msg.MediaSeconds == nil {
+			return fmt.Errorf("%w: voice note requires media_url and media_seconds", ErrMissingRequiredFieldToSendVoicenote)
+		}
+
+		secs := *msg.MediaSeconds
+		if !(secs > 0) || math.IsNaN(secs) || math.IsInf(secs, 0) {
+			return fmt.Errorf("%w: invalid media_seconds=%v", ErrInvalidVoiceNoteSeconds, secs)
+		}
+
+		if secs > float64(constants.MaxVoiceNoteLengthInSeconds) {
+			return fmt.Errorf("%w: cannot be greater than %v seconds (got %.3f)",
+				ErrVoiceNoteTooLong, constants.MaxVoiceNoteLengthInSeconds, secs)
+		}
+
+		if err := validateHTTPURL(*msg.MediaUrl); err != nil {
+			return fmt.Errorf("%w: media_url invalid: %v", ErrInvalidMediaUrl, err)
+		}
+		// Optional: enforce allowed MIME/container or extension
+
+	case domain.MessageTypeGif:
+		if msg.MediaUrl == nil {
+			return fmt.Errorf("%w: media_url is required", ErrGifMessageMissingURL)
+		}
+
+		if err := validateHTTPURL(*msg.MediaUrl); err != nil {
+			return fmt.Errorf("%w: media_url invalid: %v", ErrInvalidMediaUrl, err)
+		}
+		// Optional: allow-list providers (e.g., tenor, giphy)
+
+	default:
+		return fmt.Errorf("%w: type=%s", ErrInvalidMessageType, msg.Type)
+	}
+
+	return nil
+}
+
+func validateHTTPURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return err
+	}
+
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("unsupported scheme %q", u.Scheme)
+	}
+
+	if u.Host == "" {
+		return fmt.Errorf("empty host")
+	}
+
+	return nil
 }
 
 // For aggregate flows (e.g., called from CreateSwipe)

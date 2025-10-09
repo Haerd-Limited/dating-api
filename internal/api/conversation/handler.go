@@ -11,10 +11,12 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
+	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	convostorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/interaction"
 	interactionstorage "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	commonMessages "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
@@ -186,6 +188,22 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, conversation.ErrInvalidMessage):
+		return http.StatusBadRequest, "Invalid message"
+	case errors.Is(err, conversation.ErrInvalidTextMessage):
+		return http.StatusBadRequest, "Invalid text message. Make sure your text is not blank"
+	case errors.Is(err, conversation.ErrTextTooLong):
+		return http.StatusBadRequest, fmt.Sprintf("Text message is too long. Please keep it under %v characters", constants.MaxTextLengthRunes)
+	case errors.Is(err, conversation.ErrMissingRequiredFieldToSendVoicenote):
+		return http.StatusBadRequest, "Sending a voice note requires a media_url and media_seconds"
+	case errors.Is(err, conversation.ErrVoiceNoteTooLong):
+		return http.StatusBadRequest, fmt.Sprintf("Voice note too long. Must be less than %v seconds", constants.MaxVoiceNoteLengthInSeconds)
+	case errors.Is(err, conversation.ErrInvalidMediaUrl):
+		return http.StatusBadRequest, "Invalid media url"
+	case errors.Is(err, conversation.ErrGifMessageMissingURL):
+		return http.StatusBadRequest, "Invalid gif message. Make sure your gif url is not blank"
+	case errors.Is(err, conversation.ErrInvalidMessageType):
+		return http.StatusBadRequest, fmt.Sprintf("Invalid message type. Must be one of '%s','%s','%s' or '%s'", domain.MessageTypeVoice, domain.MessageTypeSystem, domain.MessageTypeText, domain.MessageTypeGif)
 	case errors.Is(err, convostorage.ErrClientMsgIDNotUnique):
 		return http.StatusBadRequest, "Client message ID must be unique. Please generate a new one"
 	case errors.Is(err, convostorage.ErrNotConversationParticipant):

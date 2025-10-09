@@ -16,7 +16,7 @@ func MapMessageDomainToEntity(msg domain.Message) entity.Message {
 		SenderID:       msg.SenderID,
 		Type:           string(msg.Type),
 		TextBody:       null.StringFromPtr(msg.TextBody),
-		MediaKey:       null.StringFromPtr(msg.MediaKey),
+		MediaKey:       null.StringFromPtr(msg.MediaUrl),
 		MediaSeconds:   FloatPtrToNullDecimal(msg.MediaSeconds),
 		ClientMSGID:    null.StringFrom(msg.ClientMsgID),
 	}
