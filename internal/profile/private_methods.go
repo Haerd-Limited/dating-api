@@ -61,7 +61,7 @@ func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
 	}
 
 	// height
-	if up.HeightCM != nil {
+	if up.HeightCM != nil && *up.HeightCM != 0 {
 		h := *up.HeightCM
 		if h < constants.MinHeight || h > constants.MaxHeight {
 			return fmt.Errorf("%w: height_cm out of range", ErrInvalidHeight)
