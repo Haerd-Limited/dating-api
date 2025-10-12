@@ -475,6 +475,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, profile.ErrContainsSocialMediaPromotion):
 		return http.StatusBadRequest, messages.SocialsNotAllowedMsg
+	case errors.Is(err, profile.ErrInvalidBirthdate):
+		return http.StatusBadRequest, fmt.Sprintf("Invalid birthdate. You must be at least %v and at most %v", constants.MinAge, constants.MaxAge)
 	case errors.Is(err, profile.ErrInvalidPromptPosition):
 		return http.StatusBadRequest, "Invalid prompt position"
 	case errors.Is(err, profile.ErrDuplicatePromptPosition):
