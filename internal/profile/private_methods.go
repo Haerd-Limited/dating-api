@@ -42,7 +42,7 @@ func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
 		}
 	}
 	// birthdate
-	if up.Birthdate != nil {
+	if up.Birthdate != nil && !up.Birthdate.IsZero() {
 		bd := *up.Birthdate
 		today := time.Now().UTC()
 
