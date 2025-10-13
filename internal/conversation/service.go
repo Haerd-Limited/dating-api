@@ -274,6 +274,8 @@ func (s *service) validateMessage(msg domain.Message) error {
 	}
 
 	switch msg.Type {
+	case domain.MessageTypeSystem:
+		return nil
 	case domain.MessageTypeText:
 		// Require non-empty text (adjust per your product rules)
 		if msg.TextBody == nil || strings.TrimSpace(*msg.TextBody) == "" {
