@@ -466,11 +466,6 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
-const (
-	InvalidUsernameLengthMsg  = "Username must be between 3 and 20 characters long"
-	UsernameContainsSpacesMsg = "Username cannot contain spaces"
-)
-
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, profile.ErrContainsSocialMediaPromotion):
@@ -500,9 +495,9 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	case errors.Is(err, commonErrors.ErrInvalidGender):
 		return http.StatusBadRequest, messages.InvalidGenderMsg
 	case errors.Is(err, user.ErrInvalidNameLength):
-		return http.StatusBadRequest, InvalidUsernameLengthMsg
+		return http.StatusBadRequest, "Username must be between 3 and 20 characters long"
 	case errors.Is(err, user.ErrNameContainsSpaces):
-		return http.StatusBadRequest, UsernameContainsSpacesMsg
+		return http.StatusBadRequest, "Username cannot contain spaces"
 
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg

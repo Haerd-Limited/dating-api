@@ -35,6 +35,8 @@ type Presigner interface {
 		purpose *string) ([]UploadSlot, error)
 }
 
+const KeyBase = "haerd-dating/users"
+
 func NewPresigner(ctx context.Context, region, bucket string, loadOpts ...func(*config.LoadOptions) error) (Presigner, error) {
 	if region == "" || bucket == "" {
 		return nil, errors.New("region and bucket are required")
@@ -76,11 +78,11 @@ func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count
 		var key string
 
 		if purpose != nil && *purpose == "voicenote" {
-			key = fmt.Sprintf("users/%s/messages/voice-notes/%s.%s", sanitize(userID), uuid.NewString(), ext)
+			key = fmt.Sprintf("%s/%s/messages/voice-notes/%s.%s", KeyBase, sanitize(userID), uuid.NewString(), ext)
 		} else if strings.Contains(contentType, "audio") {
-			key = fmt.Sprintf("users/%s/prompts/%s.%s", sanitize(userID), uuid.NewString(), ext)
+			key = fmt.Sprintf("%s/%s/prompts/%s.%s", KeyBase, sanitize(userID), uuid.NewString(), ext)
 		} else {
-			key = fmt.Sprintf("users/%s/photos/%s.%s", sanitize(userID), uuid.NewString(), ext)
+			key = fmt.Sprintf("%s/%s/profile-photos/%s.%s", KeyBase, sanitize(userID), uuid.NewString(), ext)
 		}
 
 		req := &s3.PutObjectInput{
