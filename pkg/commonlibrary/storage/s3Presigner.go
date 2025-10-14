@@ -36,7 +36,7 @@ type Presigner interface {
 		purpose *string) ([]UploadSlot, error)
 }
 
-func NewPresigner(ctx context.Context, region, bucket string, loadOpts ...func(*config.LoadOptions) error) (Presigner, error) {
+func NewPresigner(ctx context.Context, env, region, bucket string, loadOpts ...func(*config.LoadOptions) error) (Presigner, error) {
 	if region == "" || bucket == "" {
 		return nil, errors.New("region and bucket are required")
 	}
@@ -52,6 +52,7 @@ func NewPresigner(ctx context.Context, region, bucket string, loadOpts ...func(*
 		bucket:    bucket,
 		region:    region,
 		presigner: s3.NewPresignClient(client),
+		env:       env,
 	}, nil
 }
 

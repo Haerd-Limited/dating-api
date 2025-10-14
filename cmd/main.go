@@ -77,7 +77,7 @@ func main() {
 
 	debug.SetGCPercent(20)
 
-	s3Presigner, err := s3Storage.NewPresigner(ctx, cfg.AWSRegion, cfg.S3BucketName)
+	s3Presigner, err := s3Storage.NewPresigner(ctx, cfg.Env, cfg.AWSRegion, cfg.S3BucketName)
 	if err != nil {
 		logger.Sugar().Fatalf("failed to create S3 presigner: %v", err)
 	}
