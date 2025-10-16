@@ -18,6 +18,7 @@ type Config struct {
 	Env                        string `mapstructure:"ENV" yaml:"env" validate:"required"`
 	JwtSecret                  string `mapstructure:"JWT_SECRET" yaml:"jwt_secret" validate:"required"`
 	AWSRegion                  string `mapstructure:"AWS_REGION" yaml:"aws_region" validate:"required"`
+	AWSRekognitionRegion       string `mapstructure:"AWS_REKOGNITION_REGION" yaml:"aws_rekognition_region" validate:"required"`
 	AWSAccessKeyID             string `mapstructure:"AWS_ACCESS_KEY_ID" yaml:"aws_access_key_id" validate:"required"`
 	AWSSecretAccessKey         string `mapstructure:"AWS_SECRET_ACCESS_KEY" yaml:"aws_secret_access_key" validate:"required"`
 	S3BucketName               string `mapstructure:"S3_BUCKET_NAME" yaml:"s3_bucket_name" validate:"required"`
@@ -60,6 +61,7 @@ func LoadConfig() (*Config, error) {
 		TwilioAccountSID:           viper.GetString("TWILIO_ACCOUNT_SID"),
 		TwilioAuthToken:            viper.GetString("TWILIO_AUTH_TOKEN"),
 		TwilioNumber:               viper.GetString("TWILIO_NUMBER"),
+		AWSRekognitionRegion:       viper.GetString("AWS_REKOGNITION_REGION"),
 	}
 
 	// Validate the config.

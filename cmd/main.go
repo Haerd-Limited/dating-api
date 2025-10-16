@@ -109,7 +109,7 @@ func main() {
 	hub := realtime.NewHub()
 	flake := ids.NewSnowflake(1)
 
-	rek, err := aws.NewRek(ctx, cfg.AWSRegion)
+	rek, err := aws.NewRek(ctx, cfg.AWSRekognitionRegion)
 	if err != nil {
 		logger.Sugar().Fatalf("failed to create rek: %v", err)
 	}
@@ -117,7 +117,7 @@ func main() {
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner, s3Reader, cfg.Env)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo)
-	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRegion, verificationRepo, awsService, profileService, logger)
+	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger)
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
 	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
 	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
