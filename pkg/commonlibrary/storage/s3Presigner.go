@@ -73,7 +73,7 @@ func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count
 	}
 
 	slots := make([]UploadSlot, 0, count)
-	var KeyBase = fmt.Sprintf("haerd-dating/%s/users/%s", p.env, sanitize(userID))
+	KeyBase := fmt.Sprintf("%s/users/%s", p.env, sanitize(userID))
 
 	for i := 0; i < count; i++ {
 		var key string
