@@ -41,6 +41,9 @@ func TestToOne(t *testing.T) {
 	t.Run("UserProfileToHabitUsingSmoking", testUserProfileToOneHabitUsingSmoking)
 	t.Run("UserProfileToUserUsingUser", testUserProfileToOneUserUsingUser)
 	t.Run("UserThemeToUserUsingUser", testUserThemeToOneUserUsingUser)
+	t.Run("UserVerificationStatusToVerificationAttemptUsingLastAttempt", testUserVerificationStatusToOneVerificationAttemptUsingLastAttempt)
+	t.Run("UserVerificationStatusToUserUsingUser", testUserVerificationStatusToOneUserUsingUser)
+	t.Run("VerificationAttemptToUserUsingUser", testVerificationAttemptToOneUserUsingUser)
 	t.Run("VoicePromptToPromptTypeUsingVoicePromptPromptType", testVoicePromptToOnePromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingUser", testVoicePromptToOneUserUsingUser)
 }
@@ -51,6 +54,7 @@ func TestOneToOne(t *testing.T) {
 	t.Run("UserToUserPreferenceUsingUserPreference", testUserOneToOneUserPreferenceUsingUserPreference)
 	t.Run("UserToUserProfileUsingUserProfile", testUserOneToOneUserProfileUsingUserProfile)
 	t.Run("UserToUserThemeUsingUserTheme", testUserOneToOneUserThemeUsingUserTheme)
+	t.Run("UserToUserVerificationStatusUsingUserVerificationStatus", testUserOneToOneUserVerificationStatusUsingUserVerificationStatus)
 }
 
 // TestToMany tests cannot be run in parallel
@@ -90,7 +94,9 @@ func TestToMany(t *testing.T) {
 	t.Run("UserToInterests", testUserToManyInterests)
 	t.Run("UserToLanguages", testUserToManyLanguages)
 	t.Run("UserToUserProfileVisibilities", testUserToManyUserProfileVisibilities)
+	t.Run("UserToVerificationAttempts", testUserToManyVerificationAttempts)
 	t.Run("UserToVoicePrompts", testUserToManyVoicePrompts)
+	t.Run("VerificationAttemptToLastAttemptUserVerificationStatuses", testVerificationAttemptToManyLastAttemptUserVerificationStatuses)
 	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyPromptSwipes)
 }
 
@@ -130,6 +136,9 @@ func TestToOneSet(t *testing.T) {
 	t.Run("UserProfileToHabitUsingSmokingUserProfiles", testUserProfileToOneSetOpHabitUsingSmoking)
 	t.Run("UserProfileToUserUsingUserProfile", testUserProfileToOneSetOpUserUsingUser)
 	t.Run("UserThemeToUserUsingUserTheme", testUserThemeToOneSetOpUserUsingUser)
+	t.Run("UserVerificationStatusToVerificationAttemptUsingLastAttemptUserVerificationStatuses", testUserVerificationStatusToOneSetOpVerificationAttemptUsingLastAttempt)
+	t.Run("UserVerificationStatusToUserUsingUserVerificationStatus", testUserVerificationStatusToOneSetOpUserUsingUser)
+	t.Run("VerificationAttemptToUserUsingVerificationAttempts", testVerificationAttemptToOneSetOpUserUsingUser)
 	t.Run("VoicePromptToPromptTypeUsingVoicePrompts", testVoicePromptToOneSetOpPromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingVoicePrompts", testVoicePromptToOneSetOpUserUsingUser)
 }
@@ -152,6 +161,7 @@ func TestToOneRemove(t *testing.T) {
 	t.Run("UserProfileToPoliticalBeliefUsingUserProfiles", testUserProfileToOneRemoveOpPoliticalBeliefUsingPoliticalBelief)
 	t.Run("UserProfileToReligionUsingUserProfiles", testUserProfileToOneRemoveOpReligionUsingReligion)
 	t.Run("UserProfileToHabitUsingSmokingUserProfiles", testUserProfileToOneRemoveOpHabitUsingSmoking)
+	t.Run("UserVerificationStatusToVerificationAttemptUsingLastAttemptUserVerificationStatuses", testUserVerificationStatusToOneRemoveOpVerificationAttemptUsingLastAttempt)
 	t.Run("VoicePromptToPromptTypeUsingVoicePrompts", testVoicePromptToOneRemoveOpPromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingVoicePrompts", testVoicePromptToOneRemoveOpUserUsingUser)
 }
@@ -162,6 +172,7 @@ func TestOneToOneSet(t *testing.T) {
 	t.Run("UserToUserPreferenceUsingUserPreference", testUserOneToOneSetOpUserPreferenceUsingUserPreference)
 	t.Run("UserToUserProfileUsingUserProfile", testUserOneToOneSetOpUserProfileUsingUserProfile)
 	t.Run("UserToUserThemeUsingUserTheme", testUserOneToOneSetOpUserThemeUsingUserTheme)
+	t.Run("UserToUserVerificationStatusUsingUserVerificationStatus", testUserOneToOneSetOpUserVerificationStatusUsingUserVerificationStatus)
 }
 
 // TestOneToOneRemove tests cannot be run in parallel
@@ -205,7 +216,9 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("UserToInterests", testUserToManyAddOpInterests)
 	t.Run("UserToLanguages", testUserToManyAddOpLanguages)
 	t.Run("UserToUserProfileVisibilities", testUserToManyAddOpUserProfileVisibilities)
+	t.Run("UserToVerificationAttempts", testUserToManyAddOpVerificationAttempts)
 	t.Run("UserToVoicePrompts", testUserToManyAddOpVoicePrompts)
+	t.Run("VerificationAttemptToLastAttemptUserVerificationStatuses", testVerificationAttemptToManyAddOpLastAttemptUserVerificationStatuses)
 	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyAddOpPromptSwipes)
 }
 
@@ -232,6 +245,7 @@ func TestToManySet(t *testing.T) {
 	t.Run("UserToInterests", testUserToManySetOpInterests)
 	t.Run("UserToLanguages", testUserToManySetOpLanguages)
 	t.Run("UserToVoicePrompts", testUserToManySetOpVoicePrompts)
+	t.Run("VerificationAttemptToLastAttemptUserVerificationStatuses", testVerificationAttemptToManySetOpLastAttemptUserVerificationStatuses)
 	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManySetOpPromptSwipes)
 }
 
@@ -258,5 +272,6 @@ func TestToManyRemove(t *testing.T) {
 	t.Run("UserToInterests", testUserToManyRemoveOpInterests)
 	t.Run("UserToLanguages", testUserToManyRemoveOpLanguages)
 	t.Run("UserToVoicePrompts", testUserToManyRemoveOpVoicePrompts)
+	t.Run("VerificationAttemptToLastAttemptUserVerificationStatuses", testVerificationAttemptToManyRemoveOpLastAttemptUserVerificationStatuses)
 	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyRemoveOpPromptSwipes)
 }

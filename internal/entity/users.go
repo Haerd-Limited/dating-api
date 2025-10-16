@@ -104,6 +104,7 @@ var UserRels = struct {
 	UserPreference           string
 	UserProfile              string
 	UserTheme                string
+	UserVerificationStatus   string
 	ConversationParticipants string
 	UserAConversations       string
 	UserBConversations       string
@@ -119,11 +120,13 @@ var UserRels = struct {
 	Interests                string
 	Languages                string
 	UserProfileVisibilities  string
+	VerificationAttempts     string
 	VoicePrompts             string
 }{
 	UserPreference:           "UserPreference",
 	UserProfile:              "UserProfile",
 	UserTheme:                "UserTheme",
+	UserVerificationStatus:   "UserVerificationStatus",
 	ConversationParticipants: "ConversationParticipants",
 	UserAConversations:       "UserAConversations",
 	UserBConversations:       "UserBConversations",
@@ -139,6 +142,7 @@ var UserRels = struct {
 	Interests:                "Interests",
 	Languages:                "Languages",
 	UserProfileVisibilities:  "UserProfileVisibilities",
+	VerificationAttempts:     "VerificationAttempts",
 	VoicePrompts:             "VoicePrompts",
 }
 
@@ -147,6 +151,7 @@ type userR struct {
 	UserPreference           *UserPreference              `boil:"UserPreference" json:"UserPreference" toml:"UserPreference" yaml:"UserPreference"`
 	UserProfile              *UserProfile                 `boil:"UserProfile" json:"UserProfile" toml:"UserProfile" yaml:"UserProfile"`
 	UserTheme                *UserTheme                   `boil:"UserTheme" json:"UserTheme" toml:"UserTheme" yaml:"UserTheme"`
+	UserVerificationStatus   *UserVerificationStatus      `boil:"UserVerificationStatus" json:"UserVerificationStatus" toml:"UserVerificationStatus" yaml:"UserVerificationStatus"`
 	ConversationParticipants ConversationParticipantSlice `boil:"ConversationParticipants" json:"ConversationParticipants" toml:"ConversationParticipants" yaml:"ConversationParticipants"`
 	UserAConversations       ConversationSlice            `boil:"UserAConversations" json:"UserAConversations" toml:"UserAConversations" yaml:"UserAConversations"`
 	UserBConversations       ConversationSlice            `boil:"UserBConversations" json:"UserBConversations" toml:"UserBConversations" yaml:"UserBConversations"`
@@ -162,6 +167,7 @@ type userR struct {
 	Interests                InterestSlice                `boil:"Interests" json:"Interests" toml:"Interests" yaml:"Interests"`
 	Languages                LanguageSlice                `boil:"Languages" json:"Languages" toml:"Languages" yaml:"Languages"`
 	UserProfileVisibilities  UserProfileVisibilitySlice   `boil:"UserProfileVisibilities" json:"UserProfileVisibilities" toml:"UserProfileVisibilities" yaml:"UserProfileVisibilities"`
+	VerificationAttempts     VerificationAttemptSlice     `boil:"VerificationAttempts" json:"VerificationAttempts" toml:"VerificationAttempts" yaml:"VerificationAttempts"`
 	VoicePrompts             VoicePromptSlice             `boil:"VoicePrompts" json:"VoicePrompts" toml:"VoicePrompts" yaml:"VoicePrompts"`
 }
 
@@ -216,6 +222,22 @@ func (r *userR) GetUserTheme() *UserTheme {
 	}
 
 	return r.UserTheme
+}
+
+func (o *User) GetUserVerificationStatus() *UserVerificationStatus {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetUserVerificationStatus()
+}
+
+func (r *userR) GetUserVerificationStatus() *UserVerificationStatus {
+	if r == nil {
+		return nil
+	}
+
+	return r.UserVerificationStatus
 }
 
 func (o *User) GetConversationParticipants() ConversationParticipantSlice {
@@ -456,6 +478,22 @@ func (r *userR) GetUserProfileVisibilities() UserProfileVisibilitySlice {
 	}
 
 	return r.UserProfileVisibilities
+}
+
+func (o *User) GetVerificationAttempts() VerificationAttemptSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetVerificationAttempts()
+}
+
+func (r *userR) GetVerificationAttempts() VerificationAttemptSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.VerificationAttempts
 }
 
 func (o *User) GetVoicePrompts() VoicePromptSlice {
@@ -823,6 +861,17 @@ func (o *User) UserTheme(mods ...qm.QueryMod) userThemeQuery {
 	return UserThemes(queryMods...)
 }
 
+// UserVerificationStatus pointed to by the foreign key.
+func (o *User) UserVerificationStatus(mods ...qm.QueryMod) userVerificationStatusQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"user_id\" = ?", o.ID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return UserVerificationStatuses(queryMods...)
+}
+
 // ConversationParticipants retrieves all the conversation_participant's ConversationParticipants with an executor.
 func (o *User) ConversationParticipants(mods ...qm.QueryMod) conversationParticipantQuery {
 	var queryMods []qm.QueryMod
@@ -1033,6 +1082,20 @@ func (o *User) UserProfileVisibilities(mods ...qm.QueryMod) userProfileVisibilit
 	)
 
 	return UserProfileVisibilities(queryMods...)
+}
+
+// VerificationAttempts retrieves all the verification_attempt's VerificationAttempts with an executor.
+func (o *User) VerificationAttempts(mods ...qm.QueryMod) verificationAttemptQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"verification_attempts\".\"user_id\"=?", o.ID),
+	)
+
+	return VerificationAttempts(queryMods...)
 }
 
 // VoicePrompts retrieves all the voice_prompt's VoicePrompts with an executor.
@@ -1390,6 +1453,123 @@ func (userL) LoadUserTheme(ctx context.Context, e boil.ContextExecutor, singular
 				local.R.UserTheme = foreign
 				if foreign.R == nil {
 					foreign.R = &userThemeR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadUserVerificationStatus allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (userL) LoadUserVerificationStatus(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_verification_status`),
+		qm.WhereIn(`user_verification_status.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load UserVerificationStatus")
+	}
+
+	var resultSlice []*UserVerificationStatus
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice UserVerificationStatus")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for user_verification_status")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_verification_status")
+	}
+
+	if len(userVerificationStatusAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.UserVerificationStatus = foreign
+		if foreign.R == nil {
+			foreign.R = &userVerificationStatusR{}
+		}
+		foreign.R.User = object
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.UserID {
+				local.R.UserVerificationStatus = foreign
+				if foreign.R == nil {
+					foreign.R = &userVerificationStatusR{}
 				}
 				foreign.R.User = local
 				break
@@ -3129,6 +3309,119 @@ func (userL) LoadUserProfileVisibilities(ctx context.Context, e boil.ContextExec
 	return nil
 }
 
+// LoadVerificationAttempts allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadVerificationAttempts(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`verification_attempts`),
+		qm.WhereIn(`verification_attempts.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load verification_attempts")
+	}
+
+	var resultSlice []*VerificationAttempt
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice verification_attempts")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on verification_attempts")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for verification_attempts")
+	}
+
+	if len(verificationAttemptAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.VerificationAttempts = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &verificationAttemptR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.VerificationAttempts = append(local.R.VerificationAttempts, foreign)
+				if foreign.R == nil {
+					foreign.R = &verificationAttemptR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadVoicePrompts allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (userL) LoadVoicePrompts(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
@@ -3384,6 +3677,56 @@ func (o *User) SetUserTheme(ctx context.Context, exec boil.ContextExecutor, inse
 
 	if related.R == nil {
 		related.R = &userThemeR{
+			User: o,
+		}
+	} else {
+		related.R.User = o
+	}
+	return nil
+}
+
+// SetUserVerificationStatus of the user to the related item.
+// Sets o.R.UserVerificationStatus to related.
+// Adds o to related.R.User.
+func (o *User) SetUserVerificationStatus(ctx context.Context, exec boil.ContextExecutor, insert bool, related *UserVerificationStatus) error {
+	var err error
+
+	if insert {
+		related.UserID = o.ID
+
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE \"user_verification_status\" SET %s WHERE %s",
+			strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+			strmangle.WhereClause("\"", "\"", 2, userVerificationStatusPrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.UserID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.UserID = o.ID
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			UserVerificationStatus: related,
+		}
+	} else {
+		o.R.UserVerificationStatus = related
+	}
+
+	if related.R == nil {
+		related.R = &userVerificationStatusR{
 			User: o,
 		}
 	} else {
@@ -4436,6 +4779,59 @@ func (o *User) AddUserProfileVisibilities(ctx context.Context, exec boil.Context
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &userProfileVisibilityR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddVerificationAttempts adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.VerificationAttempts.
+// Sets related.R.User appropriately.
+func (o *User) AddVerificationAttempts(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*VerificationAttempt) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"verification_attempts\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, verificationAttemptPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			VerificationAttempts: related,
+		}
+	} else {
+		o.R.VerificationAttempts = append(o.R.VerificationAttempts, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &verificationAttemptR{
 				User: o,
 			}
 		} else {

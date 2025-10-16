@@ -39,7 +39,9 @@ var TableNames = struct {
 	UserProfileVisibility    string
 	UserProfiles             string
 	UserTheme                string
+	UserVerificationStatus   string
 	Users                    string
+	VerificationAttempts     string
 	VerificationCodes        string
 	VoicePrompts             string
 }{
@@ -78,7 +80,9 @@ var TableNames = struct {
 	UserProfileVisibility:    "user_profile_visibility",
 	UserProfiles:             "user_profiles",
 	UserTheme:                "user_theme",
+	UserVerificationStatus:   "user_verification_status",
 	Users:                    "users",
+	VerificationAttempts:     "verification_attempts",
 	VerificationCodes:        "verification_codes",
 	VoicePrompts:             "voice_prompts",
 }

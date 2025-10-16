@@ -72,7 +72,11 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("UserThemes", testUserThemesUpsert)
 
+	t.Run("UserVerificationStatuses", testUserVerificationStatusesUpsert)
+
 	t.Run("Users", testUsersUpsert)
+
+	t.Run("VerificationAttempts", testVerificationAttemptsUpsert)
 
 	t.Run("VerificationCodes", testVerificationCodesUpsert)
 

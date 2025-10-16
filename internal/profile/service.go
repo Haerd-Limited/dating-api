@@ -14,6 +14,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
+	verificationstorage "github.com/Haerd-Limited/dating-api/internal/verification/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
@@ -35,20 +36,23 @@ type Service interface {
 }
 
 type service struct {
-	logger      *zap.Logger
-	profileRepo storage.ProfileRepository
-	lookupRepo  lookupstorage.LookupRepository
+	logger           *zap.Logger
+	profileRepo      storage.ProfileRepository
+	lookupRepo       lookupstorage.LookupRepository
+	verificationRepo verificationstorage.VerificationRepository
 }
 
 func NewProfileService(
 	logger *zap.Logger,
 	profileRepository storage.ProfileRepository,
 	lookupRepository lookupstorage.LookupRepository,
+	verificationRepository verificationstorage.VerificationRepository,
 ) Service {
 	return &service{
-		logger:      logger,
-		profileRepo: profileRepository,
-		lookupRepo:  lookupRepository,
+		logger:           logger,
+		profileRepo:      profileRepository,
+		lookupRepo:       lookupRepository,
+		verificationRepo: verificationRepository,
 	}
 }
 
@@ -286,6 +290,20 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		prof.EthnicityID = *up.EthnicityID
 	}
 
+	if len(up.Photos) > 0 {
+		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID))
+		if err != nil {
+			return fmt.Errorf("insert user photos: %w", err)
+		}
+
+		err = s.verificationRepo.InvalidatePhotoVerification(ctx, up.UserID)
+		if err != nil {
+			return fmt.Errorf("invalidate photo verification: %w", err)
+		}
+
+		prof.Verified = false
+	}
+
 	// Persist
 	err = s.updateUserProfile(ctx, prof)
 	if err != nil {
@@ -303,13 +321,6 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		err = s.profileRepo.UpsertUserSpokenLanguages(ctx, up.UserID, up.SpokenLanguages)
 		if err != nil {
 			return fmt.Errorf("upsert user spoken languages: %w", err)
-		}
-	}
-
-	if len(up.Photos) > 0 {
-		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID))
-		if err != nil {
-			return fmt.Errorf("insert user photos: %w", err)
 		}
 	}
 

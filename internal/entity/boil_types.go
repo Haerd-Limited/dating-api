@@ -97,3 +97,31 @@ func AllVisibilityLevel() []string {
 		VisibilityLevelAlwaysVisible,
 	}
 }
+
+// Enum values for VerificationType
+const (
+	VerificationTypePhoto string = "photo"
+)
+
+func AllVerificationType() []string {
+	return []string{
+		VerificationTypePhoto,
+	}
+}
+
+// Enum values for VerificationStatus
+const (
+	VerificationStatusPending     string = "pending"
+	VerificationStatusPassed      string = "passed"
+	VerificationStatusFailed      string = "failed"
+	VerificationStatusNeedsReview string = "needs_review"
+)
+
+func AllVerificationStatus() []string {
+	return []string{
+		VerificationStatusPending,
+		VerificationStatusPassed,
+		VerificationStatusFailed,
+		VerificationStatusNeedsReview,
+	}
+}

@@ -40,6 +40,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
+	"github.com/Haerd-Limited/dating-api/internal/verification"
+	verificationstorage "github.com/Haerd-Limited/dating-api/internal/verification/storage"
 	commondb "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/db"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/ids"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
@@ -87,7 +89,13 @@ func main() {
 		logger.Sugar().Fatalf("failed to create S3 uploader: %v", err)
 	}
 
+	s3Reader, err := s3Storage.NewS3Reader(ctx, logger, cfg.AWSRegion, cfg.S3BucketName)
+	if err != nil {
+		logger.Sugar().Fatalf("failed to create S3 reader: %v", err)
+	}
+
 	// notificationRepo := notificationStorage.NewNotificationRepository(db)
+	verificationRepo := verificationstorage.NewVerificationRepository(db)
 	lookupRepo := lookupstorage.NewLookupRepository(db)
 	profileRepo := profilestorage.NewProfileRepository(db)
 	preferenceRepo := preferencestorage.NewPreferenceRepository(db)
@@ -100,9 +108,16 @@ func main() {
 
 	hub := realtime.NewHub()
 	flake := ids.NewSnowflake(1)
-	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner)
+
+	rek, err := aws.NewRek(ctx, cfg.AWSRegion)
+	if err != nil {
+		logger.Sugar().Fatalf("failed to create rek: %v", err)
+	}
+
+	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner, s3Reader, cfg.Env)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
-	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo)
+	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo)
+	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRegion, verificationRepo, awsService, profileService, logger)
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
 	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
 	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
@@ -131,6 +146,7 @@ func main() {
 		mediaService,
 		lookupService,
 		hub,
+		verificationService,
 	)
 
 	// Start server with context

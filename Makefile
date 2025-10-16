@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  add_verified_to_profiles sql
+	@cd ./migrations && goose create  add_unique_attempt_index sql
 .PHONY: migrate-create
 
 

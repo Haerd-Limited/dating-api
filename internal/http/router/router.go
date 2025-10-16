@@ -16,6 +16,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile"
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime"
+	"github.com/Haerd-Limited/dating-api/internal/api/verification"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
@@ -26,6 +27,7 @@ import (
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internalrealtime "github.com/Haerd-Limited/dating-api/internal/realtime"
+	internalverification "github.com/Haerd-Limited/dating-api/internal/verification"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
 
@@ -41,6 +43,7 @@ func New(
 	mediaService internalmedia.Service,
 	lookupService internallookup.Service,
 	hub *internalrealtime.Hub,
+	verificationService internalverification.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -58,6 +61,7 @@ func New(
 	mediaHandler := media.NewMediaHandler(logger, mediaService)
 	lookupHandler := lookup.NewLookupHandler(logger, lookupService)
 	wsHandler := realtime.NewWsHandler(logger, hub, conversationService)
+	verificationHandler := verification.NewVerificationHandler(logger, verificationService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
@@ -148,7 +152,12 @@ func New(
 				r.Route("/users/me", func(r chi.Router) {
 					r.Get("/", profileHandler.GetMyProfile())
 					r.Patch("/", profileHandler.UpdateMyProfile())
-					r.Patch("/verify", profileHandler.Verify())
+					r.Patch("/verify", profileHandler.Verify()) // Simple version that doesnt use AWS. call when not in uat/prod.
+
+					r.Route("/verification", func(r chi.Router) {
+						r.Post("/photo/start", verificationHandler.Start()) // returns {session_id, region}
+						r.Post("/photo/complete", verificationHandler.Complete())
+					})
 					// TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})

@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"time"
@@ -10,6 +12,32 @@ import (
 
 	"github.com/rivo/uniseg"
 )
+
+// S3KeyFromURL extracts the S3 object key from a typical S3 URL like:
+// https://<bucket>.s3.<region>.amazonaws.com/<key>?<query>
+// Returns a cleaned, URL-decoded key (no leading slash).
+func S3KeyFromURL(raw string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+	// Decode %XX sequences and strip the leading slash
+	decodedPath, err := url.PathUnescape(u.Path)
+	if err != nil {
+		return "", err
+	}
+
+	if decodedPath == "" || decodedPath == "/" {
+		return "", errors.New("no key in URL path")
+	}
+	// Clean to remove any ./.. segments, then drop the leading /
+	key := strings.TrimPrefix(path.Clean(decodedPath), "/")
+	if key == "" {
+		return "", errors.New("empty key after cleaning")
+	}
+
+	return key, nil
+}
 
 // CalculateAge returns the age in years given a birthdate.
 func CalculateAge(birthdate time.Time) int {

@@ -461,7 +461,7 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err)
+	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
 	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
 	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
