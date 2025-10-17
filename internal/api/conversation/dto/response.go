@@ -30,9 +30,15 @@ type Conversation struct {
 }
 
 type Match struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"display_name"`
-	Emoji       string `json:"emoji"`
+	ID          string    `json:"id"`
+	DisplayName string    `json:"display_name"`
+	Emoji       string    `json:"emoji"`
+	Theme       UserTheme `json:"theme"`
+}
+
+type UserTheme struct {
+	BaseHex string   `json:"base_hex"`
+	Palette []string `json:"palette"`
 }
 
 type Message struct {

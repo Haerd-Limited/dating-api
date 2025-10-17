@@ -61,6 +61,10 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 			ID:          matchID,
 			DisplayName: matchProfile.DisplayName,
 			Emoji:       matchProfile.Emoji,
+			Theme: domain.Theme{
+				BaseHex: matchProfile.Theme.BaseHex,
+				Palette: matchProfile.Theme.Palette,
+			},
 		},
 		CreatedAt:      conversationEntity.CreatedAt,
 		LastActivityAt: conversationEntity.LastActivityAt,

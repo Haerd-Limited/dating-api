@@ -6,17 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	internalaws "github.com/Haerd-Limited/dating-api/internal/aws"
-	"github.com/Haerd-Limited/dating-api/internal/entity"
-	"github.com/Haerd-Limited/dating-api/internal/profile"
-	"github.com/Haerd-Limited/dating-api/internal/verification/domain"
-	"github.com/Haerd-Limited/dating-api/internal/verification/storage"
+
 	"github.com/aarondl/null/v8"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	rek "github.com/aws/aws-sdk-go-v2/service/rekognition"
 	"github.com/aws/aws-sdk-go-v2/service/rekognition/types"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+
+	internalaws "github.com/Haerd-Limited/dating-api/internal/aws"
+	"github.com/Haerd-Limited/dating-api/internal/entity"
+	"github.com/Haerd-Limited/dating-api/internal/profile"
+	"github.com/Haerd-Limited/dating-api/internal/verification/domain"
+	"github.com/Haerd-Limited/dating-api/internal/verification/storage"
 )
 
 type Service interface {
@@ -58,6 +60,7 @@ func (s *service) StartPhotoVerification(ctx context.Context, userID string) (do
 			zap.String("user_id", userID),
 			zap.String("session_id", existing.SessionID.String),
 		)
+
 		return domain.StartResult{SessionID: existing.SessionID.String, Region: s.region}, nil
 	}
 
@@ -65,14 +68,17 @@ func (s *service) StartPhotoVerification(ctx context.Context, userID string) (do
 	out, err := s.rek.CreateFaceLivenessSession(ctx, &rek.CreateFaceLivenessSessionInput{
 		ClientRequestToken: aws.String(tok),
 	})
+
 	if err != nil {
 		s.logger.Error("create liveness session failed",
 			zap.String("user_id", userID),
 			zap.String("client_token", tok),
 			zap.Error(err),
 		)
+
 		return domain.StartResult{}, fmt.Errorf("create face liveness session: %w", err)
 	}
+
 	sessionID := aws.ToString(out.SessionId)
 
 	// persist attempt
@@ -90,6 +96,7 @@ func (s *service) StartPhotoVerification(ctx context.Context, userID string) (do
 			zap.String("client_token", tok),
 			zap.Error(err),
 		)
+
 		return domain.StartResult{}, fmt.Errorf("create attempt: %w", err)
 	}
 
@@ -116,6 +123,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 			zap.String("user_id", userID), zap.String("session_id", sessionID), zap.Error(err))
 		return domain.CompleteResult{}, fmt.Errorf("get face liveness result: %w", err)
 	}
+
 	if res.Confidence == nil {
 		s.logger.Warn("liveness missing confidence",
 			zap.String("user_id", userID), zap.String("session_id", sessionID))
@@ -136,12 +144,15 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 			zap.Float64("liveness", confidence),
 			zap.Float64("threshold", domain.LivenessPassThreshold),
 		)
+
 		verificationAttempt.Status = entity.VerificationStatusFailed
 		verificationAttempt.LivenessScore = null.Float64From(confidence)
+
 		reasonCodes, mErr := json.Marshal([]string{"liveness_low_confidence"})
 		if mErr != nil {
 			return domain.CompleteResult{}, fmt.Errorf("marshal reason codes: %w", mErr)
 		}
+
 		verificationAttempt.ReasonCodes = null.JSONFrom(reasonCodes)
 
 		err = s.verificationRepo.MarkAttempt(ctx, *verificationAttempt)
@@ -152,8 +163,10 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 				zap.Float64("liveness", confidence),
 				zap.Strings("reasons", []string{"liveness_low_confidence"}),
 			)
+
 			return domain.CompleteResult{}, fmt.Errorf("mark attempt: %w", err)
 		}
+
 		return domain.CompleteResult{Status: entity.VerificationStatusFailed, PhotoVerified: false, Reasons: []string{"liveness_failed"}}, nil
 	}
 
@@ -164,13 +177,14 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 	} else {
 		return domain.CompleteResult{}, errors.New("no reference image from liveness result")
 	}
-	//todo: On haerd-dating/verification/, set an S3 lifecycle rule to expire after 7–30 days. (Ops: S3 → Bucket → Management → Lifecycle rules.)
+	// todo: On haerd-dating/verification/, set an S3 lifecycle rule to expire after 7–30 days. (Ops: S3 → Bucket → Management → Lifecycle rules.)
 	bestKey, bErr := s.awsService.StoreBestFrame(ctx, bestFrame, userID)
 	if bErr == nil {
 		s.logger.Debug("best frame stored",
 			zap.String("user_id", userID), zap.String("session_id", sessionID),
 			zap.String("best_frame_key", bestKey),
 		)
+
 		verificationAttempt.BestFrameS3Key = null.StringFrom(bestKey)
 		// don’t fail the whole flow if this write fails; it’s only for review/audit
 	}
@@ -182,6 +196,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 	}
 
 	var bestSim float64
+
 	for _, key := range keys {
 		targetImgBytes, gErr := s.awsService.GetObjectBytes(ctx, key)
 		if gErr != nil {
@@ -203,6 +218,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 			}
 		}
 	}
+
 	s.logger.Info("compare summary",
 		zap.String("user_id", userID), zap.String("session_id", sessionID),
 		zap.Float32("liveness", *res.Confidence),
@@ -226,33 +242,40 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 		if err != nil {
 			return domain.CompleteResult{}, fmt.Errorf("set user photo verified: %w", err)
 		}
+
 		err = s.profileService.VerifyProfile(ctx, userID)
 		if err != nil {
 			return domain.CompleteResult{}, fmt.Errorf("verify profile: %w", err)
 		}
+
 		s.logger.Info("verification passed",
 			zap.String("attempt_id", verificationAttempt.ID),
 			zap.String("user_id", userID),
 			zap.Float32("liveness", *res.Confidence),
 			zap.Float64("best_similarity", bestSim),
 		)
+
 		return domain.CompleteResult{Status: entity.VerificationStatusPassed, MatchScore: bestSim, PhotoVerified: true}, nil
 	}
 
-	//todo: create a dashboard for manual review.
+	// todo: create a dashboard for manual review.
 	verificationAttempt.Status = entity.VerificationStatusNeedsReview
 	confidence := float64(*res.Confidence)
 	verificationAttempt.LivenessScore = null.Float64From(confidence)
+
 	reasonCodes, mErr := json.Marshal([]string{"low_similarity"})
 	if mErr != nil {
 		return domain.CompleteResult{}, fmt.Errorf("marshal reason codes: %w", mErr)
 	}
+
 	verificationAttempt.ReasonCodes = null.JSONFrom(reasonCodes)
 	verificationAttempt.MatchScore = null.Float64From(bestSim)
+
 	err = s.verificationRepo.MarkAttempt(ctx, *verificationAttempt)
 	if err != nil {
 		return domain.CompleteResult{}, fmt.Errorf("mark attempt: %w", err)
 	}
+
 	s.logger.Info("verification needs review",
 		zap.String("attempt_id", verificationAttempt.ID),
 		zap.String("user_id", userID),

@@ -120,6 +120,10 @@ func MapConversationToDto(convo domain.Conversation) dto.Conversation {
 			ID:          convo.MatchedUser.ID,
 			DisplayName: convo.MatchedUser.DisplayName,
 			Emoji:       convo.MatchedUser.Emoji,
+			Theme: dto.UserTheme{
+				BaseHex: convo.MatchedUser.Theme.BaseHex,
+				Palette: convo.MatchedUser.Theme.Palette,
+			},
 		},
 		CreatedAt:      convo.CreatedAt,
 		LastActivityAt: convo.LastActivityAt,
