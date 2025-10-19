@@ -79,7 +79,7 @@ var (
 )
 
 func (s *service) GetConversationScore(ctx context.Context, userID string, convoID string) (int, error) {
-	_, _, shared, err := s.scoreService.GetScores(ctx, convoID, userID)
+	_, _, shared, err := s.scoreService.GetScores(ctx, convoID, userID, nil)
 	if err != nil {
 		return 0, fmt.Errorf("get scores userID= %s convoID= %s: %w", userID, convoID, err)
 	}

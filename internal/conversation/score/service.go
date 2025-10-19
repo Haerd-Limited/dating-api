@@ -18,7 +18,7 @@ type Service interface {
 	Apply(ctx context.Context, conversationID, userID string, c domain.Contribution) (domain.ScoreSnapshot, error)
 	GetSnapshot(ctx context.Context, conversationID, userID string) (domain.ScoreSnapshot, error)
 	ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID string, c domain.Contribution) (domain.ScoreSnapshot, error)
-	GetScores(ctx context.Context, convoID, userID string) (me int, them int, shared int, err error)
+	GetScores(ctx context.Context, convoID, userID string, tx *sql.Tx) (me int, them int, shared int, err error)
 }
 
 type service struct {
@@ -92,7 +92,7 @@ func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID st
 	}
 
 	// 4) read both scores
-	me, them, shared, err := s.GetScores(ctx, convoID, userID)
+	me, them, shared, err := s.GetScores(ctx, convoID, userID, tx)
 	if err != nil {
 		return domain.ScoreSnapshot{}, fmt.Errorf("get scores userID=%s convoID=%s: %w", userID, convoID, err)
 	}
@@ -100,10 +100,6 @@ func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID st
 	canReveal := shared >= cfg.Threshold
 
 	// The reveal happens via the handshake endpoint when both confirm.
-
-	if err := tx.Commit(); err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("commit tx: %w", err)
-	}
 
 	// Extend your snapshot to include shared/min & canReveal.
 	// If you can’t change the struct yet, repurpose 'Revealed' to carry 'canReveal' temporarily.
@@ -180,7 +176,7 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 	}
 
 	// 4) read scores
-	me, them, shared, err := s.GetScores(ctx, convoID, userID)
+	me, them, shared, err := s.GetScores(ctx, convoID, userID, nil)
 	if err != nil {
 		return domain.ScoreSnapshot{}, fmt.Errorf("get scores userID=%s convoID=%s: %w", userID, convoID, err)
 	}
@@ -208,14 +204,14 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 	}, nil
 }
 
-func (s *service) GetScores(ctx context.Context, convoID, userID string) (me int, them int, shared int, err error) {
+func (s *service) GetScores(ctx context.Context, convoID, userID string, tx *sql.Tx) (me int, them int, shared int, err error) {
 	// 4) read both scores
-	me, err = s.conversationRepo.GetUserConversationScore(ctx, userID, convoID)
+	me, err = s.conversationRepo.GetUserConversationScore(ctx, userID, convoID, tx)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("get user conversation score: %w", err)
 	}
 
-	them, err = s.conversationRepo.GetOtherParticipantConversationScore(ctx, userID, convoID)
+	them, err = s.conversationRepo.GetOtherParticipantConversationScore(ctx, userID, convoID, tx)
 	if err != nil {
 		return 0, 0, 0, fmt.Errorf("get other participant conversation score: %w", err)
 	}
@@ -239,7 +235,7 @@ func (s *service) GetSnapshot(ctx context.Context, convoID, userID string) (doma
 		return domain.ScoreSnapshot{}, fmt.Errorf("get conversation by ID convoID=%s: %w", convoID, err)
 	}
 
-	me, them, shared, err := s.GetScores(ctx, convoID, userID)
+	me, them, shared, err := s.GetScores(ctx, convoID, userID, nil)
 	if err != nil {
 		return domain.ScoreSnapshot{}, fmt.Errorf("get scores : %w", err)
 	}

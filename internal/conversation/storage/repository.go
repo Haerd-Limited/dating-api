@@ -33,8 +33,8 @@ type ConversationRepository interface {
 	GetScoringBonuses(ctx context.Context) (entity.ScoringBonuse, error)
 	GetScoringCall(ctx context.Context) (entity.ScoringCall, error)
 	GetScoringVoice(ctx context.Context) (entity.ScoringVoice, error)
-	GetUserConversationScore(ctx context.Context, userID, convoID string) (int, error)
-	GetOtherParticipantConversationScore(ctx context.Context, userID, convoID string) (int, error)
+	GetUserConversationScore(ctx context.Context, userID, convoID string, tx *sql.Tx) (int, error)
+	GetOtherParticipantConversationScore(ctx context.Context, userID, convoID string, tx *sql.Tx) (int, error)
 	SetConversationToRevealed(ctx context.Context, tx *sql.Tx, conversationID string) error
 	CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error
 }
@@ -88,11 +88,18 @@ func (r *repository) SetConversationToRevealed(ctx context.Context, tx *sql.Tx, 
 	return nil
 }
 
-func (r *repository) GetOtherParticipantConversationScore(ctx context.Context, userID, convoID string) (int, error) {
+func (r *repository) GetOtherParticipantConversationScore(ctx context.Context, userID, convoID string, tx *sql.Tx) (int, error) {
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
 	convoParticipants, err := entity.ConversationParticipants(
 		entity.ConversationParticipantWhere.UserID.NEQ(userID),
 		entity.ConversationParticipantWhere.ConversationID.EQ(convoID),
-	).One(ctx, r.db)
+	).One(ctx, exec)
 	if err != nil {
 		return 0, err
 	}
@@ -135,11 +142,18 @@ func (r *repository) CreateConversationScores(ctx context.Context, convoID, user
 	return nil
 }
 
-func (r *repository) GetUserConversationScore(ctx context.Context, userID, convoID string) (int, error) {
+func (r *repository) GetUserConversationScore(ctx context.Context, userID, convoID string, tx *sql.Tx) (int, error) {
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
 	convoParticipants, err := entity.ConversationParticipants(
 		entity.ConversationParticipantWhere.UserID.EQ(userID),
 		entity.ConversationParticipantWhere.ConversationID.EQ(convoID),
-	).One(ctx, r.db)
+	).One(ctx, exec)
 	if err != nil {
 		return 0, err
 	}
