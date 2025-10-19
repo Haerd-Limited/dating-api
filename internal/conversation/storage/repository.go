@@ -449,24 +449,9 @@ func (r *repository) CreateConversation(ctx context.Context, userA, userB string
 		return nil, fmt.Errorf("insert conversation failed: %w", err)
 	}
 
-	cpA := &entity.ConversationParticipant{
-		ConversationID: c.ID,
-		UserID:         userA,
-	}
-
-	err = cpA.Insert(ctx, exec, boil.Infer())
+	err = r.CreateConversationScores(ctx, c.ID, userA, userB, tx)
 	if err != nil {
-		return nil, fmt.Errorf("insert conversation participant failed userA=%s convoID%s: %w", userA, c.ID, err)
-	}
-
-	cpB := &entity.ConversationParticipant{
-		ConversationID: c.ID,
-		UserID:         userB,
-	}
-
-	err = cpB.Insert(ctx, exec, boil.Infer())
-	if err != nil {
-		return nil, fmt.Errorf("insert conversation participant failed  userB=%s convoID%s: %w", userB, c.ID, err)
+		return nil, fmt.Errorf("create conversation scores failed: %w", err)
 	}
 
 	return c, nil
