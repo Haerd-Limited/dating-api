@@ -29,8 +29,7 @@ type Service interface {
 	GetConversationScore(ctx context.Context, userID string, convoID string) (int, error)
 	CreateConversation(ctx context.Context, userID, matchUserID string) error
 	CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) (string, error)
-	SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error)
-	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error)
+	SendMessage(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error)
 	GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error)
 	IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error)
 	CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error
@@ -110,7 +109,7 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 			return nil, fmt.Errorf("get first like by convo id userID=%s convoID=%s: %w", userID, convoID, err)
 		}
 
-		_, err = s.SendMessage(ctx, domain.Message{
+		_, err = s.SendMessage(ctx, nil, domain.Message{
 			ConversationID: convoID,
 			SenderID:       firstLike.ActorID,
 			Type:           domain.MessageType(*firstLike.MessageType),
@@ -237,37 +236,6 @@ func (s *service) CreateConversationViaTx(ctx context.Context, userID, matchUser
 	return convoEntity.ID, nil
 }
 
-// For general API calls
-func (s *service) SendMessage(ctx context.Context, msg domain.Message) (domain.Message, error) {
-	err := s.validateMessage(msg)
-	if err != nil {
-		return domain.Message{}, fmt.Errorf("validate message userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
-	}
-
-	msg.ID = s.flake.Next()
-	ent := mapper.MapMessageDomainToEntity(msg)
-
-	e, err := s.conversationRepo.SendMessage(ctx, ent) // standalone version
-	if err != nil {
-		return domain.Message{}, fmt.Errorf("send message userID=%s conversationID=%s: %w", msg.SenderID, msg.ConversationID, err)
-	}
-
-	result, err := mapper.MapMessageEntityToDomain(*e)
-	if err != nil {
-		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
-	}
-
-	result.ResultingScoreSnapShot, err = s.ApplyScore(ctx, nil, result)
-	if err != nil {
-		return domain.Message{}, fmt.Errorf("apply score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
-	}
-
-	s.sendMessageToConversation(result)
-	// todo: broadcast score update
-
-	return result, nil
-}
-
 func (s *service) validateMessage(msg domain.Message) error {
 	// Basic invariants common to all messages
 	if msg.ConversationID == "" {
@@ -329,8 +297,12 @@ func (s *service) validateMessage(msg domain.Message) error {
 	return nil
 }
 
-// For aggregate flows (e.g., called from CreateSwipe)
-func (s *service) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error) {
+func (s *service) SendMessage(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error) {
+	err := s.validateMessage(msg)
+	if err != nil {
+		return domain.Message{}, fmt.Errorf("validate message userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+	}
+
 	msg.ID = s.flake.Next()
 	ent := mapper.MapMessageDomainToEntity(msg)
 
@@ -350,6 +322,8 @@ func (s *service) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.M
 	}
 
 	s.sendMessageToConversation(result)
+
+	s.updateConversationRealtime(ctx, msg.SenderID, msg.ConversationID)
 
 	return result, nil
 }

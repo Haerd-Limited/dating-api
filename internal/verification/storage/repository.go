@@ -49,7 +49,7 @@ func (r *verificationRepository) InvalidatePhotoVerification(ctx context.Context
 
 	uvs.PhotoVerified = false
 	uvs.PhotoVerifiedAt = null.Time{} // null
-	uvs.UpdatedAt = time.Now()
+	uvs.UpdatedAt = time.Now().UTC()
 	_, err = uvs.Update(ctx, r.db, boil.Whitelist(
 		entity.UserVerificationStatusColumns.PhotoVerified,
 		entity.UserVerificationStatusColumns.PhotoVerifiedAt,
@@ -89,7 +89,7 @@ func (r *verificationRepository) GetVerificationAttemptByUserIDAndSessionID(ctx 
 }
 
 func (r *verificationRepository) CreateAttempt(ctx context.Context, a entity.VerificationAttempt) error {
-	now := time.Now()
+	now := time.Now().UTC()
 	a.CreatedAt = now
 	a.UpdatedAt = now
 
@@ -149,7 +149,7 @@ func (r *verificationRepository) MarkAttempt(ctx context.Context, upd entity.Ver
 	}
 
 	// Always bump updated_at
-	upd.UpdatedAt = time.Now()
+	upd.UpdatedAt = time.Now().UTC()
 
 	cols = append(cols, entity.VerificationAttemptColumns.UpdatedAt)
 
@@ -166,7 +166,7 @@ func (r *verificationRepository) MarkAttempt(ctx context.Context, upd entity.Ver
 }
 
 func (r *verificationRepository) SetUserPhotoVerified(ctx context.Context, userID string, attemptID string) error {
-	now := time.Now()
+	now := time.Now().UTC()
 
 	uvs := &entity.UserVerificationStatus{
 		UserID:          userID,

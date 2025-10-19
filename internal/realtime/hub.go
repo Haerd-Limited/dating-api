@@ -6,6 +6,7 @@ import (
 
 type Broadcaster interface {
 	BroadcastToConversation(convoID string, payload []byte)
+	BroadcastToUser(userID string, payload []byte)
 }
 
 type Hub struct {
@@ -18,6 +19,15 @@ func NewHub() *Hub {
 	return &Hub{
 		byUser:         make(map[string]map[*Conn]struct{}),
 		byConversation: make(map[string]map[*Conn]struct{}),
+	}
+}
+
+func (h *Hub) BroadcastToUser(userID string, payload []byte) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	for c := range h.byUser[userID] {
+		c.Enqueue(payload)
 	}
 }
 

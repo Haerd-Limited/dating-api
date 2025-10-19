@@ -22,7 +22,6 @@ type ConversationRepository interface {
 	GetLastMessageByID(ctx context.Context, lastMessageID int64) (*entity.Message, error)
 	CreateConversation(ctx context.Context, userA, userB string, tx *sql.Tx) (*entity.Conversation, error)
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
-	SendMessage(ctx context.Context, msg entity.Message) (*entity.Message, error)
 	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entity.Message) (*entity.Message, error)
 	GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error)
 	GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error)
@@ -37,6 +36,7 @@ type ConversationRepository interface {
 	GetOtherParticipantConversationScore(ctx context.Context, userID, convoID string, tx *sql.Tx) (int, error)
 	SetConversationToRevealed(ctx context.Context, tx *sql.Tx, conversationID string) error
 	CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error
+	GetConversationParticipants(ctx context.Context, conversationID string) ([]*entity.ConversationParticipant, error)
 }
 
 type repository struct {
@@ -56,6 +56,17 @@ var (
 	ErrNotConversationParticipant = errors.New("user is not a participant in the conversation")
 	ErrClientMsgIDNotUnique       = errors.New("client message ID is not unique")
 )
+
+func (r *repository) GetConversationParticipants(ctx context.Context, conversationID string) ([]*entity.ConversationParticipant, error) {
+	participants, err := entity.ConversationParticipants(
+		entity.ConversationParticipantWhere.ConversationID.EQ(conversationID),
+	).All(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return participants, nil
+}
 
 func (r *repository) SetConversationToRevealed(ctx context.Context, tx *sql.Tx, conversationID string) error {
 	var exec boil.ContextExecutor
@@ -283,7 +294,7 @@ func (r *repository) GetMessagesByConversationID(ctx context.Context, conversati
 }
 
 // Standalone version that manages its own tx for non-aggregate use
-func (r *repository) SendMessage(ctx context.Context, msg entity.Message) (*entity.Message, error) {
+func (r *repository) sendMessage(ctx context.Context, msg entity.Message) (*entity.Message, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("begin: %w", err)
@@ -305,6 +316,17 @@ func (r *repository) SendMessage(ctx context.Context, msg entity.Message) (*enti
 
 // True “ViaTx” – uses caller’s tx
 func (r *repository) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entity.Message) (*entity.Message, error) {
+	var result *entity.Message
+
+	var err error
+	if tx == nil {
+		result, err = r.sendMessage(ctx, msg)
+		if err != nil {
+			return nil, fmt.Errorf("send message: %w", err)
+		}
+
+		return result, nil
+	}
 	// 1) Lock conversation
 	convo, err := entity.Conversations(
 		entity.ConversationWhere.ID.EQ(msg.ConversationID),
@@ -368,7 +390,9 @@ func (r *repository) SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entit
 		return nil, fmt.Errorf("update conversation: %w", err)
 	}
 
-	return &msg, nil
+	result = &msg
+
+	return result, nil
 }
 
 func (r *repository) GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error) {
@@ -443,7 +467,7 @@ func (r *repository) CreateConversation(ctx context.Context, userA, userB string
 	}
 
 	// Create new conversation
-	now := time.Now()
+	now := time.Now().UTC()
 	c := &entity.Conversation{
 		UserA:          userA,
 		UserB:          userB,

@@ -2,12 +2,15 @@ package interaction
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
 	conversationDomain "github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
@@ -17,6 +20,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
+	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
@@ -34,6 +38,7 @@ type service struct {
 	interactionRepo     storage.InteractionRepository
 	discoverService     discover.Service
 	uow                 uow.UoW
+	hub                 realtime.Broadcaster
 }
 
 func NewInteractionService(
@@ -43,6 +48,7 @@ func NewInteractionService(
 	interactionRepo storage.InteractionRepository,
 	discoverService discover.Service,
 	uow uow.UoW,
+	hub realtime.Broadcaster,
 ) Service {
 	return &service{
 		logger:              logger,
@@ -51,6 +57,7 @@ func NewInteractionService(
 		conversationService: conversationService,
 		discoverService:     discoverService,
 		uow:                 uow,
+		hub:                 hub,
 	}
 }
 
@@ -92,7 +99,6 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 	switch swipe.Action {
 	case constants.ActionLike, constants.ActionSuperlike:
-
 		if !matchable {
 			if swipe.Message == nil {
 				systemMsg := messages.LikedYourPromptMsg
@@ -110,6 +116,24 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			if err != nil {
 				return "", fmt.Errorf("commit tx: %w", err)
 			}
+
+			evt := dto.Event{
+				ID:        realtime.NewEventID(),
+				Type:      "like.created",
+				ActorID:   swipe.UserID,
+				Ts:        time.Now(),
+				ContextID: "",
+				Data:      nil,
+				Version:   1,
+			}
+
+			b, mErr := json.Marshal(evt)
+			if mErr != nil {
+				is.logger.Error("marshal event", zap.Error(mErr))
+				return ResultSent, nil
+			}
+
+			is.hub.BroadcastToUser(swipe.TargetUserID, b)
 
 			return ResultSent, nil
 		}
@@ -149,7 +173,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		targetUserSentMeALikeWithAMessage := targetUserSwipe.Message.Valid && targetUserSwipe.MessageType.Valid && targetUserSwipe.IdempotencyKey.Valid
 		if targetUserSentMeALikeWithAMessage {
 			// if the user i'm about to match, sent me a like with a message, we want to include that message as the first message in our conversation.
-			_, err = is.conversationService.SendMessageViaTx(ctx, tx.Raw(), conversationDomain.Message{
+			_, err = is.conversationService.SendMessage(ctx, tx.Raw(), conversationDomain.Message{
 				ConversationID: convoID,
 				SenderID:       swipe.TargetUserID,
 				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
@@ -165,7 +189,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 		userRepliedToLiked := swipe.Message != nil
 		if userRepliedToLiked {
-			_, err = is.conversationService.SendMessageViaTx(ctx, tx.Raw(), conversationDomain.Message{
+			_, err = is.conversationService.SendMessage(ctx, tx.Raw(), conversationDomain.Message{
 				ConversationID: convoID,
 				SenderID:       swipe.UserID,
 				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
@@ -183,6 +207,25 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		if err != nil {
 			return "", fmt.Errorf("commit tx: %w", err)
 		}
+
+		evt := dto.Event{
+			ID:        realtime.NewEventID(),
+			Type:      "match.created",
+			ActorID:   swipe.UserID,
+			Ts:        time.Now(),
+			ContextID: convoID,
+			Data:      nil,
+			Version:   1,
+		}
+
+		byts, mErr := json.Marshal(evt)
+		if mErr != nil {
+			is.logger.Error("marshal event", zap.Error(mErr))
+			return ResultMatched, nil
+		}
+
+		is.hub.BroadcastToUser(swipe.TargetUserID, byts)
+		is.hub.BroadcastToUser(swipe.UserID, byts)
 
 		return ResultMatched, nil
 

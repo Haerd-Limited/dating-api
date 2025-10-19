@@ -4,11 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"go.uber.org/zap"
+
+	dtomapper "github.com/Haerd-Limited/dating-api/internal/api/conversation/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
 	scoredomain "github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
+	"github.com/Haerd-Limited/dating-api/internal/realtime"
 )
 
 func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID string) (*domain.Conversation, error) {
@@ -149,18 +154,112 @@ func (s *service) sendMessageToConversation(msg domain.Message) {
 	evt := dto.ServerMsg{
 		Type:           "message.new",
 		ConversationID: msg.ConversationID,
-		Payload: map[string]any{
-			"id":              msg.ID,
-			"conversation_id": msg.ConversationID,
-			"sender_id":       msg.SenderID,
-			"text_body":       msg.TextBody,
-			"type":            msg.Type,
-			"media_key":       msg.MediaUrl,
-			"media_seconds":   msg.MediaSeconds,
-			"created_at":      msg.CreatedAt,
-			"client_msg_id":   msg.ClientMsgID,
-		},
+		Payload:        dtomapper.MapMessageToDto(&msg),
 	}
 	b, _ := json.Marshal(evt)
 	s.hub.BroadcastToConversation(msg.ConversationID, b)
+}
+
+func (s *service) updateConversationRealtime(ctx context.Context, userID string, convoID string) {
+	participants, err := s.conversationRepo.GetConversationParticipants(ctx, convoID)
+	if err != nil {
+		s.logger.Error("updating conversation: get conversation participants", zap.Error(err))
+		return
+	}
+
+	if participants == nil {
+		s.logger.Error("updating conversation: participants is nil")
+		return
+	}
+
+	if len(participants) != 2 {
+		s.logger.Error("updating conversation: participants is not 2")
+		return
+	}
+
+	if participants[0].UserID == participants[1].UserID {
+		s.logger.Error("updating conversation: participants are the same")
+		return
+	}
+
+	var matchID string
+	if participants[0].UserID == userID {
+		matchID = participants[1].UserID
+	} else {
+		matchID = participants[0].UserID
+	}
+	// from user POV
+	convo, err := s.getConversationByUserIds(ctx, userID, matchID)
+	if err != nil {
+		s.logger.Error("updating conversation: get conversation by user ids", zap.Error(err))
+		return
+	}
+
+	if convo == nil {
+		s.logger.Error("updating conversation: conversation is nil")
+		return
+	}
+
+	// from user POV
+	if convo.LastMessage == nil {
+		s.logger.Error("updating conversation: last message is nil")
+		return
+	}
+
+	if convo.LastMessage.Type == domain.MessageTypeSystem {
+		return
+	}
+
+	evt := dto.Event{
+		ID:        realtime.NewEventID(),
+		Type:      "conversation.updated",
+		ActorID:   convo.LastMessage.SenderID,
+		Ts:        time.Now().UTC(),
+		ContextID: convo.ID,
+		Data:      dtomapper.MapConversationToDto(*convo),
+		Version:   1,
+	}
+
+	b, err := json.Marshal(evt)
+	if err != nil {
+		s.logger.Error("error marshalling event", zap.Error(err))
+		return
+	}
+
+	s.hub.BroadcastToUser(userID, b)
+
+	// from match POV
+	convo, err = s.getConversationByUserIds(ctx, matchID, userID)
+	if err != nil {
+		s.logger.Error("updating conversation from match POV: get conversation by user ids", zap.Error(err))
+		return
+	}
+
+	if convo == nil {
+		s.logger.Error("updating conversation from match POV: conversation is nil")
+		return
+	}
+
+	if convo.LastMessage == nil {
+		s.logger.Error("updating conversation: last message is nil")
+		return
+	}
+
+	evt = dto.Event{
+		ID:        realtime.NewEventID(),
+		Type:      "conversation.updated",
+		ActorID:   convo.LastMessage.SenderID,
+		Ts:        time.Now().UTC(),
+		ContextID: convo.ID,
+		Data:      dtomapper.MapConversationToDto(*convo),
+		Version:   1,
+	}
+
+	byts, err := json.Marshal(evt)
+	if err != nil {
+		s.logger.Error("error marshalling event", zap.Error(err))
+		return
+	}
+
+	s.hub.BroadcastToUser(matchID, byts)
 }

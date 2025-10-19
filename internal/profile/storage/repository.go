@@ -337,7 +337,7 @@ func (pr *profileRepository) GetUserProfileByUserID(ctx context.Context, userID 
 }
 
 func (pr *profileRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string) error {
-	userProfile.UpdatedAt = time.Now()
+	userProfile.UpdatedAt = time.Now().UTC()
 
 	whiteList = append(whiteList, "updated_at")
 

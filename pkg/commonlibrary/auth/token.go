@@ -33,7 +33,7 @@ func GenerateRefreshToken(userID string) *authDomain.RefreshToken {
 		ID:        uuid.New().String(),
 		UserID:    userID,
 		Token:     uuid.New().String(),
-		ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
+		ExpiresAt: time.Now().Add(7 * 24 * time.Hour).UTC(),
 	}
 }
 

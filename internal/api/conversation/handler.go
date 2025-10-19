@@ -135,7 +135,7 @@ func (h *handler) SendMessage() http.HandlerFunc {
 			return
 		}
 
-		msg, err := h.conversationService.SendMessage(ctx, mapper.MapSendMessageRequestToDomain(req, convoID, userID))
+		msg, err := h.conversationService.SendMessage(ctx, nil, mapper.MapSendMessageRequestToDomain(req, convoID, userID))
 		if err != nil {
 			h.handleServiceErrorResponse(w, r, "SendMessage", err)
 			return

@@ -41,7 +41,7 @@ func S3KeyFromURL(raw string) (string, error) {
 
 // CalculateAge returns the age in years given a birthdate.
 func CalculateAge(birthdate time.Time) int {
-	now := time.Now()
+	now := time.Now().UTC()
 
 	years := now.Year() - birthdate.Year()
 

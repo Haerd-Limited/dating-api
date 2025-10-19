@@ -210,7 +210,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	purpose := strings.ToLower(requestCodeDetails.Purpose)
 
 	// Rate limits (per identifier + per IP), but do not leak to client
-	window := time.Now().Add(-1 * time.Hour)
+	window := time.Now().Add(-1 * time.Hour).UTC()
 
 	n1, _ := as.AuthRepo.CountRecentSends(ctx, requestCodeDetails.Channel, identifier, purpose, window)
 	if n1 >= as.perIDPerHour {
@@ -260,7 +260,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 		Identifier:  identifier,
 		Purpose:     purpose,
 		CodeHash:    hash,
-		ExpiresAt:   time.Now().Add(as.codeTTL),
+		ExpiresAt:   time.Now().Add(as.codeTTL).UTC(),
 		RequestIP:   net.ParseIP(clientIP(requestCodeDetails.IP)),
 		MaxAttempts: 5,
 	})
