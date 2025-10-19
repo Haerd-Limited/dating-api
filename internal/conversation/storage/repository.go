@@ -36,6 +36,7 @@ type ConversationRepository interface {
 	GetUserConversationScore(ctx context.Context, userID, convoID string) (int, error)
 	GetOtherParticipantConversationScore(ctx context.Context, userID, convoID string) (int, error)
 	SetConversationToRevealed(ctx context.Context, tx *sql.Tx, conversationID string) error
+	CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error
 }
 
 type repository struct {
@@ -97,6 +98,41 @@ func (r *repository) GetOtherParticipantConversationScore(ctx context.Context, u
 	}
 
 	return convoParticipants.Score, nil
+}
+
+func (r *repository) CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error {
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
+	userScore := entity.ConversationParticipant{
+		UserID:         userID,
+		Score:          0,
+		ScoreLifetime:  0,
+		ConversationID: convoID,
+	}
+
+	err := userScore.Insert(ctx, exec, boil.Infer())
+	if err != nil {
+		return fmt.Errorf("insert user score: %w", err)
+	}
+
+	matchedUserScore := entity.ConversationParticipant{
+		UserID:         matchedUserID,
+		Score:          0,
+		ScoreLifetime:  0,
+		ConversationID: convoID,
+	}
+
+	err = matchedUserScore.Insert(ctx, exec, boil.Infer())
+	if err != nil {
+		return fmt.Errorf("insert matched user score: %w", err)
+	}
+
+	return nil
 }
 
 func (r *repository) GetUserConversationScore(ctx context.Context, userID, convoID string) (int, error) {

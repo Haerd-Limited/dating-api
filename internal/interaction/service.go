@@ -140,6 +140,11 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return "", fmt.Errorf("create conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 		}
 
+		err = is.conversationService.CreateConversationScores(ctx, convoID, swipe.UserID, swipe.TargetUserID, tx.Raw())
+		if err != nil {
+			return "", fmt.Errorf("create conversation scores convoID= %suserID=%s targetUserID=%s: %w", convoID, swipe.UserID, swipe.TargetUserID, err)
+		}
+
 		var targetUserSwipe *entity.Swipe
 
 		targetUserSwipe, err = is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, swipe.TargetUserID, swipe.UserID)

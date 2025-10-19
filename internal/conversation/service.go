@@ -33,6 +33,7 @@ type Service interface {
 	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error)
 	GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error)
 	IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error)
+	CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error
 }
 
 type service struct {
@@ -88,6 +89,10 @@ func (s *service) GetConversationScore(ctx context.Context, userID string, convo
 
 func (s *service) IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error) {
 	return s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
+}
+
+func (s *service) CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error {
+	return s.conversationRepo.CreateConversationScores(ctx, convoID, userID, matchedUserID, tx)
 }
 
 func (s *service) GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error) {
