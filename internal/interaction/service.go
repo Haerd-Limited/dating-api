@@ -79,20 +79,19 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 	defer func() { _ = tx.Rollback() }()
 
+	matchable, err := is.interactionRepo.CheckIfMatchable(ctx, swipe.UserID, swipe.TargetUserID)
+	if err != nil {
+		return "", fmt.Errorf("check if matchable userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+	}
+
 	// todo: allow voice note swipes
-	err = is.validateSwipe(ctx, swipe)
+	err = is.validateSwipe(ctx, swipe, matchable)
 	if err != nil {
 		return "", fmt.Errorf("validate swipe userID=%s : %w", swipe.UserID, err)
 	}
 
 	switch swipe.Action {
 	case constants.ActionLike, constants.ActionSuperlike:
-		var matchErr error
-
-		matchable, matchErr := is.interactionRepo.CheckIfMatchable(ctx, swipe.UserID, swipe.TargetUserID)
-		if matchErr != nil {
-			return "", fmt.Errorf("check if matchable userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, matchErr)
-		}
 
 		if !matchable {
 			if swipe.Message == nil {
@@ -275,7 +274,7 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 	return likes, nil
 }
 
-func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error {
+func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatchable bool) error {
 	// Ensure frontend/client sent a valid action
 	if swipe.Action != constants.ActionLike && swipe.Action != constants.ActionSuperlike && swipe.Action != constants.ActionPass {
 		return fmt.Errorf("%w : action=%s", ErrInvalidAction, swipe.Action)
@@ -285,7 +284,12 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe) error 
 	if swipe.Action == constants.ActionSuperlike || swipe.Action == constants.ActionLike {
 		hasAny := swipe.Message != nil || swipe.MessageType != nil || swipe.IdempotencyKey != nil
 
-		atleastOneIsMissing := swipe.Message == nil || swipe.MessageType == nil || swipe.PromptID == nil || swipe.IdempotencyKey == nil
+		var atleastOneIsMissing bool
+		if isMatchable {
+			atleastOneIsMissing = swipe.Message == nil || swipe.MessageType == nil || swipe.IdempotencyKey == nil
+		} else {
+			atleastOneIsMissing = swipe.Message == nil || swipe.MessageType == nil || swipe.PromptID == nil || swipe.IdempotencyKey == nil
+		}
 
 		unableToSendLikeWithMessage := hasAny && atleastOneIsMissing
 
