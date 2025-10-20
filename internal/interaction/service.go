@@ -208,6 +208,25 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return "", fmt.Errorf("commit tx: %w", err)
 		}
 
+		evt := dto.Event{
+			ID:        realtime.NewEventID(),
+			Type:      "match.created",
+			ActorID:   swipe.UserID,
+			Ts:        time.Now(),
+			ContextID: convoID,
+			Data:      nil,
+			Version:   1,
+		}
+
+		byts, mErr := json.Marshal(evt)
+		if mErr != nil {
+			is.logger.Error("marshal event", zap.Error(mErr))
+			return ResultMatched, nil
+		}
+
+		is.hub.BroadcastToUser(swipe.TargetUserID, byts)
+		is.hub.BroadcastToUser(swipe.UserID, byts)
+
 		return ResultMatched, nil
 
 	case constants.ActionPass:
