@@ -206,10 +206,6 @@ func (s *service) updateConversationRealtime(ctx context.Context, userID string,
 		return
 	}
 
-	if convo.LastMessage.Type == domain.MessageTypeSystem {
-		return
-	}
-
 	evt := dto.Event{
 		ID:        realtime.NewEventID(),
 		Type:      "conversation.updated",
