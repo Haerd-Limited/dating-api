@@ -3,6 +3,7 @@ package interaction
 import (
 	"errors"
 	"fmt"
+	convostorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -109,6 +110,8 @@ func (h *handler) GetLikes() http.HandlerFunc {
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, convostorage.ErrClientMsgIDNotUnique):
+		return http.StatusBadRequest, "Client message ID must be unique"
 	case errors.Is(err, interaction.ErrPromptIDRequiredToLikeUser):
 		return http.StatusBadRequest, "Prompt ID is required to like a profile"
 	case errors.Is(err, interaction.ErrSelfLike):
