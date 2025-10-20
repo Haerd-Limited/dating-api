@@ -44,7 +44,7 @@ func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
 	// birthdate
 	if up.Birthdate != nil && !up.Birthdate.IsZero() {
 		bd := *up.Birthdate
-		today := time.Now().UTC()
+		today := time.Now()
 
 		if bd.After(today) {
 			return fmt.Errorf("%w: birthdate in future", ErrInvalidBirthdate)
