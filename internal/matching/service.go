@@ -54,7 +54,7 @@ func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) 
 	}
 
 	if len(valid) == 0 {
-		return fmt.Errorf("unknown question_id: %d", cmd.QuestionID)
+		return fmt.Errorf("%w : unknown question_id: %d", ErrInvalidAnswerID, cmd.QuestionID)
 	}
 
 	validSet := make(map[int64]struct{}, len(valid))
