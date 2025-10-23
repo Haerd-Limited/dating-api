@@ -84,11 +84,37 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 			Palette: profile.Theme.Palette,
 		},
 
-		Work:       profile.Work,
-		JobTitle:   profile.JobTitle,
-		University: profile.University,
+		Work:         profile.Work,
+		JobTitle:     profile.JobTitle,
+		University:   profile.University,
+		MatchSummary: MapMatchSummary(profile.MatchSummary),
 
 		CreatedAt: createdAtStr,
 		UpdatedAt: updatedAtStr,
 	}
+}
+
+func MapMatchSummary(ms *profilecard.MatchSummary) *MatchSummary {
+	if ms == nil {
+		return nil
+	}
+
+	out := &MatchSummary{
+		MatchPercent: ms.MatchPercent,
+		OverlapCount: ms.OverlapCount,
+		HiddenReason: ms.HiddenReason,
+	}
+	if len(ms.Badges) > 0 {
+		out.Badges = make([]MatchBadge, 0, len(ms.Badges))
+		for _, b := range ms.Badges {
+			out.Badges = append(out.Badges, MatchBadge{
+				QuestionID:    b.QuestionID,
+				QuestionText:  b.QuestionText,
+				PartnerAnswer: b.PartnerAnswer,
+				Weight:        b.Weight,
+			})
+		}
+	}
+
+	return out
 }

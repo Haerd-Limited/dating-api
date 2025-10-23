@@ -3,6 +3,7 @@ package matching
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 
 	"go.uber.org/zap"
@@ -15,6 +16,7 @@ import (
 type Service interface {
 	GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int) (domain.QuestionsAndAnswers, error)
 	SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error
+	ComputeMatch(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.MatchSummary, error)
 }
 
 type service struct {
@@ -40,6 +42,118 @@ var (
 	ErrInvalidAnswerID             = fmt.Errorf("invalid answer_id")
 	ErrAcceptableAnswerIDsRequired = fmt.Errorf("acceptable_answer_ids required")
 )
+
+const defaultBadgeLimit = 3
+
+// ComputeMatch calculates the viewer↔target match summary.
+// - Uses only overlapping questions (both answered).
+// - OkCupid-style: geometric mean of asymmetric satisfactions.
+// - Honors mandatory gates in either direction.
+// - Hides score when overlap < minOverlap but still returns overlap count.
+func (s *service) ComputeMatch(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.MatchSummary, error) {
+	out := &domain.MatchSummary{}
+
+	// trivial self-view: 100% (skip DB, but still try to return overlap count via one call)
+	if viewerID == targetID {
+		_, _, overlap, err := s.matchingRepo.PerspectiveSums(ctx, viewerID, targetID)
+		if err != nil {
+			return out, fmt.Errorf("failed to compute perspective sums: %w", err)
+		}
+
+		out.MatchPercent = 100
+		out.OverlapCount = overlap
+
+		return out, nil
+	}
+
+	// 1) Mandatory gate (either side fails → near-zero or hidden)
+	mismatchAB, err := s.matchingRepo.HasMandatoryMismatch(ctx, viewerID, targetID)
+	if err != nil {
+		return out, fmt.Errorf("failed to check mandatory mismatch(AB): %w", err)
+	}
+
+	mismatchBA, err := s.matchingRepo.HasMandatoryMismatch(ctx, targetID, viewerID)
+	if err != nil {
+		return out, fmt.Errorf("failed to check mandatory mismatch(BA): %w", err)
+	}
+
+	/*this means someone in this pair, doesn't meet a mandatory requirement of the other user.
+	So the relationship is chalked from the get go and no point in calculating match percentage with other overlapping questions*/
+	if mismatchAB || mismatchBA {
+		// Still compute overlap (for UX messaging), but short-circuit score.
+		_, _, overlap, psErr := s.matchingRepo.PerspectiveSums(ctx, viewerID, targetID)
+		if psErr != nil {
+			return out, fmt.Errorf("failed to compute perspective sums: %w", psErr)
+		}
+
+		out.OverlapCount = overlap
+		out.MatchPercent = 1
+		out.HiddenReason = "Mandatory mismatch"
+		out.Badges = []domain.MatchBadge{}
+
+		return out, nil
+	}
+
+	// 2) Perspective sums (A→B and B→A)
+	earnedAB, totalAB, overlapAB, err := s.matchingRepo.PerspectiveSums(ctx, viewerID, targetID)
+	if err != nil {
+		return out, fmt.Errorf("failed to compute perspective sums: %w", err)
+	}
+
+	earnedBA, totalBA, _, err := s.matchingRepo.PerspectiveSums(ctx, targetID, viewerID)
+	if err != nil {
+		return out, fmt.Errorf("failed to compute perspective sums: %w", err)
+	}
+
+	out.OverlapCount = overlapAB // same either direction by construction
+
+	// 3) Enforce minimum overlap (hide score if not enough)
+	if minOverlap > 0 && out.OverlapCount < minOverlap {
+		out.HiddenReason = fmt.Sprintf("Not enough overlap (need %d+ shared answers)", minOverlap)
+		out.MatchPercent = 0
+		out.Badges = []domain.MatchBadge{}
+
+		return out, nil
+	}
+
+	// 4) Match math (guard divide-by-zero by treating zero-total as denominator=1)
+	sA := 0.0
+	if totalAB > 0 {
+		sA = float64(earnedAB) / float64(totalAB)
+	} else {
+		sA = 1.0
+	}
+
+	sB := 0.0
+	if totalBA > 0 {
+		sB = float64(earnedBA) / float64(totalBA)
+	} else {
+		sB = 1.0
+	}
+
+	match := math.Sqrt(sA * sB)
+
+	percent := int(math.Round(match * 100.0))
+	if percent < 0 {
+		percent = 0
+	}
+
+	if percent > 100 {
+		percent = 100
+	}
+
+	out.MatchPercent = percent
+
+	// 5) Badges (viewer-perspective satisfied, highest-weight)
+	badges, err := s.matchingRepo.TopBadges(ctx, viewerID, targetID, defaultBadgeLimit)
+	if err != nil {
+		return out, fmt.Errorf("failed to get top badges: %w", err)
+	}
+
+	out.Badges = badges
+
+	return out, nil
+}
 
 func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error {
 	// 1) validate importance

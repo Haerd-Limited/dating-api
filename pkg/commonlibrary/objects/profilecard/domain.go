@@ -37,13 +37,29 @@ type ProfileCard struct {
 	JobTitle   *string
 	University *string
 
-	Verified   bool // todo: implement logic
-	DistanceKm int  // todo: implement logic
+	Verified   bool
+	DistanceKm int // todo: implement logic
 
 	LikeCount *int64
 
+	MatchSummary *MatchSummary
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type MatchBadge struct {
+	QuestionID    int64
+	QuestionText  string
+	PartnerAnswer string
+	Weight        int // derived from importance
+}
+
+type MatchSummary struct {
+	MatchPercent int          // 0–100
+	OverlapCount int          // # shared questions answered
+	Badges       []MatchBadge // top 2–3 satisfied items
+	HiddenReason string       // e.g., "Not enough overlap"
 }
 
 type UserTheme struct {

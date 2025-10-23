@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/discover/storage"
+	"github.com/Haerd-Limited/dating-api/internal/matching"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
@@ -20,22 +21,27 @@ type Service interface {
 }
 
 type service struct {
-	logger         *zap.Logger
-	profileService profile.Service
-	discoverRepo   storage.DiscoverRepository
+	logger          *zap.Logger
+	profileService  profile.Service
+	matchingService matching.Service
+	discoverRepo    storage.DiscoverRepository
 }
 
 func NewDiscoverService(
 	logger *zap.Logger,
 	profileService profile.Service,
+	matchingService matching.Service,
 	discoverRepo storage.DiscoverRepository,
 ) Service {
 	return &service{
-		logger:         logger,
-		profileService: profileService,
-		discoverRepo:   discoverRepo,
+		logger:          logger,
+		profileService:  profileService,
+		matchingService: matchingService,
+		discoverRepo:    discoverRepo,
 	}
 }
+
+const minOverlap = 5
 
 func (s *service) AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error) {
 	return s.discoverRepo.AlreadyInteracted(ctx, userID, targetUserID)
@@ -56,6 +62,26 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 		p, profileErr := s.profileService.GetProfileCard(ctx, candidate.UserID)
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		}
+
+		matchSummary, profileErr := s.matchingService.ComputeMatch(ctx, userID, candidate.UserID, minOverlap)
+		if profileErr != nil {
+			return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		}
+
+		p.MatchSummary = &profilecard.MatchSummary{
+			MatchPercent: matchSummary.MatchPercent,
+			OverlapCount: matchSummary.OverlapCount,
+			Badges:       nil,
+			HiddenReason: matchSummary.HiddenReason,
+		}
+		for _, badge := range matchSummary.Badges {
+			p.MatchSummary.Badges = append(p.MatchSummary.Badges, profilecard.MatchBadge{
+				QuestionID:    badge.QuestionID,
+				QuestionText:  badge.QuestionText,
+				PartnerAnswer: badge.PartnerAnswer,
+				Weight:        badge.Weight,
+			})
 		}
 
 		profiles = append(profiles, p)
@@ -126,6 +152,26 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		}
 
 		p.LikeCount = &likeCount
+
+		matchSummary, profileErr := s.matchingService.ComputeMatch(ctx, userID, candidate.UserID, minOverlap)
+		if profileErr != nil {
+			return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		}
+
+		p.MatchSummary = &profilecard.MatchSummary{
+			MatchPercent: matchSummary.MatchPercent,
+			OverlapCount: matchSummary.OverlapCount,
+			Badges:       nil,
+			HiddenReason: matchSummary.HiddenReason,
+		}
+		for _, badge := range matchSummary.Badges {
+			p.MatchSummary.Badges = append(p.MatchSummary.Badges, profilecard.MatchBadge{
+				QuestionID:    badge.QuestionID,
+				QuestionText:  badge.QuestionText,
+				PartnerAnswer: badge.PartnerAnswer,
+				Weight:        badge.Weight,
+			})
+		}
 
 		profiles = append(profiles, p)
 	}

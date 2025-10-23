@@ -34,12 +34,27 @@ type ProfileCard struct {
 	Verified  bool   `json:"verified"`
 	LikeCount *int64 `json:"like_count"`
 
-	Work       *string `json:"work"`
-	JobTitle   *string `json:"job_title"`
-	University *string `json:"university"`
+	Work         *string       `json:"work"`
+	JobTitle     *string       `json:"job_title"`
+	University   *string       `json:"university"`
+	MatchSummary *MatchSummary `json:"match_summary"`
 
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
+}
+
+type MatchBadge struct {
+	QuestionID    int64  `json:"question_id"`
+	QuestionText  string `json:"question_text"`
+	PartnerAnswer string `json:"partner_answer"`
+	Weight        int    `json:"weight"` // derived from importance
+}
+
+type MatchSummary struct {
+	MatchPercent int          `json:"match_percent"`           // 0–100
+	OverlapCount int          `json:"overlap_count"`           // # shared questions answered
+	Badges       []MatchBadge `json:"badges"`                  // top 2–3 satisfied items
+	HiddenReason string       `json:"hidden_reason,omitempty"` // e.g., "Not enough overlap"
 }
 type UserTheme struct {
 	BaseHex string   `json:"base_hex"`

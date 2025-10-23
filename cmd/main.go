@@ -106,7 +106,7 @@ func main() {
 	interactionRepo := interactionstorage.NewInteractionRepository(db)
 	userRepo := storage.NewUserRepository(db)
 	authRepo := authstorage.NewAuthRepository(db)
-	matchingRepo := matchingstorage.NewMatchingRepository(db)
+	matchingRepo := matchingstorage.NewMatchingRepository(db, logger)
 	unitOfWork := uow.New(db.DB)
 
 	hub := realtime.NewHub()
@@ -123,7 +123,7 @@ func main() {
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo)
 	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger)
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
-	discoverService := discover.NewDiscoverService(logger, profileService, discoverRepo)
+	discoverService := discover.NewDiscoverService(logger, profileService, matchingService, discoverRepo)
 	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
 	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService)
 	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, unitOfWork, hub)
