@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/matching/dto"
+	"github.com/Haerd-Limited/dating-api/internal/api/matching/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/matching"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
@@ -17,6 +19,7 @@ import (
 
 type Handler interface {
 	GetQuestions() http.HandlerFunc
+	SaveAnswer() http.HandlerFunc
 }
 
 type handler struct {
@@ -31,6 +34,40 @@ func NewMatchingHandler(
 	return &handler{
 		logger:          logger,
 		matchingService: matchingService,
+	}
+}
+
+func (h *handler) SaveAnswer() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		var req dto.SaveAnswerRequest
+		// Validates and decodes request
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate save answer request body", "error", err.Error())
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("invalid json"),
+			)
+
+			return
+		}
+
+		err = h.matchingService.SaveAnswer(ctx, mapper.MapSaveAnswerRequestToDomain(req, userID))
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "SaveAnswer", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Answer saved successfully"))
 	}
 }
 
@@ -54,7 +91,7 @@ func (h *handler) GetQuestions() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, dto.MapDomainToQuestionAndAnswerResponse(result))
+		render.Json(w, http.StatusOK, mapper.MapDomainToQuestionAndAnswerResponse(result))
 	}
 }
 
@@ -70,6 +107,12 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, matching.ErrAcceptableAnswerIDsRequired):
+		return http.StatusBadRequest, "Acceptable answer ids required when importance is 'very'"
+	case errors.Is(err, matching.ErrInvalidAnswerID):
+		return http.StatusBadRequest, "Invalid answer id"
+	case errors.Is(err, matching.ErrInvalidImportance):
+		return http.StatusBadRequest, "Invalid importance"
 	default:
 		return http.StatusInternalServerError, commonMessages.InternalServerErrorMsg
 	}

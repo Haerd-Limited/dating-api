@@ -2,6 +2,15 @@ package domain
 
 import "time"
 
+type SaveAnswerCommand struct {
+	UserID              string
+	QuestionID          int64
+	AnswerID            int64
+	AcceptableAnswerIDs []int64
+	Importance          string // enum text
+	IsPrivate           bool
+}
+
 type QuestionCategory struct {
 	ID        int64
 	Key       string

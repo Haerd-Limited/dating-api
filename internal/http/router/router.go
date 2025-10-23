@@ -154,6 +154,7 @@ func New(
 
 				r.Route("/matching", func(r chi.Router) {
 					r.Get("/questions", matchingHandler.GetQuestions())
+					r.Post("/answers", matchingHandler.SaveAnswer())
 				})
 
 				// Current user
