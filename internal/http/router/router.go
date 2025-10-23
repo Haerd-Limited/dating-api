@@ -12,6 +12,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction"
 	"github.com/Haerd-Limited/dating-api/internal/api/lookup"
+	"github.com/Haerd-Limited/dating-api/internal/api/matching"
 	"github.com/Haerd-Limited/dating-api/internal/api/media"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile"
@@ -22,6 +23,7 @@ import (
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
 	internalinteraction "github.com/Haerd-Limited/dating-api/internal/interaction"
 	internallookup "github.com/Haerd-Limited/dating-api/internal/lookup"
+	internalmatching "github.com/Haerd-Limited/dating-api/internal/matching"
 	internalmedia "github.com/Haerd-Limited/dating-api/internal/media"
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
@@ -44,6 +46,7 @@ func New(
 	lookupService internallookup.Service,
 	hub *internalrealtime.Hub,
 	verificationService internalverification.Service,
+	matchingService internalmatching.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -62,6 +65,7 @@ func New(
 	lookupHandler := lookup.NewLookupHandler(logger, lookupService)
 	wsHandler := realtime.NewWsHandler(logger, hub, conversationService)
 	verificationHandler := verification.NewVerificationHandler(logger, verificationService)
+	matchingHandler := matching.NewMatchingHandler(logger, matchingService)
 	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
@@ -146,6 +150,10 @@ func New(
 
 					r.Get("/voice/presign", mediaHandler.GenerateVoiceNoteUploadUrl())
 					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
+				})
+
+				r.Route("/matching", func(r chi.Router) {
+					r.Get("/questions", matchingHandler.GetQuestions())
 				})
 
 				// Current user

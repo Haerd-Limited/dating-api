@@ -30,6 +30,8 @@ import (
 	interactionstorage "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/lookup"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
+	"github.com/Haerd-Limited/dating-api/internal/matching"
+	matchingstorage "github.com/Haerd-Limited/dating-api/internal/matching/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/preference"
@@ -104,6 +106,7 @@ func main() {
 	interactionRepo := interactionstorage.NewInteractionRepository(db)
 	userRepo := storage.NewUserRepository(db)
 	authRepo := authstorage.NewAuthRepository(db)
+	matchingRepo := matchingstorage.NewMatchingRepository(db)
 	unitOfWork := uow.New(db.DB)
 
 	hub := realtime.NewHub()
@@ -114,6 +117,7 @@ func main() {
 		logger.Sugar().Fatalf("failed to create rek: %v", err)
 	}
 
+	matchingService := matching.NewMatchingService(logger, matchingRepo)
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner, s3Reader, cfg.Env)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo)
@@ -147,6 +151,7 @@ func main() {
 		lookupService,
 		hub,
 		verificationService,
+		matchingService,
 	)
 
 	// Start server with context

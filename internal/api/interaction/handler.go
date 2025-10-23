@@ -3,13 +3,13 @@ package interaction
 import (
 	"errors"
 	"fmt"
-	convostorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"net/http"
 
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
+	convostorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/interaction"
 	storage2 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"

@@ -16,7 +16,7 @@ migrate-down:
 .PHONY: migrate-down
 
 migrate-create:
-	@cd ./migrations && goose create  add_unique_attempt_index sql
+	@cd ./migrations && goose create  create_matching_schema_and_seed sql
 .PHONY: migrate-create
 
 

@@ -15,6 +15,7 @@ var TableNames = struct {
 	Genders                  string
 	GooseDBVersion           string
 	Habits                   string
+	ImportanceWeights        string
 	Interests                string
 	Languages                string
 	Matches                  string
@@ -23,6 +24,9 @@ var TableNames = struct {
 	Photos                   string
 	PoliticalBeliefs         string
 	PromptTypes              string
+	QuestionAnswers          string
+	QuestionCategories       string
+	Questions                string
 	RefreshTokens            string
 	Religions                string
 	ScoringBonuses           string
@@ -33,6 +37,7 @@ var TableNames = struct {
 	ScoringVoice             string
 	SpatialRefSys            string
 	Swipes                   string
+	UserAnswers              string
 	UserInterests            string
 	UserLanguages            string
 	UserPreferences          string
@@ -56,6 +61,7 @@ var TableNames = struct {
 	Genders:                  "genders",
 	GooseDBVersion:           "goose_db_version",
 	Habits:                   "habits",
+	ImportanceWeights:        "importance_weights",
 	Interests:                "interests",
 	Languages:                "languages",
 	Matches:                  "matches",
@@ -64,6 +70,9 @@ var TableNames = struct {
 	Photos:                   "photos",
 	PoliticalBeliefs:         "political_beliefs",
 	PromptTypes:              "prompt_types",
+	QuestionAnswers:          "question_answers",
+	QuestionCategories:       "question_categories",
+	Questions:                "questions",
 	RefreshTokens:            "refresh_tokens",
 	Religions:                "religions",
 	ScoringBonuses:           "scoring_bonuses",
@@ -74,6 +83,7 @@ var TableNames = struct {
 	ScoringVoice:             "scoring_voice",
 	SpatialRefSys:            "spatial_ref_sys",
 	Swipes:                   "swipes",
+	UserAnswers:              "user_answers",
 	UserInterests:            "user_interests",
 	UserLanguages:            "user_languages",
 	UserPreferences:          "user_preferences",

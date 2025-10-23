@@ -28,6 +28,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Habits", testHabitsUpsert)
 
+	t.Run("ImportanceWeights", testImportanceWeightsUpsert)
+
 	t.Run("Interests", testInterestsUpsert)
 
 	t.Run("Languages", testLanguagesUpsert)
@@ -43,6 +45,12 @@ func TestUpsert(t *testing.T) {
 	t.Run("PoliticalBeliefs", testPoliticalBeliefsUpsert)
 
 	t.Run("PromptTypes", testPromptTypesUpsert)
+
+	t.Run("QuestionAnswers", testQuestionAnswersUpsert)
+
+	t.Run("QuestionCategories", testQuestionCategoriesUpsert)
+
+	t.Run("Questions", testQuestionsUpsert)
 
 	t.Run("RefreshTokens", testRefreshTokensUpsert)
 
@@ -63,6 +71,8 @@ func TestUpsert(t *testing.T) {
 	t.Run("SpatialRefSys", testSpatialRefSysUpsert)
 
 	t.Run("Swipes", testSwipesUpsert)
+
+	t.Run("UserAnswers", testUserAnswersUpsert)
 
 	t.Run("UserPreferences", testUserPreferencesUpsert)
 
