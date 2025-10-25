@@ -64,24 +64,9 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
 
-		matchSummary, profileErr := s.matchingService.ComputeMatch(ctx, userID, candidate.UserID, minOverlap)
+		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
-		}
-
-		p.MatchSummary = &profilecard.MatchSummary{
-			MatchPercent: matchSummary.MatchPercent,
-			OverlapCount: matchSummary.OverlapCount,
-			Badges:       nil,
-			HiddenReason: matchSummary.HiddenReason,
-		}
-		for _, badge := range matchSummary.Badges {
-			p.MatchSummary.Badges = append(p.MatchSummary.Badges, profilecard.MatchBadge{
-				QuestionID:    badge.QuestionID,
-				QuestionText:  badge.QuestionText,
-				PartnerAnswer: badge.PartnerAnswer,
-				Weight:        badge.Weight,
-			})
 		}
 
 		profiles = append(profiles, p)
@@ -153,28 +138,36 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 		p.LikeCount = &likeCount
 
-		matchSummary, profileErr := s.matchingService.ComputeMatch(ctx, userID, candidate.UserID, minOverlap)
+		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
-		}
-
-		p.MatchSummary = &profilecard.MatchSummary{
-			MatchPercent: matchSummary.MatchPercent,
-			OverlapCount: matchSummary.OverlapCount,
-			Badges:       nil,
-			HiddenReason: matchSummary.HiddenReason,
-		}
-		for _, badge := range matchSummary.Badges {
-			p.MatchSummary.Badges = append(p.MatchSummary.Badges, profilecard.MatchBadge{
-				QuestionID:    badge.QuestionID,
-				QuestionText:  badge.QuestionText,
-				PartnerAnswer: badge.PartnerAnswer,
-				Weight:        badge.Weight,
-			})
 		}
 
 		profiles = append(profiles, p)
 	}
 
 	return profiles, nil
+}
+
+func (s *service) computeMatch(ctx context.Context, userID string, candidateID string, minOverlap int) (*profilecard.MatchSummary, error) {
+	matchSummary, err := s.matchingService.ComputeMatch(ctx, userID, candidateID, minOverlap)
+	if err != nil {
+		return nil, err
+	}
+	result := &profilecard.MatchSummary{
+		MatchPercent: matchSummary.MatchPercent,
+		OverlapCount: matchSummary.OverlapCount,
+		Badges:       nil,
+		HiddenReason: matchSummary.HiddenReason,
+	}
+	for _, badge := range matchSummary.Badges {
+		result.Badges = append(result.Badges, profilecard.MatchBadge{
+			QuestionID:    badge.QuestionID,
+			QuestionText:  badge.QuestionText,
+			PartnerAnswer: badge.PartnerAnswer,
+			Weight:        badge.Weight,
+		})
+	}
+
+	return result, nil
 }

@@ -4,13 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/Haerd-Limited/dating-api/internal/entity"
-	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
+
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
+
+	"github.com/Haerd-Limited/dating-api/internal/entity"
+	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
 )
 
 type MatchingRepository interface {
@@ -55,13 +57,16 @@ func (r *repository) HasMandatoryMismatch(ctx context.Context, aID, bID string) 
 	`
 
 	var one int
+
 	err := queries.Raw(q, aID, bID).QueryRowContext(ctx, r.db).Scan(&one)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil
 		}
+
 		return false, fmt.Errorf("HasMandatoryMismatch: %w", err)
 	}
+
 	return true, nil
 }
 
@@ -91,6 +96,7 @@ func (r *repository) PerspectiveSums(ctx context.Context, aID, bID string) (earn
 	if err != nil {
 		err = fmt.Errorf("PerspectiveSums: %w", err)
 	}
+
 	return
 }
 
@@ -137,11 +143,13 @@ func (r *repository) TopBadges(ctx context.Context, aID, bID string, limit int) 
 	}(rows)
 
 	var out []domain.MatchBadge
+
 	for rows.Next() {
 		var rrow row
 		if err = rows.Scan(&rrow.ID, &rrow.Text, &rrow.Label, &rrow.Weight); err != nil {
 			return nil, fmt.Errorf("TopBadges scan: %w", err)
 		}
+
 		out = append(out, domain.MatchBadge{
 			QuestionID:    rrow.ID,
 			QuestionText:  rrow.Text,
@@ -149,9 +157,11 @@ func (r *repository) TopBadges(ctx context.Context, aID, bID string, limit int) 
 			Weight:        rrow.Weight,
 		})
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("TopBadges rows: %w", err)
 	}
+
 	return out, nil
 }
 
@@ -164,10 +174,12 @@ func (r *repository) GetAnswerIDsForQuestion(ctx context.Context, questionID int
 	if err != nil {
 		return nil, err
 	}
+
 	out := make([]int64, 0, len(ans))
 	for _, a := range ans {
 		out = append(out, a.ID)
 	}
+
 	return out, nil
 }
 
@@ -199,6 +211,7 @@ func (r *repository) GetQuestionAnswers(ctx context.Context, questionID int64) (
 	if err != nil {
 		return nil, err
 	}
+
 	return answers, nil
 }
 
@@ -207,9 +220,11 @@ func (r *repository) ListQuestions(ctx context.Context, categoryKey *string, lim
 	if limit <= 0 {
 		limit = 10
 	}
+
 	if limit > 50 {
 		limit = 50
 	}
+
 	if offset < 0 {
 		offset = 0
 	}

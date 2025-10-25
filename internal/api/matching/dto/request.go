@@ -7,7 +7,7 @@ type SaveAnswerRequest struct {
 	AnswerID            int64   `json:"answer_id" validate:"required"`
 	AcceptableAnswerIDs []int64 `json:"acceptable_answer_ids"`
 	Importance          string  `json:"importance" validate:"required"`
-	//IsPrivate tells us whether the user wants us to allow their answers to be displayed on their profile or simply be used for algorithm
+	// IsPrivate tells us whether the user wants us to allow their answers to be displayed on their profile or simply be used for algorithm
 	IsPrivate bool `json:"is_private"`
 }
 
