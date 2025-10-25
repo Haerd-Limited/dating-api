@@ -5,6 +5,22 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
 )
 
+func MapDomainToGetOverviewResponse(d domain.Overview) dto.GetOverviewResponse {
+	var packs []dto.Pack
+	for _, pack := range d.QuestionPacks {
+		packs = append(packs, dto.Pack{
+			CategoryKey:                pack.CategoryKey,
+			CategoryName:               pack.CategoryName,
+			NumberOfCompletedQuestions: pack.NumberOfCompletedQuestions,
+			TotalQuestions:             pack.TotalQuestions,
+		})
+	}
+
+	return dto.GetOverviewResponse{
+		QuestionPacks: packs,
+	}
+}
+
 func MapDomainToQuestionAndAnswerResponse(d domain.QuestionsAndAnswers) dto.GetQuestionsAndAnswersResponse {
 	out := dto.GetQuestionsAndAnswersResponse{
 		Total:  d.Total,

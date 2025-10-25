@@ -154,6 +154,7 @@ func (s *service) computeMatch(ctx context.Context, userID string, candidateID s
 	if err != nil {
 		return nil, err
 	}
+
 	result := &profilecard.MatchSummary{
 		MatchPercent: matchSummary.MatchPercent,
 		OverlapCount: matchSummary.OverlapCount,

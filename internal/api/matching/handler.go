@@ -19,6 +19,7 @@ import (
 
 type Handler interface {
 	GetQuestions() http.HandlerFunc
+	GetOverview() http.HandlerFunc
 	SaveAnswer() http.HandlerFunc
 }
 
@@ -34,6 +35,26 @@ func NewMatchingHandler(
 	return &handler{
 		logger:          logger,
 		matchingService: matchingService,
+	}
+}
+
+func (h *handler) GetOverview() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		result, err := h.matchingService.GetOverview(ctx, userID)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GetOverview", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapDomainToGetOverviewResponse(result))
 	}
 }
 

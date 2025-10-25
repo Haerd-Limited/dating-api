@@ -2,6 +2,16 @@ package domain
 
 import "time"
 
+type Overview struct {
+	QuestionPacks []Pack
+}
+
+type Pack struct {
+	CategoryKey                string
+	CategoryName               string
+	NumberOfCompletedQuestions int
+	TotalQuestions             int
+}
 type MatchBadge struct {
 	QuestionID    int64
 	QuestionText  string
@@ -46,6 +56,15 @@ type AnswerOption struct {
 	QuestionID int64
 	Label      string
 	Sort       int
+}
+
+type UserAnswer struct {
+	QuestionID          int64
+	AnswerID            int64
+	AcceptableAnswerIds []int64
+	Importance          string
+	IsPrivate           bool
+	UpdatedAt           time.Time
 }
 
 type QuestionAndAnswers struct {

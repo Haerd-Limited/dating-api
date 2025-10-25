@@ -21,6 +21,9 @@ type MatchingRepository interface {
 	CountQuestions(ctx context.Context, categoryKey *string) (int, error)
 	GetAnswerIDsForQuestion(ctx context.Context, questionID int64) ([]int64, error)
 	UpsertUserAnswer(ctx context.Context, answer entity.UserAnswer) error
+	GetQuestionCategories(ctx context.Context) (entity.QuestionCategorySlice, error)
+	GetUserAnswers(ctx context.Context, userID string) (entity.UserAnswerSlice, error)
+	CountAnsweredByCategory(ctx context.Context, userID, categoryKey string) (int, error)
 
 	HasMandatoryMismatch(ctx context.Context, aID, bID string) (bool, error)
 	PerspectiveSums(ctx context.Context, aID, bID string) (earned int, total int, overlap int, err error)
@@ -40,6 +43,24 @@ func NewMatchingRepository(
 		db:     db,
 		logger: logger,
 	}
+}
+
+func (r *repository) GetUserAnswers(ctx context.Context, userID string) (entity.UserAnswerSlice, error) {
+	result, err := entity.UserAnswers(
+		entity.UserAnswerWhere.UserID.EQ(userID),
+	).All(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (r *repository) GetQuestionCategories(ctx context.Context) (entity.QuestionCategorySlice, error) {
+	result, err := entity.QuestionCategories().All(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // HasMandatoryMismatch returns true if A has any 'mandatory' answers that B does not satisfy.
@@ -267,4 +288,21 @@ func (r *repository) CountQuestions(ctx context.Context, categoryKey *string) (i
 	}
 
 	return int(count), nil
+}
+
+// CountAnsweredByCategory returns how many questions `userID` has answered in `categoryKey`.
+func (r *repository) CountAnsweredByCategory(ctx context.Context, userID, categoryKey string) (int, error) {
+	const q = `
+		SELECT COUNT(*)::int
+		FROM user_answers ua
+		JOIN questions q   ON q.id = ua.question_id
+		JOIN question_categories qc ON qc.id = q.category_id
+		WHERE ua.user_id = $1::uuid
+		  AND qc.key = $2;
+	`
+	var n int
+	if err := queries.Raw(q, userID, categoryKey).QueryRowContext(ctx, r.db).Scan(&n); err != nil {
+		return 0, fmt.Errorf("CountAnsweredByCategory: %w", err)
+	}
+	return n, nil
 }

@@ -153,6 +153,7 @@ func New(
 				})
 
 				r.Route("/matching", func(r chi.Router) {
+					r.Get("/overview", matchingHandler.GetOverview())
 					r.Get("/questions", matchingHandler.GetQuestions())
 					r.Post("/answers", matchingHandler.SaveAnswer())
 				})

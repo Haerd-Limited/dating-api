@@ -14,6 +14,7 @@ import (
 )
 
 type Service interface {
+	GetOverview(ctx context.Context, userID string) (domain.Overview, error)
 	GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int) (domain.QuestionsAndAnswers, error)
 	SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error
 	ComputeMatch(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.MatchSummary, error)
@@ -44,6 +45,39 @@ var (
 )
 
 const defaultBadgeLimit = 3
+
+func (s *service) GetOverview(ctx context.Context, userID string) (domain.Overview, error) {
+	categories, err := s.getQuestionCategories(ctx)
+	if err != nil {
+		return domain.Overview{}, fmt.Errorf("failed to get categories: %w", err)
+	}
+
+	questionPacks := make([]domain.Pack, 0, len(categories))
+
+	for _, c := range categories {
+		totalCategoryQuestionCount, cErr := s.matchingRepo.CountQuestions(ctx, &c.Key)
+		if cErr != nil {
+			return domain.Overview{}, fmt.Errorf("failed to get count questions category=%v : %w", c.Key, cErr)
+		}
+
+		answeredQuestionsCount, cErr := s.matchingRepo.CountAnsweredByCategory(ctx, userID, c.Key)
+		if cErr != nil {
+			return domain.Overview{}, fmt.Errorf("failed to get count answered questions category=%v : %w", c.Key, cErr)
+		}
+
+		pack := domain.Pack{
+			CategoryKey:                c.Key,
+			CategoryName:               c.Name,
+			NumberOfCompletedQuestions: answeredQuestionsCount,
+			TotalQuestions:             totalCategoryQuestionCount,
+		}
+		questionPacks = append(questionPacks, pack)
+	}
+
+	return domain.Overview{
+		QuestionPacks: questionPacks,
+	}, nil
+}
 
 // ComputeMatch calculates the viewer↔target match summary.
 // - Uses only overlapping questions (both answered).
@@ -211,21 +245,14 @@ func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) 
 }
 
 func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int) (domain.QuestionsAndAnswers, error) {
-	var catPtr *string
-	if category != "" {
-		catPtr = &category
-	}
-
-	questionEntities, err := s.matchingRepo.ListQuestions(ctx, catPtr, limit, offset)
+	domainQuestions, err := s.listQuestions(ctx, category, offset, limit)
 	if err != nil {
-		return domain.QuestionsAndAnswers{}, err
+		return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to list questions category=%v : %w", category, err)
 	}
 
-	domainQuestion := mapper.MapQuestionEntitiesToDomain(questionEntities)
+	items := make([]domain.QuestionAndAnswers, 0, len(domainQuestions))
 
-	items := make([]domain.QuestionAndAnswers, 0, len(domainQuestion))
-
-	for _, q := range domainQuestion {
+	for _, q := range domainQuestions {
 		answerEntities, aErr := s.matchingRepo.GetQuestionAnswers(ctx, q.ID)
 		if aErr != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question answers questionID=%v : %w", q.ID, aErr)
@@ -237,7 +264,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 		})
 	}
 
-	total, err := s.matchingRepo.CountQuestions(ctx, catPtr)
+	total, err := s.matchingRepo.CountQuestions(ctx, &category)
 	if err != nil {
 		return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions category=%v : %w", category, err)
 	}
@@ -249,3 +276,60 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 		Offset: offset,
 	}, nil
 }
+
+func (s *service) listQuestions(ctx context.Context, category string, offset, limit int) ([]domain.Question, error) {
+	var catPtr *string
+	if category != "" {
+		catPtr = &category
+	}
+
+	questionEntities, err := s.matchingRepo.ListQuestions(ctx, catPtr, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapQuestionEntitiesToDomain(questionEntities), nil
+}
+
+func (s *service) getQuestionCategories(ctx context.Context) ([]domain.QuestionCategory, error) {
+	categoryEntities, err := s.matchingRepo.GetQuestionCategories(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var categories []domain.QuestionCategory
+	for _, c := range categoryEntities {
+		categories = append(categories, domain.QuestionCategory{
+			ID:        c.ID,
+			Name:      c.Name,
+			Key:       c.Key,
+			CreatedAt: c.CreatedAt,
+		})
+	}
+
+	return categories, nil
+}
+
+/*
+func (s *service) getUserAnswers(ctx context.Context, userID string) ([]domain.UserAnswer, error) {
+	entities, err := s.matchingRepo.GetUserAnswers(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var answers []domain.UserAnswer
+
+	for _, a := range entities {
+		answers = append(answers, domain.UserAnswer{
+			QuestionID:          a.QuestionID,
+			AnswerID:            a.AnswerID,
+			AcceptableAnswerIds: a.AcceptableAnswerIds,
+			Importance:          a.Importance,
+			IsPrivate:           a.IsPrivate,
+			UpdatedAt:           a.UpdatedAt,
+		})
+	}
+
+	return answers, nil
+}
+*/

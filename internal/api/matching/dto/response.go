@@ -14,6 +14,16 @@ type QuestionResponse struct {
 	Answers      []AnswerResponse `json:"answers"`
 }
 
+type GetOverviewResponse struct {
+	QuestionPacks []Pack `json:"question_packs"`
+}
+type Pack struct {
+	CategoryKey                string `json:"category_key"`
+	CategoryName               string `json:"category_name"`
+	NumberOfCompletedQuestions int    `json:"number_of_completed_questions"`
+	TotalQuestions             int    `json:"total_questions"`
+}
+
 type GetQuestionsAndAnswersResponse struct {
 	Questions []QuestionResponse `json:"questions"`
 	Total     int                `json:"total"`
