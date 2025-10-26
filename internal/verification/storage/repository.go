@@ -73,7 +73,7 @@ func (r *verificationRepository) CheckIfPendingAttemptsExist(ctx context.Context
 	return attempt, nil
 }
 
-// todo: get reviewed
+// todo(high-priority): get reviewed
 func (r *verificationRepository) GetVerificationAttemptByUserIDAndSessionID(ctx context.Context, userID string, sessionID string) (*entity.VerificationAttempt, error) {
 	va, err := entity.VerificationAttempts(
 		entity.VerificationAttemptWhere.UserID.EQ(userID),
@@ -205,7 +205,7 @@ func (r *verificationRepository) SetUserPhotoVerified(ctx context.Context, userI
 	return nil
 }
 
-// todo: require frontend to return keys instead of urls for photos and voicenotes. or update service to parse for key and store in db
+// todo(high-priority): require frontend to return keys instead of urls for photos and voicenotes. or update service to parse for key and store in db
 func (r *verificationRepository) GetUserPrivatePhotoKeys(ctx context.Context, userID string) ([]string, error) {
 	photos, err := entity.Photos(entity.PhotoWhere.UserID.EQ(null.StringFrom(userID))).All(ctx, r.db)
 	if err != nil {

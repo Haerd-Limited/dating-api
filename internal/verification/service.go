@@ -258,7 +258,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 		return domain.CompleteResult{Status: entity.VerificationStatusPassed, MatchScore: bestSim, PhotoVerified: true}, nil
 	}
 
-	// todo: create a dashboard for manual review.
+	// todo(high-priority): create a dashboard for manual review.
 	verificationAttempt.Status = entity.VerificationStatusNeedsReview
 	confidence := float64(*res.Confidence)
 	verificationAttempt.LivenessScore = null.Float64From(confidence)

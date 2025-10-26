@@ -8,7 +8,7 @@ import (
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 )
 
-// todo: validate in service
+// todo(high-priority): validate in service
 func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (domain.UpdateProfile, error) {
 	var birthdate *time.Time
 

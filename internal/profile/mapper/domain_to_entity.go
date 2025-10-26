@@ -186,8 +186,8 @@ func MapVoicePromptsUpdateToEntity(uploadedPrompts []domain.VoicePromptUpdate, u
 			IsPrimary:     p.IsPrimary,
 			AudioURL:      p.URL,
 			CoverPhotoURL: null.StringFrom(p.PromptCoverURL),
-			// todo: add transcript
-			// todo: add duration somehow
+			// todo(high-priority): add transcript
+			// todo(high-priority): add duration somehow. ask frontend to provide
 		})
 	}
 

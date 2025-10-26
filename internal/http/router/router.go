@@ -168,7 +168,7 @@ func New(
 						r.Post("/photo/start", verificationHandler.Start()) // returns {session_id, region}
 						r.Post("/photo/complete", verificationHandler.Complete())
 					})
-					// TODO: create delete account endpoint that deletes all user data from DB and S3 bucket
+					// TODO(high-priority): create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})
 			/*r.Route(

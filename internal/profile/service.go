@@ -67,7 +67,6 @@ var (
 	ErrDuplicatePromptPosition      = errors.New("duplicate prompt position")
 )
 
-// todo: use aws face recognitions
 func (s *service) VerifyProfile(ctx context.Context, userID string) error {
 	// Load current profile
 	prof, err := s.getUserProfile(ctx, userID)
@@ -179,7 +178,7 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 	}, nil
 }
 
-// todo: make atomic with uow
+// todo(high-priority): make atomic with uow
 func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) error {
 	err := s.validateProfileUpdate(up)
 	if err != nil {
@@ -484,8 +483,8 @@ func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts 
 }
 
 func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {
-	// todo: check if position values are unique
-	// todo: ensure count is min/max 6
+	// todo(high-priority): check if position values are unique
+	// todo(high-priority): ensure count is min/max 6
 	return s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID))
 }
 

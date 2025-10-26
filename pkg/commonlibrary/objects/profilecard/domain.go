@@ -38,7 +38,7 @@ type ProfileCard struct {
 	University *string
 
 	Verified   bool
-	DistanceKm int // todo: implement logic
+	DistanceKm int // todo(high-priority): implement logic
 
 	LikeCount *int64
 

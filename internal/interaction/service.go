@@ -76,7 +76,7 @@ const (
 	ResultPassed  = "PASSED"
 )
 
-// todo: implement only one superlike a week unless they buy more.
+// todo(high-priority): implement only one superlike a week unless they buy more.
 func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error) {
 	// this should all be a single transaction
 	tx, err := is.uow.Begin(ctx)
@@ -138,7 +138,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return ResultSent, nil
 		}
 
-		// todo: block unverified users from matching
+		// todo(high-priority): block unverified users from matching
 
 		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
 		if err != nil {
@@ -176,7 +176,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			_, err = is.conversationService.SendMessage(ctx, tx.Raw(), conversationDomain.Message{
 				ConversationID: convoID,
 				SenderID:       swipe.TargetUserID,
-				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
+				Type:           conversationDomain.MessageTypeText, // todo(high-priority): update later to be dynamic and check if they sent a voice note message as a like.
 				TextBody:       targetUserSwipe.Message.Ptr(),
 				MediaUrl:       nil,
 				MediaSeconds:   nil,
@@ -192,7 +192,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			_, err = is.conversationService.SendMessage(ctx, tx.Raw(), conversationDomain.Message{
 				ConversationID: convoID,
 				SenderID:       swipe.UserID,
-				Type:           conversationDomain.MessageTypeText, // todo: update later to be dynamic and check if they sent a voice note message as a like.
+				Type:           conversationDomain.MessageTypeText, // todo(high-priority): update later to be dynamic and check if they sent a voice note message as a like.
 				TextBody:       swipe.Message,
 				MediaUrl:       nil,
 				MediaSeconds:   nil,
