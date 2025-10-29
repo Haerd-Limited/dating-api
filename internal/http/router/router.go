@@ -140,6 +140,10 @@ func New(
 					r.Get("/{id}/score", conversationHandler.GetConversationScore())
 					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
 					r.Post("/{id}/messages", conversationHandler.SendMessage())
+					r.Post("/{id}/reveal/initiate", conversationHandler.InitiateReveal())
+					r.Post("/{id}/reveal/confirm", conversationHandler.ConfirmReveal())
+					r.Post("/{id}/reveal/decision", conversationHandler.MakeRevealDecision())
+					r.Get("/{id}/photos", conversationHandler.GetMatchPhotos())
 				})
 
 				r.Route("/media", func(r chi.Router) {

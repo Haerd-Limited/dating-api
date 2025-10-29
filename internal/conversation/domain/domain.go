@@ -24,6 +24,9 @@ type Conversation struct {
 	LastMessage    *Message
 	UnreadCount    int
 	Score          ScoreSnapshot
+	RevealRequest  *RevealRequest
+	DateMode       bool
+	Photos         []Photo // Only populated when revealed
 }
 
 type MatchedUser struct {
@@ -97,4 +100,35 @@ type Match struct {
 	UserB      string
 	CreatedAt  time.Time
 	RevealedAt time.Time
+}
+
+type RevealStatus string
+
+const (
+	RevealStatusPending   RevealStatus = "pending"
+	RevealStatusExpired   RevealStatus = "expired"
+	RevealStatusConfirmed RevealStatus = "confirmed"
+	RevealStatusCancelled RevealStatus = "cancelled"
+)
+
+type RevealRequest struct {
+	ConversationID string
+	InitiatorID    string
+	RequestedAt    time.Time
+	ExpiresAt      time.Time
+	Status         RevealStatus
+}
+
+type RevealDecision string
+
+const (
+	RevealDecisionContinue RevealDecision = constants.RevealDecisionContinue
+	RevealDecisionDate     RevealDecision = constants.RevealDecisionDate
+	RevealDecisionUnmatch  RevealDecision = constants.RevealDecisionUnmatch
+)
+
+type Photo struct {
+	URL       string
+	IsPrimary bool
+	Position  int16
 }

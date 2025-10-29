@@ -37,6 +37,12 @@ type ConversationRepository interface {
 	SetConversationToRevealed(ctx context.Context, tx *sql.Tx, conversationID string) error
 	CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error
 	GetConversationParticipants(ctx context.Context, conversationID string) ([]*entity.ConversationParticipant, error)
+	CreateRevealRequest(ctx context.Context, conversationID, userID string, expiresAt time.Time) error
+	GetRevealRequest(ctx context.Context, conversationID string) (*entity.RevealRequest, error)
+	UpdateRevealRequestStatus(ctx context.Context, conversationID string, status string) error
+	SaveRevealDecision(ctx context.Context, conversationID, userID string, decision string) error
+	GetRevealDecisions(ctx context.Context, conversationID string) ([]*entity.RevealDecision, error)
+	SetDateMode(ctx context.Context, conversationID string, dateMode bool) error
 }
 
 type repository struct {
@@ -55,6 +61,7 @@ var (
 	ErrMatchNotActive             = errors.New("match is not active")
 	ErrNotConversationParticipant = errors.New("user is not a participant in the conversation")
 	ErrClientMsgIDNotUnique       = errors.New("client message ID is not unique")
+	ErrRevealAlreadyInitiated     = errors.New("reveal request already exists for this conversation")
 )
 
 func (r *repository) GetConversationParticipants(ctx context.Context, conversationID string) ([]*entity.ConversationParticipant, error) {
@@ -507,4 +514,101 @@ func (r *repository) GetMatches(ctx context.Context, userID string) ([]*entity.M
 	}
 
 	return matches, nil
+}
+
+func (r *repository) CreateRevealRequest(ctx context.Context, conversationID, userID string, expiresAt time.Time) error {
+	revealRequest := &entity.RevealRequest{
+		ConversationID: conversationID,
+		InitiatorID:    userID,
+		RequestedAt:    time.Now().UTC(),
+		ExpiresAt:      expiresAt,
+		Status:         "pending",
+	}
+
+	err := revealRequest.Insert(ctx, r.db, boil.Infer())
+	if err != nil {
+		return fmt.Errorf("insert reveal request failed: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) GetRevealRequest(ctx context.Context, conversationID string) (*entity.RevealRequest, error) {
+	revealRequest, err := entity.RevealRequests(
+		entity.RevealRequestWhere.ConversationID.EQ(conversationID),
+	).One(ctx, r.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("get reveal request failed: %w", err)
+	}
+
+	return revealRequest, nil
+}
+
+func (r *repository) UpdateRevealRequestStatus(ctx context.Context, conversationID string, status string) error {
+	revealRequest, err := entity.RevealRequests(
+		entity.RevealRequestWhere.ConversationID.EQ(conversationID),
+	).One(ctx, r.db)
+	if err != nil {
+		return fmt.Errorf("get reveal request for update failed: %w", err)
+	}
+
+	revealRequest.Status = status
+
+	_, err = revealRequest.Update(ctx, r.db, boil.Whitelist(entity.RevealRequestColumns.Status))
+	if err != nil {
+		return fmt.Errorf("update reveal request status failed: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) SaveRevealDecision(ctx context.Context, conversationID, userID string, decision string) error {
+	revealDecision := &entity.RevealDecision{
+		ConversationID: conversationID,
+		UserID:         userID,
+		Decision:       decision,
+		DecidedAt:      time.Now().UTC(),
+	}
+
+	err := revealDecision.Insert(ctx, r.db, boil.Infer())
+	if err != nil {
+		return fmt.Errorf("insert reveal decision failed: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) GetRevealDecisions(ctx context.Context, conversationID string) ([]*entity.RevealDecision, error) {
+	decisions, err := entity.RevealDecisions(
+		entity.RevealDecisionWhere.ConversationID.EQ(conversationID),
+	).All(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("get reveal decisions failed: %w", err)
+	}
+
+	return decisions, nil
+}
+
+func (r *repository) SetDateMode(ctx context.Context, conversationID string, dateMode bool) error {
+	// Get the match for this conversation
+	match, err := entity.Matches(
+		qm.Where("(user_a, user_b) IN (SELECT user_a, user_b FROM conversations WHERE id = ?)", conversationID),
+		qm.Or2(qm.Where("(user_b, user_a) IN (SELECT user_a, user_b FROM conversations WHERE id = ?)", conversationID)),
+	).One(ctx, r.db)
+	if err != nil {
+		return fmt.Errorf("get match for date mode update failed: %w", err)
+	}
+
+	match.DateMode = dateMode
+
+	_, err = match.Update(ctx, r.db, boil.Whitelist(entity.MatchColumns.DateMode))
+	if err != nil {
+		return fmt.Errorf("update match date mode failed: %w", err)
+	}
+
+	return nil
 }

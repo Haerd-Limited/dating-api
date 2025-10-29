@@ -60,6 +60,56 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 
 	scoreSnapShot := mapper.MapScoreDomainSnapShotToConversationDomain(snapShot)
 
+	// Get reveal request if exists
+	revealRequestEntity, err := s.conversationRepo.GetRevealRequest(ctx, conversationEntity.ID)
+	if err != nil {
+		return nil, fmt.Errorf("get reveal request: %w", err)
+	}
+
+	var revealRequest *domain.RevealRequest
+	if revealRequestEntity != nil {
+		revealRequest = &domain.RevealRequest{
+			ConversationID: revealRequestEntity.ConversationID,
+			InitiatorID:    revealRequestEntity.InitiatorID,
+			RequestedAt:    revealRequestEntity.RequestedAt,
+			ExpiresAt:      revealRequestEntity.ExpiresAt,
+			Status:         domain.RevealStatus(revealRequestEntity.Status),
+		}
+	}
+
+	// Get date mode from match
+	matches, err := s.conversationRepo.GetMatches(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get matches for date mode: %w", err)
+	}
+
+	var dateMode bool
+
+	for _, match := range matches {
+		if (match.UserA == userID && match.UserB == matchID) || (match.UserB == userID && match.UserA == matchID) {
+			dateMode = match.DateMode
+			break
+		}
+	}
+
+	// Get photos if conversation is revealed
+	var photos []domain.Photo
+
+	if scoreSnapShot.Revealed {
+		matchPhotos, err := s.profileService.GetUserPhotos(ctx, matchID)
+		if err != nil {
+			return nil, fmt.Errorf("get match photos: %w", err)
+		}
+		// Convert profile photos to conversation photos
+		for _, photo := range matchPhotos {
+			photos = append(photos, domain.Photo{
+				URL:       photo.URL,
+				IsPrimary: photo.IsPrimary,
+				Position:  photo.Position,
+			})
+		}
+	}
+
 	return &domain.Conversation{
 		ID: conversationEntity.ID,
 		MatchedUser: domain.MatchedUser{
@@ -75,6 +125,9 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 		LastActivityAt: conversationEntity.LastActivityAt,
 		LastMessage:    lastMessage,
 		Score:          *scoreSnapShot,
+		RevealRequest:  revealRequest,
+		DateMode:       dateMode,
+		Photos:         photos,
 	}, nil
 }
 

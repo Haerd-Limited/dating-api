@@ -56,6 +56,10 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Religions", testReligionsUpsert)
 
+	t.Run("RevealDecisions", testRevealDecisionsUpsert)
+
+	t.Run("RevealRequests", testRevealRequestsUpsert)
+
 	t.Run("ScoringBonuses", testScoringBonusesUpsert)
 
 	t.Run("ScoringCalls", testScoringCallsUpsert)

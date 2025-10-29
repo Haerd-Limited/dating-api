@@ -21,24 +21,24 @@ var (
 	_ = queries.Equal
 )
 
-func testMatches(t *testing.T) {
+func testRevealRequests(t *testing.T) {
 	t.Parallel()
 
-	query := Matches()
+	query := RevealRequests()
 
 	if query.Query == nil {
 		t.Error("expected a query, got nothing")
 	}
 }
 
-func testMatchesDelete(t *testing.T) {
+func testRevealRequestsDelete(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func testMatchesDelete(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,14 +64,14 @@ func testMatchesDelete(t *testing.T) {
 	}
 }
 
-func testMatchesQueryDeleteAll(t *testing.T) {
+func testRevealRequestsQueryDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -81,13 +81,13 @@ func testMatchesQueryDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if rowsAff, err := Matches().DeleteAll(ctx, tx); err != nil {
+	if rowsAff, err := RevealRequests().DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,14 +97,14 @@ func testMatchesQueryDeleteAll(t *testing.T) {
 	}
 }
 
-func testMatchesSliceDeleteAll(t *testing.T) {
+func testRevealRequestsSliceDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func testMatchesSliceDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := MatchSlice{o}
+	slice := RevealRequestSlice{o}
 
 	if rowsAff, err := slice.DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
@@ -122,7 +122,7 @@ func testMatchesSliceDeleteAll(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,14 +132,14 @@ func testMatchesSliceDeleteAll(t *testing.T) {
 	}
 }
 
-func testMatchesExists(t *testing.T) {
+func testRevealRequestsExists(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -149,23 +149,23 @@ func testMatchesExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := MatchExists(ctx, tx, o.ID)
+	e, err := RevealRequestExists(ctx, tx, o.ConversationID)
 	if err != nil {
-		t.Errorf("Unable to check if Match exists: %s", err)
+		t.Errorf("Unable to check if RevealRequest exists: %s", err)
 	}
 	if !e {
-		t.Errorf("Expected MatchExists to return true, but got false.")
+		t.Errorf("Expected RevealRequestExists to return true, but got false.")
 	}
 }
 
-func testMatchesFind(t *testing.T) {
+func testRevealRequestsFind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -175,24 +175,24 @@ func testMatchesFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	matchFound, err := FindMatch(ctx, tx, o.ID)
+	revealRequestFound, err := FindRevealRequest(ctx, tx, o.ConversationID)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if matchFound == nil {
+	if revealRequestFound == nil {
 		t.Error("want a record, got nil")
 	}
 }
 
-func testMatchesBind(t *testing.T) {
+func testRevealRequestsBind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -202,19 +202,19 @@ func testMatchesBind(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = Matches().Bind(ctx, tx, o); err != nil {
+	if err = RevealRequests().Bind(ctx, tx, o); err != nil {
 		t.Error(err)
 	}
 }
 
-func testMatchesOne(t *testing.T) {
+func testRevealRequestsOne(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -224,38 +224,38 @@ func testMatchesOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	if x, err := Matches().One(ctx, tx); err != nil {
+	if x, err := RevealRequests().One(ctx, tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
 	}
 }
 
-func testMatchesAll(t *testing.T) {
+func testRevealRequestsAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	matchOne := &Match{}
-	matchTwo := &Match{}
-	if err = randomize.Struct(seed, matchOne, matchDBTypes, false, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	revealRequestOne := &RevealRequest{}
+	revealRequestTwo := &RevealRequest{}
+	if err = randomize.Struct(seed, revealRequestOne, revealRequestDBTypes, false, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
-	if err = randomize.Struct(seed, matchTwo, matchDBTypes, false, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	if err = randomize.Struct(seed, revealRequestTwo, revealRequestDBTypes, false, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = matchOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = revealRequestOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = matchTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = revealRequestTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := Matches().All(ctx, tx)
+	slice, err := RevealRequests().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -265,31 +265,31 @@ func testMatchesAll(t *testing.T) {
 	}
 }
 
-func testMatchesCount(t *testing.T) {
+func testRevealRequestsCount(t *testing.T) {
 	t.Parallel()
 
 	var err error
 	seed := randomize.NewSeed()
-	matchOne := &Match{}
-	matchTwo := &Match{}
-	if err = randomize.Struct(seed, matchOne, matchDBTypes, false, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	revealRequestOne := &RevealRequest{}
+	revealRequestTwo := &RevealRequest{}
+	if err = randomize.Struct(seed, revealRequestOne, revealRequestDBTypes, false, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
-	if err = randomize.Struct(seed, matchTwo, matchDBTypes, false, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	if err = randomize.Struct(seed, revealRequestTwo, revealRequestDBTypes, false, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = matchOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = revealRequestOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = matchTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = revealRequestTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -299,155 +299,155 @@ func testMatchesCount(t *testing.T) {
 	}
 }
 
-func matchBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func matchAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func matchAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func matchBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func matchAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func matchBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func matchAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func matchBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func matchAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *Match) error {
-	*o = Match{}
+func revealRequestAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *RevealRequest) error {
+	*o = RevealRequest{}
 	return nil
 }
 
-func testMatchesHooks(t *testing.T) {
+func testRevealRequestsHooks(t *testing.T) {
 	t.Parallel()
 
 	var err error
 
 	ctx := context.Background()
-	empty := &Match{}
-	o := &Match{}
+	empty := &RevealRequest{}
+	o := &RevealRequest{}
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, o, matchDBTypes, false); err != nil {
-		t.Errorf("Unable to randomize Match object: %s", err)
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, false); err != nil {
+		t.Errorf("Unable to randomize RevealRequest object: %s", err)
 	}
 
-	AddMatchHook(boil.BeforeInsertHook, matchBeforeInsertHook)
+	AddRevealRequestHook(boil.BeforeInsertHook, revealRequestBeforeInsertHook)
 	if err = o.doBeforeInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeInsertHook function to empty object, but got: %#v", o)
 	}
-	matchBeforeInsertHooks = []MatchHook{}
+	revealRequestBeforeInsertHooks = []RevealRequestHook{}
 
-	AddMatchHook(boil.AfterInsertHook, matchAfterInsertHook)
+	AddRevealRequestHook(boil.AfterInsertHook, revealRequestAfterInsertHook)
 	if err = o.doAfterInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterInsertHook function to empty object, but got: %#v", o)
 	}
-	matchAfterInsertHooks = []MatchHook{}
+	revealRequestAfterInsertHooks = []RevealRequestHook{}
 
-	AddMatchHook(boil.AfterSelectHook, matchAfterSelectHook)
+	AddRevealRequestHook(boil.AfterSelectHook, revealRequestAfterSelectHook)
 	if err = o.doAfterSelectHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterSelectHook function to empty object, but got: %#v", o)
 	}
-	matchAfterSelectHooks = []MatchHook{}
+	revealRequestAfterSelectHooks = []RevealRequestHook{}
 
-	AddMatchHook(boil.BeforeUpdateHook, matchBeforeUpdateHook)
+	AddRevealRequestHook(boil.BeforeUpdateHook, revealRequestBeforeUpdateHook)
 	if err = o.doBeforeUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpdateHook function to empty object, but got: %#v", o)
 	}
-	matchBeforeUpdateHooks = []MatchHook{}
+	revealRequestBeforeUpdateHooks = []RevealRequestHook{}
 
-	AddMatchHook(boil.AfterUpdateHook, matchAfterUpdateHook)
+	AddRevealRequestHook(boil.AfterUpdateHook, revealRequestAfterUpdateHook)
 	if err = o.doAfterUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpdateHook function to empty object, but got: %#v", o)
 	}
-	matchAfterUpdateHooks = []MatchHook{}
+	revealRequestAfterUpdateHooks = []RevealRequestHook{}
 
-	AddMatchHook(boil.BeforeDeleteHook, matchBeforeDeleteHook)
+	AddRevealRequestHook(boil.BeforeDeleteHook, revealRequestBeforeDeleteHook)
 	if err = o.doBeforeDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeDeleteHook function to empty object, but got: %#v", o)
 	}
-	matchBeforeDeleteHooks = []MatchHook{}
+	revealRequestBeforeDeleteHooks = []RevealRequestHook{}
 
-	AddMatchHook(boil.AfterDeleteHook, matchAfterDeleteHook)
+	AddRevealRequestHook(boil.AfterDeleteHook, revealRequestAfterDeleteHook)
 	if err = o.doAfterDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterDeleteHook function to empty object, but got: %#v", o)
 	}
-	matchAfterDeleteHooks = []MatchHook{}
+	revealRequestAfterDeleteHooks = []RevealRequestHook{}
 
-	AddMatchHook(boil.BeforeUpsertHook, matchBeforeUpsertHook)
+	AddRevealRequestHook(boil.BeforeUpsertHook, revealRequestBeforeUpsertHook)
 	if err = o.doBeforeUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpsertHook function to empty object, but got: %#v", o)
 	}
-	matchBeforeUpsertHooks = []MatchHook{}
+	revealRequestBeforeUpsertHooks = []RevealRequestHook{}
 
-	AddMatchHook(boil.AfterUpsertHook, matchAfterUpsertHook)
+	AddRevealRequestHook(boil.AfterUpsertHook, revealRequestAfterUpsertHook)
 	if err = o.doAfterUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpsertHook function to empty object, but got: %#v", o)
 	}
-	matchAfterUpsertHooks = []MatchHook{}
+	revealRequestAfterUpsertHooks = []RevealRequestHook{}
 }
 
-func testMatchesInsert(t *testing.T) {
+func testRevealRequestsInsert(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -457,7 +457,7 @@ func testMatchesInsert(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -467,24 +467,24 @@ func testMatchesInsert(t *testing.T) {
 	}
 }
 
-func testMatchesInsertWhitelist(t *testing.T) {
+func testRevealRequestsInsertWhitelist(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert(ctx, tx, boil.Whitelist(strmangle.SetMerge(matchPrimaryKeyColumns, matchColumnsWithoutDefault)...)); err != nil {
+	if err = o.Insert(ctx, tx, boil.Whitelist(strmangle.SetMerge(revealRequestPrimaryKeyColumns, revealRequestColumnsWithoutDefault)...)); err != nil {
 		t.Error(err)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -494,17 +494,78 @@ func testMatchesInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testMatchToOneUserUsingUserAUser(t *testing.T) {
+func testRevealRequestToOneConversationUsingConversation(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var local Match
+	var local RevealRequest
+	var foreign Conversation
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, revealRequestDBTypes, false, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, conversationDBTypes, false, conversationColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Conversation struct: %s", err)
+	}
+
+	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	local.ConversationID = foreign.ID
+	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.Conversation().One(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if check.ID != foreign.ID {
+		t.Errorf("want: %v, got %v", foreign.ID, check.ID)
+	}
+
+	ranAfterSelectHook := false
+	AddConversationHook(boil.AfterSelectHook, func(ctx context.Context, e boil.ContextExecutor, o *Conversation) error {
+		ranAfterSelectHook = true
+		return nil
+	})
+
+	slice := RevealRequestSlice{&local}
+	if err = local.L.LoadConversation(ctx, tx, false, (*[]*RevealRequest)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Conversation == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.Conversation = nil
+	if err = local.L.LoadConversation(ctx, tx, true, &local, nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Conversation == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	if !ranAfterSelectHook {
+		t.Error("failed to run AfterSelect hook for relationship")
+	}
+}
+
+func testRevealRequestToOneUserUsingInitiator(t *testing.T) {
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var local RevealRequest
 	var foreign User
 
 	seed := randomize.NewSeed()
-	if err := randomize.Struct(seed, &local, matchDBTypes, false, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	if err := randomize.Struct(seed, &local, revealRequestDBTypes, false, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 	if err := randomize.Struct(seed, &foreign, userDBTypes, false, userColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize User struct: %s", err)
@@ -514,12 +575,12 @@ func testMatchToOneUserUsingUserAUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	local.UserA = foreign.ID
+	local.InitiatorID = foreign.ID
 	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	check, err := local.UserAUser().One(ctx, tx)
+	check, err := local.Initiator().One(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -534,80 +595,19 @@ func testMatchToOneUserUsingUserAUser(t *testing.T) {
 		return nil
 	})
 
-	slice := MatchSlice{&local}
-	if err = local.L.LoadUserAUser(ctx, tx, false, (*[]*Match)(&slice), nil); err != nil {
+	slice := RevealRequestSlice{&local}
+	if err = local.L.LoadInitiator(ctx, tx, false, (*[]*RevealRequest)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.UserAUser == nil {
+	if local.R.Initiator == nil {
 		t.Error("struct should have been eager loaded")
 	}
 
-	local.R.UserAUser = nil
-	if err = local.L.LoadUserAUser(ctx, tx, true, &local, nil); err != nil {
+	local.R.Initiator = nil
+	if err = local.L.LoadInitiator(ctx, tx, true, &local, nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.UserAUser == nil {
-		t.Error("struct should have been eager loaded")
-	}
-
-	if !ranAfterSelectHook {
-		t.Error("failed to run AfterSelect hook for relationship")
-	}
-}
-
-func testMatchToOneUserUsingUserBUser(t *testing.T) {
-	ctx := context.Background()
-	tx := MustTx(boil.BeginTx(ctx, nil))
-	defer func() { _ = tx.Rollback() }()
-
-	var local Match
-	var foreign User
-
-	seed := randomize.NewSeed()
-	if err := randomize.Struct(seed, &local, matchDBTypes, false, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
-	}
-	if err := randomize.Struct(seed, &foreign, userDBTypes, false, userColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize User struct: %s", err)
-	}
-
-	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-
-	local.UserB = foreign.ID
-	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-
-	check, err := local.UserBUser().One(ctx, tx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if check.ID != foreign.ID {
-		t.Errorf("want: %v, got %v", foreign.ID, check.ID)
-	}
-
-	ranAfterSelectHook := false
-	AddUserHook(boil.AfterSelectHook, func(ctx context.Context, e boil.ContextExecutor, o *User) error {
-		ranAfterSelectHook = true
-		return nil
-	})
-
-	slice := MatchSlice{&local}
-	if err = local.L.LoadUserBUser(ctx, tx, false, (*[]*Match)(&slice), nil); err != nil {
-		t.Fatal(err)
-	}
-	if local.R.UserBUser == nil {
-		t.Error("struct should have been eager loaded")
-	}
-
-	local.R.UserBUser = nil
-	if err = local.L.LoadUserBUser(ctx, tx, true, &local, nil); err != nil {
-		t.Fatal(err)
-	}
-	if local.R.UserBUser == nil {
+	if local.R.Initiator == nil {
 		t.Error("struct should have been eager loaded")
 	}
 
@@ -616,18 +616,71 @@ func testMatchToOneUserUsingUserBUser(t *testing.T) {
 	}
 }
 
-func testMatchToOneSetOpUserUsingUserAUser(t *testing.T) {
+func testRevealRequestToOneSetOpConversationUsingConversation(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
-	var a Match
+	var a RevealRequest
+	var b, c Conversation
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, revealRequestDBTypes, false, strmangle.SetComplement(revealRequestPrimaryKeyColumns, revealRequestColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, conversationDBTypes, false, strmangle.SetComplement(conversationPrimaryKeyColumns, conversationColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, conversationDBTypes, false, strmangle.SetComplement(conversationPrimaryKeyColumns, conversationColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*Conversation{&b, &c} {
+		err = a.SetConversation(ctx, tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.Conversation != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.RevealRequest != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if a.ConversationID != x.ID {
+			t.Error("foreign key was wrong value", a.ConversationID)
+		}
+
+		if exists, err := RevealRequestExists(ctx, tx, a.ConversationID); err != nil {
+			t.Fatal(err)
+		} else if !exists {
+			t.Error("want 'a' to exist")
+		}
+
+	}
+}
+func testRevealRequestToOneSetOpUserUsingInitiator(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a RevealRequest
 	var b, c User
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, matchDBTypes, false, strmangle.SetComplement(matchPrimaryKeyColumns, matchColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &a, revealRequestDBTypes, false, strmangle.SetComplement(revealRequestPrimaryKeyColumns, revealRequestColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 	if err = randomize.Struct(seed, &b, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
@@ -645,100 +698,43 @@ func testMatchToOneSetOpUserUsingUserAUser(t *testing.T) {
 	}
 
 	for i, x := range []*User{&b, &c} {
-		err = a.SetUserAUser(ctx, tx, i != 0, x)
+		err = a.SetInitiator(ctx, tx, i != 0, x)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if a.R.UserAUser != x {
+		if a.R.Initiator != x {
 			t.Error("relationship struct not set to correct value")
 		}
 
-		if x.R.UserAMatches[0] != &a {
+		if x.R.InitiatorRevealRequests[0] != &a {
 			t.Error("failed to append to foreign relationship struct")
 		}
-		if a.UserA != x.ID {
-			t.Error("foreign key was wrong value", a.UserA)
+		if a.InitiatorID != x.ID {
+			t.Error("foreign key was wrong value", a.InitiatorID)
 		}
 
-		zero := reflect.Zero(reflect.TypeOf(a.UserA))
-		reflect.Indirect(reflect.ValueOf(&a.UserA)).Set(zero)
+		zero := reflect.Zero(reflect.TypeOf(a.InitiatorID))
+		reflect.Indirect(reflect.ValueOf(&a.InitiatorID)).Set(zero)
 
 		if err = a.Reload(ctx, tx); err != nil {
 			t.Fatal("failed to reload", err)
 		}
 
-		if a.UserA != x.ID {
-			t.Error("foreign key was wrong value", a.UserA, x.ID)
-		}
-	}
-}
-func testMatchToOneSetOpUserUsingUserBUser(t *testing.T) {
-	var err error
-
-	ctx := context.Background()
-	tx := MustTx(boil.BeginTx(ctx, nil))
-	defer func() { _ = tx.Rollback() }()
-
-	var a Match
-	var b, c User
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, matchDBTypes, false, strmangle.SetComplement(matchPrimaryKeyColumns, matchColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-	if err = randomize.Struct(seed, &b, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-	if err = randomize.Struct(seed, &c, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-
-	for i, x := range []*User{&b, &c} {
-		err = a.SetUserBUser(ctx, tx, i != 0, x)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if a.R.UserBUser != x {
-			t.Error("relationship struct not set to correct value")
-		}
-
-		if x.R.UserBMatches[0] != &a {
-			t.Error("failed to append to foreign relationship struct")
-		}
-		if a.UserB != x.ID {
-			t.Error("foreign key was wrong value", a.UserB)
-		}
-
-		zero := reflect.Zero(reflect.TypeOf(a.UserB))
-		reflect.Indirect(reflect.ValueOf(&a.UserB)).Set(zero)
-
-		if err = a.Reload(ctx, tx); err != nil {
-			t.Fatal("failed to reload", err)
-		}
-
-		if a.UserB != x.ID {
-			t.Error("foreign key was wrong value", a.UserB, x.ID)
+		if a.InitiatorID != x.ID {
+			t.Error("foreign key was wrong value", a.InitiatorID, x.ID)
 		}
 	}
 }
 
-func testMatchesReload(t *testing.T) {
+func testRevealRequestsReload(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -753,14 +749,14 @@ func testMatchesReload(t *testing.T) {
 	}
 }
 
-func testMatchesReloadAll(t *testing.T) {
+func testRevealRequestsReloadAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -770,21 +766,21 @@ func testMatchesReloadAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := MatchSlice{o}
+	slice := RevealRequestSlice{o}
 
 	if err = slice.ReloadAll(ctx, tx); err != nil {
 		t.Error(err)
 	}
 }
 
-func testMatchesSelect(t *testing.T) {
+func testRevealRequestsSelect(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -794,7 +790,7 @@ func testMatchesSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice, err := Matches().All(ctx, tx)
+	slice, err := RevealRequests().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -805,25 +801,25 @@ func testMatchesSelect(t *testing.T) {
 }
 
 var (
-	matchDBTypes = map[string]string{`ID`: `uuid`, `UserA`: `uuid`, `UserB`: `uuid`, `CreatedAt`: `timestamp with time zone`, `RevealedAt`: `timestamp with time zone`, `Status`: `enum.match_status('active','unmatched','blocked')`, `DateMode`: `boolean`}
-	_            = bytes.MinRead
+	revealRequestDBTypes = map[string]string{`ConversationID`: `uuid`, `InitiatorID`: `uuid`, `RequestedAt`: `timestamp with time zone`, `ExpiresAt`: `timestamp with time zone`, `Status`: `text`}
+	_                    = bytes.MinRead
 )
 
-func testMatchesUpdate(t *testing.T) {
+func testRevealRequestsUpdate(t *testing.T) {
 	t.Parallel()
 
-	if 0 == len(matchPrimaryKeyColumns) {
+	if 0 == len(revealRequestPrimaryKeyColumns) {
 		t.Skip("Skipping table with no primary key columns")
 	}
-	if len(matchAllColumns) == len(matchPrimaryKeyColumns) {
+	if len(revealRequestAllColumns) == len(revealRequestPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -833,7 +829,7 @@ func testMatchesUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -842,8 +838,8 @@ func testMatchesUpdate(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	if rowsAff, err := o.Update(ctx, tx, boil.Infer()); err != nil {
@@ -853,18 +849,18 @@ func testMatchesUpdate(t *testing.T) {
 	}
 }
 
-func testMatchesSliceUpdateAll(t *testing.T) {
+func testRevealRequestsSliceUpdateAll(t *testing.T) {
 	t.Parallel()
 
-	if len(matchAllColumns) == len(matchPrimaryKeyColumns) {
+	if len(revealRequestAllColumns) == len(revealRequestPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &Match{}
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := &RevealRequest{}
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -874,7 +870,7 @@ func testMatchesSliceUpdateAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -883,18 +879,18 @@ func testMatchesSliceUpdateAll(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, matchDBTypes, true, matchPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	if err = randomize.Struct(seed, o, revealRequestDBTypes, true, revealRequestPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	// Remove Primary keys and unique columns from what we plan to update
 	var fields []string
-	if strmangle.StringSliceMatch(matchAllColumns, matchPrimaryKeyColumns) {
-		fields = matchAllColumns
+	if strmangle.StringSliceMatch(revealRequestAllColumns, revealRequestPrimaryKeyColumns) {
+		fields = revealRequestAllColumns
 	} else {
 		fields = strmangle.SetComplement(
-			matchAllColumns,
-			matchPrimaryKeyColumns,
+			revealRequestAllColumns,
+			revealRequestPrimaryKeyColumns,
 		)
 	}
 
@@ -912,7 +908,7 @@ func testMatchesSliceUpdateAll(t *testing.T) {
 		}
 	}
 
-	slice := MatchSlice{o}
+	slice := RevealRequestSlice{o}
 	if rowsAff, err := slice.UpdateAll(ctx, tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
@@ -920,29 +916,29 @@ func testMatchesSliceUpdateAll(t *testing.T) {
 	}
 }
 
-func testMatchesUpsert(t *testing.T) {
+func testRevealRequestsUpsert(t *testing.T) {
 	t.Parallel()
 
-	if len(matchAllColumns) == len(matchPrimaryKeyColumns) {
+	if len(revealRequestAllColumns) == len(revealRequestPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
 	// Attempt the INSERT side of an UPSERT
-	o := Match{}
-	if err = randomize.Struct(seed, &o, matchDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	o := RevealRequest{}
+	if err = randomize.Struct(seed, &o, revealRequestDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 	if err = o.Upsert(ctx, tx, false, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert Match: %s", err)
+		t.Errorf("Unable to upsert RevealRequest: %s", err)
 	}
 
-	count, err := Matches().Count(ctx, tx)
+	count, err := RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -951,15 +947,15 @@ func testMatchesUpsert(t *testing.T) {
 	}
 
 	// Attempt the UPDATE side of an UPSERT
-	if err = randomize.Struct(seed, &o, matchDBTypes, false, matchPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize Match struct: %s", err)
+	if err = randomize.Struct(seed, &o, revealRequestDBTypes, false, revealRequestPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize RevealRequest struct: %s", err)
 	}
 
 	if err = o.Upsert(ctx, tx, true, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert Match: %s", err)
+		t.Errorf("Unable to upsert RevealRequest: %s", err)
 	}
 
-	count, err = Matches().Count(ctx, tx)
+	count, err = RevealRequests().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}

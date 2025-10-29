@@ -137,5 +137,39 @@ func MapConversationToDto(convo domain.Conversation) dto.Conversation {
 			CanReveal: convo.Score.CanReveal,
 			Shared:    convo.Score.Shared,
 		},
+		RevealRequest: MapRevealRequestToDTO(convo.RevealRequest),
+		DateMode:      convo.DateMode,
+		Photos:        MapPhotosToDTO(convo.Photos),
 	}
+}
+
+func MapRevealRequestToDTO(revealRequest *domain.RevealRequest) *dto.RevealRequest {
+	if revealRequest == nil {
+		return nil
+	}
+
+	return &dto.RevealRequest{
+		ConversationID: revealRequest.ConversationID,
+		InitiatorID:    revealRequest.InitiatorID,
+		RequestedAt:    revealRequest.RequestedAt,
+		ExpiresAt:      revealRequest.ExpiresAt,
+		Status:         string(revealRequest.Status),
+	}
+}
+
+func MapPhotosToDTO(photos []domain.Photo) []dto.Photo {
+	if photos == nil {
+		return nil
+	}
+
+	var dtos []dto.Photo
+	for _, photo := range photos {
+		dtos = append(dtos, dto.Photo{
+			URL:       photo.URL,
+			IsPrimary: photo.IsPrimary,
+			Position:  photo.Position,
+		})
+	}
+
+	return dtos
 }

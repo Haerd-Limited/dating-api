@@ -30,6 +30,10 @@ type Handler interface {
 	SendMessage() http.HandlerFunc
 	GetConversationMessages() http.HandlerFunc
 	GetConversationScore() http.HandlerFunc
+	InitiateReveal() http.HandlerFunc
+	ConfirmReveal() http.HandlerFunc
+	MakeRevealDecision() http.HandlerFunc
+	GetMatchPhotos() http.HandlerFunc
 }
 
 type handler struct {
@@ -44,6 +48,163 @@ func NewConversationHandler(
 	return &handler{
 		logger:              logger,
 		conversationService: conversationService,
+	}
+}
+
+func (h *handler) InitiateReveal() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		convoID := chi.URLParam(r, "id")
+		if convoID == "" {
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(
+					"Conversation ID is required as a URL parameter",
+				))
+
+			return
+		}
+
+		err := h.conversationService.InitiateReveal(ctx, userID, convoID)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "InitiateReveal", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.InitiateRevealResponse{
+			Message: "Reveal request initiated successfully",
+		})
+	}
+}
+
+func (h *handler) ConfirmReveal() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		convoID := chi.URLParam(r, "id")
+		if convoID == "" {
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(
+					"Conversation ID is required as a URL parameter",
+				))
+
+			return
+		}
+
+		err := h.conversationService.ConfirmReveal(ctx, userID, convoID)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "ConfirmReveal", err)
+			return
+		}
+
+		// Get photos after reveal
+		photos, err := h.conversationService.GetMatchPhotos(ctx, convoID, userID)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GetMatchPhotos", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.ConfirmRevealResponse{
+			Photos: mapper.MapPhotosToDTO(photos),
+		})
+	}
+}
+
+func (h *handler) MakeRevealDecision() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		convoID := chi.URLParam(r, "id")
+		if convoID == "" {
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(
+					"Conversation ID is required as a URL parameter",
+				))
+
+			return
+		}
+
+		var req dto.MakeRevealDecisionRequest
+
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate make reveal decision request body", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("decision is required and must be one of: continue, date, unmatch"),
+			)
+
+			return
+		}
+
+		err = h.conversationService.MakeRevealDecision(ctx, userID, convoID, req.Decision)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "MakeRevealDecision", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.MakeRevealDecisionResponse{
+			Message: "Decision saved successfully",
+		})
+	}
+}
+
+func (h *handler) GetMatchPhotos() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		convoID := chi.URLParam(r, "id")
+		if convoID == "" {
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(
+					"Conversation ID is required as a URL parameter",
+				))
+
+			return
+		}
+
+		photos, err := h.conversationService.GetMatchPhotos(ctx, convoID, userID)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GetMatchPhotos", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.GetMatchPhotosResponse{
+			Photos: mapper.MapPhotosToDTO(photos),
+		})
 	}
 }
 
@@ -217,6 +378,14 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusNotFound, "User does not exist"
 	case errors.Is(err, interactionstorage.ErrAlreadySwiped):
 		return http.StatusConflict, "You've already swiped on this user"
+	case errors.Is(err, conversation.ErrRevealNotEligible):
+		return http.StatusForbidden, "You haven't built enough connection to reveal yet"
+	case errors.Is(err, conversation.ErrRevealAlreadyInitiated):
+		return http.StatusConflict, "Reveal already initiated"
+	case errors.Is(err, conversation.ErrRevealRequestExpired):
+		return http.StatusGone, "Reveal request has expired"
+	case errors.Is(err, conversation.ErrConversationNotRevealed):
+		return http.StatusForbidden, "Photos not revealed yet"
 	default:
 		return http.StatusInternalServerError, commonMessages.InternalServerErrorMsg
 	}

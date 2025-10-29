@@ -21,4 +21,8 @@ const (
 	MinAge                                      = 18
 	MinHeight                                   = 100
 	MaxHeight                                   = 300
+	RevealWindowHours                           = 48
+	RevealDecisionContinue                      = "continue"
+	RevealDecisionDate                          = "date"
+	RevealDecisionUnmatch                       = "unmatch"
 )

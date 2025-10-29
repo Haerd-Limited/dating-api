@@ -21,12 +21,15 @@ type GetConversationScoreResponse struct {
 type Conversation struct {
 	ID string `json:"id"`
 	// Match the user/person you matched with
-	Match          Match         `json:"match"`
-	CreatedAt      time.Time     `json:"created_at"`
-	LastActivityAt time.Time     `json:"last_activity_at"`
-	LastMessage    *Message      `json:"last_message"`
-	UnreadCount    int           `json:"unread_count"`
-	Score          ScoreSnapshot `json:"score_snapshot"`
+	Match          Match          `json:"match"`
+	CreatedAt      time.Time      `json:"created_at"`
+	LastActivityAt time.Time      `json:"last_activity_at"`
+	LastMessage    *Message       `json:"last_message"`
+	UnreadCount    int            `json:"unread_count"`
+	Score          ScoreSnapshot  `json:"score_snapshot"`
+	RevealRequest  *RevealRequest `json:"reveal_request,omitempty"`
+	DateMode       bool           `json:"date_mode"`
+	Photos         []Photo        `json:"photos,omitempty"`
 }
 
 type Match struct {

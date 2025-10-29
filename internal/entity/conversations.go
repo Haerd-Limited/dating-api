@@ -200,14 +200,18 @@ var ConversationRels = struct {
 	LastMessage              string
 	UserAUser                string
 	UserBUser                string
+	RevealRequest            string
 	ConversationParticipants string
 	Messages                 string
+	RevealDecisions          string
 }{
 	LastMessage:              "LastMessage",
 	UserAUser:                "UserAUser",
 	UserBUser:                "UserBUser",
+	RevealRequest:            "RevealRequest",
 	ConversationParticipants: "ConversationParticipants",
 	Messages:                 "Messages",
+	RevealDecisions:          "RevealDecisions",
 }
 
 // conversationR is where relationships are stored.
@@ -215,8 +219,10 @@ type conversationR struct {
 	LastMessage              *Message                     `boil:"LastMessage" json:"LastMessage" toml:"LastMessage" yaml:"LastMessage"`
 	UserAUser                *User                        `boil:"UserAUser" json:"UserAUser" toml:"UserAUser" yaml:"UserAUser"`
 	UserBUser                *User                        `boil:"UserBUser" json:"UserBUser" toml:"UserBUser" yaml:"UserBUser"`
+	RevealRequest            *RevealRequest               `boil:"RevealRequest" json:"RevealRequest" toml:"RevealRequest" yaml:"RevealRequest"`
 	ConversationParticipants ConversationParticipantSlice `boil:"ConversationParticipants" json:"ConversationParticipants" toml:"ConversationParticipants" yaml:"ConversationParticipants"`
 	Messages                 MessageSlice                 `boil:"Messages" json:"Messages" toml:"Messages" yaml:"Messages"`
+	RevealDecisions          RevealDecisionSlice          `boil:"RevealDecisions" json:"RevealDecisions" toml:"RevealDecisions" yaml:"RevealDecisions"`
 }
 
 // NewStruct creates a new relationship struct
@@ -272,6 +278,22 @@ func (r *conversationR) GetUserBUser() *User {
 	return r.UserBUser
 }
 
+func (o *Conversation) GetRevealRequest() *RevealRequest {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetRevealRequest()
+}
+
+func (r *conversationR) GetRevealRequest() *RevealRequest {
+	if r == nil {
+		return nil
+	}
+
+	return r.RevealRequest
+}
+
 func (o *Conversation) GetConversationParticipants() ConversationParticipantSlice {
 	if o == nil {
 		return nil
@@ -302,6 +324,22 @@ func (r *conversationR) GetMessages() MessageSlice {
 	}
 
 	return r.Messages
+}
+
+func (o *Conversation) GetRevealDecisions() RevealDecisionSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetRevealDecisions()
+}
+
+func (r *conversationR) GetRevealDecisions() RevealDecisionSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.RevealDecisions
 }
 
 // conversationL is where Load methods for each relationship are stored.
@@ -653,6 +691,17 @@ func (o *Conversation) UserBUser(mods ...qm.QueryMod) userQuery {
 	return Users(queryMods...)
 }
 
+// RevealRequest pointed to by the foreign key.
+func (o *Conversation) RevealRequest(mods ...qm.QueryMod) revealRequestQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"conversation_id\" = ?", o.ID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return RevealRequests(queryMods...)
+}
+
 // ConversationParticipants retrieves all the conversation_participant's ConversationParticipants with an executor.
 func (o *Conversation) ConversationParticipants(mods ...qm.QueryMod) conversationParticipantQuery {
 	var queryMods []qm.QueryMod
@@ -679,6 +728,20 @@ func (o *Conversation) Messages(mods ...qm.QueryMod) messageQuery {
 	)
 
 	return Messages(queryMods...)
+}
+
+// RevealDecisions retrieves all the reveal_decision's RevealDecisions with an executor.
+func (o *Conversation) RevealDecisions(mods ...qm.QueryMod) revealDecisionQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"reveal_decisions\".\"conversation_id\"=?", o.ID),
+	)
+
+	return RevealDecisions(queryMods...)
 }
 
 // LoadLastMessage allows an eager lookup of values, cached into the
@@ -1045,6 +1108,123 @@ func (conversationL) LoadUserBUser(ctx context.Context, e boil.ContextExecutor, 
 	return nil
 }
 
+// LoadRevealRequest allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (conversationL) LoadRevealRequest(ctx context.Context, e boil.ContextExecutor, singular bool, maybeConversation interface{}, mods queries.Applicator) error {
+	var slice []*Conversation
+	var object *Conversation
+
+	if singular {
+		var ok bool
+		object, ok = maybeConversation.(*Conversation)
+		if !ok {
+			object = new(Conversation)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeConversation)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeConversation))
+			}
+		}
+	} else {
+		s, ok := maybeConversation.(*[]*Conversation)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeConversation)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeConversation))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &conversationR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &conversationR{}
+			}
+
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`reveal_requests`),
+		qm.WhereIn(`reveal_requests.conversation_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load RevealRequest")
+	}
+
+	var resultSlice []*RevealRequest
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice RevealRequest")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for reveal_requests")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for reveal_requests")
+	}
+
+	if len(revealRequestAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.RevealRequest = foreign
+		if foreign.R == nil {
+			foreign.R = &revealRequestR{}
+		}
+		foreign.R.Conversation = object
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.ConversationID {
+				local.R.RevealRequest = foreign
+				if foreign.R == nil {
+					foreign.R = &revealRequestR{}
+				}
+				foreign.R.Conversation = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadConversationParticipants allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (conversationL) LoadConversationParticipants(ctx context.Context, e boil.ContextExecutor, singular bool, maybeConversation interface{}, mods queries.Applicator) error {
@@ -1271,6 +1451,119 @@ func (conversationL) LoadMessages(ctx context.Context, e boil.ContextExecutor, s
 	return nil
 }
 
+// LoadRevealDecisions allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (conversationL) LoadRevealDecisions(ctx context.Context, e boil.ContextExecutor, singular bool, maybeConversation interface{}, mods queries.Applicator) error {
+	var slice []*Conversation
+	var object *Conversation
+
+	if singular {
+		var ok bool
+		object, ok = maybeConversation.(*Conversation)
+		if !ok {
+			object = new(Conversation)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeConversation)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeConversation))
+			}
+		}
+	} else {
+		s, ok := maybeConversation.(*[]*Conversation)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeConversation)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeConversation))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &conversationR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &conversationR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`reveal_decisions`),
+		qm.WhereIn(`reveal_decisions.conversation_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load reveal_decisions")
+	}
+
+	var resultSlice []*RevealDecision
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice reveal_decisions")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on reveal_decisions")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for reveal_decisions")
+	}
+
+	if len(revealDecisionAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.RevealDecisions = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &revealDecisionR{}
+			}
+			foreign.R.Conversation = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.ConversationID {
+				local.R.RevealDecisions = append(local.R.RevealDecisions, foreign)
+				if foreign.R == nil {
+					foreign.R = &revealDecisionR{}
+				}
+				foreign.R.Conversation = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetLastMessage of the conversation to the related item.
 // Sets o.R.LastMessage to related.
 // Adds o to related.R.LastMessageConversations.
@@ -1445,6 +1738,56 @@ func (o *Conversation) SetUserBUser(ctx context.Context, exec boil.ContextExecut
 	return nil
 }
 
+// SetRevealRequest of the conversation to the related item.
+// Sets o.R.RevealRequest to related.
+// Adds o to related.R.Conversation.
+func (o *Conversation) SetRevealRequest(ctx context.Context, exec boil.ContextExecutor, insert bool, related *RevealRequest) error {
+	var err error
+
+	if insert {
+		related.ConversationID = o.ID
+
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE \"reveal_requests\" SET %s WHERE %s",
+			strmangle.SetParamNames("\"", "\"", 1, []string{"conversation_id"}),
+			strmangle.WhereClause("\"", "\"", 2, revealRequestPrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.ConversationID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.ConversationID = o.ID
+	}
+
+	if o.R == nil {
+		o.R = &conversationR{
+			RevealRequest: related,
+		}
+	} else {
+		o.R.RevealRequest = related
+	}
+
+	if related.R == nil {
+		related.R = &revealRequestR{
+			Conversation: o,
+		}
+	} else {
+		related.R.Conversation = o
+	}
+	return nil
+}
+
 // AddConversationParticipants adds the given related objects to the existing relationships
 // of the conversation, optionally inserting them as new records.
 // Appends related to o.R.ConversationParticipants.
@@ -1542,6 +1885,59 @@ func (o *Conversation) AddMessages(ctx context.Context, exec boil.ContextExecuto
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &messageR{
+				Conversation: o,
+			}
+		} else {
+			rel.R.Conversation = o
+		}
+	}
+	return nil
+}
+
+// AddRevealDecisions adds the given related objects to the existing relationships
+// of the conversation, optionally inserting them as new records.
+// Appends related to o.R.RevealDecisions.
+// Sets related.R.Conversation appropriately.
+func (o *Conversation) AddRevealDecisions(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*RevealDecision) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.ConversationID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"reveal_decisions\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"conversation_id"}),
+				strmangle.WhereClause("\"", "\"", 2, revealDecisionPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ConversationID, rel.UserID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.ConversationID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &conversationR{
+			RevealDecisions: related,
+		}
+	} else {
+		o.R.RevealDecisions = append(o.R.RevealDecisions, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &revealDecisionR{
 				Conversation: o,
 			}
 		} else {

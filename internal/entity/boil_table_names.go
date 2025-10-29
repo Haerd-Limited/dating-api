@@ -29,6 +29,8 @@ var TableNames = struct {
 	Questions                string
 	RefreshTokens            string
 	Religions                string
+	RevealDecisions          string
+	RevealRequests           string
 	ScoringBonuses           string
 	ScoringCall              string
 	ScoringPenalties         string
@@ -75,6 +77,8 @@ var TableNames = struct {
 	Questions:                "questions",
 	RefreshTokens:            "refresh_tokens",
 	Religions:                "religions",
+	RevealDecisions:          "reveal_decisions",
+	RevealRequests:           "reveal_requests",
 	ScoringBonuses:           "scoring_bonuses",
 	ScoringCall:              "scoring_call",
 	ScoringPenalties:         "scoring_penalties",

@@ -27,6 +27,7 @@ type Service interface {
 	UpdateProfile(ctx context.Context, updatedProfile domain.UpdateProfile) error
 	ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string) error
 	GetVoicePromptByID(ctx context.Context, id int64) (domain.VoicePrompt, error)
+	GetUserPhotos(ctx context.Context, userID string) ([]domain.Photo, error)
 
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error
@@ -444,6 +445,10 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	}
 
 	return result, nil
+}
+
+func (s *service) GetUserPhotos(ctx context.Context, userID string) ([]domain.Photo, error) {
+	return s.getUserPhotos(ctx, userID)
 }
 
 func (s *service) GetProfileCard(ctx context.Context, userID string) (profilecard.ProfileCard, error) {

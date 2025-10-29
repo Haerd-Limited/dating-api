@@ -52,6 +52,7 @@ func (r *repository) GetUserAnswers(ctx context.Context, userID string) (entity.
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
@@ -60,6 +61,7 @@ func (r *repository) GetQuestionCategories(ctx context.Context) (entity.Question
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
@@ -300,9 +302,11 @@ func (r *repository) CountAnsweredByCategory(ctx context.Context, userID, catego
 		WHERE ua.user_id = $1::uuid
 		  AND qc.key = $2;
 	`
+
 	var n int
 	if err := queries.Raw(q, userID, categoryKey).QueryRowContext(ctx, r.db).Scan(&n); err != nil {
 		return 0, fmt.Errorf("CountAnsweredByCategory: %w", err)
 	}
+
 	return n, nil
 }

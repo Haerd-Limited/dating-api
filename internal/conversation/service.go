@@ -3,14 +3,17 @@ package conversation
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
@@ -19,6 +22,7 @@ import (
 	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
+	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
@@ -33,6 +37,10 @@ type Service interface {
 	GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error)
 	IsConversationParticipant(ctx context.Context, conversationID, userID string) (bool, error)
 	CreateConversationScores(ctx context.Context, convoID, userID, matchedUserID string, tx *sql.Tx) error
+	InitiateReveal(ctx context.Context, userID, conversationID string) error
+	ConfirmReveal(ctx context.Context, userID, conversationID string) error
+	MakeRevealDecision(ctx context.Context, userID, conversationID, decision string) error
+	GetMatchPhotos(ctx context.Context, conversationID, userID string) ([]domain.Photo, error)
 }
 
 type service struct {
@@ -43,6 +51,7 @@ type service struct {
 	hub              realtime.Broadcaster
 	interactionRepo  storage3.InteractionRepository
 	scoreService     score.Service
+	uow              uow.UoW
 }
 
 func NewConversationService(
@@ -53,6 +62,7 @@ func NewConversationService(
 	hub realtime.Broadcaster,
 	interactionRepo storage3.InteractionRepository,
 	scoreService score.Service,
+	uow uow.UoW,
 ) Service {
 	return &service{
 		logger:           logger,
@@ -62,6 +72,7 @@ func NewConversationService(
 		hub:              hub,
 		interactionRepo:  interactionRepo,
 		scoreService:     scoreService,
+		uow:              uow,
 	}
 }
 
@@ -75,6 +86,10 @@ var (
 	ErrInvalidVoiceNoteSeconds             = errors.New("invalid voice note seconds")
 	ErrTextTooLong                         = errors.New("text too long")
 	ErrInvalidTextMessage                  = errors.New("invalid text message")
+	ErrRevealNotEligible                   = errors.New("reveal not eligible")
+	ErrRevealAlreadyInitiated              = errors.New("reveal already initiated")
+	ErrRevealRequestExpired                = errors.New("reveal request expired")
+	ErrConversationNotRevealed             = errors.New("conversation not revealed")
 )
 
 func (s *service) GetConversationScore(ctx context.Context, userID string, convoID string) (int, error) {
@@ -366,4 +381,301 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 	}
 
 	return result, nil
+}
+
+func (s *service) InitiateReveal(ctx context.Context, userID, conversationID string) error {
+	// Check if user is participant in conversation
+	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("check conversation participant userID=%s conversationID=%s: %w", userID, conversationID, err)
+	}
+
+	if !isParticipant {
+		return storage.ErrNotConversationParticipant
+	}
+
+	// Check if conversation is eligible for reveal (CanReveal = true)
+	snapshot, err := s.scoreService.GetSnapshot(ctx, conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("get score snapshot: %w", err)
+	}
+
+	if !snapshot.CanReveal {
+		return ErrRevealNotEligible
+	}
+
+	// Check if reveal request already exists
+	existingRequest, err := s.conversationRepo.GetRevealRequest(ctx, conversationID)
+	if err != nil {
+		return fmt.Errorf("get existing reveal request: %w", err)
+	}
+
+	if existingRequest != nil && existingRequest.Status == string(domain.RevealStatusPending) {
+		return ErrRevealAlreadyInitiated
+	}
+
+	// Create reveal request with 48-hour expiry
+	expiresAt := time.Now().Add(time.Duration(constants.RevealWindowHours) * time.Hour)
+
+	err = s.conversationRepo.CreateRevealRequest(ctx, conversationID, userID, expiresAt)
+	if err != nil {
+		return fmt.Errorf("create reveal request: %w", err)
+	}
+
+	// Send WebSocket event to other user
+	s.broadcastRevealInitiated(ctx, conversationID, userID)
+
+	// TODO: Implement background job to cleanup expired reveals
+	// This should run periodically to mark expired reveal requests and notify users
+
+	return nil
+}
+
+func (s *service) ConfirmReveal(ctx context.Context, userID, conversationID string) error {
+	// Check if user is participant in conversation
+	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("check conversation participant: %w", err)
+	}
+
+	if !isParticipant {
+		return storage.ErrNotConversationParticipant
+	}
+
+	// Get reveal request
+	revealRequest, err := s.conversationRepo.GetRevealRequest(ctx, conversationID)
+	if err != nil {
+		return fmt.Errorf("get reveal request: %w", err)
+	}
+
+	if revealRequest == nil {
+		return ErrRevealRequestExpired
+	}
+
+	// Check if request is still pending and not expired
+	if revealRequest.Status != string(domain.RevealStatusPending) {
+		return ErrRevealRequestExpired
+	}
+
+	if time.Now().After(revealRequest.ExpiresAt) {
+		// Mark as expired
+		err = s.conversationRepo.UpdateRevealRequestStatus(ctx, conversationID, string(domain.RevealStatusExpired))
+		if err != nil {
+			return fmt.Errorf("update reveal request status to expired: %w", err)
+		}
+
+		return ErrRevealRequestExpired
+	}
+
+	// Check if user is not the initiator (can't confirm own request)
+	if revealRequest.InitiatorID == userID {
+		return fmt.Errorf("cannot confirm own reveal request")
+	}
+
+	// Set conversation to revealed
+	tx, err := s.uow.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+
+	defer func() { _ = tx.Rollback() }()
+
+	err = s.conversationRepo.SetConversationToRevealed(ctx, tx.Raw(), conversationID)
+	if err != nil {
+		return fmt.Errorf("set conversation to revealed: %w", err)
+	}
+
+	// Update reveal request status
+	err = s.conversationRepo.UpdateRevealRequestStatus(ctx, conversationID, string(domain.RevealStatusConfirmed))
+	if err != nil {
+		return fmt.Errorf("update reveal request status: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	// Broadcast to both users
+	s.broadcastRevealConfirmed(ctx, conversationID)
+
+	return nil
+}
+
+func (s *service) MakeRevealDecision(ctx context.Context, userID, conversationID, decision string) error {
+	// Validate decision
+	switch decision {
+	case constants.RevealDecisionContinue, constants.RevealDecisionDate, constants.RevealDecisionUnmatch:
+		// Valid decisions
+	default:
+		return fmt.Errorf("invalid decision: %s", decision)
+	}
+
+	// Check if user is participant in conversation
+	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("check conversation participant: %w", err)
+	}
+
+	if !isParticipant {
+		return storage.ErrNotConversationParticipant
+	}
+
+	// Check if conversation is revealed
+	snapshot, err := s.scoreService.GetSnapshot(ctx, conversationID, userID)
+	if err != nil {
+		return fmt.Errorf("get score snapshot: %w", err)
+	}
+
+	if !snapshot.Revealed {
+		return ErrConversationNotRevealed
+	}
+
+	// Save decision
+	err = s.conversationRepo.SaveRevealDecision(ctx, conversationID, userID, decision)
+	if err != nil {
+		return fmt.Errorf("save reveal decision: %w", err)
+	}
+
+	// Update date mode if decision is "date"
+	if decision == constants.RevealDecisionDate {
+		err = s.conversationRepo.SetDateMode(ctx, conversationID, true)
+		if err != nil {
+			return fmt.Errorf("set date mode: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *service) GetMatchPhotos(ctx context.Context, conversationID, userID string) ([]domain.Photo, error) {
+	// Check if user is participant in conversation
+	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("check conversation participant: %w", err)
+	}
+
+	if !isParticipant {
+		return nil, ErrConversationNotRevealed
+	}
+
+	// Check if conversation is revealed
+	snapshot, err := s.scoreService.GetSnapshot(ctx, conversationID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get score snapshot: %w", err)
+	}
+
+	if !snapshot.Revealed {
+		return nil, ErrConversationNotRevealed
+	}
+
+	// Get the other participant's user ID
+	participants, err := s.conversationRepo.GetConversationParticipants(ctx, conversationID)
+	if err != nil {
+		return nil, fmt.Errorf("get conversation participants: %w", err)
+	}
+
+	var matchUserID string
+
+	for _, participant := range participants {
+		if participant.UserID != userID {
+			matchUserID = participant.UserID
+			break
+		}
+	}
+
+	if matchUserID == "" {
+		return nil, fmt.Errorf("match user not found")
+	}
+
+	// Get photos from profile service
+	profilePhotos, err := s.profileService.GetUserPhotos(ctx, matchUserID)
+	if err != nil {
+		return nil, fmt.Errorf("get user photos: %w", err)
+	}
+
+	// Convert profile photos to conversation photos
+	var photos []domain.Photo
+	for _, photo := range profilePhotos {
+		photos = append(photos, domain.Photo{
+			URL:       photo.URL,
+			IsPrimary: photo.IsPrimary,
+			Position:  photo.Position,
+		})
+	}
+
+	return photos, nil
+}
+
+func (s *service) broadcastRevealInitiated(ctx context.Context, conversationID, initiatorID string) {
+	// Get participants
+	participants, err := s.conversationRepo.GetConversationParticipants(ctx, conversationID)
+	if err != nil {
+		s.logger.Error("broadcast reveal initiated: get participants", zap.Error(err))
+		return
+	}
+
+	// Find the other user
+	var otherUserID string
+
+	for _, participant := range participants {
+		if participant.UserID != initiatorID {
+			otherUserID = participant.UserID
+			break
+		}
+	}
+
+	if otherUserID == "" {
+		s.logger.Error("broadcast reveal initiated: other user not found")
+		return
+	}
+
+	// Send event to other user
+	evt := dto.Event{
+		ID:        realtime.NewEventID(),
+		Type:      "reveal.initiated",
+		ActorID:   initiatorID,
+		Ts:        time.Now(),
+		ContextID: conversationID,
+		Data:      nil,
+		Version:   1,
+	}
+
+	b, err := json.Marshal(evt)
+	if err != nil {
+		s.logger.Error("broadcast reveal initiated: marshal event", zap.Error(err))
+		return
+	}
+
+	s.hub.BroadcastToUser(otherUserID, b)
+}
+
+func (s *service) broadcastRevealConfirmed(ctx context.Context, conversationID string) {
+	// Get participants
+	participants, err := s.conversationRepo.GetConversationParticipants(ctx, conversationID)
+	if err != nil {
+		s.logger.Error("broadcast reveal confirmed: get participants", zap.Error(err))
+		return
+	}
+
+	// Send event to both users
+	evt := dto.Event{
+		ID:        realtime.NewEventID(),
+		Type:      "reveal.confirmed",
+		ActorID:   "", // System event
+		Ts:        time.Now(),
+		ContextID: conversationID,
+		Data:      nil,
+		Version:   1,
+	}
+
+	b, err := json.Marshal(evt)
+	if err != nil {
+		s.logger.Error("broadcast reveal confirmed: marshal event", zap.Error(err))
+		return
+	}
+
+	for _, participant := range participants {
+		s.hub.BroadcastToUser(participant.UserID, b)
+	}
 }

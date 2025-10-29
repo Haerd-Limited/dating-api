@@ -24,6 +24,10 @@ func TestToOne(t *testing.T) {
 	t.Run("QuestionAnswerToQuestionUsingQuestion", testQuestionAnswerToOneQuestionUsingQuestion)
 	t.Run("QuestionToQuestionCategoryUsingCategory", testQuestionToOneQuestionCategoryUsingCategory)
 	t.Run("RefreshTokenToUserUsingUser", testRefreshTokenToOneUserUsingUser)
+	t.Run("RevealDecisionToConversationUsingConversation", testRevealDecisionToOneConversationUsingConversation)
+	t.Run("RevealDecisionToUserUsingUser", testRevealDecisionToOneUserUsingUser)
+	t.Run("RevealRequestToConversationUsingConversation", testRevealRequestToOneConversationUsingConversation)
+	t.Run("RevealRequestToUserUsingInitiator", testRevealRequestToOneUserUsingInitiator)
 	t.Run("SwipeToUserUsingActor", testSwipeToOneUserUsingActor)
 	t.Run("SwipeToVoicePromptUsingPrompt", testSwipeToOneVoicePromptUsingPrompt)
 	t.Run("SwipeToUserUsingTarget", testSwipeToOneUserUsingTarget)
@@ -55,6 +59,7 @@ func TestToOne(t *testing.T) {
 // TestOneToOne tests cannot be run in parallel
 // or deadlocks can occur.
 func TestOneToOne(t *testing.T) {
+	t.Run("ConversationToRevealRequestUsingRevealRequest", testConversationOneToOneRevealRequestUsingRevealRequest)
 	t.Run("UserToUserPreferenceUsingUserPreference", testUserOneToOneUserPreferenceUsingUserPreference)
 	t.Run("UserToUserProfileUsingUserProfile", testUserOneToOneUserProfileUsingUserProfile)
 	t.Run("UserToUserThemeUsingUserTheme", testUserOneToOneUserThemeUsingUserTheme)
@@ -66,6 +71,7 @@ func TestOneToOne(t *testing.T) {
 func TestToMany(t *testing.T) {
 	t.Run("ConversationToConversationParticipants", testConversationToManyConversationParticipants)
 	t.Run("ConversationToMessages", testConversationToManyMessages)
+	t.Run("ConversationToRevealDecisions", testConversationToManyRevealDecisions)
 	t.Run("DatingIntentionToUserProfiles", testDatingIntentionToManyUserProfiles)
 	t.Run("EducationLevelToUserProfiles", testEducationLevelToManyUserProfiles)
 	t.Run("EthnicityToUserProfiles", testEthnicityToManyUserProfiles)
@@ -97,6 +103,8 @@ func TestToMany(t *testing.T) {
 	t.Run("UserToSenderMessages", testUserToManySenderMessages)
 	t.Run("UserToPhotos", testUserToManyPhotos)
 	t.Run("UserToRefreshTokens", testUserToManyRefreshTokens)
+	t.Run("UserToRevealDecisions", testUserToManyRevealDecisions)
+	t.Run("UserToInitiatorRevealRequests", testUserToManyInitiatorRevealRequests)
 	t.Run("UserToActorSwipes", testUserToManyActorSwipes)
 	t.Run("UserToTargetSwipes", testUserToManyTargetSwipes)
 	t.Run("UserToInterests", testUserToManyInterests)
@@ -127,6 +135,10 @@ func TestToOneSet(t *testing.T) {
 	t.Run("QuestionAnswerToQuestionUsingQuestionAnswers", testQuestionAnswerToOneSetOpQuestionUsingQuestion)
 	t.Run("QuestionToQuestionCategoryUsingCategoryQuestions", testQuestionToOneSetOpQuestionCategoryUsingCategory)
 	t.Run("RefreshTokenToUserUsingRefreshTokens", testRefreshTokenToOneSetOpUserUsingUser)
+	t.Run("RevealDecisionToConversationUsingRevealDecisions", testRevealDecisionToOneSetOpConversationUsingConversation)
+	t.Run("RevealDecisionToUserUsingRevealDecisions", testRevealDecisionToOneSetOpUserUsingUser)
+	t.Run("RevealRequestToConversationUsingRevealRequest", testRevealRequestToOneSetOpConversationUsingConversation)
+	t.Run("RevealRequestToUserUsingInitiatorRevealRequests", testRevealRequestToOneSetOpUserUsingInitiator)
 	t.Run("SwipeToUserUsingActorSwipes", testSwipeToOneSetOpUserUsingActor)
 	t.Run("SwipeToVoicePromptUsingPromptSwipes", testSwipeToOneSetOpVoicePromptUsingPrompt)
 	t.Run("SwipeToUserUsingTargetSwipes", testSwipeToOneSetOpUserUsingTarget)
@@ -181,6 +193,7 @@ func TestToOneRemove(t *testing.T) {
 // TestOneToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
 func TestOneToOneSet(t *testing.T) {
+	t.Run("ConversationToRevealRequestUsingRevealRequest", testConversationOneToOneSetOpRevealRequestUsingRevealRequest)
 	t.Run("UserToUserPreferenceUsingUserPreference", testUserOneToOneSetOpUserPreferenceUsingUserPreference)
 	t.Run("UserToUserProfileUsingUserProfile", testUserOneToOneSetOpUserProfileUsingUserProfile)
 	t.Run("UserToUserThemeUsingUserTheme", testUserOneToOneSetOpUserThemeUsingUserTheme)
@@ -196,6 +209,7 @@ func TestOneToOneRemove(t *testing.T) {}
 func TestToManyAdd(t *testing.T) {
 	t.Run("ConversationToConversationParticipants", testConversationToManyAddOpConversationParticipants)
 	t.Run("ConversationToMessages", testConversationToManyAddOpMessages)
+	t.Run("ConversationToRevealDecisions", testConversationToManyAddOpRevealDecisions)
 	t.Run("DatingIntentionToUserProfiles", testDatingIntentionToManyAddOpUserProfiles)
 	t.Run("EducationLevelToUserProfiles", testEducationLevelToManyAddOpUserProfiles)
 	t.Run("EthnicityToUserProfiles", testEthnicityToManyAddOpUserProfiles)
@@ -227,6 +241,8 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("UserToSenderMessages", testUserToManyAddOpSenderMessages)
 	t.Run("UserToPhotos", testUserToManyAddOpPhotos)
 	t.Run("UserToRefreshTokens", testUserToManyAddOpRefreshTokens)
+	t.Run("UserToRevealDecisions", testUserToManyAddOpRevealDecisions)
+	t.Run("UserToInitiatorRevealRequests", testUserToManyAddOpInitiatorRevealRequests)
 	t.Run("UserToActorSwipes", testUserToManyAddOpActorSwipes)
 	t.Run("UserToTargetSwipes", testUserToManyAddOpTargetSwipes)
 	t.Run("UserToInterests", testUserToManyAddOpInterests)
