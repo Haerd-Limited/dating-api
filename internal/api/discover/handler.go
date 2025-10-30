@@ -7,6 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/api/discover/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -19,6 +20,7 @@ import (
 
 type Handler interface {
 	GetDiscover() http.HandlerFunc
+	GetDiscoverWithFilters() http.HandlerFunc
 	GetVoiceWorthHearing() http.HandlerFunc
 }
 
@@ -53,6 +55,42 @@ func (h *handler) GetDiscover() http.HandlerFunc {
 		result, err := h.discoverService.GetDiscoverFeed(ctx, userID, limit, offset)
 		if err != nil {
 			h.handleServiceErrorResponse(w, r, "GetDiscoverFeed", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapToGetDiscoverResponse(result))
+	}
+}
+
+func (h *handler) GetDiscoverWithFilters() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		// Parse request body for filters
+		var req dto.GetDiscoverRequest
+		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("Invalid request body"))
+			return
+		}
+
+		// Set defaults if not provided
+		if req.Limit <= 0 {
+			req.Limit = 10
+		}
+
+		if req.Offset < 0 {
+			req.Offset = 0
+		}
+
+		result, err := h.discoverService.GetDiscoverFeedWithFilters(ctx, userID, req.Limit, req.Offset, req.Filters)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GetDiscoverFeedWithFilters", err)
 			return
 		}
 

@@ -118,6 +118,7 @@ func New(
 
 				r.Route("/discover", func(r chi.Router) {
 					r.Get("/", discoverHandler.GetDiscover())
+					r.Post("/filters", discoverHandler.GetDiscoverWithFilters())
 				})
 				r.Route("/vwh", func(r chi.Router) {
 					r.Get("/", discoverHandler.GetVoiceWorthHearing())

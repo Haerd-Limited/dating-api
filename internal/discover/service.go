@@ -6,15 +6,18 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/discover/domain"
 	"github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/matching"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
+	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
 type Service interface {
 	GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]profilecard.ProfileCard, error)
+	GetDiscoverFeedWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) ([]profilecard.ProfileCard, error)
 	GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error)
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
@@ -47,9 +50,14 @@ func (s *service) AlreadyInteracted(ctx context.Context, userID string, targetUs
 	return s.discoverRepo.AlreadyInteracted(ctx, userID, targetUserID)
 }
 
-// todo(high-priority): add filters like  age range, dating intentions, distance, age
+// GetDiscoverFeed returns the discover feed without filters (backwards compatibility)
 func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]profilecard.ProfileCard, error) {
-	candidates, err := s.discoverRepo.GetDiscoverFeedCandidates(ctx, userID, limit, offset)
+	return s.GetDiscoverFeedWithFilters(ctx, userID, limit, offset, nil)
+}
+
+// GetDiscoverFeedWithFilters returns the discover feed with optional filters
+func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) ([]profilecard.ProfileCard, error) {
+	candidates, err := s.discoverRepo.GetDiscoverFeedCandidatesWithFilters(ctx, userID, limit, offset, filters)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get candidate IDs userID=%s limit=%v offset=%v: %w", userID, limit, offset, err)
 	}
@@ -68,6 +76,11 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 		p, profileErr := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		}
+
+		// Apply post-query filters that can't be done efficiently in SQL
+		if filters != nil && !s.passesPostQueryFilters(p, filters, &currentUserProfile) {
+			continue
 		}
 
 		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
@@ -183,4 +196,32 @@ func (s *service) computeMatch(ctx context.Context, userID string, candidateID s
 	}
 
 	return result, nil
+}
+
+// passesPostQueryFilters applies filters that can't be efficiently done in SQL
+func (s *service) passesPostQueryFilters(profile profilecard.ProfileCard, filters *domain.DiscoverFilters, currentUserProfile *profiledomain.EnrichedProfile) bool {
+	if filters == nil {
+		return true
+	}
+
+	// Apply distance filter if specified
+	if filters.HasDistanceFilter() {
+		if profile.DistanceKm > *filters.Distance.MaxDistanceKM {
+			return false
+		}
+	}
+
+	// Apply age filter if specified
+	if filters.HasAgeFilter() {
+		age := profile.Age
+		if filters.AgeRange.MinAge != nil && age < *filters.AgeRange.MinAge {
+			return false
+		}
+
+		if filters.AgeRange.MaxAge != nil && age > *filters.AgeRange.MaxAge {
+			return false
+		}
+	}
+
+	return true
 }
