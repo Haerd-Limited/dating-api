@@ -54,12 +54,18 @@ func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int,
 		return nil, fmt.Errorf("failed to get candidate IDs userID=%s limit=%v offset=%v: %w", userID, limit, offset, err)
 	}
 
+	// Get current user's location for distance calculation
+	currentUserProfile, err := s.profileService.GetEnrichedProfile(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current user profile userID=%s: %w", userID, err)
+	}
+
 	var profiles []profilecard.ProfileCard
 
 	for _, candidate := range candidates {
 		var profileErr error
 
-		p, profileErr := s.profileService.GetProfileCard(ctx, candidate.UserID)
+		p, profileErr := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
@@ -110,6 +116,12 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		return nil, nil
 	}
 
+	// Get current user's location for distance calculation
+	currentUserProfile, err := s.profileService.GetEnrichedProfile(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current user profile userID=%s: %w", userID, err)
+	}
+
 	var profiles []profilecard.ProfileCard
 
 	for _, candidate := range candidates {
@@ -124,7 +136,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 			continue
 		}
 
-		p, profileErr := s.profileService.GetProfileCard(ctx, candidate.UserID)
+		p, profileErr := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
 		if profileErr != nil {
 			return nil, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}

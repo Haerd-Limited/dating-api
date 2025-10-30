@@ -60,6 +60,7 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		Longitude:     profile.Longitude,
 		City:          profile.City,
 		Country:       profile.Country,
+		DistanceKm:    profile.DistanceKm,
 		Emoji:         profile.Emoji,
 		CoverPhotoURL: coverPhotoUrl,
 

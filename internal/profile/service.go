@@ -23,6 +23,7 @@ import (
 type Service interface {
 	GetEnrichedProfile(ctx context.Context, userID string) (domain.EnrichedProfile, error)
 	GetProfileCard(ctx context.Context, userID string) (profilecard.ProfileCard, error)
+	GetProfileCardWithDistance(ctx context.Context, userID string, currentUserLat, currentUserLon float64) (profilecard.ProfileCard, error)
 	GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error)
 	UpdateProfile(ctx context.Context, updatedProfile domain.UpdateProfile) error
 	ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string) error
@@ -472,6 +473,20 @@ func (s *service) GetProfileCard(ctx context.Context, userID string) (profilecar
 	}
 
 	return mapper.MapEnrichedProfileToProfileCard(enrichedProfile), nil
+}
+
+func (s *service) GetProfileCardWithDistance(ctx context.Context, userID string, currentUserLat, currentUserLon float64) (profilecard.ProfileCard, error) {
+	enrichedProfile, err := s.GetEnrichedProfile(ctx, userID)
+	if err != nil {
+		return profilecard.ProfileCard{}, fmt.Errorf("get enriched profile: %w", err)
+	}
+
+	profileCard := mapper.MapEnrichedProfileToProfileCard(enrichedProfile)
+
+	// Calculate distance between current user and profile
+	profileCard.DistanceKm = utils.CalculateDistanceKm(currentUserLat, currentUserLon, enrichedProfile.Latitude, enrichedProfile.Longitude)
+
+	return profileCard, nil
 }
 
 func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string) error {

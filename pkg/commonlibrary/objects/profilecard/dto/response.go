@@ -9,10 +9,11 @@ type ProfileCard struct {
 	Emoji       string `json:"emoji"`
 
 	// Location
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	City      string  `json:"home_town"`
-	Country   string  `json:"country"`
+	Latitude   float64 `json:"latitude"`
+	Longitude  float64 `json:"longitude"`
+	City       string  `json:"home_town"`
+	Country    string  `json:"country"`
+	DistanceKm int     `json:"distance_km"`
 
 	Gender          string        `json:"gender"`
 	DatingIntention string        `json:"dating_intention"`
