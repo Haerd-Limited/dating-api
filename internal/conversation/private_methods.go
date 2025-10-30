@@ -110,6 +110,12 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 		}
 	}
 
+	// Get unread count for this conversation
+	unreadCount, err := s.conversationRepo.GetUnreadCount(ctx, conversationEntity.ID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get unread count: %w", err)
+	}
+
 	return &domain.Conversation{
 		ID: conversationEntity.ID,
 		MatchedUser: domain.MatchedUser{
@@ -124,6 +130,7 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 		CreatedAt:      conversationEntity.CreatedAt,
 		LastActivityAt: conversationEntity.LastActivityAt,
 		LastMessage:    lastMessage,
+		UnreadCount:    unreadCount,
 		Score:          *scoreSnapShot,
 		RevealRequest:  revealRequest,
 		DateMode:       dateMode,

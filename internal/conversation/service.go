@@ -171,6 +171,13 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 		messages = append(messages, msg)
 	}
 
+	// Mark all messages in the conversation as read for this user
+	err = s.conversationRepo.MarkConversationMessagesAsRead(ctx, convoID, userID, nil)
+	if err != nil {
+		// Log error but don't fail the request - read status is best-effort
+		s.logger.Sugar().Warnw("failed to mark conversation messages as read", "error", err, "userID", userID, "convoID", convoID)
+	}
+
 	return messages, nil
 }
 

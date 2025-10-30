@@ -43,6 +43,8 @@ type ConversationRepository interface {
 	SaveRevealDecision(ctx context.Context, conversationID, userID string, decision string) error
 	GetRevealDecisions(ctx context.Context, conversationID string) ([]*entity.RevealDecision, error)
 	SetDateMode(ctx context.Context, conversationID string, dateMode bool) error
+	MarkConversationMessagesAsRead(ctx context.Context, conversationID, userID string, tx *sql.Tx) error
+	GetUnreadCount(ctx context.Context, conversationID, userID string) (int, error)
 }
 
 type repository struct {
@@ -611,4 +613,67 @@ func (r *repository) SetDateMode(ctx context.Context, conversationID string, dat
 	}
 
 	return nil
+}
+
+func (r *repository) MarkConversationMessagesAsRead(ctx context.Context, conversationID, userID string, tx *sql.Tx) error {
+	// Insert read receipts (status=2) for all messages in the conversation
+	// where the message was sent by someone other than the user
+	// and doesn't already have a read receipt for this user
+	query := `
+		INSERT INTO message_receipts (message_id, user_id, status, at)
+		SELECT m.id, $2, 2, NOW()
+		FROM messages m
+		WHERE m.conversation_id = $1
+		  AND m.sender_id != $2
+		  AND m.type != 'system'
+		  AND NOT EXISTS (
+			SELECT 1 FROM message_receipts mr
+			WHERE mr.message_id = m.id
+			  AND mr.user_id = $2
+			  AND mr.status = 2
+		  )
+		ON CONFLICT (message_id, user_id, status) DO NOTHING
+	`
+
+	var err error
+	if tx != nil {
+		_, err = tx.ExecContext(ctx, query, conversationID, userID)
+	} else {
+		_, err = r.db.ExecContext(ctx, query, conversationID, userID)
+	}
+
+	if err != nil {
+		return fmt.Errorf("mark conversation messages as read: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) GetUnreadCount(ctx context.Context, conversationID, userID string) (int, error) {
+	// Count messages where:
+	// - sender_id != userID (messages sent by others)
+	// - type != 'system' (exclude system messages)
+	// - No read receipt (status=2) exists for this user
+	query := `
+		SELECT COUNT(DISTINCT m.id)
+		FROM messages m
+		WHERE m.conversation_id = $1
+		  AND m.sender_id != $2
+		  AND m.type != 'system'
+		  AND NOT EXISTS (
+			SELECT 1 FROM message_receipts mr
+			WHERE mr.message_id = m.id
+			  AND mr.user_id = $2
+			  AND mr.status = 2
+		  )
+	`
+
+	var count int
+
+	err := r.db.GetContext(ctx, &count, query, conversationID, userID)
+	if err != nil {
+		return 0, fmt.Errorf("get unread count: %w", err)
+	}
+
+	return count, nil
 }
