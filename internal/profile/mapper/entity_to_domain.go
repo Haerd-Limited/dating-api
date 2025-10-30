@@ -96,9 +96,7 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 		d.FamilyPlanID = &up.FamilyPlanID.Int16
 	}
 
-	if up.EthnicityID.Valid {
-		d.EthnicityID = up.EthnicityID.Int16
-	}
+	// EthnicityIDs will be loaded separately via repository
 
 	// Extra text fields
 	if up.Work.Valid {

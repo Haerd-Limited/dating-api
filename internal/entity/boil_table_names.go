@@ -40,6 +40,7 @@ var TableNames = struct {
 	SpatialRefSys            string
 	Swipes                   string
 	UserAnswers              string
+	UserEthnicities          string
 	UserInterests            string
 	UserLanguages            string
 	UserPreferences          string
@@ -88,6 +89,7 @@ var TableNames = struct {
 	SpatialRefSys:            "spatial_ref_sys",
 	Swipes:                   "swipes",
 	UserAnswers:              "user_answers",
+	UserEthnicities:          "user_ethnicities",
 	UserInterests:            "user_interests",
 	UserLanguages:            "user_languages",
 	UserPreferences:          "user_preferences",

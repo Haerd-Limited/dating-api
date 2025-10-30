@@ -60,10 +60,6 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 			ID:    profile.Drugs.ID,
 			Label: profile.Drugs.Label,
 		},
-		Ethnicity: dto.Ethnicity{
-			ID:    profile.Ethnicity.ID,
-			Label: profile.Ethnicity.Label,
-		},
 		Work:       profile.Work,
 		JobTitle:   profile.JobTitle,
 		University: profile.University,
@@ -73,6 +69,15 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 
 	if profile.CoverPhotoURL != nil {
 		result.CoverPhotoURL = *profile.CoverPhotoURL
+	}
+
+	if profile.Ethnicities != nil {
+		for _, ethnicity := range profile.Ethnicities {
+			result.Ethnicities = append(result.Ethnicities, dto.Ethnicity{
+				ID:    ethnicity.ID,
+				Label: ethnicity.Label,
+			})
+		}
 	}
 
 	if profile.SpokenLanguages != nil {
@@ -114,9 +119,9 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 
 	if profile.ChildrenStatus != nil {
 		result.ChildrenStatus = &dto.Status{
-			ID:    result.ChildrenStatus.ID,
-			Label: result.ChildrenStatus.Label,
-			Key:   result.ChildrenStatus.Key,
+			ID:    profile.ChildrenStatus.ID,
+			Label: profile.ChildrenStatus.Label,
+			Key:   profile.ChildrenStatus.Key,
 		}
 	}
 

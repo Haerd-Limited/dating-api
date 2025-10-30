@@ -58,14 +58,14 @@ var EthnicityWhere = struct {
 
 // EthnicityRels is where relationship names are stored.
 var EthnicityRels = struct {
-	UserProfiles string
+	Users string
 }{
-	UserProfiles: "UserProfiles",
+	Users: "Users",
 }
 
 // ethnicityR is where relationships are stored.
 type ethnicityR struct {
-	UserProfiles UserProfileSlice `boil:"UserProfiles" json:"UserProfiles" toml:"UserProfiles" yaml:"UserProfiles"`
+	Users UserSlice `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
 }
 
 // NewStruct creates a new relationship struct
@@ -73,20 +73,20 @@ func (*ethnicityR) NewStruct() *ethnicityR {
 	return &ethnicityR{}
 }
 
-func (o *Ethnicity) GetUserProfiles() UserProfileSlice {
+func (o *Ethnicity) GetUsers() UserSlice {
 	if o == nil {
 		return nil
 	}
 
-	return o.R.GetUserProfiles()
+	return o.R.GetUsers()
 }
 
-func (r *ethnicityR) GetUserProfiles() UserProfileSlice {
+func (r *ethnicityR) GetUsers() UserSlice {
 	if r == nil {
 		return nil
 	}
 
-	return r.UserProfiles
+	return r.Users
 }
 
 // ethnicityL is where Load methods for each relationship are stored.
@@ -405,23 +405,24 @@ func (q ethnicityQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (
 	return count > 0, nil
 }
 
-// UserProfiles retrieves all the user_profile's UserProfiles with an executor.
-func (o *Ethnicity) UserProfiles(mods ...qm.QueryMod) userProfileQuery {
+// Users retrieves all the user's Users with an executor.
+func (o *Ethnicity) Users(mods ...qm.QueryMod) userQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"user_profiles\".\"ethnicity_id\"=?", o.ID),
+		qm.InnerJoin("\"user_ethnicities\" on \"users\".\"id\" = \"user_ethnicities\".\"user_id\""),
+		qm.Where("\"user_ethnicities\".\"ethnicity_id\"=?", o.ID),
 	)
 
-	return UserProfiles(queryMods...)
+	return Users(queryMods...)
 }
 
-// LoadUserProfiles allows an eager lookup of values, cached into the
+// LoadUsers allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (ethnicityL) LoadUserProfiles(ctx context.Context, e boil.ContextExecutor, singular bool, maybeEthnicity interface{}, mods queries.Applicator) error {
+func (ethnicityL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular bool, maybeEthnicity interface{}, mods queries.Applicator) error {
 	var slice []*Ethnicity
 	var object *Ethnicity
 
@@ -474,8 +475,10 @@ func (ethnicityL) LoadUserProfiles(ctx context.Context, e boil.ContextExecutor, 
 	}
 
 	query := NewQuery(
-		qm.From(`user_profiles`),
-		qm.WhereIn(`user_profiles.ethnicity_id in ?`, argsSlice...),
+		qm.Select("\"users\".\"id\", \"users\".\"email\", \"users\".\"first_name\", \"users\".\"last_name\", \"users\".\"phone\", \"users\".\"created_at\", \"users\".\"updated_at\", \"users\".\"onboarding_step\", \"a\".\"ethnicity_id\""),
+		qm.From("\"users\""),
+		qm.InnerJoin("\"user_ethnicities\" as \"a\" on \"users\".\"id\" = \"a\".\"user_id\""),
+		qm.WhereIn("\"a\".\"ethnicity_id\" in ?", argsSlice...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -483,22 +486,36 @@ func (ethnicityL) LoadUserProfiles(ctx context.Context, e boil.ContextExecutor, 
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load user_profiles")
+		return errors.Wrap(err, "failed to eager load users")
 	}
 
-	var resultSlice []*UserProfile
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice user_profiles")
+	var resultSlice []*User
+
+	var localJoinCols []int16
+	for results.Next() {
+		one := new(User)
+		var localJoinCol int16
+
+		err = results.Scan(&one.ID, &one.Email, &one.FirstName, &one.LastName, &one.Phone, &one.CreatedAt, &one.UpdatedAt, &one.OnboardingStep, &localJoinCol)
+		if err != nil {
+			return errors.Wrap(err, "failed to scan eager loaded results for users")
+		}
+		if err = results.Err(); err != nil {
+			return errors.Wrap(err, "failed to plebian-bind eager loaded slice users")
+		}
+
+		resultSlice = append(resultSlice, one)
+		localJoinCols = append(localJoinCols, localJoinCol)
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on user_profiles")
+		return errors.Wrap(err, "failed to close results in eager load on users")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_profiles")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for users")
 	}
 
-	if len(userProfileAfterSelectHooks) != 0 {
+	if len(userAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -506,24 +523,25 @@ func (ethnicityL) LoadUserProfiles(ctx context.Context, e boil.ContextExecutor, 
 		}
 	}
 	if singular {
-		object.R.UserProfiles = resultSlice
+		object.R.Users = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &userProfileR{}
+				foreign.R = &userR{}
 			}
-			foreign.R.Ethnicity = object
+			foreign.R.Ethnicities = append(foreign.R.Ethnicities, object)
 		}
 		return nil
 	}
 
-	for _, foreign := range resultSlice {
+	for i, foreign := range resultSlice {
+		localJoinCol := localJoinCols[i]
 		for _, local := range slice {
-			if queries.Equal(local.ID, foreign.EthnicityID) {
-				local.R.UserProfiles = append(local.R.UserProfiles, foreign)
+			if local.ID == localJoinCol {
+				local.R.Users = append(local.R.Users, foreign)
 				if foreign.R == nil {
-					foreign.R = &userProfileR{}
+					foreign.R = &userR{}
 				}
-				foreign.R.Ethnicity = local
+				foreign.R.Ethnicities = append(foreign.R.Ethnicities, local)
 				break
 			}
 		}
@@ -532,67 +550,62 @@ func (ethnicityL) LoadUserProfiles(ctx context.Context, e boil.ContextExecutor, 
 	return nil
 }
 
-// AddUserProfiles adds the given related objects to the existing relationships
+// AddUsers adds the given related objects to the existing relationships
 // of the ethnicity, optionally inserting them as new records.
-// Appends related to o.R.UserProfiles.
-// Sets related.R.Ethnicity appropriately.
-func (o *Ethnicity) AddUserProfiles(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserProfile) error {
+// Appends related to o.R.Users.
+// Sets related.R.Ethnicities appropriately.
+func (o *Ethnicity) AddUsers(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*User) error {
 	var err error
 	for _, rel := range related {
 		if insert {
-			queries.Assign(&rel.EthnicityID, o.ID)
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE \"user_profiles\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"ethnicity_id"}),
-				strmangle.WhereClause("\"", "\"", 2, userProfilePrimaryKeyColumns),
-			)
-			values := []interface{}{o.ID, rel.UserID}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			queries.Assign(&rel.EthnicityID, o.ID)
 		}
 	}
 
+	for _, rel := range related {
+		query := "insert into \"user_ethnicities\" (\"ethnicity_id\", \"user_id\") values ($1, $2)"
+		values := []interface{}{o.ID, rel.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, query)
+			fmt.Fprintln(writer, values)
+		}
+		_, err = exec.ExecContext(ctx, query, values...)
+		if err != nil {
+			return errors.Wrap(err, "failed to insert into join table")
+		}
+	}
 	if o.R == nil {
 		o.R = &ethnicityR{
-			UserProfiles: related,
+			Users: related,
 		}
 	} else {
-		o.R.UserProfiles = append(o.R.UserProfiles, related...)
+		o.R.Users = append(o.R.Users, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &userProfileR{
-				Ethnicity: o,
+			rel.R = &userR{
+				Ethnicities: EthnicitySlice{o},
 			}
 		} else {
-			rel.R.Ethnicity = o
+			rel.R.Ethnicities = append(rel.R.Ethnicities, o)
 		}
 	}
 	return nil
 }
 
-// SetUserProfiles removes all previously related items of the
+// SetUsers removes all previously related items of the
 // ethnicity replacing them completely with the passed
 // in related items, optionally inserting them as new records.
-// Sets o.R.Ethnicity's UserProfiles accordingly.
-// Replaces o.R.UserProfiles with related.
-// Sets related.R.Ethnicity's UserProfiles accordingly.
-func (o *Ethnicity) SetUserProfiles(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserProfile) error {
-	query := "update \"user_profiles\" set \"ethnicity_id\" = null where \"ethnicity_id\" = $1"
+// Sets o.R.Ethnicities's Users accordingly.
+// Replaces o.R.Users with related.
+// Sets related.R.Ethnicities's Users accordingly.
+func (o *Ethnicity) SetUsers(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*User) error {
+	query := "delete from \"user_ethnicities\" where \"ethnicity_id\" = $1"
 	values := []interface{}{o.ID}
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -604,59 +617,82 @@ func (o *Ethnicity) SetUserProfiles(ctx context.Context, exec boil.ContextExecut
 		return errors.Wrap(err, "failed to remove relationships before set")
 	}
 
+	removeUsersFromEthnicitiesSlice(o, related)
 	if o.R != nil {
-		for _, rel := range o.R.UserProfiles {
-			queries.SetScanner(&rel.EthnicityID, nil)
-			if rel.R == nil {
-				continue
-			}
-
-			rel.R.Ethnicity = nil
-		}
-		o.R.UserProfiles = nil
+		o.R.Users = nil
 	}
 
-	return o.AddUserProfiles(ctx, exec, insert, related...)
+	return o.AddUsers(ctx, exec, insert, related...)
 }
 
-// RemoveUserProfiles relationships from objects passed in.
-// Removes related items from R.UserProfiles (uses pointer comparison, removal does not keep order)
-// Sets related.R.Ethnicity.
-func (o *Ethnicity) RemoveUserProfiles(ctx context.Context, exec boil.ContextExecutor, related ...*UserProfile) error {
+// RemoveUsers relationships from objects passed in.
+// Removes related items from R.Users (uses pointer comparison, removal does not keep order)
+// Sets related.R.Ethnicities.
+func (o *Ethnicity) RemoveUsers(ctx context.Context, exec boil.ContextExecutor, related ...*User) error {
 	if len(related) == 0 {
 		return nil
 	}
 
 	var err error
+	query := fmt.Sprintf(
+		"delete from \"user_ethnicities\" where \"ethnicity_id\" = $1 and \"user_id\" in (%s)",
+		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
+	)
+	values := []interface{}{o.ID}
 	for _, rel := range related {
-		queries.SetScanner(&rel.EthnicityID, nil)
-		if rel.R != nil {
-			rel.R.Ethnicity = nil
-		}
-		if _, err = rel.Update(ctx, exec, boil.Whitelist("ethnicity_id")); err != nil {
-			return err
-		}
+		values = append(values, rel.ID)
 	}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err = exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+	removeUsersFromEthnicitiesSlice(o, related)
 	if o.R == nil {
 		return nil
 	}
 
 	for _, rel := range related {
-		for i, ri := range o.R.UserProfiles {
+		for i, ri := range o.R.Users {
 			if rel != ri {
 				continue
 			}
 
-			ln := len(o.R.UserProfiles)
+			ln := len(o.R.Users)
 			if ln > 1 && i < ln-1 {
-				o.R.UserProfiles[i] = o.R.UserProfiles[ln-1]
+				o.R.Users[i] = o.R.Users[ln-1]
 			}
-			o.R.UserProfiles = o.R.UserProfiles[:ln-1]
+			o.R.Users = o.R.Users[:ln-1]
 			break
 		}
 	}
 
 	return nil
+}
+
+func removeUsersFromEthnicitiesSlice(o *Ethnicity, related []*User) {
+	for _, rel := range related {
+		if rel.R == nil {
+			continue
+		}
+		for i, ri := range rel.R.Ethnicities {
+			if o.ID != ri.ID {
+				continue
+			}
+
+			ln := len(rel.R.Ethnicities)
+			if ln > 1 && i < ln-1 {
+				rel.R.Ethnicities[i] = rel.R.Ethnicities[ln-1]
+			}
+			rel.R.Ethnicities = rel.R.Ethnicities[:ln-1]
+			break
+		}
+	}
 }
 
 // Ethnicities retrieves all the records using an executor.

@@ -74,7 +74,7 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		Drugs:           profile.Drugs,
 		ChildrenStatus:  profile.ChildrenStatus,
 		FamilyPlan:      profile.FamilyPlan,
-		Ethnicity:       profile.Ethnicity,
+		Ethnicities:     profile.Ethnicities,
 		SpokenLanguages: profile.SpokenLanguages,
 		VoicePrompts:    voicePrompts,
 		LikeCount:       profile.LikeCount,

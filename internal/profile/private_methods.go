@@ -431,3 +431,22 @@ func (s *service) getEthnicityByID(ctx context.Context, id int16) (domain.Ethnic
 		Label: ethnicityEntity.Label,
 	}, nil
 }
+
+func (s *service) getEthnicitiesByIDs(ctx context.Context, ids []int16) ([]domain.Ethnicity, error) {
+	if len(ids) == 0 {
+		return []domain.Ethnicity{}, nil
+	}
+
+	var ethnicities []domain.Ethnicity
+
+	for _, id := range ids {
+		ethnicity, err := s.getEthnicityByID(ctx, id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get ethnicity by ID %d: %w", id, err)
+		}
+
+		ethnicities = append(ethnicities, ethnicity)
+	}
+
+	return ethnicities, nil
+}

@@ -135,6 +135,11 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 		return domain.UpdateProfile{}, fmt.Errorf("get user spoken languages: %w", err)
 	}
 
+	ethnicityIDs, err := s.profileRepo.GetUserEthnicities(ctx, userID)
+	if err != nil {
+		return domain.UpdateProfile{}, fmt.Errorf("get user ethnicities: %w", err)
+	}
+
 	VoicePrompts, err := s.getUserVoicePromptsForUpdate(ctx, userID)
 	if err != nil {
 		return domain.UpdateProfile{}, fmt.Errorf("get user voice prompts: %w", err)
@@ -166,7 +171,7 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 		DrugsID:           &userProfile.DrugsID,
 		ChildrenStatusID:  userProfile.ChildrenStatusID,
 		FamilyPlanID:      userProfile.FamilyPlanID,
-		EthnicityID:       &userProfile.EthnicityID,
+		EthnicityIDs:      ethnicityIDs,
 		SpokenLanguages:   languageIds,
 		VoicePrompts:      VoicePrompts,
 		Photos:            Photos,
@@ -286,10 +291,6 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		prof.FamilyPlanID = up.FamilyPlanID
 	}
 
-	if up.EthnicityID != nil {
-		prof.EthnicityID = *up.EthnicityID
-	}
-
 	if len(up.Photos) > 0 {
 		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID))
 		if err != nil {
@@ -314,6 +315,14 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		err = s.UpsertUserTheme(ctx, up.UserID, *up.BaseColour)
 		if err != nil {
 			return fmt.Errorf("upsert user theme: %w", err)
+		}
+	}
+
+	// Update ethnicities if provided (including empty array to clear)
+	if up.EthnicityIDs != nil {
+		err = s.profileRepo.UpsertUserEthnicities(ctx, up.UserID, up.EthnicityIDs)
+		if err != nil {
+			return fmt.Errorf("upsert user ethnicities: %w", err)
 		}
 	}
 
@@ -370,9 +379,14 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 		return domain.EnrichedProfile{}, fmt.Errorf("get gender: %w", err)
 	}
 
-	result.Ethnicity, err = s.getEthnicityByID(ctx, userProfile.EthnicityID)
+	ethnicityIDs, err := s.profileRepo.GetUserEthnicities(ctx, userID)
 	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("get ethnicity: %w", err)
+		return domain.EnrichedProfile{}, fmt.Errorf("get user ethnicities: %w", err)
+	}
+
+	result.Ethnicities, err = s.getEthnicitiesByIDs(ctx, ethnicityIDs)
+	if err != nil {
+		return domain.EnrichedProfile{}, fmt.Errorf("get ethnicities: %w", err)
 	}
 
 	result.DatingIntention, err = s.getDatingIntentionByID(ctx, userProfile.DatingIntentionID)

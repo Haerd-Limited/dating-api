@@ -119,6 +119,7 @@ var UserRels = struct {
 	InitiatorRevealRequests  string
 	ActorSwipes              string
 	TargetSwipes             string
+	Ethnicities              string
 	Interests                string
 	Languages                string
 	UserProfileVisibilities  string
@@ -143,6 +144,7 @@ var UserRels = struct {
 	InitiatorRevealRequests:  "InitiatorRevealRequests",
 	ActorSwipes:              "ActorSwipes",
 	TargetSwipes:             "TargetSwipes",
+	Ethnicities:              "Ethnicities",
 	Interests:                "Interests",
 	Languages:                "Languages",
 	UserProfileVisibilities:  "UserProfileVisibilities",
@@ -170,6 +172,7 @@ type userR struct {
 	InitiatorRevealRequests  RevealRequestSlice           `boil:"InitiatorRevealRequests" json:"InitiatorRevealRequests" toml:"InitiatorRevealRequests" yaml:"InitiatorRevealRequests"`
 	ActorSwipes              SwipeSlice                   `boil:"ActorSwipes" json:"ActorSwipes" toml:"ActorSwipes" yaml:"ActorSwipes"`
 	TargetSwipes             SwipeSlice                   `boil:"TargetSwipes" json:"TargetSwipes" toml:"TargetSwipes" yaml:"TargetSwipes"`
+	Ethnicities              EthnicitySlice               `boil:"Ethnicities" json:"Ethnicities" toml:"Ethnicities" yaml:"Ethnicities"`
 	Interests                InterestSlice                `boil:"Interests" json:"Interests" toml:"Interests" yaml:"Interests"`
 	Languages                LanguageSlice                `boil:"Languages" json:"Languages" toml:"Languages" yaml:"Languages"`
 	UserProfileVisibilities  UserProfileVisibilitySlice   `boil:"UserProfileVisibilities" json:"UserProfileVisibilities" toml:"UserProfileVisibilities" yaml:"UserProfileVisibilities"`
@@ -468,6 +471,22 @@ func (r *userR) GetTargetSwipes() SwipeSlice {
 	}
 
 	return r.TargetSwipes
+}
+
+func (o *User) GetEthnicities() EthnicitySlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetEthnicities()
+}
+
+func (r *userR) GetEthnicities() EthnicitySlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.Ethnicities
 }
 
 func (o *User) GetInterests() InterestSlice {
@@ -1104,6 +1123,21 @@ func (o *User) TargetSwipes(mods ...qm.QueryMod) swipeQuery {
 	)
 
 	return Swipes(queryMods...)
+}
+
+// Ethnicities retrieves all the ethnicity's Ethnicities with an executor.
+func (o *User) Ethnicities(mods ...qm.QueryMod) ethnicityQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.InnerJoin("\"user_ethnicities\" on \"ethnicities\".\"id\" = \"user_ethnicities\".\"ethnicity_id\""),
+		qm.Where("\"user_ethnicities\".\"user_id\"=?", o.ID),
+	)
+
+	return Ethnicities(queryMods...)
 }
 
 // Interests retrieves all the interest's Interests with an executor.
@@ -3228,6 +3262,136 @@ func (userL) LoadTargetSwipes(ctx context.Context, e boil.ContextExecutor, singu
 	return nil
 }
 
+// LoadEthnicities allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadEthnicities(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.Select("\"ethnicities\".\"id\", \"ethnicities\".\"label\", \"a\".\"user_id\""),
+		qm.From("\"ethnicities\""),
+		qm.InnerJoin("\"user_ethnicities\" as \"a\" on \"ethnicities\".\"id\" = \"a\".\"ethnicity_id\""),
+		qm.WhereIn("\"a\".\"user_id\" in ?", argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load ethnicities")
+	}
+
+	var resultSlice []*Ethnicity
+
+	var localJoinCols []string
+	for results.Next() {
+		one := new(Ethnicity)
+		var localJoinCol string
+
+		err = results.Scan(&one.ID, &one.Label, &localJoinCol)
+		if err != nil {
+			return errors.Wrap(err, "failed to scan eager loaded results for ethnicities")
+		}
+		if err = results.Err(); err != nil {
+			return errors.Wrap(err, "failed to plebian-bind eager loaded slice ethnicities")
+		}
+
+		resultSlice = append(resultSlice, one)
+		localJoinCols = append(localJoinCols, localJoinCol)
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on ethnicities")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for ethnicities")
+	}
+
+	if len(ethnicityAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Ethnicities = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &ethnicityR{}
+			}
+			foreign.R.Users = append(foreign.R.Users, object)
+		}
+		return nil
+	}
+
+	for i, foreign := range resultSlice {
+		localJoinCol := localJoinCols[i]
+		for _, local := range slice {
+			if local.ID == localJoinCol {
+				local.R.Ethnicities = append(local.R.Ethnicities, foreign)
+				if foreign.R == nil {
+					foreign.R = &ethnicityR{}
+				}
+				foreign.R.Users = append(foreign.R.Users, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadInterests allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (userL) LoadInterests(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
@@ -4841,6 +5005,151 @@ func (o *User) AddTargetSwipes(ctx context.Context, exec boil.ContextExecutor, i
 		}
 	}
 	return nil
+}
+
+// AddEthnicities adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.Ethnicities.
+// Sets related.R.Users appropriately.
+func (o *User) AddEthnicities(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Ethnicity) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		}
+	}
+
+	for _, rel := range related {
+		query := "insert into \"user_ethnicities\" (\"user_id\", \"ethnicity_id\") values ($1, $2)"
+		values := []interface{}{o.ID, rel.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, query)
+			fmt.Fprintln(writer, values)
+		}
+		_, err = exec.ExecContext(ctx, query, values...)
+		if err != nil {
+			return errors.Wrap(err, "failed to insert into join table")
+		}
+	}
+	if o.R == nil {
+		o.R = &userR{
+			Ethnicities: related,
+		}
+	} else {
+		o.R.Ethnicities = append(o.R.Ethnicities, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &ethnicityR{
+				Users: UserSlice{o},
+			}
+		} else {
+			rel.R.Users = append(rel.R.Users, o)
+		}
+	}
+	return nil
+}
+
+// SetEthnicities removes all previously related items of the
+// user replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Users's Ethnicities accordingly.
+// Replaces o.R.Ethnicities with related.
+// Sets related.R.Users's Ethnicities accordingly.
+func (o *User) SetEthnicities(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Ethnicity) error {
+	query := "delete from \"user_ethnicities\" where \"user_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	removeEthnicitiesFromUsersSlice(o, related)
+	if o.R != nil {
+		o.R.Ethnicities = nil
+	}
+
+	return o.AddEthnicities(ctx, exec, insert, related...)
+}
+
+// RemoveEthnicities relationships from objects passed in.
+// Removes related items from R.Ethnicities (uses pointer comparison, removal does not keep order)
+// Sets related.R.Users.
+func (o *User) RemoveEthnicities(ctx context.Context, exec boil.ContextExecutor, related ...*Ethnicity) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	query := fmt.Sprintf(
+		"delete from \"user_ethnicities\" where \"user_id\" = $1 and \"ethnicity_id\" in (%s)",
+		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
+	)
+	values := []interface{}{o.ID}
+	for _, rel := range related {
+		values = append(values, rel.ID)
+	}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err = exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+	removeEthnicitiesFromUsersSlice(o, related)
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.Ethnicities {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.Ethnicities)
+			if ln > 1 && i < ln-1 {
+				o.R.Ethnicities[i] = o.R.Ethnicities[ln-1]
+			}
+			o.R.Ethnicities = o.R.Ethnicities[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
+func removeEthnicitiesFromUsersSlice(o *User, related []*Ethnicity) {
+	for _, rel := range related {
+		if rel.R == nil {
+			continue
+		}
+		for i, ri := range rel.R.Users {
+			if o.ID != ri.ID {
+				continue
+			}
+
+			ln := len(rel.R.Users)
+			if ln > 1 && i < ln-1 {
+				rel.R.Users[i] = rel.R.Users[ln-1]
+			}
+			rel.R.Users = rel.R.Users[:ln-1]
+			break
+		}
+	}
 }
 
 // AddInterests adds the given related objects to the existing relationships

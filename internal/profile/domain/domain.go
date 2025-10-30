@@ -27,7 +27,7 @@ type Profile struct {
 	DrugsID           int16
 	ChildrenStatusID  *int16
 	FamilyPlanID      *int16
-	EthnicityID       int16
+	EthnicityIDs      []int16
 	CoverPhotoURL     *string
 	Emoji             string
 
@@ -69,7 +69,7 @@ type UpdateProfile struct {
 	DrugsID           *int16
 	ChildrenStatusID  *int16
 	FamilyPlanID      *int16
-	EthnicityID       *int16
+	EthnicityIDs      []int16
 	SpokenLanguages   []int16
 	VoicePrompts      []VoicePromptUpdate
 	Photos            []Photo
@@ -109,7 +109,7 @@ type EnrichedProfile struct {
 	Drugs           Habit
 	ChildrenStatus  *Status
 	FamilyPlan      *Status
-	Ethnicity       Ethnicity
+	Ethnicities     []Ethnicity
 	SpokenLanguages []Language
 	VoicePrompts    []ProfileVoicePrompt
 	Photos          []Photo

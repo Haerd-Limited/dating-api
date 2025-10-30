@@ -137,10 +137,7 @@ func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []stri
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.FamilyPlanID)
 	}
 
-	if p.EthnicityID != 0 {
-		ent.EthnicityID = null.Int16From(p.EthnicityID)
-		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.EthnicityID)
-	}
+	// EthnicityIDs are handled separately via repository methods
 
 	// JSONB: your entity expects []byte
 	if p.ProfileMeta != nil {

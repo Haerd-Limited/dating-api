@@ -799,67 +799,6 @@ func testUserProfileToOneEducationLevelUsingEducationLevel(t *testing.T) {
 	}
 }
 
-func testUserProfileToOneEthnicityUsingEthnicity(t *testing.T) {
-	ctx := context.Background()
-	tx := MustTx(boil.BeginTx(ctx, nil))
-	defer func() { _ = tx.Rollback() }()
-
-	var local UserProfile
-	var foreign Ethnicity
-
-	seed := randomize.NewSeed()
-	if err := randomize.Struct(seed, &local, userProfileDBTypes, true, userProfileColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize UserProfile struct: %s", err)
-	}
-	if err := randomize.Struct(seed, &foreign, ethnicityDBTypes, false, ethnicityColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize Ethnicity struct: %s", err)
-	}
-
-	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-
-	queries.Assign(&local.EthnicityID, foreign.ID)
-	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-
-	check, err := local.Ethnicity().One(ctx, tx)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !queries.Equal(check.ID, foreign.ID) {
-		t.Errorf("want: %v, got %v", foreign.ID, check.ID)
-	}
-
-	ranAfterSelectHook := false
-	AddEthnicityHook(boil.AfterSelectHook, func(ctx context.Context, e boil.ContextExecutor, o *Ethnicity) error {
-		ranAfterSelectHook = true
-		return nil
-	})
-
-	slice := UserProfileSlice{&local}
-	if err = local.L.LoadEthnicity(ctx, tx, false, (*[]*UserProfile)(&slice), nil); err != nil {
-		t.Fatal(err)
-	}
-	if local.R.Ethnicity == nil {
-		t.Error("struct should have been eager loaded")
-	}
-
-	local.R.Ethnicity = nil
-	if err = local.L.LoadEthnicity(ctx, tx, true, &local, nil); err != nil {
-		t.Fatal(err)
-	}
-	if local.R.Ethnicity == nil {
-		t.Error("struct should have been eager loaded")
-	}
-
-	if !ranAfterSelectHook {
-		t.Error("failed to run AfterSelect hook for relationship")
-	}
-}
-
 func testUserProfileToOneFamilyPlanUsingFamilyPlan(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
@@ -1832,115 +1771,6 @@ func testUserProfileToOneRemoveOpEducationLevelUsingEducationLevel(t *testing.T)
 	}
 }
 
-func testUserProfileToOneSetOpEthnicityUsingEthnicity(t *testing.T) {
-	var err error
-
-	ctx := context.Background()
-	tx := MustTx(boil.BeginTx(ctx, nil))
-	defer func() { _ = tx.Rollback() }()
-
-	var a UserProfile
-	var b, c Ethnicity
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, userProfileDBTypes, false, strmangle.SetComplement(userProfilePrimaryKeyColumns, userProfileColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-	if err = randomize.Struct(seed, &b, ethnicityDBTypes, false, strmangle.SetComplement(ethnicityPrimaryKeyColumns, ethnicityColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-	if err = randomize.Struct(seed, &c, ethnicityDBTypes, false, strmangle.SetComplement(ethnicityPrimaryKeyColumns, ethnicityColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-
-	for i, x := range []*Ethnicity{&b, &c} {
-		err = a.SetEthnicity(ctx, tx, i != 0, x)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if a.R.Ethnicity != x {
-			t.Error("relationship struct not set to correct value")
-		}
-
-		if x.R.UserProfiles[0] != &a {
-			t.Error("failed to append to foreign relationship struct")
-		}
-		if !queries.Equal(a.EthnicityID, x.ID) {
-			t.Error("foreign key was wrong value", a.EthnicityID)
-		}
-
-		zero := reflect.Zero(reflect.TypeOf(a.EthnicityID))
-		reflect.Indirect(reflect.ValueOf(&a.EthnicityID)).Set(zero)
-
-		if err = a.Reload(ctx, tx); err != nil {
-			t.Fatal("failed to reload", err)
-		}
-
-		if !queries.Equal(a.EthnicityID, x.ID) {
-			t.Error("foreign key was wrong value", a.EthnicityID, x.ID)
-		}
-	}
-}
-
-func testUserProfileToOneRemoveOpEthnicityUsingEthnicity(t *testing.T) {
-	var err error
-
-	ctx := context.Background()
-	tx := MustTx(boil.BeginTx(ctx, nil))
-	defer func() { _ = tx.Rollback() }()
-
-	var a UserProfile
-	var b Ethnicity
-
-	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, &a, userProfileDBTypes, false, strmangle.SetComplement(userProfilePrimaryKeyColumns, userProfileColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-	if err = randomize.Struct(seed, &b, ethnicityDBTypes, false, strmangle.SetComplement(ethnicityPrimaryKeyColumns, ethnicityColumnsWithoutDefault)...); err != nil {
-		t.Fatal(err)
-	}
-
-	if err = a.Insert(ctx, tx, boil.Infer()); err != nil {
-		t.Fatal(err)
-	}
-
-	if err = a.SetEthnicity(ctx, tx, true, &b); err != nil {
-		t.Fatal(err)
-	}
-
-	if err = a.RemoveEthnicity(ctx, tx, &b); err != nil {
-		t.Error("failed to remove relationship")
-	}
-
-	count, err := a.Ethnicity().Count(ctx, tx)
-	if err != nil {
-		t.Error(err)
-	}
-	if count != 0 {
-		t.Error("want no relationships remaining")
-	}
-
-	if a.R.Ethnicity != nil {
-		t.Error("R struct entry should be nil")
-	}
-
-	if !queries.IsValuerNil(a.EthnicityID) {
-		t.Error("foreign key value should be nil")
-	}
-
-	if len(b.R.UserProfiles) != 0 {
-		t.Error("failed to remove a from b's relationships")
-	}
-}
-
 func testUserProfileToOneSetOpFamilyPlanUsingFamilyPlan(t *testing.T) {
 	var err error
 
@@ -2723,7 +2553,7 @@ func testUserProfilesSelect(t *testing.T) {
 }
 
 var (
-	userProfileDBTypes = map[string]string{`UserID`: `uuid`, `DisplayName`: `text`, `Birthdate`: `date`, `HeightCM`: `smallint`, `Geo`: `USER-DEFINED`, `City`: `text`, `Country`: `text`, `GenderID`: `smallint`, `DatingIntentionID`: `smallint`, `ReligionID`: `smallint`, `EducationLevelID`: `smallint`, `PoliticalBeliefID`: `smallint`, `DrinkingID`: `smallint`, `SmokingID`: `smallint`, `MarijuanaID`: `smallint`, `DrugsID`: `smallint`, `ChildrenStatusID`: `smallint`, `FamilyPlanID`: `smallint`, `EthnicityID`: `smallint`, `Work`: `text`, `JobTitle`: `text`, `University`: `text`, `ProfileMeta`: `jsonb`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `CoverPhotoURL`: `text`, `Emoji`: `text`, `Verified`: `boolean`}
+	userProfileDBTypes = map[string]string{`UserID`: `uuid`, `DisplayName`: `text`, `Birthdate`: `date`, `HeightCM`: `smallint`, `Geo`: `USER-DEFINED`, `City`: `text`, `Country`: `text`, `GenderID`: `smallint`, `DatingIntentionID`: `smallint`, `ReligionID`: `smallint`, `EducationLevelID`: `smallint`, `PoliticalBeliefID`: `smallint`, `DrinkingID`: `smallint`, `SmokingID`: `smallint`, `MarijuanaID`: `smallint`, `DrugsID`: `smallint`, `ChildrenStatusID`: `smallint`, `FamilyPlanID`: `smallint`, `Work`: `text`, `JobTitle`: `text`, `University`: `text`, `ProfileMeta`: `jsonb`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `CoverPhotoURL`: `text`, `Emoji`: `text`, `Verified`: `boolean`}
 	_                  = bytes.MinRead
 )
 

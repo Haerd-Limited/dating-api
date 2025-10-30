@@ -62,8 +62,8 @@ func (wae WorkAndEducationRequest) Validate() error {
 }
 
 type BackgroundRequest struct {
-	EducationLevelID int16 `json:"education_level_id" validate:"required"`
-	EthnicityID      int16 `json:"ethnicity_id" validate:"required"` // todo(high-priority): make it an array.
+	EducationLevelID int16   `json:"education_level_id" validate:"required"`
+	EthnicityIDs     []int16 `json:"ethnicity_ids" validate:"required,min=1,dive,gt=0"`
 }
 
 func (br BackgroundRequest) Validate() error {

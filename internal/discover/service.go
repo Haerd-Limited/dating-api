@@ -47,7 +47,7 @@ func (s *service) AlreadyInteracted(ctx context.Context, userID string, targetUs
 	return s.discoverRepo.AlreadyInteracted(ctx, userID, targetUserID)
 }
 
-// todo(high-priority): add filters like  age, race, distance, age
+// todo(high-priority): add filters like  age range, dating intentions, distance, age
 func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]profilecard.ProfileCard, error) {
 	candidates, err := s.discoverRepo.GetDiscoverFeedCandidates(ctx, userID, limit, offset)
 	if err != nil {

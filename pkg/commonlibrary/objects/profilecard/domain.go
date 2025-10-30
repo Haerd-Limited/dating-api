@@ -28,7 +28,7 @@ type ProfileCard struct {
 	Drugs           string
 	ChildrenStatus  *string
 	FamilyPlan      *string
-	Ethnicity       string
+	Ethnicities     []string
 	SpokenLanguages []string
 	VoicePrompts    []VoicePrompt
 	Theme           UserTheme

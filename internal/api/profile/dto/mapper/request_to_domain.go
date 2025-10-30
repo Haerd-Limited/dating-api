@@ -68,7 +68,7 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 		DrugsID:           req.DrugsID,
 		ChildrenStatusID:  req.ChildrenStatusID,
 		FamilyPlanID:      req.FamilyPlanID,
-		EthnicityID:       req.EthnicityID,
+		EthnicityIDs:      req.EthnicityIDs,
 		SpokenLanguages:   req.SpokenLanguages,
 		VoicePrompts:      voicePrompts,
 		Photos:            photos,

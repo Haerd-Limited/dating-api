@@ -23,10 +23,12 @@ type ProfileRepository interface {
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
+	UpsertUserEthnicities(ctx context.Context, userID string, ethnicities []int16) error
 	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string) error
 	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
+	GetUserEthnicities(ctx context.Context, userID string) ([]int16, error)
 	GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error)
 	GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error)
 	GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error)
@@ -325,6 +327,109 @@ func (pr *profileRepository) UpsertUserSpokenLanguages(
 	}
 
 	return nil
+}
+
+func (pr *profileRepository) UpsertUserEthnicities(
+	ctx context.Context,
+	userID string,
+	ethnicities []int16,
+) (err error) {
+	tx, err := pr.db.BeginTxx(ctx, &sql.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
+	}()
+
+	// Clear existing selections
+	_, err = tx.ExecContext(ctx, `DELETE FROM user_ethnicities WHERE user_id = $1`, userID)
+	if err != nil {
+		return fmt.Errorf("delete user_ethnicities: %w", err)
+	}
+
+	// Nothing to insert? we're done after clearing.
+	if len(ethnicities) == 0 {
+		return nil
+	}
+
+	// De‑dupe in case the caller passed duplicates.
+	uniq := make([]int16, 0, len(ethnicities))
+
+	seen := make(map[int16]struct{}, len(ethnicities))
+	for _, id := range ethnicities {
+		if _, ok := seen[id]; ok {
+			continue
+		}
+
+		seen[id] = struct{}{}
+
+		uniq = append(uniq, id)
+	}
+
+	// Build a single INSERT ... VALUES (...) ... statement.
+	var (
+		sb   strings.Builder
+		args = make([]any, 1+len(uniq))
+	)
+
+	sb.WriteString(`INSERT INTO user_ethnicities (user_id, ethnicity_id) VALUES `)
+
+	args[0] = userID
+
+	for i, eid := range uniq {
+		if i > 0 {
+			sb.WriteString(",")
+		}
+		// user_id is always $1; each ethnicity_id is $2, $3, ...
+		sb.WriteString(fmt.Sprintf("($1,$%d)", i+2))
+
+		args[i+1] = eid
+	}
+
+	// Ignore duplicates that could arise from race conditions.
+	sb.WriteString(` ON CONFLICT (user_id, ethnicity_id) DO NOTHING`)
+
+	if _, err = tx.ExecContext(ctx, sb.String(), args...); err != nil {
+		return fmt.Errorf("insert user_ethnicities: %w", err)
+	}
+
+	return nil
+}
+
+func (pr *profileRepository) GetUserEthnicities(ctx context.Context, userID string) ([]int16, error) {
+	var ethnicityIDs []int16
+
+	query := `SELECT ethnicity_id FROM user_ethnicities WHERE user_id = $1 ORDER BY ethnicity_id`
+
+	rows, err := pr.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query user_ethnicities: %w", err)
+	}
+
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	for rows.Next() {
+		var id int16
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("failed to scan ethnicity_id: %w", err)
+		}
+
+		ethnicityIDs = append(ethnicityIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating ethnicity rows: %w", err)
+	}
+
+	return ethnicityIDs, nil
 }
 
 func (pr *profileRepository) GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error) {

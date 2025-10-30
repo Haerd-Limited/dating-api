@@ -539,7 +539,7 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 	}
 
 	userProfile.EducationLevelID = &backgroundDetails.EducationLevelID
-	userProfile.EthnicityID = &backgroundDetails.EthnicityID
+	userProfile.EthnicityIDs = backgroundDetails.EthnicityIDs
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {

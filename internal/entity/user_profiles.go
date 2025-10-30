@@ -42,7 +42,6 @@ type UserProfile struct {
 	DrugsID           null.Int16  `boil:"drugs_id" json:"drugs_id,omitempty" toml:"drugs_id" yaml:"drugs_id,omitempty"`
 	ChildrenStatusID  null.Int16  `boil:"children_status_id" json:"children_status_id,omitempty" toml:"children_status_id" yaml:"children_status_id,omitempty"`
 	FamilyPlanID      null.Int16  `boil:"family_plan_id" json:"family_plan_id,omitempty" toml:"family_plan_id" yaml:"family_plan_id,omitempty"`
-	EthnicityID       null.Int16  `boil:"ethnicity_id" json:"ethnicity_id,omitempty" toml:"ethnicity_id" yaml:"ethnicity_id,omitempty"`
 	Work              null.String `boil:"work" json:"work,omitempty" toml:"work" yaml:"work,omitempty"`
 	JobTitle          null.String `boil:"job_title" json:"job_title,omitempty" toml:"job_title" yaml:"job_title,omitempty"`
 	University        null.String `boil:"university" json:"university,omitempty" toml:"university" yaml:"university,omitempty"`
@@ -76,7 +75,6 @@ var UserProfileColumns = struct {
 	DrugsID           string
 	ChildrenStatusID  string
 	FamilyPlanID      string
-	EthnicityID       string
 	Work              string
 	JobTitle          string
 	University        string
@@ -105,7 +103,6 @@ var UserProfileColumns = struct {
 	DrugsID:           "drugs_id",
 	ChildrenStatusID:  "children_status_id",
 	FamilyPlanID:      "family_plan_id",
-	EthnicityID:       "ethnicity_id",
 	Work:              "work",
 	JobTitle:          "job_title",
 	University:        "university",
@@ -136,7 +133,6 @@ var UserProfileTableColumns = struct {
 	DrugsID           string
 	ChildrenStatusID  string
 	FamilyPlanID      string
-	EthnicityID       string
 	Work              string
 	JobTitle          string
 	University        string
@@ -165,7 +161,6 @@ var UserProfileTableColumns = struct {
 	DrugsID:           "user_profiles.drugs_id",
 	ChildrenStatusID:  "user_profiles.children_status_id",
 	FamilyPlanID:      "user_profiles.family_plan_id",
-	EthnicityID:       "user_profiles.ethnicity_id",
 	Work:              "user_profiles.work",
 	JobTitle:          "user_profiles.job_title",
 	University:        "user_profiles.university",
@@ -222,7 +217,6 @@ var UserProfileWhere = struct {
 	DrugsID           whereHelpernull_Int16
 	ChildrenStatusID  whereHelpernull_Int16
 	FamilyPlanID      whereHelpernull_Int16
-	EthnicityID       whereHelpernull_Int16
 	Work              whereHelpernull_String
 	JobTitle          whereHelpernull_String
 	University        whereHelpernull_String
@@ -251,7 +245,6 @@ var UserProfileWhere = struct {
 	DrugsID:           whereHelpernull_Int16{field: "\"user_profiles\".\"drugs_id\""},
 	ChildrenStatusID:  whereHelpernull_Int16{field: "\"user_profiles\".\"children_status_id\""},
 	FamilyPlanID:      whereHelpernull_Int16{field: "\"user_profiles\".\"family_plan_id\""},
-	EthnicityID:       whereHelpernull_Int16{field: "\"user_profiles\".\"ethnicity_id\""},
 	Work:              whereHelpernull_String{field: "\"user_profiles\".\"work\""},
 	JobTitle:          whereHelpernull_String{field: "\"user_profiles\".\"job_title\""},
 	University:        whereHelpernull_String{field: "\"user_profiles\".\"university\""},
@@ -270,7 +263,6 @@ var UserProfileRels = struct {
 	Drinking        string
 	Drug            string
 	EducationLevel  string
-	Ethnicity       string
 	FamilyPlan      string
 	Gender          string
 	Marijuana       string
@@ -284,7 +276,6 @@ var UserProfileRels = struct {
 	Drinking:        "Drinking",
 	Drug:            "Drug",
 	EducationLevel:  "EducationLevel",
-	Ethnicity:       "Ethnicity",
 	FamilyPlan:      "FamilyPlan",
 	Gender:          "Gender",
 	Marijuana:       "Marijuana",
@@ -301,7 +292,6 @@ type userProfileR struct {
 	Drinking        *Habit           `boil:"Drinking" json:"Drinking" toml:"Drinking" yaml:"Drinking"`
 	Drug            *Habit           `boil:"Drug" json:"Drug" toml:"Drug" yaml:"Drug"`
 	EducationLevel  *EducationLevel  `boil:"EducationLevel" json:"EducationLevel" toml:"EducationLevel" yaml:"EducationLevel"`
-	Ethnicity       *Ethnicity       `boil:"Ethnicity" json:"Ethnicity" toml:"Ethnicity" yaml:"Ethnicity"`
 	FamilyPlan      *FamilyPlan      `boil:"FamilyPlan" json:"FamilyPlan" toml:"FamilyPlan" yaml:"FamilyPlan"`
 	Gender          *Gender          `boil:"Gender" json:"Gender" toml:"Gender" yaml:"Gender"`
 	Marijuana       *Habit           `boil:"Marijuana" json:"Marijuana" toml:"Marijuana" yaml:"Marijuana"`
@@ -394,22 +384,6 @@ func (r *userProfileR) GetEducationLevel() *EducationLevel {
 	}
 
 	return r.EducationLevel
-}
-
-func (o *UserProfile) GetEthnicity() *Ethnicity {
-	if o == nil {
-		return nil
-	}
-
-	return o.R.GetEthnicity()
-}
-
-func (r *userProfileR) GetEthnicity() *Ethnicity {
-	if r == nil {
-		return nil
-	}
-
-	return r.Ethnicity
 }
 
 func (o *UserProfile) GetFamilyPlan() *FamilyPlan {
@@ -528,9 +502,9 @@ func (r *userProfileR) GetUser() *User {
 type userProfileL struct{}
 
 var (
-	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified"}
+	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified"}
 	userProfileColumnsWithoutDefault = []string{"user_id", "display_name"}
-	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "ethnicity_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified"}
+	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )
@@ -893,17 +867,6 @@ func (o *UserProfile) EducationLevel(mods ...qm.QueryMod) educationLevelQuery {
 	queryMods = append(queryMods, mods...)
 
 	return EducationLevels(queryMods...)
-}
-
-// Ethnicity pointed to by the foreign key.
-func (o *UserProfile) Ethnicity(mods ...qm.QueryMod) ethnicityQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.EthnicityID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return Ethnicities(queryMods...)
 }
 
 // FamilyPlan pointed to by the foreign key.
@@ -1593,130 +1556,6 @@ func (userProfileL) LoadEducationLevel(ctx context.Context, e boil.ContextExecut
 				local.R.EducationLevel = foreign
 				if foreign.R == nil {
 					foreign.R = &educationLevelR{}
-				}
-				foreign.R.UserProfiles = append(foreign.R.UserProfiles, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadEthnicity allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (userProfileL) LoadEthnicity(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserProfile interface{}, mods queries.Applicator) error {
-	var slice []*UserProfile
-	var object *UserProfile
-
-	if singular {
-		var ok bool
-		object, ok = maybeUserProfile.(*UserProfile)
-		if !ok {
-			object = new(UserProfile)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeUserProfile)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUserProfile))
-			}
-		}
-	} else {
-		s, ok := maybeUserProfile.(*[]*UserProfile)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeUserProfile)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUserProfile))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &userProfileR{}
-		}
-		if !queries.IsNil(object.EthnicityID) {
-			args[object.EthnicityID] = struct{}{}
-		}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &userProfileR{}
-			}
-
-			if !queries.IsNil(obj.EthnicityID) {
-				args[obj.EthnicityID] = struct{}{}
-			}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`ethnicities`),
-		qm.WhereIn(`ethnicities.id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load Ethnicity")
-	}
-
-	var resultSlice []*Ethnicity
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Ethnicity")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for ethnicities")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for ethnicities")
-	}
-
-	if len(ethnicityAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.Ethnicity = foreign
-		if foreign.R == nil {
-			foreign.R = &ethnicityR{}
-		}
-		foreign.R.UserProfiles = append(foreign.R.UserProfiles, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if queries.Equal(local.EthnicityID, foreign.ID) {
-				local.R.Ethnicity = foreign
-				if foreign.R == nil {
-					foreign.R = &ethnicityR{}
 				}
 				foreign.R.UserProfiles = append(foreign.R.UserProfiles, local)
 				break
@@ -2978,86 +2817,6 @@ func (o *UserProfile) RemoveEducationLevel(ctx context.Context, exec boil.Contex
 
 	for i, ri := range related.R.UserProfiles {
 		if queries.Equal(o.EducationLevelID, ri.EducationLevelID) {
-			continue
-		}
-
-		ln := len(related.R.UserProfiles)
-		if ln > 1 && i < ln-1 {
-			related.R.UserProfiles[i] = related.R.UserProfiles[ln-1]
-		}
-		related.R.UserProfiles = related.R.UserProfiles[:ln-1]
-		break
-	}
-	return nil
-}
-
-// SetEthnicity of the userProfile to the related item.
-// Sets o.R.Ethnicity to related.
-// Adds o to related.R.UserProfiles.
-func (o *UserProfile) SetEthnicity(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Ethnicity) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"user_profiles\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"ethnicity_id"}),
-		strmangle.WhereClause("\"", "\"", 2, userProfilePrimaryKeyColumns),
-	)
-	values := []interface{}{related.ID, o.UserID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	queries.Assign(&o.EthnicityID, related.ID)
-	if o.R == nil {
-		o.R = &userProfileR{
-			Ethnicity: related,
-		}
-	} else {
-		o.R.Ethnicity = related
-	}
-
-	if related.R == nil {
-		related.R = &ethnicityR{
-			UserProfiles: UserProfileSlice{o},
-		}
-	} else {
-		related.R.UserProfiles = append(related.R.UserProfiles, o)
-	}
-
-	return nil
-}
-
-// RemoveEthnicity relationship.
-// Sets o.R.Ethnicity to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *UserProfile) RemoveEthnicity(ctx context.Context, exec boil.ContextExecutor, related *Ethnicity) error {
-	var err error
-
-	queries.SetScanner(&o.EthnicityID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("ethnicity_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.Ethnicity = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.UserProfiles {
-		if queries.Equal(o.EthnicityID, ri.EthnicityID) {
 			continue
 		}
 

@@ -84,7 +84,7 @@ type Language struct {
 type Background struct {
 	UserID           string
 	EducationLevelID int16
-	EthnicityID      int16
+	EthnicityIDs     []int16
 }
 
 type Beliefs struct {

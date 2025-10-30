@@ -48,7 +48,7 @@ func MapBackgroundRequestToDomain(req dto.BackgroundRequest, userID string) doma
 	return domain.Background{
 		UserID:           userID,
 		EducationLevelID: req.EducationLevelID,
-		EthnicityID:      req.EthnicityID,
+		EthnicityIDs:     req.EthnicityIDs,
 	}
 }
 

@@ -494,14 +494,14 @@ func testEthnicitiesInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testEthnicityToManyUserProfiles(t *testing.T) {
+func testEthnicityToManyUsers(t *testing.T) {
 	var err error
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
 	var a Ethnicity
-	var b, c UserProfile
+	var b, c User
 
 	seed := randomize.NewSeed()
 	if err = randomize.Struct(seed, &a, ethnicityDBTypes, true, ethnicityColumnsWithDefault...); err != nil {
@@ -512,15 +512,13 @@ func testEthnicityToManyUserProfiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = randomize.Struct(seed, &b, userProfileDBTypes, false, userProfileColumnsWithDefault...); err != nil {
+	if err = randomize.Struct(seed, &b, userDBTypes, false, userColumnsWithDefault...); err != nil {
 		t.Fatal(err)
 	}
-	if err = randomize.Struct(seed, &c, userProfileDBTypes, false, userProfileColumnsWithDefault...); err != nil {
+	if err = randomize.Struct(seed, &c, userDBTypes, false, userColumnsWithDefault...); err != nil {
 		t.Fatal(err)
 	}
 
-	queries.Assign(&b.EthnicityID, a.ID)
-	queries.Assign(&c.EthnicityID, a.ID)
 	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
@@ -528,17 +526,26 @@ func testEthnicityToManyUserProfiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	check, err := a.UserProfiles().All(ctx, tx)
+	_, err = tx.Exec("insert into \"user_ethnicities\" (\"ethnicity_id\", \"user_id\") values ($1, $2)", a.ID, b.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = tx.Exec("insert into \"user_ethnicities\" (\"ethnicity_id\", \"user_id\") values ($1, $2)", a.ID, c.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.Users().All(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	bFound, cFound := false, false
 	for _, v := range check {
-		if queries.Equal(v.EthnicityID, b.EthnicityID) {
+		if v.ID == b.ID {
 			bFound = true
 		}
-		if queries.Equal(v.EthnicityID, c.EthnicityID) {
+		if v.ID == c.ID {
 			cFound = true
 		}
 	}
@@ -551,18 +558,18 @@ func testEthnicityToManyUserProfiles(t *testing.T) {
 	}
 
 	slice := EthnicitySlice{&a}
-	if err = a.L.LoadUserProfiles(ctx, tx, false, (*[]*Ethnicity)(&slice), nil); err != nil {
+	if err = a.L.LoadUsers(ctx, tx, false, (*[]*Ethnicity)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(a.R.UserProfiles); got != 2 {
+	if got := len(a.R.Users); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
-	a.R.UserProfiles = nil
-	if err = a.L.LoadUserProfiles(ctx, tx, true, &a, nil); err != nil {
+	a.R.Users = nil
+	if err = a.L.LoadUsers(ctx, tx, true, &a, nil); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(a.R.UserProfiles); got != 2 {
+	if got := len(a.R.Users); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
@@ -571,7 +578,7 @@ func testEthnicityToManyUserProfiles(t *testing.T) {
 	}
 }
 
-func testEthnicityToManyAddOpUserProfiles(t *testing.T) {
+func testEthnicityToManyAddOpUsers(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -579,15 +586,15 @@ func testEthnicityToManyAddOpUserProfiles(t *testing.T) {
 	defer func() { _ = tx.Rollback() }()
 
 	var a Ethnicity
-	var b, c, d, e UserProfile
+	var b, c, d, e User
 
 	seed := randomize.NewSeed()
 	if err = randomize.Struct(seed, &a, ethnicityDBTypes, false, strmangle.SetComplement(ethnicityPrimaryKeyColumns, ethnicityColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	foreigners := []*UserProfile{&b, &c, &d, &e}
+	foreigners := []*User{&b, &c, &d, &e}
 	for _, x := range foreigners {
-		if err = randomize.Struct(seed, x, userProfileDBTypes, false, strmangle.SetComplement(userProfilePrimaryKeyColumns, userProfileColumnsWithoutDefault)...); err != nil {
+		if err = randomize.Struct(seed, x, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -602,13 +609,13 @@ func testEthnicityToManyAddOpUserProfiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	foreignersSplitByInsertion := [][]*UserProfile{
+	foreignersSplitByInsertion := [][]*User{
 		{&b, &c},
 		{&d, &e},
 	}
 
 	for i, x := range foreignersSplitByInsertion {
-		err = a.AddUserProfiles(ctx, tx, i != 0, x...)
+		err = a.AddUsers(ctx, tx, i != 0, x...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -616,28 +623,21 @@ func testEthnicityToManyAddOpUserProfiles(t *testing.T) {
 		first := x[0]
 		second := x[1]
 
-		if !queries.Equal(a.ID, first.EthnicityID) {
-			t.Error("foreign key was wrong value", a.ID, first.EthnicityID)
+		if first.R.Ethnicities[0] != &a {
+			t.Error("relationship was not added properly to the slice")
 		}
-		if !queries.Equal(a.ID, second.EthnicityID) {
-			t.Error("foreign key was wrong value", a.ID, second.EthnicityID)
-		}
-
-		if first.R.Ethnicity != &a {
-			t.Error("relationship was not added properly to the foreign slice")
-		}
-		if second.R.Ethnicity != &a {
-			t.Error("relationship was not added properly to the foreign slice")
+		if second.R.Ethnicities[0] != &a {
+			t.Error("relationship was not added properly to the slice")
 		}
 
-		if a.R.UserProfiles[i*2] != first {
+		if a.R.Users[i*2] != first {
 			t.Error("relationship struct slice not set to correct value")
 		}
-		if a.R.UserProfiles[i*2+1] != second {
+		if a.R.Users[i*2+1] != second {
 			t.Error("relationship struct slice not set to correct value")
 		}
 
-		count, err := a.UserProfiles().Count(ctx, tx)
+		count, err := a.Users().Count(ctx, tx)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -647,7 +647,7 @@ func testEthnicityToManyAddOpUserProfiles(t *testing.T) {
 	}
 }
 
-func testEthnicityToManySetOpUserProfiles(t *testing.T) {
+func testEthnicityToManySetOpUsers(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -655,15 +655,15 @@ func testEthnicityToManySetOpUserProfiles(t *testing.T) {
 	defer func() { _ = tx.Rollback() }()
 
 	var a Ethnicity
-	var b, c, d, e UserProfile
+	var b, c, d, e User
 
 	seed := randomize.NewSeed()
 	if err = randomize.Struct(seed, &a, ethnicityDBTypes, false, strmangle.SetComplement(ethnicityPrimaryKeyColumns, ethnicityColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	foreigners := []*UserProfile{&b, &c, &d, &e}
+	foreigners := []*User{&b, &c, &d, &e}
 	for _, x := range foreigners {
-		if err = randomize.Struct(seed, x, userProfileDBTypes, false, strmangle.SetComplement(userProfilePrimaryKeyColumns, userProfileColumnsWithoutDefault)...); err != nil {
+		if err = randomize.Struct(seed, x, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -678,25 +678,12 @@ func testEthnicityToManySetOpUserProfiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = a.SetUserProfiles(ctx, tx, false, &b, &c)
+	err = a.SetUsers(ctx, tx, false, &b, &c)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err := a.UserProfiles().Count(ctx, tx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if count != 2 {
-		t.Error("count was wrong:", count)
-	}
-
-	err = a.SetUserProfiles(ctx, tx, true, &d, &e)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	count, err = a.UserProfiles().Count(ctx, tx)
+	count, err := a.Users().Count(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -704,41 +691,45 @@ func testEthnicityToManySetOpUserProfiles(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	if !queries.IsValuerNil(b.EthnicityID) {
-		t.Error("want b's foreign key value to be nil")
-	}
-	if !queries.IsValuerNil(c.EthnicityID) {
-		t.Error("want c's foreign key value to be nil")
-	}
-	if !queries.Equal(a.ID, d.EthnicityID) {
-		t.Error("foreign key was wrong value", a.ID, d.EthnicityID)
-	}
-	if !queries.Equal(a.ID, e.EthnicityID) {
-		t.Error("foreign key was wrong value", a.ID, e.EthnicityID)
+	err = a.SetUsers(ctx, tx, true, &d, &e)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	if b.R.Ethnicity != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
+	count, err = a.Users().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if c.R.Ethnicity != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
-	}
-	if d.R.Ethnicity != &a {
-		t.Error("relationship was not added properly to the foreign struct")
-	}
-	if e.R.Ethnicity != &a {
-		t.Error("relationship was not added properly to the foreign struct")
+	if count != 2 {
+		t.Error("count was wrong:", count)
 	}
 
-	if a.R.UserProfiles[0] != &d {
+	// The following checks cannot be implemented since we have no handle
+	// to these when we call Set(). Leaving them here as wishful thinking
+	// and to let people know there's dragons.
+	//
+	// if len(b.R.Ethnicities) != 0 {
+	// 	t.Error("relationship was not removed properly from the slice")
+	// }
+	// if len(c.R.Ethnicities) != 0 {
+	// 	t.Error("relationship was not removed properly from the slice")
+	// }
+	if d.R.Ethnicities[0] != &a {
+		t.Error("relationship was not added properly to the slice")
+	}
+	if e.R.Ethnicities[0] != &a {
+		t.Error("relationship was not added properly to the slice")
+	}
+
+	if a.R.Users[0] != &d {
 		t.Error("relationship struct slice not set to correct value")
 	}
-	if a.R.UserProfiles[1] != &e {
+	if a.R.Users[1] != &e {
 		t.Error("relationship struct slice not set to correct value")
 	}
 }
 
-func testEthnicityToManyRemoveOpUserProfiles(t *testing.T) {
+func testEthnicityToManyRemoveOpUsers(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -746,15 +737,15 @@ func testEthnicityToManyRemoveOpUserProfiles(t *testing.T) {
 	defer func() { _ = tx.Rollback() }()
 
 	var a Ethnicity
-	var b, c, d, e UserProfile
+	var b, c, d, e User
 
 	seed := randomize.NewSeed()
 	if err = randomize.Struct(seed, &a, ethnicityDBTypes, false, strmangle.SetComplement(ethnicityPrimaryKeyColumns, ethnicityColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	foreigners := []*UserProfile{&b, &c, &d, &e}
+	foreigners := []*User{&b, &c, &d, &e}
 	for _, x := range foreigners {
-		if err = randomize.Struct(seed, x, userProfileDBTypes, false, strmangle.SetComplement(userProfilePrimaryKeyColumns, userProfileColumnsWithoutDefault)...); err != nil {
+		if err = randomize.Struct(seed, x, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -763,12 +754,12 @@ func testEthnicityToManyRemoveOpUserProfiles(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = a.AddUserProfiles(ctx, tx, true, foreigners...)
+	err = a.AddUsers(ctx, tx, true, foreigners...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err := a.UserProfiles().Count(ctx, tx)
+	count, err := a.Users().Count(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -776,12 +767,12 @@ func testEthnicityToManyRemoveOpUserProfiles(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	err = a.RemoveUserProfiles(ctx, tx, foreigners[:2]...)
+	err = a.RemoveUsers(ctx, tx, foreigners[:2]...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	count, err = a.UserProfiles().Count(ctx, tx)
+	count, err = a.Users().Count(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -789,35 +780,28 @@ func testEthnicityToManyRemoveOpUserProfiles(t *testing.T) {
 		t.Error("count was wrong:", count)
 	}
 
-	if !queries.IsValuerNil(b.EthnicityID) {
-		t.Error("want b's foreign key value to be nil")
+	if len(b.R.Ethnicities) != 0 {
+		t.Error("relationship was not removed properly from the slice")
 	}
-	if !queries.IsValuerNil(c.EthnicityID) {
-		t.Error("want c's foreign key value to be nil")
+	if len(c.R.Ethnicities) != 0 {
+		t.Error("relationship was not removed properly from the slice")
 	}
-
-	if b.R.Ethnicity != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
+	if d.R.Ethnicities[0] != &a {
+		t.Error("relationship was not added properly to the foreign struct")
 	}
-	if c.R.Ethnicity != nil {
-		t.Error("relationship was not removed properly from the foreign struct")
-	}
-	if d.R.Ethnicity != &a {
-		t.Error("relationship to a should have been preserved")
-	}
-	if e.R.Ethnicity != &a {
-		t.Error("relationship to a should have been preserved")
+	if e.R.Ethnicities[0] != &a {
+		t.Error("relationship was not added properly to the foreign struct")
 	}
 
-	if len(a.R.UserProfiles) != 2 {
+	if len(a.R.Users) != 2 {
 		t.Error("should have preserved two relationships")
 	}
 
 	// Removal doesn't do a stable deletion for performance so we have to flip the order
-	if a.R.UserProfiles[1] != &d {
+	if a.R.Users[1] != &d {
 		t.Error("relationship to d should have been preserved")
 	}
-	if a.R.UserProfiles[0] != &e {
+	if a.R.Users[0] != &e {
 		t.Error("relationship to e should have been preserved")
 	}
 }

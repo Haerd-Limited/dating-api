@@ -25,7 +25,7 @@ type ProfileCard struct {
 	Drugs           string        `json:"drugs"`
 	ChildrenStatus  *string       `json:"children_status"`
 	FamilyPlan      *string       `json:"family_plan"`
-	Ethnicity       string        `json:"ethnicity"`
+	Ethnicities     []string      `json:"ethnicities"`
 	SpokenLanguages []string      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt `json:"voice_prompts"`
 	Theme           UserTheme     `json:"theme"`

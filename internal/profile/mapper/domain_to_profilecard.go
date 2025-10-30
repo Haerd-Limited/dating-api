@@ -30,7 +30,6 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 		Smoking:         ep.Smoking.Label,
 		Marijuana:       ep.Marijuana.Label,
 		Drugs:           ep.Drugs.Label,
-		Ethnicity:       ep.Ethnicity.Label,
 
 		Work:       ep.Work,
 		JobTitle:   ep.JobTitle,
@@ -53,6 +52,14 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 	if ep.FamilyPlan != nil {
 		lbl := ep.FamilyPlan.Label
 		fp.FamilyPlan = &lbl
+	}
+
+	// Ethnicities -> []string (labels)
+	if len(ep.Ethnicities) > 0 {
+		fp.Ethnicities = make([]string, len(ep.Ethnicities))
+		for i, e := range ep.Ethnicities {
+			fp.Ethnicities[i] = e.Label
+		}
 	}
 
 	// Spoken languages -> []string (labels)

@@ -31,7 +31,7 @@ type Profile struct {
 	Drugs           Habit           `json:"drugs"`
 	ChildrenStatus  *Status         `json:"children_status"`
 	FamilyPlan      *Status         `json:"family_plan"`
-	Ethnicity       Ethnicity       `json:"ethnicity"`
+	Ethnicities     []Ethnicity     `json:"ethnicities"`
 	SpokenLanguages []Language      `json:"spoken_languages"`
 	VoicePrompts    []VoicePrompt   `json:"voice_prompts"`
 	Photos          []Photo         `json:"photos"`
