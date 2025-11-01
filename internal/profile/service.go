@@ -9,8 +9,10 @@ import (
 	"github.com/aarondl/null/v8"
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
+	"github.com/Haerd-Limited/dating-api/internal/openai"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
@@ -29,6 +31,7 @@ type Service interface {
 	ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string) error
 	GetVoicePromptByID(ctx context.Context, id int64) (domain.VoicePrompt, error)
 	GetUserPhotos(ctx context.Context, userID string) ([]domain.Photo, error)
+	GetTranscript(ctx context.Context, voicePromptID int64) (string, error)
 
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error
@@ -42,6 +45,8 @@ type service struct {
 	profileRepo      storage.ProfileRepository
 	lookupRepo       lookupstorage.LookupRepository
 	verificationRepo verificationstorage.VerificationRepository
+	openaiService    openai.Service
+	awsService       aws.Service
 }
 
 func NewProfileService(
@@ -49,12 +54,16 @@ func NewProfileService(
 	profileRepository storage.ProfileRepository,
 	lookupRepository lookupstorage.LookupRepository,
 	verificationRepository verificationstorage.VerificationRepository,
+	openaiService openai.Service,
+	awsService aws.Service,
 ) Service {
 	return &service{
 		logger:           logger,
 		profileRepo:      profileRepository,
 		lookupRepo:       lookupRepository,
 		verificationRepo: verificationRepository,
+		openaiService:    openaiService,
+		awsService:       awsService,
 	}
 }
 
@@ -109,6 +118,46 @@ func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.Voic
 		CoverPhotoUrl: coverPhotoUrl,
 		Prompt:        prompt.Label,
 	}, nil
+}
+
+func (s *service) GetTranscript(ctx context.Context, voicePromptID int64) (string, error) {
+	// 1. Get voice prompt from DB
+	vp, err := s.profileRepo.GetVoicePromptByID(ctx, voicePromptID)
+	if err != nil {
+		return "", fmt.Errorf("voice prompt not found: %w", err)
+	}
+
+	// 2. Return if transcript already exists
+	if vp.Transcript.Valid && vp.Transcript.String != "" {
+		return vp.Transcript.String, nil
+	}
+
+	// 3. Extract S3 key from audio_url
+	key, err := utils.S3KeyFromURL(vp.AudioURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid audio URL: %w", err)
+	}
+
+	// 4. Download audio from S3
+	audioData, err := s.awsService.GetObjectBytes(ctx, key)
+	if err != nil {
+		return "", fmt.Errorf("failed to download audio: %w", err)
+	}
+
+	// 5. Transcribe with OpenAI
+	transcript, err := s.openaiService.TranscribeAudio(ctx, audioData, key)
+	if err != nil {
+		return "", fmt.Errorf("transcription failed: %w", err)
+	}
+
+	// 6. Save to database
+	err = s.profileRepo.UpdateVoicePromptTranscript(ctx, voicePromptID, transcript)
+	if err != nil {
+		s.logger.Warn("failed to save transcript", zap.Error(err))
+		// Don't fail - return the transcript anyway
+	}
+
+	return transcript, nil
 }
 
 func (s *service) ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string) error {
@@ -526,7 +575,6 @@ func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts 
 
 func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {
 	// todo(high-priority): check if position values are unique
-	// todo(high-priority): ensure count is min/max 6
 	if len(photos) != 6 {
 		return fmt.Errorf("%w: please provide exactly 6 photos", ErrNotEnoughPhotosProvided)
 	}

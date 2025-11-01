@@ -20,7 +20,6 @@ func MapPromptsToProfileVoicePrompts(uploadedPrompts domain.Prompts) []profiledo
 			IsPrimary:      p.IsPrimary,
 			URL:            p.URL,
 			PromptCoverURL: coverPhotoUrl,
-			// todo(high-priority): add transcript
 			// todo: add duration somehow. ask frontend to send
 		})
 	}

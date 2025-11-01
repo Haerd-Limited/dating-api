@@ -34,6 +34,7 @@ import (
 	matchingstorage "github.com/Haerd-Limited/dating-api/internal/matching/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
+	"github.com/Haerd-Limited/dating-api/internal/openai"
 	"github.com/Haerd-Limited/dating-api/internal/preference"
 	preferencestorage "github.com/Haerd-Limited/dating-api/internal/preference/storage"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
@@ -119,8 +120,9 @@ func main() {
 
 	matchingService := matching.NewMatchingService(logger, matchingRepo)
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner, s3Reader, cfg.Env)
+	openaiService := openai.NewOpenAIService(cfg.OpenAIAPIKey, logger)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
-	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo)
+	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo, openaiService, awsService)
 	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger)
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
 	discoverService := discover.NewDiscoverService(logger, profileService, matchingService, discoverRepo)

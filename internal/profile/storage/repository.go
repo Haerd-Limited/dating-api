@@ -33,6 +33,7 @@ type ProfileRepository interface {
 	GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error)
 	GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error)
 	IsVerified(ctx context.Context, userID string) (bool, error)
+	UpdateVoicePromptTranscript(ctx context.Context, id int64, transcript string) error
 }
 
 type profileRepository struct {
@@ -61,6 +62,22 @@ func (pr *profileRepository) GetVoicePromptByID(ctx context.Context, id int64) (
 	}
 
 	return vp, nil
+}
+
+func (pr *profileRepository) UpdateVoicePromptTranscript(ctx context.Context, id int64, transcript string) error {
+	vp, err := entity.VoicePrompts(entity.VoicePromptWhere.ID.EQ(id)).One(ctx, pr.db)
+	if err != nil {
+		return fmt.Errorf("voice prompt not found: %w", err)
+	}
+
+	vp.Transcript = null.StringFrom(transcript)
+
+	_, err = vp.Update(ctx, pr.db, boil.Whitelist(entity.VoicePromptColumns.Transcript))
+	if err != nil {
+		return fmt.Errorf("failed to update transcript: %w", err)
+	}
+
+	return nil
 }
 
 func (pr *profileRepository) InsertProfile(ctx context.Context, userProfile *entity.UserProfile, tx *sql.Tx) error {

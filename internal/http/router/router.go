@@ -120,6 +120,7 @@ func New(
 					r.Get("/", discoverHandler.GetDiscover())
 					r.Post("/filters", discoverHandler.GetDiscoverWithFilters())
 				})
+				r.Get("/voice-prompts/{id}/transcript", profileHandler.GetVoicePromptTranscript())
 				r.Route("/vwh", func(r chi.Router) {
 					r.Get("/", discoverHandler.GetVoiceWorthHearing())
 				})
@@ -175,6 +176,7 @@ func New(
 					})
 					// TODO(high-priority): create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
+
 			})
 			/*r.Route(
 				"/notifications", func(r chi.Router) {

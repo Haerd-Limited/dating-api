@@ -27,6 +27,7 @@ type Config struct {
 	TwilioAccountSID           string `mapstructure:"TWILIO_ACCOUNT_SID" yaml:"twilio_account_sid"`
 	TwilioAuthToken            string `mapstructure:"TWILIO_AUTH_TOKEN" yaml:"twilio_auth_token"`
 	TwilioNumber               string `mapstructure:"TWILIO_NUMBER" yaml:"twilio_number"`
+	OpenAIAPIKey               string `mapstructure:"OPENAI_API_KEY" yaml:"openai_api_key" validate:"required"`
 }
 
 // LoadConfig loads from OS env; if ENV=local (or unset) it will attempt to load .env first.
@@ -62,6 +63,7 @@ func LoadConfig() (*Config, error) {
 		TwilioAuthToken:            viper.GetString("TWILIO_AUTH_TOKEN"),
 		TwilioNumber:               viper.GetString("TWILIO_NUMBER"),
 		AWSRekognitionRegion:       viper.GetString("AWS_REKOGNITION_REGION"),
+		OpenAIAPIKey:               viper.GetString("OPENAI_API_KEY"),
 	}
 
 	// Validate the config.

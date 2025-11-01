@@ -1,10 +1,13 @@
 package profile
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
@@ -24,6 +27,7 @@ type Handler interface {
 	GetMyProfile() http.HandlerFunc
 	UpdateMyProfile() http.HandlerFunc
 	Verify() http.HandlerFunc
+	GetVoicePromptTranscript() http.HandlerFunc
 }
 
 type handler struct {
@@ -135,8 +139,41 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
+func (h *handler) GetVoicePromptTranscript() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		_, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		// Extract voice prompt ID from URL
+		idStr := chi.URLParam(r, "id")
+		id, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil {
+			render.Json(w, http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("Invalid voice prompt ID"))
+			return
+		}
+
+		transcript, err := h.profileService.GetTranscript(ctx, id)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GetVoicePromptTranscript", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, map[string]string{
+			"transcript": transcript,
+		})
+	}
+}
+
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return http.StatusNotFound, "Voice prompt not found"
 	case errors.Is(err, profile.ErrInvalidPromptPosition):
 		return http.StatusBadRequest, "Invalid prompt position"
 	case errors.Is(err, profile.ErrDuplicatePromptPosition):

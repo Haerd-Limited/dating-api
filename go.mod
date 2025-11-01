@@ -27,6 +27,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/rivo/uniseg v0.4.7
+	github.com/sashabaranov/go-openai v1.41.2
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/twilio/twilio-go v1.27.2
