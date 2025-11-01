@@ -77,5 +77,6 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 		University:        req.University,
 		CoverPhotoURL:     req.CoverPhotoUrl,
 		ProfileEmoji:      req.ProfileEmoji,
+		BaseColour:        req.ProfileBaseColour,
 	}, nil
 }

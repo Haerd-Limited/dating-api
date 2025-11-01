@@ -63,6 +63,7 @@ var (
 	ErrInvalidID                    = errors.New("id must be greater than 0")
 	ErrMissingPrompts               = errors.New("missing prompts")
 	ErrTooManyPromptsProvided       = errors.New("too many prompts provided")
+	ErrNotEnoughPhotosProvided      = errors.New("not enough photos provided")
 	ErrInvalidBirthdate             = errors.New("invalid birthdate")
 	ErrInvalidHeight                = errors.New("invalid height")
 	ErrInvalidPromptPosition        = errors.New("invalid prompt position")
@@ -341,6 +342,13 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		}
 	}
 
+	if up.BaseColour != nil {
+		err = s.UpsertUserTheme(ctx, up.UserID, *up.BaseColour)
+		if err != nil {
+			return fmt.Errorf("upsert user theme: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -519,6 +527,10 @@ func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts 
 func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {
 	// todo(high-priority): check if position values are unique
 	// todo(high-priority): ensure count is min/max 6
+	if len(photos) != 6 {
+		return fmt.Errorf("%w: please provide exactly 6 photos", ErrNotEnoughPhotosProvided)
+	}
+
 	return s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID))
 }
 

@@ -468,6 +468,8 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
+	case errors.Is(err, profile.ErrNotEnoughPhotosProvided):
+		return http.StatusBadRequest, "Please provide exactly 6 photos"
 	case errors.Is(err, profile.ErrContainsSocialMediaPromotion):
 		return http.StatusBadRequest, messages.SocialsNotAllowedMsg
 	case errors.Is(err, profile.ErrInvalidBirthdate):
