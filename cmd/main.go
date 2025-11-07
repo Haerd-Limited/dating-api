@@ -97,7 +97,6 @@ func main() {
 		logger.Sugar().Fatalf("failed to create S3 reader: %v", err)
 	}
 
-	// notificationRepo := notificationStorage.NewNotificationRepository(db)
 	verificationRepo := verificationstorage.NewVerificationRepository(db)
 	lookupRepo := lookupstorage.NewLookupRepository(db)
 	profileRepo := profilestorage.NewProfileRepository(db)
@@ -134,11 +133,6 @@ func main() {
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 	mediaService := media.NewMediaService(logger, awsService)
 	onboardingService := onboarding.NewOnboardingService(logger, userService, authService, mediaService, profileService, lookupRepo)
-
-	/*notificationService, err := notification.NewNotificationService(logger, notificationRepo, cfg.GoogleCredentialsJson)
-	if err != nil {
-		logger.Sugar().Fatalf("failed to create notification service: %v", err)
-	}*/
 
 	mux := router.New(
 		logger,

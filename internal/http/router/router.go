@@ -66,7 +66,6 @@ func New(
 	wsHandler := realtime.NewWsHandler(logger, hub, conversationService)
 	verificationHandler := verification.NewVerificationHandler(logger, verificationService)
 	matchingHandler := matching.NewMatchingHandler(logger, matchingService)
-	// notificationsHandler := notification.NewNotificationHandler(logger, notificationService)
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
@@ -177,13 +176,7 @@ func New(
 					// TODO(high-priority): create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})
-			/*r.Route(
-				"/notifications", func(r chi.Router) {
-					r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret))) // Protected endpoints: wrap these with auth middleware.
-					r.Post("/device-token", notificationsHandler.RegisterDeviceToken())
-					r.Post("/push-test", notificationsHandler.TestPushNotification()) // for testing in postman
-				},
-			)*/
+
 		},
 	)
 
