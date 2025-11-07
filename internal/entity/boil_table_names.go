@@ -52,6 +52,7 @@ var TableNames = struct {
 	VerificationAttempts     string
 	VerificationCodes        string
 	VoicePrompts             string
+	VoiceWorthHearingWeekly  string
 }{
 	ConversationParticipants: "conversation_participants",
 	Conversations:            "conversations",
@@ -101,4 +102,5 @@ var TableNames = struct {
 	VerificationAttempts:     "verification_attempts",
 	VerificationCodes:        "verification_codes",
 	VoicePrompts:             "voice_prompts",
+	VoiceWorthHearingWeekly:  "voice_worth_hearing_weekly",
 }

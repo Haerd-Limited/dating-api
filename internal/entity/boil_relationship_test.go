@@ -53,6 +53,7 @@ func TestToOne(t *testing.T) {
 	t.Run("VerificationAttemptToUserUsingUser", testVerificationAttemptToOneUserUsingUser)
 	t.Run("VoicePromptToPromptTypeUsingVoicePromptPromptType", testVoicePromptToOnePromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingUser", testVoicePromptToOneUserUsingUser)
+	t.Run("VoiceWorthHearingWeeklyToUserUsingUser", testVoiceWorthHearingWeeklyToOneUserUsingUser)
 }
 
 // TestOneToOne tests cannot be run in parallel
@@ -112,6 +113,7 @@ func TestToMany(t *testing.T) {
 	t.Run("UserToUserProfileVisibilities", testUserToManyUserProfileVisibilities)
 	t.Run("UserToVerificationAttempts", testUserToManyVerificationAttempts)
 	t.Run("UserToVoicePrompts", testUserToManyVoicePrompts)
+	t.Run("UserToVoiceWorthHearingWeeklies", testUserToManyVoiceWorthHearingWeeklies)
 	t.Run("VerificationAttemptToLastAttemptUserVerificationStatuses", testVerificationAttemptToManyLastAttemptUserVerificationStatuses)
 	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyPromptSwipes)
 }
@@ -164,6 +166,7 @@ func TestToOneSet(t *testing.T) {
 	t.Run("VerificationAttemptToUserUsingVerificationAttempts", testVerificationAttemptToOneSetOpUserUsingUser)
 	t.Run("VoicePromptToPromptTypeUsingVoicePrompts", testVoicePromptToOneSetOpPromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingVoicePrompts", testVoicePromptToOneSetOpUserUsingUser)
+	t.Run("VoiceWorthHearingWeeklyToUserUsingVoiceWorthHearingWeeklies", testVoiceWorthHearingWeeklyToOneSetOpUserUsingUser)
 }
 
 // TestToOneRemove tests cannot be run in parallel
@@ -249,6 +252,7 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("UserToUserProfileVisibilities", testUserToManyAddOpUserProfileVisibilities)
 	t.Run("UserToVerificationAttempts", testUserToManyAddOpVerificationAttempts)
 	t.Run("UserToVoicePrompts", testUserToManyAddOpVoicePrompts)
+	t.Run("UserToVoiceWorthHearingWeeklies", testUserToManyAddOpVoiceWorthHearingWeeklies)
 	t.Run("VerificationAttemptToLastAttemptUserVerificationStatuses", testVerificationAttemptToManyAddOpLastAttemptUserVerificationStatuses)
 	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyAddOpPromptSwipes)
 }

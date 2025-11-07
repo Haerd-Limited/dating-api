@@ -3,12 +3,14 @@ package discover
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/discover/domain"
 	"github.com/Haerd-Limited/dating-api/internal/discover/storage"
+	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/matching"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
@@ -159,8 +161,12 @@ func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([
 	return ids, nil
 }
 
-// todo(high-priority): update to refresh weekly. maybe make a table to store user's voices to be heard. then have cron job recalculate and update weekly
+// GetVoiceWorthHearing returns the curated "Voices Worth Hearing" cards for the current user.
+// Results are cached per user for the calendar week starting on Sunday 00:00 UTC, so the set
+// remains stable throughout the week and is recomputed automatically when a new week begins.
 func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error) {
+	weekStart := startOfWeek(time.Now().UTC(), time.Sunday)
+
 	storedPreferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get stored preferences userID=%s: %w", userID, err)
@@ -173,9 +179,26 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		candidateLimit = voiceWorthHearingPreferencePoolSize
 	}
 
-	candidates, err := s.discoverRepo.GetVoiceWorthHearing(ctx, userID, candidateLimit)
+	cachedIDs, err := s.discoverRepo.GetWeeklyVoiceWorthHearingIDs(ctx, userID, weekStart)
 	if err != nil {
-		return nil, fmt.Errorf("get candidates userID=%s: %w", userID, err)
+		return nil, fmt.Errorf("get cached voice worth hearing ids userID=%s: %w", userID, err)
+	}
+
+	var candidates []*entity.UserProfile
+
+	switch {
+	case len(cachedIDs) > 0:
+		candidates, err = s.discoverRepo.GetVoiceWorthHearingByIDs(ctx, userID, cachedIDs)
+		if err != nil {
+			return nil, fmt.Errorf("hydrate cached candidates userID=%s: %w", userID, err)
+		}
+
+		candidates = orderCandidatesByIDs(candidates, cachedIDs)
+	default:
+		candidates, err = s.discoverRepo.GetVoiceWorthHearing(ctx, userID, candidateLimit)
+		if err != nil {
+			return nil, fmt.Errorf("get candidates userID=%s: %w", userID, err)
+		}
 	}
 
 	if len(candidates) == 0 {
@@ -202,6 +225,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 	}
 
 	profiles := make([]profilecard.ProfileCard, 0, voiceWorthHearingSelectionLimit)
+	selectedIDs := make([]string, 0, voiceWorthHearingSelectionLimit)
 
 	for _, candidate := range candidates {
 		if len(profiles) == voiceWorthHearingSelectionLimit {
@@ -258,9 +282,53 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		}
 
 		profiles = append(profiles, card)
+		selectedIDs = append(selectedIDs, candidate.UserID)
+	}
+
+	if len(cachedIDs) == 0 && len(selectedIDs) > 0 {
+		if err := s.discoverRepo.SaveWeeklyVoiceWorthHearingIDs(ctx, userID, weekStart, selectedIDs); err != nil {
+			return nil, fmt.Errorf("persist vwh cache userID=%s: %w", userID, err)
+		}
 	}
 
 	return profiles, nil
+}
+
+func orderCandidatesByIDs(candidates []*entity.UserProfile, ordering []string) []*entity.UserProfile {
+	if len(ordering) == 0 || len(candidates) <= 1 {
+		return candidates
+	}
+
+	index := make(map[string]int, len(ordering))
+	for pos, id := range ordering {
+		index[id] = pos
+	}
+
+	sort.SliceStable(candidates, func(i, j int) bool {
+		a, aOK := index[candidates[i].UserID]
+		b, bOK := index[candidates[j].UserID]
+
+		switch {
+		case aOK && bOK:
+			return a < b
+		case aOK:
+			return true
+		case bOK:
+			return false
+		default:
+			return candidates[i].UserID < candidates[j].UserID
+		}
+	})
+
+	return candidates
+}
+
+func startOfWeek(t time.Time, weekStart time.Weekday) time.Time {
+	t = t.UTC()
+	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	offset := (int(midnight.Weekday()) - int(weekStart) + 7) % 7
+
+	return midnight.AddDate(0, 0, -offset)
 }
 
 func (s *service) computeMatch(ctx context.Context, userID string, candidateID string, minOverlap int) (*profilecard.MatchSummary, error) {

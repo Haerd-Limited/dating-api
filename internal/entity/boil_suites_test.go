@@ -57,6 +57,7 @@ func TestParent(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttempts)
 	t.Run("VerificationCodes", testVerificationCodes)
 	t.Run("VoicePrompts", testVoicePrompts)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeeklies)
 }
 
 func TestDelete(t *testing.T) {
@@ -105,6 +106,7 @@ func TestDelete(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsDelete)
 	t.Run("VerificationCodes", testVerificationCodesDelete)
 	t.Run("VoicePrompts", testVoicePromptsDelete)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesDelete)
 }
 
 func TestQueryDeleteAll(t *testing.T) {
@@ -153,6 +155,7 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsQueryDeleteAll)
 	t.Run("VerificationCodes", testVerificationCodesQueryDeleteAll)
 	t.Run("VoicePrompts", testVoicePromptsQueryDeleteAll)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesQueryDeleteAll)
 }
 
 func TestSliceDeleteAll(t *testing.T) {
@@ -201,6 +204,7 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsSliceDeleteAll)
 	t.Run("VerificationCodes", testVerificationCodesSliceDeleteAll)
 	t.Run("VoicePrompts", testVoicePromptsSliceDeleteAll)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesSliceDeleteAll)
 }
 
 func TestExists(t *testing.T) {
@@ -249,6 +253,7 @@ func TestExists(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsExists)
 	t.Run("VerificationCodes", testVerificationCodesExists)
 	t.Run("VoicePrompts", testVoicePromptsExists)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesExists)
 }
 
 func TestFind(t *testing.T) {
@@ -297,6 +302,7 @@ func TestFind(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsFind)
 	t.Run("VerificationCodes", testVerificationCodesFind)
 	t.Run("VoicePrompts", testVoicePromptsFind)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesFind)
 }
 
 func TestBind(t *testing.T) {
@@ -345,6 +351,7 @@ func TestBind(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsBind)
 	t.Run("VerificationCodes", testVerificationCodesBind)
 	t.Run("VoicePrompts", testVoicePromptsBind)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesBind)
 }
 
 func TestOne(t *testing.T) {
@@ -393,6 +400,7 @@ func TestOne(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsOne)
 	t.Run("VerificationCodes", testVerificationCodesOne)
 	t.Run("VoicePrompts", testVoicePromptsOne)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesOne)
 }
 
 func TestAll(t *testing.T) {
@@ -441,6 +449,7 @@ func TestAll(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsAll)
 	t.Run("VerificationCodes", testVerificationCodesAll)
 	t.Run("VoicePrompts", testVoicePromptsAll)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesAll)
 }
 
 func TestCount(t *testing.T) {
@@ -489,6 +498,7 @@ func TestCount(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsCount)
 	t.Run("VerificationCodes", testVerificationCodesCount)
 	t.Run("VoicePrompts", testVoicePromptsCount)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesCount)
 }
 
 func TestHooks(t *testing.T) {
@@ -537,6 +547,7 @@ func TestHooks(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsHooks)
 	t.Run("VerificationCodes", testVerificationCodesHooks)
 	t.Run("VoicePrompts", testVoicePromptsHooks)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesHooks)
 }
 
 func TestInsert(t *testing.T) {
@@ -630,6 +641,8 @@ func TestInsert(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesInsertWhitelist)
 	t.Run("VoicePrompts", testVoicePromptsInsert)
 	t.Run("VoicePrompts", testVoicePromptsInsertWhitelist)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesInsert)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesInsertWhitelist)
 }
 
 func TestReload(t *testing.T) {
@@ -678,6 +691,7 @@ func TestReload(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsReload)
 	t.Run("VerificationCodes", testVerificationCodesReload)
 	t.Run("VoicePrompts", testVoicePromptsReload)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesReload)
 }
 
 func TestReloadAll(t *testing.T) {
@@ -726,6 +740,7 @@ func TestReloadAll(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsReloadAll)
 	t.Run("VerificationCodes", testVerificationCodesReloadAll)
 	t.Run("VoicePrompts", testVoicePromptsReloadAll)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesReloadAll)
 }
 
 func TestSelect(t *testing.T) {
@@ -774,6 +789,7 @@ func TestSelect(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsSelect)
 	t.Run("VerificationCodes", testVerificationCodesSelect)
 	t.Run("VoicePrompts", testVoicePromptsSelect)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesSelect)
 }
 
 func TestUpdate(t *testing.T) {
@@ -822,6 +838,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsUpdate)
 	t.Run("VerificationCodes", testVerificationCodesUpdate)
 	t.Run("VoicePrompts", testVoicePromptsUpdate)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesUpdate)
 }
 
 func TestSliceUpdateAll(t *testing.T) {
@@ -870,4 +887,5 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsSliceUpdateAll)
 	t.Run("VerificationCodes", testVerificationCodesSliceUpdateAll)
 	t.Run("VoicePrompts", testVoicePromptsSliceUpdateAll)
+	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesSliceUpdateAll)
 }

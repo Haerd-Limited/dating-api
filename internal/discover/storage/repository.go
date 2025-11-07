@@ -22,6 +22,7 @@ type DiscoverRepository interface {
 	GetDiscoverFeedCandidates(ctx context.Context, userID string, limit int, offset int) (entity.UserProfileSlice, error)
 	GetDiscoverFeedCandidatesWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) (entity.UserProfileSlice, error)
 	GetVoiceWorthHearing(ctx context.Context, userID string, limit int) ([]*entity.UserProfile, error)
+	GetVoiceWorthHearingByIDs(ctx context.Context, userID string, candidateIDs []string) ([]*entity.UserProfile, error)
 	GetLikeAndSuperlikeCount(ctx context.Context, userID string) (int64, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
@@ -30,6 +31,8 @@ type DiscoverRepository interface {
 	SaveUserDiscoverPreferences(ctx context.Context, userID string, preferences *domain.DiscoverPreferenceUpdate) error
 	GetUserDiscoverPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error)
 	GetUsersEthnicityIDs(ctx context.Context, userIDs []string) (map[string][]int16, error)
+	GetWeeklyVoiceWorthHearingIDs(ctx context.Context, userID string, weekStart time.Time) ([]string, error)
+	SaveWeeklyVoiceWorthHearingIDs(ctx context.Context, userID string, weekStart time.Time, candidateIDs []string) error
 }
 
 type discoverRepository struct {
@@ -115,6 +118,38 @@ func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID st
 	).All(ctx, r.db)
 	if err != nil {
 		return nil, fmt.Errorf("get user profiles: %w", err)
+	}
+
+	return users, nil
+}
+
+func (r *discoverRepository) GetVoiceWorthHearingByIDs(ctx context.Context, userID string, candidateIDs []string) ([]*entity.UserProfile, error) {
+	if len(candidateIDs) == 0 {
+		return nil, nil
+	}
+
+	oppositeGender, err := r.getOppositeGender(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get opposite gender: %w", err)
+	}
+
+	placeholders := make([]string, len(candidateIDs))
+	args := make([]interface{}, len(candidateIDs))
+
+	for i, id := range candidateIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	users, err := entity.UserProfiles(
+		qm.Where("user_profiles.user_id IN ("+strings.Join(placeholders, ",")+")", args...),
+		entity.UserProfileWhere.UserID.NEQ(userID),
+		entity.UserProfileWhere.GenderID.EQ(null.Int16From(oppositeGender.ID)),
+		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
+		qm.Where("u.onboarding_step = ?", stepComplete),
+	).All(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("get user profiles by ids: %w", err)
 	}
 
 	return users, nil
@@ -615,6 +650,17 @@ func (r *discoverRepository) getOppositeGender(ctx context.Context, userID strin
 }
 
 func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
+	weekStart := startOfWeek(time.Now().UTC(), time.Sunday)
+
+	cached, err := r.GetWeeklyVoiceWorthHearingIDs(ctx, userID, weekStart)
+	if err != nil {
+		return nil, fmt.Errorf("get weekly cached vwh ids userID=%s: %w", userID, err)
+	}
+
+	if len(cached) > 0 {
+		return cached, nil
+	}
+
 	profiles, err := r.GetVoiceWorthHearing(ctx, userID, 3)
 	if err != nil {
 		return nil, err
@@ -626,4 +672,60 @@ func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID
 	}
 
 	return ids, nil
+}
+
+func (r *discoverRepository) GetWeeklyVoiceWorthHearingIDs(ctx context.Context, userID string, weekStart time.Time) ([]string, error) {
+	weekStart = normalizeWeekStart(weekStart)
+
+	const query = `
+SELECT candidate_ids
+FROM voice_worth_hearing_weekly
+WHERE user_id = $1
+  AND week_start = $2
+`
+
+	var ids pq.StringArray
+
+	err := r.db.QueryRowxContext(ctx, query, userID, weekStart).Scan(&ids)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("select weekly vwh ids userID=%s: %w", userID, err)
+	}
+
+	return append([]string(nil), ids...), nil
+}
+
+func (r *discoverRepository) SaveWeeklyVoiceWorthHearingIDs(ctx context.Context, userID string, weekStart time.Time, candidateIDs []string) error {
+	weekStart = normalizeWeekStart(weekStart)
+
+	const stmt = `
+INSERT INTO voice_worth_hearing_weekly (user_id, week_start, candidate_ids)
+VALUES ($1, $2, $3)
+ON CONFLICT (user_id, week_start)
+DO UPDATE SET candidate_ids = EXCLUDED.candidate_ids,
+              updated_at    = now()
+`
+
+	_, err := r.db.ExecContext(ctx, stmt, userID, weekStart, pq.StringArray(candidateIDs))
+	if err != nil {
+		return fmt.Errorf("upsert weekly vwh ids userID=%s: %w", userID, err)
+	}
+
+	return nil
+}
+
+func startOfWeek(t time.Time, weekStart time.Weekday) time.Time {
+	t = t.UTC()
+	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	offset := (int(midnight.Weekday()) - int(weekStart) + 7) % 7
+
+	return midnight.AddDate(0, 0, -offset)
+}
+
+func normalizeWeekStart(t time.Time) time.Time {
+	t = t.UTC()
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 }
