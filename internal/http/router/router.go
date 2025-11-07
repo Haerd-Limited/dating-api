@@ -176,7 +176,6 @@ func New(
 					// TODO(high-priority): create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
 			})
-
 		},
 	)
 

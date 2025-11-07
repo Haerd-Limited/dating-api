@@ -159,7 +159,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		return nil, nil
 	}
 
-	// Get current user's location for distance calculation
+	// todo: Get current user's location for distance calculation
 	currentUserProfile, err := s.profileService.GetEnrichedProfile(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current user profile userID=%s: %w", userID, err)

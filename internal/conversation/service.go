@@ -357,20 +357,19 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 	case domain.MessageTypeText:
 		var snap scoredomain.ScoreSnapshot
 
+		contrib := scoredomain.Contribution{
+			Type:    scoredomain.ContribText,
+			TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
+		}
+
 		var err error
 		if tx == nil {
-			snap, err = s.scoreService.Apply(ctx, msg.ConversationID, msg.SenderID, scoredomain.Contribution{
-				Type:    scoredomain.ContribText,
-				TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
-			})
+			snap, err = s.scoreService.Apply(ctx, msg.ConversationID, msg.SenderID, contrib)
 			if err != nil {
 				return nil, fmt.Errorf("apply score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
 			}
 		} else {
-			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, scoredomain.Contribution{
-				Type:    scoredomain.ContribText,
-				TextLen: utils.CountTextLen(utils.TypePtrToString(msg.TextBody)),
-			})
+			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, contrib)
 			if err != nil {
 				return nil, fmt.Errorf("apply score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
 			}
@@ -378,7 +377,39 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 
 		result = mapper.MapScoreDomainSnapShotToConversationDomain(snap)
 
-		// todo(high-priority): implement voicenote scoring
+	case domain.MessageTypeVoice:
+		if msg.MediaSeconds == nil {
+			return nil, fmt.Errorf("apply score voice msg missing media_seconds userID=%s convoID=%s", msg.SenderID, msg.ConversationID)
+		}
+
+		secs := int(math.Round(*msg.MediaSeconds))
+		if secs < 0 {
+			secs = 0
+		}
+
+		contrib := scoredomain.Contribution{
+			Type:    scoredomain.ContribVoice,
+			Seconds: secs,
+		}
+
+		var snap scoredomain.ScoreSnapshot
+
+		var err error
+
+		if tx == nil {
+			snap, err = s.scoreService.Apply(ctx, msg.ConversationID, msg.SenderID, contrib)
+			if err != nil {
+				return nil, fmt.Errorf("apply voice score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+			}
+		} else {
+			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, contrib)
+			if err != nil {
+				return nil, fmt.Errorf("apply voice score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+			}
+		}
+
+		result = mapper.MapScoreDomainSnapShotToConversationDomain(snap)
+
 		// todo: implement calls scoring
 	case domain.MessageTypeSystem:
 		// no scoring
