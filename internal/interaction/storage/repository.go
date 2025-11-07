@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -24,6 +25,7 @@ type InteractionRepository interface {
 	AlreadyMatched(ctx context.Context, userID string, targetUserID string) (bool, error)
 	GetSwipeByActorIDAndTargetID(ctx context.Context, actorID, targetID string) (*entity.Swipe, error)
 	GetFirstLikeSwipeByBetweenUsers(ctx context.Context, userA, userB string) (*entity.Swipe, error)
+	CountSuperlikesSince(ctx context.Context, userID string, since time.Time, exec boil.ContextExecutor) (int64, error)
 }
 
 type repository struct {
@@ -173,4 +175,21 @@ func (is *repository) AlreadyMatched(ctx context.Context, userID string, targetU
 	}
 
 	return false, nil
+}
+
+func (is *repository) CountSuperlikesSince(ctx context.Context, userID string, since time.Time, exec boil.ContextExecutor) (int64, error) {
+	if exec == nil {
+		exec = is.db
+	}
+
+	count, err := entity.Swipes(
+		entity.SwipeWhere.ActorID.EQ(userID),
+		entity.SwipeWhere.Action.EQ(constants.ActionSuperlike),
+		entity.SwipeWhere.CreatedAt.GTE(since),
+	).Count(ctx, exec)
+	if err != nil {
+		return 0, fmt.Errorf("count superlikes since userID=%s since=%s: %w", userID, since.Format(time.RFC3339), err)
+	}
+
+	return count, nil
 }

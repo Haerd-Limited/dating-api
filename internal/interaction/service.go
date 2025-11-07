@@ -68,6 +68,7 @@ var (
 	ErrInvalidAction                           = errors.New("invalid action")
 	ErrLikedAVhwUser                           = errors.New("user liked a vhw user")
 	ErrMissingRequiredFieldsForLikeWithMessage = errors.New("message, message type, prompt id and idempotency key are required for sending a like with a message")
+	ErrWeeklySuperlikeLimitReached             = errors.New("weekly superlike limit reached")
 )
 
 const (
@@ -76,7 +77,8 @@ const (
 	ResultPassed  = "PASSED"
 )
 
-// todo(high-priority): implement only one superlike a week unless they buy more.
+const weeklySuperlikeAllowance int64 = 1
+
 func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error) {
 	// this should all be a single transaction
 	tx, err := is.uow.Begin(ctx)
@@ -99,6 +101,19 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 	switch swipe.Action {
 	case constants.ActionLike, constants.ActionSuperlike:
+		if swipe.Action == constants.ActionSuperlike {
+			superlikeWindowStart := startOfWeek(time.Now(), time.Sunday, time.UTC)
+
+			superlikesUsed, err := is.interactionRepo.CountSuperlikesSince(ctx, swipe.UserID, superlikeWindowStart, tx.Raw())
+			if err != nil {
+				return "", fmt.Errorf("get weekly superlike usage userID=%s: %w", swipe.UserID, err)
+			}
+
+			if superlikesUsed >= weeklySuperlikeAllowance {
+				return "", ErrWeeklySuperlikeLimitReached
+			}
+		}
+
 		if !matchable {
 			if swipe.Message == nil {
 				systemMsg := messages.LikedYourPromptMsg
@@ -369,4 +384,17 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 	}
 
 	return nil
+}
+
+func startOfWeek(t time.Time, weekStart time.Weekday, loc *time.Location) time.Time {
+	if loc == nil {
+		loc = time.UTC
+	}
+
+	t = t.In(loc)
+
+	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
+	offset := (int(midnight.Weekday()) - int(weekStart) + 7) % 7
+
+	return midnight.AddDate(0, 0, -offset)
 }
