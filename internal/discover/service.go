@@ -45,7 +45,11 @@ func NewDiscoverService(
 	}
 }
 
-const minOverlap = 5
+const (
+	minOverlap                          = 5
+	voiceWorthHearingSelectionLimit     = 3
+	voiceWorthHearingPreferencePoolSize = 30
+)
 
 func (s *service) AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error) {
 	return s.discoverRepo.AlreadyInteracted(ctx, userID, targetUserID)
@@ -82,6 +86,14 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 
 	if limit <= 0 || limit > remaining-offset {
 		limit = remaining - offset
+	}
+
+	if filters != nil {
+		if preferenceUpdate := domain.NewPreferenceUpdateFromFilters(filters); preferenceUpdate != nil {
+			if err := s.discoverRepo.SaveUserDiscoverPreferences(ctx, userID, preferenceUpdate); err != nil {
+				return domain.DiscoverFeedResult{}, fmt.Errorf("failed to persist discover preferences userID=%s: %w", userID, err)
+			}
+		}
 	}
 
 	candidates, err := s.discoverRepo.GetDiscoverFeedCandidatesWithFilters(ctx, userID, limit, offset, filters)
@@ -148,9 +160,20 @@ func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([
 }
 
 // todo(high-priority): update to refresh weekly. maybe make a table to store user's voices to be heard. then have cron job recalculate and update weekly
-// todo (high-priority): update to be more tailored to user's preferences e.g. race age etc
 func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error) {
-	candidates, err := s.discoverRepo.GetVoiceWorthHearing(ctx, userID)
+	storedPreferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get stored preferences userID=%s: %w", userID, err)
+	}
+
+	matcher := newPreferenceMatcher(storedPreferences)
+
+	candidateLimit := voiceWorthHearingSelectionLimit
+	if matcher != nil {
+		candidateLimit = voiceWorthHearingPreferencePoolSize
+	}
+
+	candidates, err := s.discoverRepo.GetVoiceWorthHearing(ctx, userID, candidateLimit)
 	if err != nil {
 		return nil, fmt.Errorf("get candidates userID=%s: %w", userID, err)
 	}
@@ -159,46 +182,82 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		return nil, nil
 	}
 
-	// todo: Get current user's location for distance calculation
 	currentUserProfile, err := s.profileService.GetEnrichedProfile(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current user profile userID=%s: %w", userID, err)
 	}
 
-	var profiles []profilecard.ProfileCard
+	var ethnicityByUser map[string][]int16
+
+	if matcher != nil && matcher.requiresEthnicity() {
+		userIDs := make([]string, 0, len(candidates))
+		for _, candidate := range candidates {
+			userIDs = append(userIDs, candidate.UserID)
+		}
+
+		ethnicityByUser, err = s.discoverRepo.GetUsersEthnicityIDs(ctx, userIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load candidate ethnicities userID=%s: %w", userID, err)
+		}
+	}
+
+	profiles := make([]profilecard.ProfileCard, 0, voiceWorthHearingSelectionLimit)
 
 	for _, candidate := range candidates {
-		var profileErr error
+		if len(profiles) == voiceWorthHearingSelectionLimit {
+			break
+		}
 
-		alreadyInteracted, profileErr := s.discoverRepo.AlreadyInteracted(ctx, userID, candidate.UserID)
-		if profileErr != nil {
-			return nil, fmt.Errorf("already interacted userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		alreadyInteracted, interactionErr := s.discoverRepo.AlreadyInteracted(ctx, userID, candidate.UserID)
+		if interactionErr != nil {
+			return nil, fmt.Errorf("already interacted userID=%s profileUserID=%s: %w", userID, candidate.UserID, interactionErr)
 		}
 
 		if alreadyInteracted {
 			continue
 		}
 
-		p, profileErr := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
+		card, profileErr := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
 		if profileErr != nil {
 			return nil, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
 
-		var likeCount int64
+		var datingIntentionID *int16
 
-		likeCount, profileErr = s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
-		if profileErr != nil {
-			return nil, fmt.Errorf("get like and superlike count userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+		if candidate.DatingIntentionID.Valid {
+			value := candidate.DatingIntentionID.Int16
+			datingIntentionID = &value
 		}
 
-		p.LikeCount = &likeCount
+		var religionID *int16
 
-		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
+		if candidate.ReligionID.Valid {
+			value := candidate.ReligionID.Int16
+			religionID = &value
+		}
+
+		var candidateEthnicities []int16
+		if matcher != nil && matcher.requiresEthnicity() {
+			candidateEthnicities = ethnicityByUser[candidate.UserID]
+		}
+
+		if matcher != nil && !matcher.matches(card.Age, card.DistanceKm, datingIntentionID, religionID, candidateEthnicities) {
+			continue
+		}
+
+		likeCount, likeErr := s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
+		if likeErr != nil {
+			return nil, fmt.Errorf("get like and superlike count userID=%s profileUserID=%s: %w", userID, candidate.UserID, likeErr)
+		}
+
+		card.LikeCount = &likeCount
+
+		card.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
 		if profileErr != nil {
 			return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
 
-		profiles = append(profiles, p)
+		profiles = append(profiles, card)
 	}
 
 	return profiles, nil
@@ -251,6 +310,106 @@ func (s *service) passesPostQueryFilters(profile profilecard.ProfileCard, filter
 		if filters.AgeRange.MaxAge != nil && age > *filters.AgeRange.MaxAge {
 			return false
 		}
+	}
+
+	return true
+}
+
+type preferenceMatcher struct {
+	prefs           *domain.StoredDiscoverPreferences
+	datingIntentSet map[int16]struct{}
+	religionSet     map[int16]struct{}
+	ethnicitySet    map[int16]struct{}
+}
+
+func newPreferenceMatcher(prefs *domain.StoredDiscoverPreferences) *preferenceMatcher {
+	if prefs == nil || !prefs.HasAnyPreference() {
+		return nil
+	}
+
+	matcher := &preferenceMatcher{
+		prefs: prefs,
+	}
+
+	if len(prefs.DatingIntentionIDs) > 0 {
+		matcher.datingIntentSet = make(map[int16]struct{}, len(prefs.DatingIntentionIDs))
+		for _, id := range prefs.DatingIntentionIDs {
+			matcher.datingIntentSet[id] = struct{}{}
+		}
+	}
+
+	if len(prefs.ReligionIDs) > 0 {
+		matcher.religionSet = make(map[int16]struct{}, len(prefs.ReligionIDs))
+		for _, id := range prefs.ReligionIDs {
+			matcher.religionSet[id] = struct{}{}
+		}
+	}
+
+	if len(prefs.EthnicityIDs) > 0 {
+		matcher.ethnicitySet = make(map[int16]struct{}, len(prefs.EthnicityIDs))
+		for _, id := range prefs.EthnicityIDs {
+			matcher.ethnicitySet[id] = struct{}{}
+		}
+	}
+
+	return matcher
+}
+
+func (m *preferenceMatcher) requiresEthnicity() bool {
+	return m != nil && len(m.ethnicitySet) > 0
+}
+
+func (m *preferenceMatcher) matches(age int, distanceKM int, datingIntentionID *int16, religionID *int16, candidateEthnicities []int16) bool {
+	if m == nil {
+		return true
+	}
+
+	if m.prefs.DistanceKM != nil && distanceKM >= 0 {
+		if distanceKM <= *m.prefs.DistanceKM {
+			return true
+		}
+	}
+
+	if m.prefs.MinAge != nil || m.prefs.MaxAge != nil {
+		if m.ageWithinRange(age) {
+			return true
+		}
+	}
+
+	if len(m.datingIntentSet) > 0 && datingIntentionID != nil {
+		if _, ok := m.datingIntentSet[*datingIntentionID]; ok {
+			return true
+		}
+	}
+
+	if len(m.religionSet) > 0 && religionID != nil {
+		if _, ok := m.religionSet[*religionID]; ok {
+			return true
+		}
+	}
+
+	if len(m.ethnicitySet) > 0 && len(candidateEthnicities) > 0 {
+		for _, id := range candidateEthnicities {
+			if _, ok := m.ethnicitySet[id]; ok {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (m *preferenceMatcher) ageWithinRange(age int) bool {
+	if m == nil || age <= 0 {
+		return false
+	}
+
+	if m.prefs.MinAge != nil && age < *m.prefs.MinAge {
+		return false
+	}
+
+	if m.prefs.MaxAge != nil && age > *m.prefs.MaxAge {
+		return false
 	}
 
 	return true

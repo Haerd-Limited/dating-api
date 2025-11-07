@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -9,6 +11,7 @@ import (
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"github.com/Haerd-Limited/dating-api/internal/discover/domain"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
@@ -18,12 +21,15 @@ import (
 type DiscoverRepository interface {
 	GetDiscoverFeedCandidates(ctx context.Context, userID string, limit int, offset int) (entity.UserProfileSlice, error)
 	GetDiscoverFeedCandidatesWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) (entity.UserProfileSlice, error)
-	GetVoiceWorthHearing(ctx context.Context, userID string) ([]*entity.UserProfile, error)
+	GetVoiceWorthHearing(ctx context.Context, userID string, limit int) ([]*entity.UserProfile, error)
 	GetLikeAndSuperlikeCount(ctx context.Context, userID string) (int64, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
 	GetNumberOfCompleteProfilesOfOppositeGender(ctx context.Context, userID string) (int64, error)
 	GetSwipeUsageStats(ctx context.Context, userID string, window time.Duration, limit int, now time.Time) (int, *time.Time, error)
+	SaveUserDiscoverPreferences(ctx context.Context, userID string, preferences *domain.DiscoverPreferenceUpdate) error
+	GetUserDiscoverPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error)
+	GetUsersEthnicityIDs(ctx context.Context, userIDs []string) (map[string][]int16, error)
 }
 
 type discoverRepository struct {
@@ -66,7 +72,7 @@ func (r *discoverRepository) AlreadyInteracted(ctx context.Context, userID strin
 	return exists, nil
 }
 
-func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID string) ([]*entity.UserProfile, error) {
+func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID string, limit int) ([]*entity.UserProfile, error) {
 	numberOfOppositeGenderProfiles, err := r.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
@@ -79,6 +85,10 @@ func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID st
 	oppositeGender, err := r.getOppositeGender(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get opposite gender: %w", err)
+	}
+
+	if limit <= 0 {
+		limit = 3
 	}
 
 	users, err := entity.UserProfiles(
@@ -100,8 +110,8 @@ func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID st
 			AND s.action IN (?, ?)
 		) DESC`, constants.ActionLike, constants.ActionSuperlike),
 
-		// Limit to top 3
-		qm.Limit(3),
+		// Limit to top N
+		qm.Limit(limit),
 	).All(ctx, r.db)
 	if err != nil {
 		return nil, fmt.Errorf("get user profiles: %w", err)
@@ -388,10 +398,172 @@ func (r *discoverRepository) calculateMinBirthdateForAge(maxAge int) string {
 	return fmt.Sprintf("%d-01-01", year)
 }
 
+type userPreferenceRow struct {
+	DistanceKM       sql.NullInt64 `db:"distance_km"`
+	AgeMin           sql.NullInt64 `db:"age_min"`
+	AgeMax           sql.NullInt64 `db:"age_max"`
+	SeekIntentionIDs pq.Int64Array `db:"seek_intention_ids"`
+	SeekReligionIDs  pq.Int64Array `db:"seek_religion_ids"`
+	SeekEthnicityIDs pq.Int64Array `db:"seek_ethnicity_ids"`
+}
+
+func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, userID string, preferences *domain.DiscoverPreferenceUpdate) error {
+	if preferences == nil {
+		return nil
+	}
+
+	query := `
+		INSERT INTO user_preferences (user_id, distance_km, age_min, age_max, seek_intention_ids, seek_religion_ids, seek_ethnicity_ids)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (user_id) DO UPDATE
+		SET distance_km = EXCLUDED.distance_km,
+		    age_min = EXCLUDED.age_min,
+		    age_max = EXCLUDED.age_max,
+		    seek_intention_ids = EXCLUDED.seek_intention_ids,
+		    seek_religion_ids = EXCLUDED.seek_religion_ids,
+		    seek_ethnicity_ids = EXCLUDED.seek_ethnicity_ids,
+		    updated_at = now()
+	`
+
+	_, err := r.db.ExecContext(
+		ctx,
+		query,
+		userID,
+		toNullableInt64(preferences.DistanceKM),
+		toNullableInt64(preferences.MinAge),
+		toNullableInt64(preferences.MaxAge),
+		toNullableInt64Array(preferences.DatingIntentionIDs),
+		toNullableInt64Array(preferences.ReligionIDs),
+		toNullableInt64Array(preferences.EthnicityIDs),
+	)
+	if err != nil {
+		return fmt.Errorf("save user discover preferences: %w", err)
+	}
+
+	return nil
+}
+
+func (r *discoverRepository) GetUserDiscoverPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error) {
+	const query = `
+		SELECT distance_km, age_min, age_max, seek_intention_ids, seek_religion_ids, seek_ethnicity_ids
+		FROM user_preferences
+		WHERE user_id = $1
+	`
+
+	var row userPreferenceRow
+
+	err := r.db.GetContext(ctx, &row, query, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("get user discover preferences: %w", err)
+	}
+
+	return &domain.StoredDiscoverPreferences{
+		DistanceKM:         fromNullInt64(row.DistanceKM),
+		MinAge:             fromNullInt64(row.AgeMin),
+		MaxAge:             fromNullInt64(row.AgeMax),
+		DatingIntentionIDs: convertInt64SliceToInt16(row.SeekIntentionIDs),
+		ReligionIDs:        convertInt64SliceToInt16(row.SeekReligionIDs),
+		EthnicityIDs:       convertInt64SliceToInt16(row.SeekEthnicityIDs),
+	}, nil
+}
+
+func (r *discoverRepository) GetUsersEthnicityIDs(ctx context.Context, userIDs []string) (result map[string][]int16, err error) {
+	if len(userIDs) == 0 {
+		return map[string][]int16{}, nil
+	}
+
+	const query = `
+		SELECT user_id, ethnicity_id
+		FROM user_ethnicities
+		WHERE user_id = ANY($1)
+	`
+
+	rows, err := r.db.QueryxContext(ctx, query, pq.Array(userIDs))
+	if err != nil {
+		return nil, fmt.Errorf("get user ethnicity ids: %w", err)
+	}
+
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("close user ethnicity rows: %w", closeErr)
+		}
+	}()
+
+	result = make(map[string][]int16, len(userIDs))
+
+	for rows.Next() {
+		var userID string
+
+		var ethnicityID int16
+
+		if scanErr := rows.Scan(&userID, &ethnicityID); scanErr != nil {
+			return nil, fmt.Errorf("scan user ethnicity row: %w", scanErr)
+		}
+
+		result[userID] = append(result[userID], ethnicityID)
+	}
+
+	if iterErr := rows.Err(); iterErr != nil {
+		return nil, fmt.Errorf("iterate user ethnicity rows: %w", iterErr)
+	}
+
+	return result, nil
+}
+
 func convertToInterfaceSlice(int16Slice []int16) []interface{} {
 	result := make([]interface{}, len(int16Slice))
 	for i, v := range int16Slice {
 		result[i] = v
+	}
+
+	return result
+}
+
+func toNullableInt64(value *int) interface{} {
+	if value == nil {
+		return nil
+	}
+
+	v := int64(*value)
+
+	return v
+}
+
+func toNullableInt64Array(values []int16) interface{} {
+	if len(values) == 0 {
+		return nil
+	}
+
+	result := make([]int64, len(values))
+	for i, v := range values {
+		result[i] = int64(v)
+	}
+
+	return pq.Array(result)
+}
+
+func fromNullInt64(value sql.NullInt64) *int {
+	if !value.Valid {
+		return nil
+	}
+
+	v := int(value.Int64)
+
+	return &v
+}
+
+func convertInt64SliceToInt16(values []int64) []int16 {
+	if len(values) == 0 {
+		return nil
+	}
+
+	result := make([]int16, len(values))
+	for i, v := range values {
+		result[i] = int16(v)
 	}
 
 	return result
@@ -443,7 +615,7 @@ func (r *discoverRepository) getOppositeGender(ctx context.Context, userID strin
 }
 
 func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
-	profiles, err := r.GetVoiceWorthHearing(ctx, userID)
+	profiles, err := r.GetVoiceWorthHearing(ctx, userID, 3)
 	if err != nil {
 		return nil, err
 	}
