@@ -151,6 +151,7 @@ func (h *handler) GetVoicePromptTranscript() http.HandlerFunc {
 
 		// Extract voice prompt ID from URL
 		idStr := chi.URLParam(r, "id")
+
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
 			render.Json(w, http.StatusBadRequest,

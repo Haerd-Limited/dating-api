@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -22,6 +23,7 @@ type DiscoverRepository interface {
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
 	GetNumberOfCompleteProfilesOfOppositeGender(ctx context.Context, userID string) (int64, error)
+	GetSwipeUsageStats(ctx context.Context, userID string, window time.Duration, limit int, now time.Time) (int, *time.Time, error)
 }
 
 type discoverRepository struct {
@@ -125,6 +127,43 @@ func (r *discoverRepository) GetNumberOfCompleteProfilesOfOppositeGender(ctx con
 	}
 
 	return count, nil
+}
+
+func (r *discoverRepository) GetSwipeUsageStats(ctx context.Context, userID string, window time.Duration, limit int, now time.Time) (int, *time.Time, error) {
+	since := now.Add(-window)
+
+	count64, err := entity.Swipes(
+		entity.SwipeWhere.ActorID.EQ(userID),
+		entity.SwipeWhere.CreatedAt.GTE(since),
+	).Count(ctx, r.db)
+	if err != nil {
+		return 0, nil, fmt.Errorf("count swipes within window userID=%s: %w", userID, err)
+	}
+
+	count := int(count64)
+	if count < limit {
+		return count, nil, nil
+	}
+
+	k := count - limit + 1
+	if k < 1 {
+		k = 1
+	}
+
+	thresholdSwipe, err := entity.Swipes(
+		entity.SwipeWhere.ActorID.EQ(userID),
+		entity.SwipeWhere.CreatedAt.GTE(since),
+		qm.OrderBy("created_at ASC"),
+		qm.Offset(k-1),
+		qm.Limit(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return count, nil, fmt.Errorf("get gating swipe userID=%s: %w", userID, err)
+	}
+
+	t := thresholdSwipe.CreatedAt.UTC()
+
+	return count, &t, nil
 }
 
 func (r *discoverRepository) GetDiscoverFeedCandidates(

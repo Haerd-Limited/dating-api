@@ -3,6 +3,7 @@ package discover
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -16,8 +17,8 @@ import (
 )
 
 type Service interface {
-	GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]profilecard.ProfileCard, error)
-	GetDiscoverFeedWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) ([]profilecard.ProfileCard, error)
+	GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) (domain.DiscoverFeedResult, error)
+	GetDiscoverFeedWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) (domain.DiscoverFeedResult, error)
 	GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error)
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
@@ -51,31 +52,60 @@ func (s *service) AlreadyInteracted(ctx context.Context, userID string, targetUs
 }
 
 // GetDiscoverFeed returns the discover feed without filters (backwards compatibility)
-func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) ([]profilecard.ProfileCard, error) {
+func (s *service) GetDiscoverFeed(ctx context.Context, userID string, limit int, offset int) (domain.DiscoverFeedResult, error) {
 	return s.GetDiscoverFeedWithFilters(ctx, userID, limit, offset, nil)
 }
 
 // GetDiscoverFeedWithFilters returns the discover feed with optional filters
-func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) ([]profilecard.ProfileCard, error) {
+func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) (domain.DiscoverFeedResult, error) {
+	if offset < 0 {
+		offset = 0
+	}
+
+	now := time.Now().UTC()
+
+	totalSwipes, gatingSwipeAt, err := s.discoverRepo.GetSwipeUsageStats(ctx, userID, domain.DiscoverQuotaWindow, domain.DiscoverQuotaLimit, now)
+	if err != nil {
+		return domain.DiscoverFeedResult{}, fmt.Errorf("failed to compute swipe usage userID=%s: %w", userID, err)
+	}
+
+	quota := domain.NewQuotaStatus(domain.DiscoverQuotaLimit, domain.DiscoverQuotaWindow, totalSwipes, gatingSwipeAt)
+
+	remaining := quota.SwipesRemaining
+	if remaining <= 0 {
+		return domain.NewDiscoverFeedResult(nil, quota), nil
+	}
+
+	if offset >= remaining {
+		return domain.NewDiscoverFeedResult(nil, quota), nil
+	}
+
+	if limit <= 0 || limit > remaining-offset {
+		limit = remaining - offset
+	}
+
 	candidates, err := s.discoverRepo.GetDiscoverFeedCandidatesWithFilters(ctx, userID, limit, offset, filters)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get candidate IDs userID=%s limit=%v offset=%v: %w", userID, limit, offset, err)
+		return domain.DiscoverFeedResult{}, fmt.Errorf("failed to get candidate IDs userID=%s limit=%v offset=%v: %w", userID, limit, offset, err)
 	}
 
-	// Get current user's location for distance calculation
+	if len(candidates) == 0 {
+		return domain.NewDiscoverFeedResult(nil, quota), nil
+	}
+
 	currentUserProfile, err := s.profileService.GetEnrichedProfile(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current user profile userID=%s: %w", userID, err)
+		return domain.DiscoverFeedResult{}, fmt.Errorf("failed to get current user profile userID=%s: %w", userID, err)
 	}
 
-	var profiles []profilecard.ProfileCard
+	profiles := make([]profilecard.ProfileCard, 0, len(candidates))
 
 	for _, candidate := range candidates {
 		var profileErr error
 
 		p, profileErr := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
 		if profileErr != nil {
-			return nil, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+			return domain.DiscoverFeedResult{}, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
 
 		// Apply post-query filters that can't be done efficiently in SQL
@@ -85,13 +115,13 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 
 		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
 		if profileErr != nil {
-			return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+			return domain.DiscoverFeedResult{}, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
 		}
 
 		profiles = append(profiles, p)
 	}
 
-	return profiles, nil
+	return domain.NewDiscoverFeedResult(profiles, quota), nil
 }
 
 func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
