@@ -657,7 +657,7 @@ func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID
 		return cached, nil
 	}
 
-	profiles, err := r.GetVoiceWorthHearing(ctx, userID, 3)
+	profiles, err := r.GetVoiceWorthHearing(ctx, userID, constants.MaxNumberOfVWHUsersToSelect)
 	if err != nil {
 		return nil, err
 	}

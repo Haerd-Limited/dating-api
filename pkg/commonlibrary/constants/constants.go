@@ -12,6 +12,7 @@ const (
 	MessageTypeText                             = "text"
 	MessageTypeVoice                            = "voicenote"
 	MinimumNumberOfUsersRequiredToBuildVwhUsers = 5
+	MaxNumberOfVWHUsersToSelect                 = 3
 	VisibilityStateHidden                       = "HIDDEN"
 	VisibilityStateVisible                      = "VISIBLE"
 	MaxVoiceNoteLengthInSeconds                 = 60
