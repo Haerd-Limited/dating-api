@@ -14,6 +14,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/lookup"
 	"github.com/Haerd-Limited/dating-api/internal/api/matching"
 	"github.com/Haerd-Limited/dating-api/internal/api/media"
+	apinotification "github.com/Haerd-Limited/dating-api/internal/api/notification"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile"
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime"
@@ -26,6 +27,7 @@ import (
 	internalmatching "github.com/Haerd-Limited/dating-api/internal/matching"
 	internalmedia "github.com/Haerd-Limited/dating-api/internal/media"
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
+	internalnotification "github.com/Haerd-Limited/dating-api/internal/notification"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internalrealtime "github.com/Haerd-Limited/dating-api/internal/realtime"
@@ -47,6 +49,7 @@ func New(
 	hub *internalrealtime.Hub,
 	verificationService internalverification.Service,
 	matchingService internalmatching.Service,
+	notificationService internalnotification.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -58,6 +61,7 @@ func New(
 	authHandler := auth.NewAuthHandler(logger, authService)
 	profileHandler := profile.NewProfileHandler(logger, profileService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
+	notificationHandler := apinotification.NewNotificationHandler(logger, notificationService)
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
 	interactionHandler := interaction.NewInteractionHandler(logger, interactionService)
 	conversationHandler := conversation.NewConversationHandler(logger, conversationService)
@@ -129,6 +133,11 @@ func New(
 
 				r.Route("/likes", func(r chi.Router) {
 					r.Get("/", interactionHandler.GetLikes())
+				})
+
+				r.Route("/notifications", func(r chi.Router) {
+					r.Post("/device-tokens", notificationHandler.RegisterDeviceToken())
+					r.Delete("/device-tokens", notificationHandler.RemoveDeviceToken())
 				})
 
 				// router.go

@@ -33,6 +33,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/matching"
 	matchingstorage "github.com/Haerd-Limited/dating-api/internal/matching/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
+	"github.com/Haerd-Limited/dating-api/internal/notification"
+	notificationstorage "github.com/Haerd-Limited/dating-api/internal/notification/storage"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/openai"
 	"github.com/Haerd-Limited/dating-api/internal/preference"
@@ -107,6 +109,7 @@ func main() {
 	userRepo := storage.NewUserRepository(db)
 	authRepo := authstorage.NewAuthRepository(db)
 	matchingRepo := matchingstorage.NewMatchingRepository(db, logger)
+	deviceTokenRepo := notificationstorage.NewDeviceTokenRepository(db)
 	unitOfWork := uow.New(db.DB)
 
 	hub := realtime.NewHub()
@@ -126,8 +129,18 @@ func main() {
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
 	discoverService := discover.NewDiscoverService(logger, profileService, matchingService, discoverRepo)
 	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
-	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork)
-	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, unitOfWork, hub)
+
+	notificationService, err := notification.NewService(ctx, logger, deviceTokenRepo, notification.Config{
+		ServiceAccountPath: cfg.FirebaseServiceAccountPath,
+		CredentialsJSON:    cfg.GoogleCredentialsJson,
+	})
+	if err != nil {
+		logger.Sugar().Fatalf("failed to initialise notification service: %v", err)
+	}
+
+	notificationService.StartWeeklyRefreshScheduler(ctx)
+	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork, notificationService)
+	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, unitOfWork, hub, notificationService)
 	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
@@ -148,6 +161,7 @@ func main() {
 		hub,
 		verificationService,
 		matchingService,
+		notificationService,
 	)
 
 	// Start server with context

@@ -20,6 +20,7 @@ import (
 	scoredomain "github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/internal/notification"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
@@ -52,6 +53,7 @@ type service struct {
 	interactionRepo  storage3.InteractionRepository
 	scoreService     score.Service
 	uow              uow.UoW
+	notificationSvc  notification.Service
 }
 
 func NewConversationService(
@@ -63,6 +65,7 @@ func NewConversationService(
 	interactionRepo storage3.InteractionRepository,
 	scoreService score.Service,
 	uow uow.UoW,
+	notificationSvc notification.Service,
 ) Service {
 	return &service{
 		logger:           logger,
@@ -73,6 +76,7 @@ func NewConversationService(
 		interactionRepo:  interactionRepo,
 		scoreService:     scoreService,
 		uow:              uow,
+		notificationSvc:  notificationSvc,
 	}
 }
 
@@ -91,6 +95,8 @@ var (
 	ErrRevealRequestExpired                = errors.New("reveal request expired")
 	ErrConversationNotRevealed             = errors.New("conversation not revealed")
 )
+
+const messagePreviewMaxRunes = 120
 
 func (s *service) GetConversationScore(ctx context.Context, userID string, convoID string) (int, error) {
 	_, _, shared, err := s.scoreService.GetScores(ctx, convoID, userID, nil)
@@ -347,7 +353,80 @@ func (s *service) SendMessage(ctx context.Context, tx *sql.Tx, msg domain.Messag
 
 	s.updateConversationRealtime(ctx, msg.SenderID, msg.ConversationID)
 
+	s.sendNewMessagePush(ctx, result)
+
 	return result, nil
+}
+
+func (s *service) sendNewMessagePush(ctx context.Context, msg domain.Message) {
+	if s.notificationSvc == nil {
+		return
+	}
+
+	if msg.Type == domain.MessageTypeSystem {
+		return
+	}
+
+	participants, err := s.conversationRepo.GetConversationParticipants(ctx, msg.ConversationID)
+	if err != nil {
+		s.logger.Sugar().Warnw("send new message push: get participants", "error", err, "conversationID", msg.ConversationID)
+		return
+	}
+
+	var recipientID string
+
+	for _, participant := range participants {
+		if participant.UserID != msg.SenderID {
+			recipientID = participant.UserID
+			break
+		}
+	}
+
+	if recipientID == "" {
+		return
+	}
+
+	senderProfile, err := s.profileService.GetProfileCard(ctx, msg.SenderID)
+	if err != nil {
+		s.logger.Sugar().Warnw("send new message push: get sender profile", "error", err, "senderID", msg.SenderID)
+		return
+	}
+
+	preview := buildMessagePreview(msg)
+	if preview == "" {
+		preview = "You have a new message waiting for you."
+	}
+
+	if err := s.notificationSvc.SendNewMessageNotification(ctx, msg.SenderID, senderProfile.DisplayName, msg.ConversationID, recipientID, preview); err != nil {
+		s.logger.Sugar().Warnw("failed to send new message notification", "error", err, "conversationID", msg.ConversationID, "recipientID", recipientID)
+	}
+}
+
+func buildMessagePreview(msg domain.Message) string {
+	switch msg.Type {
+	case domain.MessageTypeText:
+		if msg.TextBody == nil {
+			return ""
+		}
+
+		trimmed := strings.TrimSpace(*msg.TextBody)
+		if trimmed == "" {
+			return ""
+		}
+
+		runes := []rune(trimmed)
+		if len(runes) > messagePreviewMaxRunes {
+			return string(runes[:messagePreviewMaxRunes]) + "..."
+		}
+
+		return trimmed
+	case domain.MessageTypeVoice:
+		return "sent you a voice note."
+	case domain.MessageTypeGif:
+		return "sent you a GIF."
+	default:
+		return ""
+	}
 }
 
 func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message) (*domain.ScoreSnapshot, error) {

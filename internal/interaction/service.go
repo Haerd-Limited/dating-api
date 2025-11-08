@@ -18,6 +18,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/internal/notification"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
@@ -39,6 +40,7 @@ type service struct {
 	discoverService     discover.Service
 	uow                 uow.UoW
 	hub                 realtime.Broadcaster
+	notificationService notification.Service
 }
 
 func NewInteractionService(
@@ -49,6 +51,7 @@ func NewInteractionService(
 	discoverService discover.Service,
 	uow uow.UoW,
 	hub realtime.Broadcaster,
+	notificationService notification.Service,
 ) Service {
 	return &service{
 		logger:              logger,
@@ -58,6 +61,7 @@ func NewInteractionService(
 		discoverService:     discoverService,
 		uow:                 uow,
 		hub:                 hub,
+		notificationService: notificationService,
 	}
 }
 
@@ -150,6 +154,8 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 			is.hub.BroadcastToUser(swipe.TargetUserID, b)
 
+			is.sendLikeNotification(ctx, swipe.UserID, swipe.TargetUserID)
+
 			return ResultSent, nil
 		}
 
@@ -241,6 +247,8 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 		is.hub.BroadcastToUser(swipe.TargetUserID, byts)
 		is.hub.BroadcastToUser(swipe.UserID, byts)
+
+		is.sendMatchNotifications(ctx, swipe.UserID, swipe.TargetUserID, convoID)
 
 		return ResultMatched, nil
 
@@ -397,4 +405,46 @@ func startOfWeek(t time.Time, weekStart time.Weekday, loc *time.Location) time.T
 	offset := (int(midnight.Weekday()) - int(weekStart) + 7) % 7
 
 	return midnight.AddDate(0, 0, -offset)
+}
+
+func (is *service) sendLikeNotification(ctx context.Context, actorID, recipientID string) {
+	if is.notificationService == nil {
+		return
+	}
+
+	profile, err := is.profileService.GetProfileCard(ctx, actorID)
+	if err != nil {
+		is.logger.Sugar().Warnw("send like notification: get profile", "error", err, "userID", actorID)
+		return
+	}
+
+	if err := is.notificationService.SendLikeNotification(ctx, actorID, profile.DisplayName, recipientID); err != nil {
+		is.logger.Sugar().Warnw("failed to send like notification", "error", err, "actorID", actorID, "recipientID", recipientID)
+	}
+}
+
+func (is *service) sendMatchNotifications(ctx context.Context, userA, userB, conversationID string) {
+	if is.notificationService == nil {
+		return
+	}
+
+	userAProfile, err := is.profileService.GetProfileCard(ctx, userA)
+	if err != nil {
+		is.logger.Sugar().Warnw("send match notification: get profile", "error", err, "userID", userA)
+		return
+	}
+
+	userBProfile, err := is.profileService.GetProfileCard(ctx, userB)
+	if err != nil {
+		is.logger.Sugar().Warnw("send match notification: get profile", "error", err, "userID", userB)
+		return
+	}
+
+	if err := is.notificationService.SendMatchNotification(ctx, userBProfile.DisplayName, userA, conversationID); err != nil {
+		is.logger.Sugar().Warnw("failed to send match notification", "error", err, "recipientID", userA, "counterpartID", userB)
+	}
+
+	if err := is.notificationService.SendMatchNotification(ctx, userAProfile.DisplayName, userB, conversationID); err != nil {
+		is.logger.Sugar().Warnw("failed to send match notification", "error", err, "recipientID", userB, "counterpartID", userA)
+	}
 }
