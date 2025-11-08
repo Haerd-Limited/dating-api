@@ -14,6 +14,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/matching"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
@@ -48,7 +49,6 @@ func NewDiscoverService(
 
 const (
 	minOverlap                          = 5
-	voiceWorthHearingSelectionLimit     = 3
 	voiceWorthHearingPreferencePoolSize = 30
 )
 
@@ -164,7 +164,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 	matcher := newPreferenceMatcher(storedPreferences)
 
-	candidateLimit := voiceWorthHearingSelectionLimit
+	candidateLimit := constants.MaxNumberOfVWHUsersToSelect
 	if matcher != nil {
 		candidateLimit = voiceWorthHearingPreferencePoolSize
 	}
@@ -214,11 +214,11 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		}
 	}
 
-	profiles := make([]profilecard.ProfileCard, 0, voiceWorthHearingSelectionLimit)
-	selectedIDs := make([]string, 0, voiceWorthHearingSelectionLimit)
+	profiles := make([]profilecard.ProfileCard, 0, constants.MaxNumberOfVWHUsersToSelect)
+	selectedIDs := make([]string, 0, constants.MaxNumberOfVWHUsersToSelect)
 
 	for _, candidate := range candidates {
-		if len(profiles) == voiceWorthHearingSelectionLimit {
+		if len(profiles) == constants.MaxNumberOfVWHUsersToSelect {
 			break
 		}
 
@@ -417,6 +417,7 @@ func (m *preferenceMatcher) requiresEthnicity() bool {
 	return m != nil && len(m.ethnicitySet) > 0
 }
 
+// todo: review/work on this
 func (m *preferenceMatcher) matches(age int, distanceKM int, datingIntentionID *int16, religionID *int16, candidateEthnicities []int16) bool {
 	if m == nil {
 		return true
