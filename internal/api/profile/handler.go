@@ -134,8 +134,12 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
 	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
+	if statusCode == http.StatusInternalServerError {
+		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
+	} else {
+		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
+	}
 	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
