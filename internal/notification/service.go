@@ -349,12 +349,12 @@ func newMessagingClient(ctx context.Context, cfg Config) (*messaging.Client, str
 
 	var source string
 
-	if cfg.ServiceAccountPath != "" {
+	if trimmed := strings.TrimSpace(cfg.CredentialsJSON); trimmed != "" {
+		opts = append(opts, option.WithCredentialsJSON([]byte(trimmed)))
+		source = "json"
+	} else if cfg.ServiceAccountPath != "" {
 		opts = append(opts, option.WithCredentialsFile(cfg.ServiceAccountPath))
 		source = "file"
-	} else if strings.TrimSpace(cfg.CredentialsJSON) != "" {
-		opts = append(opts, option.WithCredentialsJSON([]byte(cfg.CredentialsJSON)))
-		source = "json"
 	} else {
 		return nil, "", errNoFirebaseCredentials
 	}
