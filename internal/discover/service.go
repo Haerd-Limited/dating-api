@@ -14,7 +14,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/matching"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
@@ -139,15 +138,6 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 }
 
 func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
-	numberOfOppositeGenderProfiles, err := s.discoverRepo.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
-	}
-
-	if numberOfOppositeGenderProfiles < constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
-		return nil, nil
-	}
-
 	profiles, err := s.GetVoiceWorthHearing(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("get voice worth hearing userID=%s: %w", userID, err)

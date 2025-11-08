@@ -97,7 +97,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		return "", fmt.Errorf("check if matchable userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 	}
 
-	// todo: allow voice note swipes
+	// todo(high-priority): allow voice note swipes
 	err = is.validateSwipe(ctx, swipe, matchable)
 	if err != nil {
 		return "", fmt.Errorf("validate swipe userID=%s : %w", swipe.UserID, err)

@@ -247,32 +247,25 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
             )`, userID, constants.ActionLike, constants.ActionSuperlike),
 	}
 
-	count, err := r.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
+		return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
 	}
 
-	if count > constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
-		excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
-		if err != nil {
-			return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
+	// exclude Voice Worth Hearing candidates
+	if len(excludeIDs) > 0 {
+		ph := make([]string, len(excludeIDs))
+		args := make([]interface{}, len(excludeIDs))
+
+		for i, id := range excludeIDs {
+			ph[i] = "?"
+			args[i] = id
 		}
 
-		// exclude Voice Worth Hearing candidates
-		if len(excludeIDs) > 0 {
-			ph := make([]string, len(excludeIDs))
-			args := make([]interface{}, len(excludeIDs))
-
-			for i, id := range excludeIDs {
-				ph[i] = "?"
-				args[i] = id
-			}
-
-			mods = append(mods, qm.Where(
-				"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
-				args...,
-			))
-		}
+		mods = append(mods, qm.Where(
+			"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
+			args...,
+		))
 	}
 
 	mods = append(mods, qm.Limit(limit), qm.Offset(offset))
@@ -332,32 +325,25 @@ func (r *discoverRepository) GetDiscoverFeedCandidatesWithFilters(
 		mods = append(mods, filterMods...)
 	}
 
-	count, err := r.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
+		return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
 	}
 
-	if count > constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
-		excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
-		if err != nil {
-			return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
+	// exclude Voice Worth Hearing candidates
+	if len(excludeIDs) > 0 {
+		ph := make([]string, len(excludeIDs))
+		args := make([]interface{}, len(excludeIDs))
+
+		for i, id := range excludeIDs {
+			ph[i] = "?"
+			args[i] = id
 		}
 
-		// exclude Voice Worth Hearing candidates
-		if len(excludeIDs) > 0 {
-			ph := make([]string, len(excludeIDs))
-			args := make([]interface{}, len(excludeIDs))
-
-			for i, id := range excludeIDs {
-				ph[i] = "?"
-				args[i] = id
-			}
-
-			mods = append(mods, qm.Where(
-				"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
-				args...,
-			))
-		}
+		mods = append(mods, qm.Where(
+			"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
+			args...,
+		))
 	}
 
 	mods = append(mods, qm.Limit(limit), qm.Offset(offset))
@@ -478,6 +464,7 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 	return nil
 }
 
+// todo: update this to use sqlboiler and don't import domain objects here
 func (r *discoverRepository) GetUserDiscoverPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error) {
 	const query = `
 		SELECT distance_km, age_min, age_max, seek_intention_ids, seek_religion_ids, seek_ethnicity_ids
@@ -650,6 +637,15 @@ func (r *discoverRepository) getOppositeGender(ctx context.Context, userID strin
 }
 
 func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
+	count, err := r.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
+	}
+
+	if count <= constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
+		return nil, nil
+	}
+
 	weekStart := startOfWeek(time.Now().UTC(), time.Sunday)
 
 	cached, err := r.GetWeeklyVoiceWorthHearingIDs(ctx, userID, weekStart)

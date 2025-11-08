@@ -148,5 +148,6 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 	} else {
 		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
 	}
+
 	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
