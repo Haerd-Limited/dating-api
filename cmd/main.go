@@ -133,6 +133,7 @@ func main() {
 	notificationService, err := notification.NewService(ctx, logger, deviceTokenRepo, notification.Config{
 		ServiceAccountPath: cfg.FirebaseServiceAccountPath,
 		CredentialsJSON:    cfg.GoogleCredentialsJson,
+		ProjectID:          cfg.FirebaseProjectID,
 	})
 	if err != nil {
 		logger.Sugar().Fatalf("failed to initialise notification service: %v", err)

@@ -24,6 +24,7 @@ type Config struct {
 	S3BucketName               string `mapstructure:"S3_BUCKET_NAME" yaml:"s3_bucket_name" validate:"required"`
 	FirebaseServiceAccountPath string `mapstructure:"FIREBASE_SERVICE_ACCOUNT_PATH"`
 	GoogleCredentialsJson      string `mapstructure:"GOOGLE_CREDENTIALS_JSON"`
+	FirebaseProjectID          string `mapstructure:"FIREBASE_PROJECT_ID"`
 	TwilioAccountSID           string `mapstructure:"TWILIO_ACCOUNT_SID" yaml:"twilio_account_sid"`
 	TwilioAuthToken            string `mapstructure:"TWILIO_AUTH_TOKEN" yaml:"twilio_auth_token"`
 	TwilioNumber               string `mapstructure:"TWILIO_NUMBER" yaml:"twilio_number"`
@@ -59,6 +60,7 @@ func LoadConfig() (*Config, error) {
 		S3BucketName:               viper.GetString("S3_BUCKET_NAME"),
 		FirebaseServiceAccountPath: viper.GetString("FIREBASE_SERVICE_ACCOUNT_PATH"),
 		GoogleCredentialsJson:      viper.GetString("GOOGLE_CREDENTIALS_JSON"),
+		FirebaseProjectID:          viper.GetString("FIREBASE_PROJECT_ID"),
 		TwilioAccountSID:           viper.GetString("TWILIO_ACCOUNT_SID"),
 		TwilioAuthToken:            viper.GetString("TWILIO_AUTH_TOKEN"),
 		TwilioNumber:               viper.GetString("TWILIO_NUMBER"),

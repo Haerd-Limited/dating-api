@@ -48,6 +48,7 @@ type service struct {
 type Config struct {
 	ServiceAccountPath string
 	CredentialsJSON    string
+	ProjectID          string
 }
 
 func NewService(ctx context.Context, logger *zap.Logger, repo storage.DeviceTokenRepository, cfg Config) (Service, error) {
@@ -358,7 +359,12 @@ func newMessagingClient(ctx context.Context, cfg Config) (*messaging.Client, str
 		return nil, "", errNoFirebaseCredentials
 	}
 
-	app, err := firebase.NewApp(ctx, nil, opts...)
+	fbCfg := &firebase.Config{}
+	if cfg.ProjectID != "" {
+		fbCfg.ProjectID = cfg.ProjectID
+	}
+
+	app, err := firebase.NewApp(ctx, fbCfg, opts...)
 	if err != nil {
 		return nil, source, fmt.Errorf("create firebase app: %w", err)
 	}
