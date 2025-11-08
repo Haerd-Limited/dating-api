@@ -81,7 +81,7 @@ func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID st
 		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
 	}
 
-	if numberOfOppositeGenderProfiles < constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
+	if numberOfOppositeGenderProfiles <= constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
 		return nil, nil
 	}
 

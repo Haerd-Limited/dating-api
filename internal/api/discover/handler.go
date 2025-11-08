@@ -122,6 +122,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, storage.ErrUserDoesNotExists):
 		return http.StatusNotFound, "User does not exist"
+	case errors.Is(err, discover.ErrVoiceWorthHearingSearching):
+		return http.StatusOK, messages.VoiceWorthHearingSearchingMsg
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}
@@ -133,10 +135,14 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 	}
 
 	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-	if statusCode == http.StatusInternalServerError {
+
+	switch {
+	case statusCode == http.StatusInternalServerError:
 		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	} else {
+	case statusCode >= 400:
 		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
+	default:
+		h.logger.Sugar().Infow(fmt.Sprintf("%s response", handlerName), "message", errMsg)
 	}
 
 	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))

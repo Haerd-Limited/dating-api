@@ -10,14 +10,13 @@ import (
 )
 
 func MapToGetVoicesWorthHearingResponse(models []profilecard.ProfileCard) dto.GetVoicesWorthHearingResponse {
-	if models == nil {
-		return dto.GetVoicesWorthHearingResponse{
-			Profiles: []dto2.ProfileCard{},
-		}
+	profiles := dto2.ProfileCardsToDto(models)
+	if profiles == nil {
+		profiles = []dto2.ProfileCard{}
 	}
 
 	return dto.GetVoicesWorthHearingResponse{
-		Profiles: dto2.ProfileCardsToDto(models),
+		Profiles: profiles,
 	}
 }
 

@@ -2,6 +2,7 @@ package discover
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -32,6 +33,8 @@ type service struct {
 	matchingService matching.Service
 	discoverRepo    storage.DiscoverRepository
 }
+
+var ErrVoiceWorthHearingSearching = errors.New("voices worth hearing still searching")
 
 func NewDiscoverService(
 	logger *zap.Logger,
@@ -140,6 +143,10 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
 	profiles, err := s.GetVoiceWorthHearing(ctx, userID)
 	if err != nil {
+		if errors.Is(err, ErrVoiceWorthHearingSearching) {
+			return nil, nil
+		}
+
 		return nil, fmt.Errorf("get voice worth hearing userID=%s: %w", userID, err)
 	}
 
@@ -156,6 +163,15 @@ func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([
 // remains stable throughout the week and is recomputed automatically when a new week begins.
 func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error) {
 	weekStart := startOfWeek(time.Now().UTC(), time.Sunday)
+
+	count, err := s.discoverRepo.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get number of complete profiles of opposite gender userID=%s: %w", userID, err)
+	}
+
+	if count <= constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
+		return nil, ErrVoiceWorthHearingSearching
+	}
 
 	storedPreferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
 	if err != nil {
@@ -214,74 +230,178 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		}
 	}
 
-	profiles := make([]profilecard.ProfileCard, 0, constants.MaxNumberOfVWHUsersToSelect)
-	selectedIDs := make([]string, 0, constants.MaxNumberOfVWHUsersToSelect)
-
-	for _, candidate := range candidates {
-		if len(profiles) == constants.MaxNumberOfVWHUsersToSelect {
-			break
-		}
-
-		alreadyInteracted, interactionErr := s.discoverRepo.AlreadyInteracted(ctx, userID, candidate.UserID)
-		if interactionErr != nil {
-			return nil, fmt.Errorf("already interacted userID=%s profileUserID=%s: %w", userID, candidate.UserID, interactionErr)
-		}
-
-		if alreadyInteracted {
-			continue
-		}
-
-		card, profileErr := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
-		if profileErr != nil {
-			return nil, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
-		}
-
-		var datingIntentionID *int16
-
-		if candidate.DatingIntentionID.Valid {
-			value := candidate.DatingIntentionID.Int16
-			datingIntentionID = &value
-		}
-
-		var religionID *int16
-
-		if candidate.ReligionID.Valid {
-			value := candidate.ReligionID.Int16
-			religionID = &value
-		}
-
-		var candidateEthnicities []int16
-		if matcher != nil && matcher.requiresEthnicity() {
-			candidateEthnicities = ethnicityByUser[candidate.UserID]
-		}
-
-		if matcher != nil && !matcher.matches(card.Age, card.DistanceKm, datingIntentionID, religionID, candidateEthnicities) {
-			continue
-		}
-
-		likeCount, likeErr := s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
-		if likeErr != nil {
-			return nil, fmt.Errorf("get like and superlike count userID=%s profileUserID=%s: %w", userID, candidate.UserID, likeErr)
-		}
-
-		card.LikeCount = &likeCount
-
-		card.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
-		if profileErr != nil {
-			return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
-		}
-
-		profiles = append(profiles, card)
-		selectedIDs = append(selectedIDs, candidate.UserID)
+	profiles, selectedIDs, err := s.selectVoiceWorthHearingProfiles(ctx, matcher, candidates, userID, &currentUserProfile, ethnicityByUser)
+	if err != nil {
+		return nil, err
 	}
 
-	if len(cachedIDs) == 0 && len(selectedIDs) > 0 {
+	if len(profiles) == 0 {
+		return nil, nil
+	}
+
+	if len(cachedIDs) == 0 {
 		if err := s.discoverRepo.SaveWeeklyVoiceWorthHearingIDs(ctx, userID, weekStart, selectedIDs); err != nil {
 			return nil, fmt.Errorf("persist vwh cache userID=%s: %w", userID, err)
 		}
 	}
 
 	return profiles, nil
+}
+
+type candidateEvaluation struct {
+	card              profilecard.ProfileCard
+	matchesAll        bool
+	matchesAny        bool
+	alreadyInteracted bool
+}
+
+func (s *service) selectVoiceWorthHearingProfiles(
+	ctx context.Context,
+	matcher *preferenceMatcher,
+	candidates []*entity.UserProfile,
+	userID string,
+	currentUserProfile *profiledomain.EnrichedProfile,
+	ethnicityByUser map[string][]int16,
+) ([]profilecard.ProfileCard, []string, error) {
+	evaluationCache := make(map[string]*candidateEvaluation, len(candidates))
+
+	selectionPasses := s.buildSelectionPasses(matcher)
+
+	selectedProfiles := make([]profilecard.ProfileCard, 0, constants.MaxNumberOfVWHUsersToSelect)
+	selectedIDs := make([]string, 0, constants.MaxNumberOfVWHUsersToSelect)
+
+	for _, pass := range selectionPasses {
+		if len(selectedProfiles) == constants.MaxNumberOfVWHUsersToSelect {
+			break
+		}
+
+		for _, candidate := range candidates {
+			if len(selectedProfiles) == constants.MaxNumberOfVWHUsersToSelect {
+				break
+			}
+
+			if containsID(selectedIDs, candidate.UserID) {
+				continue
+			}
+
+			evaluation, err := s.evaluateCandidate(ctx, matcher, candidate, currentUserProfile, ethnicityByUser, userID, evaluationCache)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			if evaluation.alreadyInteracted {
+				continue
+			}
+
+			if !pass(evaluation) {
+				continue
+			}
+
+			selectedProfiles = append(selectedProfiles, evaluation.card)
+			selectedIDs = append(selectedIDs, candidate.UserID)
+		}
+	}
+
+	return selectedProfiles, selectedIDs, nil
+}
+
+func (s *service) buildSelectionPasses(matcher *preferenceMatcher) []func(*candidateEvaluation) bool {
+	passes := make([]func(*candidateEvaluation) bool, 0, 3)
+
+	if matcher != nil {
+		passes = append(passes, func(eval *candidateEvaluation) bool { return eval.matchesAll })
+		passes = append(passes, func(eval *candidateEvaluation) bool { return eval.matchesAny })
+	}
+
+	passes = append(passes, func(eval *candidateEvaluation) bool { return true })
+
+	return passes
+}
+
+func (s *service) evaluateCandidate(
+	ctx context.Context,
+	matcher *preferenceMatcher,
+	candidate *entity.UserProfile,
+	currentUserProfile *profiledomain.EnrichedProfile,
+	ethnicityByUser map[string][]int16,
+	userID string,
+	cache map[string]*candidateEvaluation,
+) (*candidateEvaluation, error) {
+	if evaluation, exists := cache[candidate.UserID]; exists {
+		return evaluation, nil
+	}
+
+	evaluation := &candidateEvaluation{}
+
+	alreadyInteracted, err := s.discoverRepo.AlreadyInteracted(ctx, userID, candidate.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("already interacted userID=%s profileUserID=%s: %w", userID, candidate.UserID, err)
+	}
+
+	evaluation.alreadyInteracted = alreadyInteracted
+	if alreadyInteracted {
+		cache[candidate.UserID] = evaluation
+		return evaluation, nil
+	}
+
+	card, err := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
+	if err != nil {
+		return nil, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, err)
+	}
+
+	likeCount, err := s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("get like and superlike count userID=%s profileUserID=%s: %w", userID, candidate.UserID, err)
+	}
+
+	card.LikeCount = &likeCount
+
+	card.MatchSummary, err = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, err)
+	}
+
+	var datingIntentionID *int16
+
+	if candidate.DatingIntentionID.Valid {
+		value := candidate.DatingIntentionID.Int16
+		datingIntentionID = &value
+	}
+
+	var religionID *int16
+
+	if candidate.ReligionID.Valid {
+		value := candidate.ReligionID.Int16
+		religionID = &value
+	}
+
+	var candidateEthnicities []int16
+	if matcher != nil && matcher.requiresEthnicity() {
+		candidateEthnicities = ethnicityByUser[candidate.UserID]
+	}
+
+	if matcher == nil {
+		evaluation.matchesAll = true
+		evaluation.matchesAny = true
+	} else {
+		evaluation.matchesAll = matcher.matchesAll(card.Age, card.DistanceKm, datingIntentionID, religionID, candidateEthnicities)
+		evaluation.matchesAny = matcher.matchesAny(card.Age, card.DistanceKm, datingIntentionID, religionID, candidateEthnicities)
+	}
+
+	evaluation.card = card
+	cache[candidate.UserID] = evaluation
+
+	return evaluation, nil
+}
+
+func containsID(ids []string, target string) bool {
+	for _, id := range ids {
+		if id == target {
+			return true
+		}
+	}
+
+	return false
 }
 
 func orderCandidatesByIDs(candidates []*entity.UserProfile, ordering []string) []*entity.UserProfile {
@@ -417,22 +537,69 @@ func (m *preferenceMatcher) requiresEthnicity() bool {
 	return m != nil && len(m.ethnicitySet) > 0
 }
 
-// todo: review/work on this
-func (m *preferenceMatcher) matches(age int, distanceKM int, datingIntentionID *int16, religionID *int16, candidateEthnicities []int16) bool {
+func (m *preferenceMatcher) matchesAll(age int, distanceKm int, datingIntentionID *int16, religionID *int16, candidateEthnicities []int16) bool {
 	if m == nil {
 		return true
 	}
 
-	if m.prefs.DistanceKM != nil && distanceKM >= 0 {
-		if distanceKM <= *m.prefs.DistanceKM {
-			return true
+	if m.prefs.DistanceKM != nil {
+		if distanceKm < 0 || distanceKm > *m.prefs.DistanceKM {
+			return false
 		}
 	}
 
-	if m.prefs.MinAge != nil || m.prefs.MaxAge != nil {
-		if m.ageWithinRange(age) {
-			return true
+	if (m.prefs.MinAge != nil || m.prefs.MaxAge != nil) && !m.ageWithinRange(age) {
+		return false
+	}
+
+	if len(m.datingIntentSet) > 0 {
+		if datingIntentionID == nil {
+			return false
 		}
+
+		if _, ok := m.datingIntentSet[*datingIntentionID]; !ok {
+			return false
+		}
+	}
+
+	if len(m.religionSet) > 0 {
+		if religionID == nil {
+			return false
+		}
+
+		if _, ok := m.religionSet[*religionID]; !ok {
+			return false
+		}
+	}
+
+	if len(m.ethnicitySet) > 0 {
+		if len(candidateEthnicities) == 0 {
+			return false
+		}
+
+		for _, id := range candidateEthnicities {
+			if _, ok := m.ethnicitySet[id]; ok {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	return true
+}
+
+func (m *preferenceMatcher) matchesAny(age int, distanceKm int, datingIntentionID *int16, religionID *int16, candidateEthnicities []int16) bool {
+	if m == nil {
+		return true
+	}
+
+	if m.prefs.DistanceKM != nil && distanceKm >= 0 && distanceKm <= *m.prefs.DistanceKM {
+		return true
+	}
+
+	if (m.prefs.MinAge != nil || m.prefs.MaxAge != nil) && m.ageWithinRange(age) {
+		return true
 	}
 
 	if len(m.datingIntentSet) > 0 && datingIntentionID != nil {
