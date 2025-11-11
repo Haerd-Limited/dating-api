@@ -6,14 +6,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Haerd-Limited/dating-api/internal/api/media/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/media/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/media"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
 
 type Handler interface {
@@ -66,21 +65,17 @@ func (h *handler) GenerateVoiceNoteUploadUrl() http.HandlerFunc {
 			return
 		}
 
-		var req dto.GenerateVoiceNoteUploadUrlRequest
-
-		err := request.DecodeAndValidate(r.Body, &req)
-		if err != nil {
-			h.logger.Sugar().Warnw("failed to decode and validate generate voicenote upload url request body", "error", err)
-			render.Json(
-				w,
-				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse("All fields are required and action field must be one of 'voicenote' or 'prompt'"),
-			)
-
+		purpose := r.URL.Query().Get("purpose")
+		if purpose == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("Purpose query parameter is required"))
+			return
+		}
+		if purpose != constants.PurposeVoiceNote && purpose != constants.PurposePrompt {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("Purpose query parameter must be one of 'voicenote' or 'prompt'"))
 			return
 		}
 
-		url, err := h.mediaService.GenerateVoiceNoteUploadUrl(ctx, userID, req.Purpose)
+		url, err := h.mediaService.GenerateVoiceNoteUploadUrl(ctx, userID, purpose)
 		if err != nil {
 			h.handleServiceErrorResponse(w, r, "GenerateVoiceNoteUploadUrl", err)
 			return

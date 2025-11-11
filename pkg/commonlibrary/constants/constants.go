@@ -11,6 +11,8 @@ const (
 	ActionSuperlike                             = "superlike"
 	MessageTypeText                             = "text"
 	MessageTypeVoice                            = "voicenote"
+	PurposeVoiceNote                            = "voicenote"
+	PurposePrompt                               = "prompt"
 	MinimumNumberOfUsersRequiredToBuildVwhUsers = 5
 	MaxNumberOfVWHUsersToSelect                 = 3
 	VisibilityStateHidden                       = "HIDDEN"
