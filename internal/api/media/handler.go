@@ -70,6 +70,7 @@ func (h *handler) GenerateVoiceNoteUploadUrl() http.HandlerFunc {
 			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("Purpose query parameter is required"))
 			return
 		}
+
 		if purpose != constants.PurposeVoiceNote && purpose != constants.PurposePrompt {
 			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("Purpose query parameter must be one of 'voicenote' or 'prompt'"))
 			return

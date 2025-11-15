@@ -160,3 +160,19 @@ func MapToGetHabitsResponse(domainHabits []domain.Habit) dto.GetHabitsResponse {
 		Habits: habits,
 	}
 }
+
+func MapToGetReportCategoriesResponse(domainCategories []domain.ReportCategory) dto.GetReportCategoriesResponse {
+	categories := make([]dto.ReportCategory, 0, len(domainCategories))
+	for _, category := range domainCategories {
+		categories = append(categories, dto.ReportCategory{
+			ID:        category.ID,
+			Key:       category.Key,
+			Label:     category.Label,
+			SortOrder: category.SortOrder,
+		})
+	}
+
+	return dto.GetReportCategoriesResponse{
+		ReportCategories: categories,
+	}
+}

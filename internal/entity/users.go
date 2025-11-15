@@ -115,14 +115,19 @@ var UserRels = struct {
 	SenderMessages            string
 	Photos                    string
 	RefreshTokens             string
+	ReviewerReportActions     string
 	RevealDecisions           string
 	InitiatorRevealRequests   string
 	ActorSwipes               string
 	TargetSwipes              string
+	BlockedUserUserBlocks     string
+	BlockerUserUserBlocks     string
 	Ethnicities               string
 	Interests                 string
 	Languages                 string
 	UserProfileVisibilities   string
+	ReportedUserUserReports   string
+	ReporterUserUserReports   string
 	VerificationAttempts      string
 	VoicePrompts              string
 	VoiceWorthHearingWeeklies string
@@ -141,14 +146,19 @@ var UserRels = struct {
 	SenderMessages:            "SenderMessages",
 	Photos:                    "Photos",
 	RefreshTokens:             "RefreshTokens",
+	ReviewerReportActions:     "ReviewerReportActions",
 	RevealDecisions:           "RevealDecisions",
 	InitiatorRevealRequests:   "InitiatorRevealRequests",
 	ActorSwipes:               "ActorSwipes",
 	TargetSwipes:              "TargetSwipes",
+	BlockedUserUserBlocks:     "BlockedUserUserBlocks",
+	BlockerUserUserBlocks:     "BlockerUserUserBlocks",
 	Ethnicities:               "Ethnicities",
 	Interests:                 "Interests",
 	Languages:                 "Languages",
 	UserProfileVisibilities:   "UserProfileVisibilities",
+	ReportedUserUserReports:   "ReportedUserUserReports",
+	ReporterUserUserReports:   "ReporterUserUserReports",
 	VerificationAttempts:      "VerificationAttempts",
 	VoicePrompts:              "VoicePrompts",
 	VoiceWorthHearingWeeklies: "VoiceWorthHearingWeeklies",
@@ -170,14 +180,19 @@ type userR struct {
 	SenderMessages            MessageSlice                 `boil:"SenderMessages" json:"SenderMessages" toml:"SenderMessages" yaml:"SenderMessages"`
 	Photos                    PhotoSlice                   `boil:"Photos" json:"Photos" toml:"Photos" yaml:"Photos"`
 	RefreshTokens             RefreshTokenSlice            `boil:"RefreshTokens" json:"RefreshTokens" toml:"RefreshTokens" yaml:"RefreshTokens"`
+	ReviewerReportActions     ReportActionSlice            `boil:"ReviewerReportActions" json:"ReviewerReportActions" toml:"ReviewerReportActions" yaml:"ReviewerReportActions"`
 	RevealDecisions           RevealDecisionSlice          `boil:"RevealDecisions" json:"RevealDecisions" toml:"RevealDecisions" yaml:"RevealDecisions"`
 	InitiatorRevealRequests   RevealRequestSlice           `boil:"InitiatorRevealRequests" json:"InitiatorRevealRequests" toml:"InitiatorRevealRequests" yaml:"InitiatorRevealRequests"`
 	ActorSwipes               SwipeSlice                   `boil:"ActorSwipes" json:"ActorSwipes" toml:"ActorSwipes" yaml:"ActorSwipes"`
 	TargetSwipes              SwipeSlice                   `boil:"TargetSwipes" json:"TargetSwipes" toml:"TargetSwipes" yaml:"TargetSwipes"`
+	BlockedUserUserBlocks     UserBlockSlice               `boil:"BlockedUserUserBlocks" json:"BlockedUserUserBlocks" toml:"BlockedUserUserBlocks" yaml:"BlockedUserUserBlocks"`
+	BlockerUserUserBlocks     UserBlockSlice               `boil:"BlockerUserUserBlocks" json:"BlockerUserUserBlocks" toml:"BlockerUserUserBlocks" yaml:"BlockerUserUserBlocks"`
 	Ethnicities               EthnicitySlice               `boil:"Ethnicities" json:"Ethnicities" toml:"Ethnicities" yaml:"Ethnicities"`
 	Interests                 InterestSlice                `boil:"Interests" json:"Interests" toml:"Interests" yaml:"Interests"`
 	Languages                 LanguageSlice                `boil:"Languages" json:"Languages" toml:"Languages" yaml:"Languages"`
 	UserProfileVisibilities   UserProfileVisibilitySlice   `boil:"UserProfileVisibilities" json:"UserProfileVisibilities" toml:"UserProfileVisibilities" yaml:"UserProfileVisibilities"`
+	ReportedUserUserReports   UserReportSlice              `boil:"ReportedUserUserReports" json:"ReportedUserUserReports" toml:"ReportedUserUserReports" yaml:"ReportedUserUserReports"`
+	ReporterUserUserReports   UserReportSlice              `boil:"ReporterUserUserReports" json:"ReporterUserUserReports" toml:"ReporterUserUserReports" yaml:"ReporterUserUserReports"`
 	VerificationAttempts      VerificationAttemptSlice     `boil:"VerificationAttempts" json:"VerificationAttempts" toml:"VerificationAttempts" yaml:"VerificationAttempts"`
 	VoicePrompts              VoicePromptSlice             `boil:"VoicePrompts" json:"VoicePrompts" toml:"VoicePrompts" yaml:"VoicePrompts"`
 	VoiceWorthHearingWeeklies VoiceWorthHearingWeeklySlice `boil:"VoiceWorthHearingWeeklies" json:"VoiceWorthHearingWeeklies" toml:"VoiceWorthHearingWeeklies" yaml:"VoiceWorthHearingWeeklies"`
@@ -412,6 +427,22 @@ func (r *userR) GetRefreshTokens() RefreshTokenSlice {
 	return r.RefreshTokens
 }
 
+func (o *User) GetReviewerReportActions() ReportActionSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetReviewerReportActions()
+}
+
+func (r *userR) GetReviewerReportActions() ReportActionSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.ReviewerReportActions
+}
+
 func (o *User) GetRevealDecisions() RevealDecisionSlice {
 	if o == nil {
 		return nil
@@ -476,6 +507,38 @@ func (r *userR) GetTargetSwipes() SwipeSlice {
 	return r.TargetSwipes
 }
 
+func (o *User) GetBlockedUserUserBlocks() UserBlockSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetBlockedUserUserBlocks()
+}
+
+func (r *userR) GetBlockedUserUserBlocks() UserBlockSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.BlockedUserUserBlocks
+}
+
+func (o *User) GetBlockerUserUserBlocks() UserBlockSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetBlockerUserUserBlocks()
+}
+
+func (r *userR) GetBlockerUserUserBlocks() UserBlockSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.BlockerUserUserBlocks
+}
+
 func (o *User) GetEthnicities() EthnicitySlice {
 	if o == nil {
 		return nil
@@ -538,6 +601,38 @@ func (r *userR) GetUserProfileVisibilities() UserProfileVisibilitySlice {
 	}
 
 	return r.UserProfileVisibilities
+}
+
+func (o *User) GetReportedUserUserReports() UserReportSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetReportedUserUserReports()
+}
+
+func (r *userR) GetReportedUserUserReports() UserReportSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.ReportedUserUserReports
+}
+
+func (o *User) GetReporterUserUserReports() UserReportSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetReporterUserUserReports()
+}
+
+func (r *userR) GetReporterUserUserReports() UserReportSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.ReporterUserUserReports
 }
 
 func (o *User) GetVerificationAttempts() VerificationAttemptSlice {
@@ -1088,6 +1183,20 @@ func (o *User) RefreshTokens(mods ...qm.QueryMod) refreshTokenQuery {
 	return RefreshTokens(queryMods...)
 }
 
+// ReviewerReportActions retrieves all the report_action's ReportActions with an executor via reviewer_id column.
+func (o *User) ReviewerReportActions(mods ...qm.QueryMod) reportActionQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"report_actions\".\"reviewer_id\"=?", o.ID),
+	)
+
+	return ReportActions(queryMods...)
+}
+
 // RevealDecisions retrieves all the reveal_decision's RevealDecisions with an executor.
 func (o *User) RevealDecisions(mods ...qm.QueryMod) revealDecisionQuery {
 	var queryMods []qm.QueryMod
@@ -1142,6 +1251,34 @@ func (o *User) TargetSwipes(mods ...qm.QueryMod) swipeQuery {
 	)
 
 	return Swipes(queryMods...)
+}
+
+// BlockedUserUserBlocks retrieves all the user_block's UserBlocks with an executor via blocked_user_id column.
+func (o *User) BlockedUserUserBlocks(mods ...qm.QueryMod) userBlockQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"user_blocks\".\"blocked_user_id\"=?", o.ID),
+	)
+
+	return UserBlocks(queryMods...)
+}
+
+// BlockerUserUserBlocks retrieves all the user_block's UserBlocks with an executor via blocker_user_id column.
+func (o *User) BlockerUserUserBlocks(mods ...qm.QueryMod) userBlockQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"user_blocks\".\"blocker_user_id\"=?", o.ID),
+	)
+
+	return UserBlocks(queryMods...)
 }
 
 // Ethnicities retrieves all the ethnicity's Ethnicities with an executor.
@@ -1201,6 +1338,34 @@ func (o *User) UserProfileVisibilities(mods ...qm.QueryMod) userProfileVisibilit
 	)
 
 	return UserProfileVisibilities(queryMods...)
+}
+
+// ReportedUserUserReports retrieves all the user_report's UserReports with an executor via reported_user_id column.
+func (o *User) ReportedUserUserReports(mods ...qm.QueryMod) userReportQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"user_reports\".\"reported_user_id\"=?", o.ID),
+	)
+
+	return UserReports(queryMods...)
+}
+
+// ReporterUserUserReports retrieves all the user_report's UserReports with an executor via reporter_user_id column.
+func (o *User) ReporterUserUserReports(mods ...qm.QueryMod) userReportQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"user_reports\".\"reporter_user_id\"=?", o.ID),
+	)
+
+	return UserReports(queryMods...)
 }
 
 // VerificationAttempts retrieves all the verification_attempt's VerificationAttempts with an executor.
@@ -2843,6 +3008,119 @@ func (userL) LoadRefreshTokens(ctx context.Context, e boil.ContextExecutor, sing
 	return nil
 }
 
+// LoadReviewerReportActions allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadReviewerReportActions(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`report_actions`),
+		qm.WhereIn(`report_actions.reviewer_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load report_actions")
+	}
+
+	var resultSlice []*ReportAction
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice report_actions")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on report_actions")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for report_actions")
+	}
+
+	if len(reportActionAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.ReviewerReportActions = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &reportActionR{}
+			}
+			foreign.R.Reviewer = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.ReviewerID) {
+				local.R.ReviewerReportActions = append(local.R.ReviewerReportActions, foreign)
+				if foreign.R == nil {
+					foreign.R = &reportActionR{}
+				}
+				foreign.R.Reviewer = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadRevealDecisions allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (userL) LoadRevealDecisions(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
@@ -3287,6 +3565,232 @@ func (userL) LoadTargetSwipes(ctx context.Context, e boil.ContextExecutor, singu
 					foreign.R = &swipeR{}
 				}
 				foreign.R.Target = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadBlockedUserUserBlocks allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadBlockedUserUserBlocks(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_blocks`),
+		qm.WhereIn(`user_blocks.blocked_user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load user_blocks")
+	}
+
+	var resultSlice []*UserBlock
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice user_blocks")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on user_blocks")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_blocks")
+	}
+
+	if len(userBlockAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.BlockedUserUserBlocks = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &userBlockR{}
+			}
+			foreign.R.BlockedUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.BlockedUserID {
+				local.R.BlockedUserUserBlocks = append(local.R.BlockedUserUserBlocks, foreign)
+				if foreign.R == nil {
+					foreign.R = &userBlockR{}
+				}
+				foreign.R.BlockedUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadBlockerUserUserBlocks allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadBlockerUserUserBlocks(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_blocks`),
+		qm.WhereIn(`user_blocks.blocker_user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load user_blocks")
+	}
+
+	var resultSlice []*UserBlock
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice user_blocks")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on user_blocks")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_blocks")
+	}
+
+	if len(userBlockAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.BlockerUserUserBlocks = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &userBlockR{}
+			}
+			foreign.R.BlockerUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.BlockerUserID {
+				local.R.BlockerUserUserBlocks = append(local.R.BlockerUserUserBlocks, foreign)
+				if foreign.R == nil {
+					foreign.R = &userBlockR{}
+				}
+				foreign.R.BlockerUser = local
 				break
 			}
 		}
@@ -3790,6 +4294,232 @@ func (userL) LoadUserProfileVisibilities(ctx context.Context, e boil.ContextExec
 					foreign.R = &userProfileVisibilityR{}
 				}
 				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadReportedUserUserReports allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadReportedUserUserReports(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_reports`),
+		qm.WhereIn(`user_reports.reported_user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load user_reports")
+	}
+
+	var resultSlice []*UserReport
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice user_reports")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on user_reports")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_reports")
+	}
+
+	if len(userReportAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.ReportedUserUserReports = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &userReportR{}
+			}
+			foreign.R.ReportedUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.ReportedUserID {
+				local.R.ReportedUserUserReports = append(local.R.ReportedUserUserReports, foreign)
+				if foreign.R == nil {
+					foreign.R = &userReportR{}
+				}
+				foreign.R.ReportedUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadReporterUserUserReports allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadReporterUserUserReports(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_reports`),
+		qm.WhereIn(`user_reports.reporter_user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load user_reports")
+	}
+
+	var resultSlice []*UserReport
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice user_reports")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on user_reports")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_reports")
+	}
+
+	if len(userReportAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.ReporterUserUserReports = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &userReportR{}
+			}
+			foreign.R.ReporterUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.ReporterUserID {
+				local.R.ReporterUserUserReports = append(local.R.ReporterUserUserReports, foreign)
+				if foreign.R == nil {
+					foreign.R = &userReportR{}
+				}
+				foreign.R.ReporterUser = local
 				break
 			}
 		}
@@ -4941,6 +5671,133 @@ func (o *User) AddRefreshTokens(ctx context.Context, exec boil.ContextExecutor, 
 	return nil
 }
 
+// AddReviewerReportActions adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.ReviewerReportActions.
+// Sets related.R.Reviewer appropriately.
+func (o *User) AddReviewerReportActions(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*ReportAction) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.ReviewerID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"report_actions\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"reviewer_id"}),
+				strmangle.WhereClause("\"", "\"", 2, reportActionPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.ReviewerID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			ReviewerReportActions: related,
+		}
+	} else {
+		o.R.ReviewerReportActions = append(o.R.ReviewerReportActions, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &reportActionR{
+				Reviewer: o,
+			}
+		} else {
+			rel.R.Reviewer = o
+		}
+	}
+	return nil
+}
+
+// SetReviewerReportActions removes all previously related items of the
+// user replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Reviewer's ReviewerReportActions accordingly.
+// Replaces o.R.ReviewerReportActions with related.
+// Sets related.R.Reviewer's ReviewerReportActions accordingly.
+func (o *User) SetReviewerReportActions(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*ReportAction) error {
+	query := "update \"report_actions\" set \"reviewer_id\" = null where \"reviewer_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.ReviewerReportActions {
+			queries.SetScanner(&rel.ReviewerID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.Reviewer = nil
+		}
+		o.R.ReviewerReportActions = nil
+	}
+
+	return o.AddReviewerReportActions(ctx, exec, insert, related...)
+}
+
+// RemoveReviewerReportActions relationships from objects passed in.
+// Removes related items from R.ReviewerReportActions (uses pointer comparison, removal does not keep order)
+// Sets related.R.Reviewer.
+func (o *User) RemoveReviewerReportActions(ctx context.Context, exec boil.ContextExecutor, related ...*ReportAction) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.ReviewerID, nil)
+		if rel.R != nil {
+			rel.R.Reviewer = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("reviewer_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.ReviewerReportActions {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.ReviewerReportActions)
+			if ln > 1 && i < ln-1 {
+				o.R.ReviewerReportActions[i] = o.R.ReviewerReportActions[ln-1]
+			}
+			o.R.ReviewerReportActions = o.R.ReviewerReportActions[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
 // AddRevealDecisions adds the given related objects to the existing relationships
 // of the user, optionally inserting them as new records.
 // Appends related to o.R.RevealDecisions.
@@ -5148,6 +6005,112 @@ func (o *User) AddTargetSwipes(ctx context.Context, exec boil.ContextExecutor, i
 			}
 		} else {
 			rel.R.Target = o
+		}
+	}
+	return nil
+}
+
+// AddBlockedUserUserBlocks adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.BlockedUserUserBlocks.
+// Sets related.R.BlockedUser appropriately.
+func (o *User) AddBlockedUserUserBlocks(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserBlock) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.BlockedUserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"user_blocks\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"blocked_user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, userBlockPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.BlockerUserID, rel.BlockedUserID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.BlockedUserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			BlockedUserUserBlocks: related,
+		}
+	} else {
+		o.R.BlockedUserUserBlocks = append(o.R.BlockedUserUserBlocks, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &userBlockR{
+				BlockedUser: o,
+			}
+		} else {
+			rel.R.BlockedUser = o
+		}
+	}
+	return nil
+}
+
+// AddBlockerUserUserBlocks adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.BlockerUserUserBlocks.
+// Sets related.R.BlockerUser appropriately.
+func (o *User) AddBlockerUserUserBlocks(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserBlock) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.BlockerUserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"user_blocks\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"blocker_user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, userBlockPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.BlockerUserID, rel.BlockedUserID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.BlockerUserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			BlockerUserUserBlocks: related,
+		}
+	} else {
+		o.R.BlockerUserUserBlocks = append(o.R.BlockerUserUserBlocks, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &userBlockR{
+				BlockerUser: o,
+			}
+		} else {
+			rel.R.BlockerUser = o
 		}
 	}
 	return nil
@@ -5636,6 +6599,112 @@ func (o *User) AddUserProfileVisibilities(ctx context.Context, exec boil.Context
 			}
 		} else {
 			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddReportedUserUserReports adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.ReportedUserUserReports.
+// Sets related.R.ReportedUser appropriately.
+func (o *User) AddReportedUserUserReports(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserReport) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.ReportedUserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"user_reports\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"reported_user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, userReportPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.ReportedUserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			ReportedUserUserReports: related,
+		}
+	} else {
+		o.R.ReportedUserUserReports = append(o.R.ReportedUserUserReports, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &userReportR{
+				ReportedUser: o,
+			}
+		} else {
+			rel.R.ReportedUser = o
+		}
+	}
+	return nil
+}
+
+// AddReporterUserUserReports adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.ReporterUserUserReports.
+// Sets related.R.ReporterUser appropriately.
+func (o *User) AddReporterUserUserReports(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserReport) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.ReporterUserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"user_reports\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"reporter_user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, userReportPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.ReporterUserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			ReporterUserUserReports: related,
+		}
+	} else {
+		o.R.ReporterUserUserReports = append(o.R.ReporterUserUserReports, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &userReportR{
+				ReporterUser: o,
+			}
+		} else {
+			rel.R.ReporterUser = o
 		}
 	}
 	return nil

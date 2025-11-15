@@ -17,6 +17,7 @@ type Config struct {
 	LogLevel                   string `mapstructure:"LOG_LEVEL" yaml:"log_level"`
 	Env                        string `mapstructure:"ENV" yaml:"env" validate:"required"`
 	JwtSecret                  string `mapstructure:"JWT_SECRET" yaml:"jwt_secret" validate:"required"`
+	AdminAPIKey                string `mapstructure:"ADMIN_API_KEY" yaml:"admin_api_key"`
 	AWSRegion                  string `mapstructure:"AWS_REGION" yaml:"aws_region" validate:"required"`
 	AWSRekognitionRegion       string `mapstructure:"AWS_REKOGNITION_REGION" yaml:"aws_rekognition_region" validate:"required"`
 	AWSAccessKeyID             string `mapstructure:"AWS_ACCESS_KEY_ID" yaml:"aws_access_key_id" validate:"required"`
@@ -53,6 +54,7 @@ func LoadConfig() (*Config, error) {
 		DatabaseURL:                viper.GetString("DATABASE_URL"),
 		LogLevel:                   viper.GetString("LOG_LEVEL"),
 		JwtSecret:                  viper.GetString("JWT_SECRET"),
+		AdminAPIKey:                viper.GetString("ADMIN_API_KEY"),
 		Env:                        viper.GetString("ENV"),
 		AWSRegion:                  viper.GetString("AWS_REGION"),
 		AWSAccessKeyID:             viper.GetString("AWS_ACCESS_KEY_ID"),

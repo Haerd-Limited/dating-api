@@ -1758,6 +1758,83 @@ func testUserToManyRefreshTokens(t *testing.T) {
 	}
 }
 
+func testUserToManyReviewerReportActions(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c ReportAction
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, reportActionDBTypes, false, reportActionColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, reportActionDBTypes, false, reportActionColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	queries.Assign(&b.ReviewerID, a.ID)
+	queries.Assign(&c.ReviewerID, a.ID)
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.ReviewerReportActions().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if queries.Equal(v.ReviewerID, b.ReviewerID) {
+			bFound = true
+		}
+		if queries.Equal(v.ReviewerID, c.ReviewerID) {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := UserSlice{&a}
+	if err = a.L.LoadReviewerReportActions(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.ReviewerReportActions); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.ReviewerReportActions = nil
+	if err = a.L.LoadReviewerReportActions(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.ReviewerReportActions); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
 func testUserToManyRevealDecisions(t *testing.T) {
 	var err error
 	ctx := context.Background()
@@ -2062,6 +2139,162 @@ func testUserToManyTargetSwipes(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := len(a.R.TargetSwipes); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
+func testUserToManyBlockedUserUserBlocks(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c UserBlock
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, userBlockDBTypes, false, userBlockColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, userBlockDBTypes, false, userBlockColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.BlockedUserID = a.ID
+	c.BlockedUserID = a.ID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.BlockedUserUserBlocks().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.BlockedUserID == b.BlockedUserID {
+			bFound = true
+		}
+		if v.BlockedUserID == c.BlockedUserID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := UserSlice{&a}
+	if err = a.L.LoadBlockedUserUserBlocks(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.BlockedUserUserBlocks); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.BlockedUserUserBlocks = nil
+	if err = a.L.LoadBlockedUserUserBlocks(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.BlockedUserUserBlocks); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
+func testUserToManyBlockerUserUserBlocks(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c UserBlock
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, userBlockDBTypes, false, userBlockColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, userBlockDBTypes, false, userBlockColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.BlockerUserID = a.ID
+	c.BlockerUserID = a.ID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.BlockerUserUserBlocks().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.BlockerUserID == b.BlockerUserID {
+			bFound = true
+		}
+		if v.BlockerUserID == c.BlockerUserID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := UserSlice{&a}
+	if err = a.L.LoadBlockerUserUserBlocks(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.BlockerUserUserBlocks); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.BlockerUserUserBlocks = nil
+	if err = a.L.LoadBlockerUserUserBlocks(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.BlockerUserUserBlocks); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
@@ -2392,6 +2625,162 @@ func testUserToManyUserProfileVisibilities(t *testing.T) {
 		t.Fatal(err)
 	}
 	if got := len(a.R.UserProfileVisibilities); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
+func testUserToManyReportedUserUserReports(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c UserReport
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, userReportDBTypes, false, userReportColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, userReportDBTypes, false, userReportColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.ReportedUserID = a.ID
+	c.ReportedUserID = a.ID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.ReportedUserUserReports().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.ReportedUserID == b.ReportedUserID {
+			bFound = true
+		}
+		if v.ReportedUserID == c.ReportedUserID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := UserSlice{&a}
+	if err = a.L.LoadReportedUserUserReports(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.ReportedUserUserReports); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.ReportedUserUserReports = nil
+	if err = a.L.LoadReportedUserUserReports(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.ReportedUserUserReports); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
+func testUserToManyReporterUserUserReports(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c UserReport
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, userReportDBTypes, false, userReportColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, userReportDBTypes, false, userReportColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.ReporterUserID = a.ID
+	c.ReporterUserID = a.ID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.ReporterUserUserReports().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.ReporterUserID == b.ReporterUserID {
+			bFound = true
+		}
+		if v.ReporterUserID == c.ReporterUserID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := UserSlice{&a}
+	if err = a.L.LoadReporterUserUserReports(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.ReporterUserUserReports); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.ReporterUserUserReports = nil
+	if err = a.L.LoadReporterUserUserReports(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.ReporterUserUserReports); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
@@ -3559,6 +3948,257 @@ func testUserToManyAddOpRefreshTokens(t *testing.T) {
 		}
 	}
 }
+func testUserToManyAddOpReviewerReportActions(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e ReportAction
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*ReportAction{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, reportActionDBTypes, false, strmangle.SetComplement(reportActionPrimaryKeyColumns, reportActionColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*ReportAction{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddReviewerReportActions(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if !queries.Equal(a.ID, first.ReviewerID) {
+			t.Error("foreign key was wrong value", a.ID, first.ReviewerID)
+		}
+		if !queries.Equal(a.ID, second.ReviewerID) {
+			t.Error("foreign key was wrong value", a.ID, second.ReviewerID)
+		}
+
+		if first.R.Reviewer != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.Reviewer != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.ReviewerReportActions[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.ReviewerReportActions[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.ReviewerReportActions().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+
+func testUserToManySetOpReviewerReportActions(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e ReportAction
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*ReportAction{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, reportActionDBTypes, false, strmangle.SetComplement(reportActionPrimaryKeyColumns, reportActionColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err = a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	err = a.SetReviewerReportActions(ctx, tx, false, &b, &c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err := a.ReviewerReportActions().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	err = a.SetReviewerReportActions(ctx, tx, true, &d, &e)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err = a.ReviewerReportActions().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	if !queries.IsValuerNil(b.ReviewerID) {
+		t.Error("want b's foreign key value to be nil")
+	}
+	if !queries.IsValuerNil(c.ReviewerID) {
+		t.Error("want c's foreign key value to be nil")
+	}
+	if !queries.Equal(a.ID, d.ReviewerID) {
+		t.Error("foreign key was wrong value", a.ID, d.ReviewerID)
+	}
+	if !queries.Equal(a.ID, e.ReviewerID) {
+		t.Error("foreign key was wrong value", a.ID, e.ReviewerID)
+	}
+
+	if b.R.Reviewer != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if c.R.Reviewer != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if d.R.Reviewer != &a {
+		t.Error("relationship was not added properly to the foreign struct")
+	}
+	if e.R.Reviewer != &a {
+		t.Error("relationship was not added properly to the foreign struct")
+	}
+
+	if a.R.ReviewerReportActions[0] != &d {
+		t.Error("relationship struct slice not set to correct value")
+	}
+	if a.R.ReviewerReportActions[1] != &e {
+		t.Error("relationship struct slice not set to correct value")
+	}
+}
+
+func testUserToManyRemoveOpReviewerReportActions(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e ReportAction
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*ReportAction{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, reportActionDBTypes, false, strmangle.SetComplement(reportActionPrimaryKeyColumns, reportActionColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	err = a.AddReviewerReportActions(ctx, tx, true, foreigners...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err := a.ReviewerReportActions().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 4 {
+		t.Error("count was wrong:", count)
+	}
+
+	err = a.RemoveReviewerReportActions(ctx, tx, foreigners[:2]...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err = a.ReviewerReportActions().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	if !queries.IsValuerNil(b.ReviewerID) {
+		t.Error("want b's foreign key value to be nil")
+	}
+	if !queries.IsValuerNil(c.ReviewerID) {
+		t.Error("want c's foreign key value to be nil")
+	}
+
+	if b.R.Reviewer != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if c.R.Reviewer != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if d.R.Reviewer != &a {
+		t.Error("relationship to a should have been preserved")
+	}
+	if e.R.Reviewer != &a {
+		t.Error("relationship to a should have been preserved")
+	}
+
+	if len(a.R.ReviewerReportActions) != 2 {
+		t.Error("should have preserved two relationships")
+	}
+
+	// Removal doesn't do a stable deletion for performance so we have to flip the order
+	if a.R.ReviewerReportActions[1] != &d {
+		t.Error("relationship to d should have been preserved")
+	}
+	if a.R.ReviewerReportActions[0] != &e {
+		t.Error("relationship to e should have been preserved")
+	}
+}
+
 func testUserToManyAddOpRevealDecisions(t *testing.T) {
 	var err error
 
@@ -3851,6 +4491,156 @@ func testUserToManyAddOpTargetSwipes(t *testing.T) {
 		}
 
 		count, err := a.TargetSwipes().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testUserToManyAddOpBlockedUserUserBlocks(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e UserBlock
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*UserBlock{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, userBlockDBTypes, false, strmangle.SetComplement(userBlockPrimaryKeyColumns, userBlockColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*UserBlock{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddBlockedUserUserBlocks(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.BlockedUserID {
+			t.Error("foreign key was wrong value", a.ID, first.BlockedUserID)
+		}
+		if a.ID != second.BlockedUserID {
+			t.Error("foreign key was wrong value", a.ID, second.BlockedUserID)
+		}
+
+		if first.R.BlockedUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.BlockedUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.BlockedUserUserBlocks[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.BlockedUserUserBlocks[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.BlockedUserUserBlocks().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testUserToManyAddOpBlockerUserUserBlocks(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e UserBlock
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*UserBlock{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, userBlockDBTypes, false, strmangle.SetComplement(userBlockPrimaryKeyColumns, userBlockColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*UserBlock{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddBlockerUserUserBlocks(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.BlockerUserID {
+			t.Error("foreign key was wrong value", a.ID, first.BlockerUserID)
+		}
+		if a.ID != second.BlockerUserID {
+			t.Error("foreign key was wrong value", a.ID, second.BlockerUserID)
+		}
+
+		if first.R.BlockerUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.BlockerUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.BlockerUserUserBlocks[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.BlockerUserUserBlocks[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.BlockerUserUserBlocks().Count(ctx, tx)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -4610,6 +5400,156 @@ func testUserToManyAddOpUserProfileVisibilities(t *testing.T) {
 		}
 
 		count, err := a.UserProfileVisibilities().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testUserToManyAddOpReportedUserUserReports(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e UserReport
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*UserReport{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, userReportDBTypes, false, strmangle.SetComplement(userReportPrimaryKeyColumns, userReportColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*UserReport{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddReportedUserUserReports(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.ReportedUserID {
+			t.Error("foreign key was wrong value", a.ID, first.ReportedUserID)
+		}
+		if a.ID != second.ReportedUserID {
+			t.Error("foreign key was wrong value", a.ID, second.ReportedUserID)
+		}
+
+		if first.R.ReportedUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.ReportedUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.ReportedUserUserReports[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.ReportedUserUserReports[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.ReportedUserUserReports().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testUserToManyAddOpReporterUserUserReports(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e UserReport
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*UserReport{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, userReportDBTypes, false, strmangle.SetComplement(userReportPrimaryKeyColumns, userReportColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*UserReport{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddReporterUserUserReports(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.ReporterUserID {
+			t.Error("foreign key was wrong value", a.ID, first.ReporterUserID)
+		}
+		if a.ID != second.ReporterUserID {
+			t.Error("foreign key was wrong value", a.ID, second.ReporterUserID)
+		}
+
+		if first.R.ReporterUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.ReporterUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.ReporterUserUserReports[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.ReporterUserUserReports[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.ReporterUserUserReports().Count(ctx, tx)
 		if err != nil {
 			t.Fatal(err)
 		}

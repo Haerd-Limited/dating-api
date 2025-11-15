@@ -22,6 +22,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
+	"github.com/Haerd-Limited/dating-api/internal/safety"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
@@ -38,6 +39,7 @@ type service struct {
 	conversationService conversation.Service
 	interactionRepo     storage.InteractionRepository
 	discoverService     discover.Service
+	safetyService       safety.Service
 	uow                 uow.UoW
 	hub                 realtime.Broadcaster
 	notificationService notification.Service
@@ -49,6 +51,7 @@ func NewInteractionService(
 	conversationService conversation.Service,
 	interactionRepo storage.InteractionRepository,
 	discoverService discover.Service,
+	safetyService safety.Service,
 	uow uow.UoW,
 	hub realtime.Broadcaster,
 	notificationService notification.Service,
@@ -59,6 +62,7 @@ func NewInteractionService(
 		profileService:      profileService,
 		conversationService: conversationService,
 		discoverService:     discoverService,
+		safetyService:       safetyService,
 		uow:                 uow,
 		hub:                 hub,
 		notificationService: notificationService,
@@ -73,6 +77,7 @@ var (
 	ErrLikedAVhwUser                           = errors.New("user liked a vhw user")
 	ErrMissingRequiredFieldsForLikeWithMessage = errors.New("message, message type, prompt id and idempotency key are required for sending a like with a message")
 	ErrWeeklySuperlikeLimitReached             = errors.New("weekly superlike limit reached")
+	ErrBlockedUser                             = errors.New("cannot interact with a blocked user")
 )
 
 const (
@@ -95,6 +100,17 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 	matchable, err := is.interactionRepo.CheckIfMatchable(ctx, swipe.UserID, swipe.TargetUserID)
 	if err != nil {
 		return "", fmt.Errorf("check if matchable userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+	}
+
+	if is.safetyService != nil {
+		blocked, blockErr := is.safetyService.IsBlocked(ctx, swipe.UserID, swipe.TargetUserID)
+		if blockErr != nil {
+			return "", fmt.Errorf("check block status userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, blockErr)
+		}
+
+		if blocked {
+			return "", ErrBlockedUser
+		}
 	}
 
 	// todo(high-priority): allow voice note swipes
@@ -288,6 +304,17 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 	var likes domain.Likes
 
 	for _, id := range likesUserIDs {
+		if is.safetyService != nil {
+			isBlocked, blockErr := is.safetyService.IsBlocked(ctx, userID, id)
+			if blockErr != nil {
+				return domain.Likes{}, fmt.Errorf("check block status userID=%s targetUserID=%s: %w", userID, id, blockErr)
+			}
+
+			if isBlocked {
+				continue
+			}
+		}
+
 		alreadyMatched, likesErr := is.interactionRepo.AlreadyMatched(ctx, userID, id)
 		if likesErr != nil {
 			return domain.Likes{}, fmt.Errorf("check if already matched userID=%s targetUserID=%s: %w", userID, id, likesErr)

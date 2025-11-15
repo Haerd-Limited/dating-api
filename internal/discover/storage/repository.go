@@ -245,6 +245,15 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
                    AND s.target_id = ?
                    AND s.action IN (?, ?)
             )`, userID, constants.ActionLike, constants.ActionSuperlike),
+
+		// exclude blocked relationships (either direction)
+		qm.Where(`
+            NOT EXISTS (
+                SELECT 1
+                  FROM user_blocks b
+                 WHERE (b.blocker_user_id = ? AND b.blocked_user_id = user_profiles.user_id)
+                    OR (b.blocker_user_id = user_profiles.user_id AND b.blocked_user_id = ?)
+            )`, userID, userID),
 	}
 
 	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
@@ -313,6 +322,15 @@ func (r *discoverRepository) GetDiscoverFeedCandidatesWithFilters(
                    AND s.target_id = ?
                    AND s.action IN (?, ?)
             )`, userID, constants.ActionLike, constants.ActionSuperlike),
+
+		// exclude blocked relationships (either direction)
+		qm.Where(`
+            NOT EXISTS (
+                SELECT 1
+                  FROM user_blocks b
+                 WHERE (b.blocker_user_id = ? AND b.blocked_user_id = user_profiles.user_id)
+                    OR (b.blocker_user_id = user_profiles.user_id AND b.blocked_user_id = ?)
+            )`, userID, userID),
 	}
 
 	// Apply filters if provided

@@ -2,6 +2,7 @@ package lookup
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/zap"
 
@@ -22,6 +23,7 @@ type Service interface {
 	GetGenders(ctx context.Context) ([]domain.Gender, error)
 	GetDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error)
 	GetFamilyStatus(ctx context.Context) ([]domain.FamilyStatus, error)
+	GetReportCategories(ctx context.Context) ([]domain.ReportCategory, error)
 }
 
 type lookupService struct {
@@ -136,4 +138,13 @@ func (s *lookupService) GetDatingIntentions(ctx context.Context) ([]domain.Datin
 	}
 
 	return mapper.MapDatingIntentionsToDomain(datingIntentionsEntities), nil
+}
+
+func (s *lookupService) GetReportCategories(ctx context.Context) ([]domain.ReportCategory, error) {
+	reportCategoriesEntities, err := s.lookupRepo.GetReportCategories(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get report categories: %w", err)
+	}
+
+	return mapper.MapReportCategoryEntitiesToDomain(reportCategoriesEntities), nil
 }

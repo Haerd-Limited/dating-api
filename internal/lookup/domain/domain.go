@@ -56,3 +56,10 @@ type EducationLevel struct {
 	ID    int16
 	Label string
 }
+
+type ReportCategory struct {
+	ID        int16
+	Key       string
+	Label     string
+	SortOrder int16
+}

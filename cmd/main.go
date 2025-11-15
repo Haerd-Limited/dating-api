@@ -42,6 +42,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profilestorage "github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
+	"github.com/Haerd-Limited/dating-api/internal/safety"
+	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -106,6 +108,7 @@ func main() {
 	discoverRepo := discoverstorage.NewDiscoverRepository(db)
 	conversationRepo := conversationstorage.NewConversationRepository(db)
 	interactionRepo := interactionstorage.NewInteractionRepository(db)
+	safetyRepo := safetystorage.NewRepository(db)
 	userRepo := storage.NewUserRepository(db)
 	authRepo := authstorage.NewAuthRepository(db)
 	matchingRepo := matchingstorage.NewMatchingRepository(db, logger)
@@ -141,7 +144,8 @@ func main() {
 
 	notificationService.StartWeeklyRefreshScheduler(ctx)
 	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork, notificationService)
-	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, unitOfWork, hub, notificationService)
+	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub)
+	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService)
 	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
@@ -163,6 +167,8 @@ func main() {
 		verificationService,
 		matchingService,
 		notificationService,
+		safetyService,
+		cfg.AdminAPIKey,
 	)
 
 	// Start server with context

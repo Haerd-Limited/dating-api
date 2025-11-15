@@ -98,6 +98,25 @@ func AllVisibilityLevel() []string {
 	}
 }
 
+// Enum values for ReportStatus
+const (
+	ReportStatusPending   string = "pending"
+	ReportStatusInReview  string = "in_review"
+	ReportStatusResolved  string = "resolved"
+	ReportStatusEscalated string = "escalated"
+	ReportStatusDismissed string = "dismissed"
+)
+
+func AllReportStatus() []string {
+	return []string{
+		ReportStatusPending,
+		ReportStatusInReview,
+		ReportStatusResolved,
+		ReportStatusEscalated,
+		ReportStatusDismissed,
+	}
+}
+
 // Enum values for VerificationType
 const (
 	VerificationTypePhoto string = "photo"

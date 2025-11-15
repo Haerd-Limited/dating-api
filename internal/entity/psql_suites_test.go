@@ -56,6 +56,10 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Religions", testReligionsUpsert)
 
+	t.Run("ReportActions", testReportActionsUpsert)
+
+	t.Run("ReportCategories", testReportCategoriesUpsert)
+
 	t.Run("RevealDecisions", testRevealDecisionsUpsert)
 
 	t.Run("RevealRequests", testRevealRequestsUpsert)
@@ -78,11 +82,15 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("UserAnswers", testUserAnswersUpsert)
 
+	t.Run("UserBlocks", testUserBlocksUpsert)
+
 	t.Run("UserPreferences", testUserPreferencesUpsert)
 
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesUpsert)
 
 	t.Run("UserProfiles", testUserProfilesUpsert)
+
+	t.Run("UserReports", testUserReportsUpsert)
 
 	t.Run("UserThemes", testUserThemesUpsert)
 

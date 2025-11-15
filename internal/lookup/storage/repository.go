@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
@@ -32,6 +33,7 @@ type LookupRepository interface {
 	GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error)
 	GetFamilyPlans(ctx context.Context) (entity.FamilyPlanSlice, error)
 	GetFamilyStatus(ctx context.Context) (entity.FamilyStatusSlice, error)
+	GetReportCategories(ctx context.Context) (entity.ReportCategorySlice, error)
 }
 
 type lookupRepository struct {
@@ -51,6 +53,17 @@ func (lr *lookupRepository) GetFamilyStatus(ctx context.Context) (entity.FamilyS
 	}
 
 	return familyStatus, nil
+}
+
+func (lr *lookupRepository) GetReportCategories(ctx context.Context) (entity.ReportCategorySlice, error) {
+	reportCategories, err := entity.ReportCategories(
+		qm.OrderBy("sort_order ASC, id ASC"),
+	).All(ctx, lr.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return reportCategories, nil
 }
 
 func (lr *lookupRepository) GetFamilyPlans(ctx context.Context) (entity.FamilyPlanSlice, error) {

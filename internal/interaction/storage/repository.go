@@ -154,6 +154,7 @@ func (is *repository) GetMatches(ctx context.Context, userID string) ([]*entity.
 		qm.Or2(
 			entity.MatchWhere.UserA.EQ(userID),
 		),
+		entity.MatchWhere.Status.EQ(string(entity.MatchStatusActive)),
 	).All(ctx, is.db)
 	if err != nil {
 		return nil, err

@@ -192,3 +192,21 @@ func MapDatingIntentionsToDomain(di []*entity.DatingIntention) []domain.DatingIn
 
 	return result
 }
+
+func MapReportCategoryEntitiesToDomain(rows entity.ReportCategorySlice) []domain.ReportCategory {
+	if rows == nil {
+		return nil
+	}
+
+	result := make([]domain.ReportCategory, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.ReportCategory{
+			ID:        row.ID,
+			Key:       row.Key,
+			Label:     row.Label,
+			SortOrder: row.SortOrder,
+		})
+	}
+
+	return result
+}

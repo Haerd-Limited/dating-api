@@ -100,3 +100,14 @@ type EducationLevel struct {
 	ID    int16  `json:"id"`
 	Label string `json:"label"`
 }
+
+type GetReportCategoriesResponse struct {
+	ReportCategories []ReportCategory `json:"report_categories"`
+}
+
+type ReportCategory struct {
+	ID        int16  `json:"id"`
+	Key       string `json:"key"`
+	Label     string `json:"label"`
+	SortOrder int16  `json:"sort_order"`
+}

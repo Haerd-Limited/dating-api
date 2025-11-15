@@ -18,6 +18,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile"
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime"
+	apisafety "github.com/Haerd-Limited/dating-api/internal/api/safety"
 	"github.com/Haerd-Limited/dating-api/internal/api/verification"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
@@ -31,6 +32,7 @@ import (
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internalrealtime "github.com/Haerd-Limited/dating-api/internal/realtime"
+	internalsafety "github.com/Haerd-Limited/dating-api/internal/safety"
 	internalverification "github.com/Haerd-Limited/dating-api/internal/verification"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
@@ -50,6 +52,8 @@ func New(
 	verificationService internalverification.Service,
 	matchingService internalmatching.Service,
 	notificationService internalnotification.Service,
+	safetyService internalsafety.Service,
+	adminAPIKey string,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -70,6 +74,7 @@ func New(
 	wsHandler := realtime.NewWsHandler(logger, hub, conversationService)
 	verificationHandler := verification.NewVerificationHandler(logger, verificationService)
 	matchingHandler := matching.NewMatchingHandler(logger, matchingService)
+	safetyHandler := apisafety.NewHandler(logger, safetyService)
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
@@ -100,6 +105,12 @@ func New(
 					r.Get("/education-levels", lookupHandler.GetEducationLevels())
 					r.Get("/family-plans", lookupHandler.GetFamilyPlans())
 					r.Get("/family-status", lookupHandler.GetFamilyStatus())
+					r.Get("/report-categories", lookupHandler.GetReportCategories())
+				})
+
+				r.Route("/safety", func(r chi.Router) {
+					r.Post("/block", safetyHandler.Block())
+					r.Post("/report", safetyHandler.Report())
 				})
 
 				r.Route(
@@ -183,6 +194,17 @@ func New(
 						r.Post("/photo/complete", verificationHandler.Complete())
 					})
 					// TODO(high-priority): create delete account endpoint that deletes all user data from DB and S3 bucket
+				})
+
+			})
+
+			r.Route("/admin", func(r chi.Router) {
+				r.Use(haerdmiddleware.AdminMiddleware(adminAPIKey))
+
+				r.Route("/reports", func(r chi.Router) {
+					r.Get("/", safetyHandler.AdminListReports())
+					r.Get("/{reportID}", safetyHandler.AdminGetReport())
+					r.Post("/{reportID}/resolve", safetyHandler.AdminResolveReport())
 				})
 			})
 		},

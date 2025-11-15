@@ -29,6 +29,8 @@ var TableNames = struct {
 	Questions                string
 	RefreshTokens            string
 	Religions                string
+	ReportActions            string
+	ReportCategories         string
 	RevealDecisions          string
 	RevealRequests           string
 	ScoringBonuses           string
@@ -40,12 +42,14 @@ var TableNames = struct {
 	SpatialRefSys            string
 	Swipes                   string
 	UserAnswers              string
+	UserBlocks               string
 	UserEthnicities          string
 	UserInterests            string
 	UserLanguages            string
 	UserPreferences          string
 	UserProfileVisibility    string
 	UserProfiles             string
+	UserReports              string
 	UserTheme                string
 	UserVerificationStatus   string
 	Users                    string
@@ -79,6 +83,8 @@ var TableNames = struct {
 	Questions:                "questions",
 	RefreshTokens:            "refresh_tokens",
 	Religions:                "religions",
+	ReportActions:            "report_actions",
+	ReportCategories:         "report_categories",
 	RevealDecisions:          "reveal_decisions",
 	RevealRequests:           "reveal_requests",
 	ScoringBonuses:           "scoring_bonuses",
@@ -90,12 +96,14 @@ var TableNames = struct {
 	SpatialRefSys:            "spatial_ref_sys",
 	Swipes:                   "swipes",
 	UserAnswers:              "user_answers",
+	UserBlocks:               "user_blocks",
 	UserEthnicities:          "user_ethnicities",
 	UserInterests:            "user_interests",
 	UserLanguages:            "user_languages",
 	UserPreferences:          "user_preferences",
 	UserProfileVisibility:    "user_profile_visibility",
 	UserProfiles:             "user_profiles",
+	UserReports:              "user_reports",
 	UserTheme:                "user_theme",
 	UserVerificationStatus:   "user_verification_status",
 	Users:                    "users",

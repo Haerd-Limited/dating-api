@@ -22,6 +22,7 @@ type ConversationRepository interface {
 	GetLastMessageByID(ctx context.Context, lastMessageID int64) (*entity.Message, error)
 	CreateConversation(ctx context.Context, userA, userB string, tx *sql.Tx) (*entity.Conversation, error)
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
+	SetMatchStatus(ctx context.Context, tx *sql.Tx, userA, userB, status string) error
 	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entity.Message) (*entity.Message, error)
 	GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error)
 	GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error)
@@ -43,6 +44,7 @@ type ConversationRepository interface {
 	SaveRevealDecision(ctx context.Context, conversationID, userID string, decision string) error
 	GetRevealDecisions(ctx context.Context, conversationID string) ([]*entity.RevealDecision, error)
 	SetDateMode(ctx context.Context, conversationID string, dateMode bool) error
+	ArchiveConversationBetween(ctx context.Context, tx *sql.Tx, userA, userB string) (*string, error)
 	MarkConversationMessagesAsRead(ctx context.Context, conversationID, userID string, tx *sql.Tx) error
 	GetUnreadCount(ctx context.Context, conversationID, userID string) (int, error)
 }
@@ -510,12 +512,79 @@ func (r *repository) GetMatches(ctx context.Context, userID string) ([]*entity.M
 		qm.Or2(
 			entity.MatchWhere.UserA.EQ(userID),
 		),
+		entity.MatchWhere.Status.EQ(string(entity.MatchStatusActive)),
 	).All(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
 
 	return matches, nil
+}
+
+func (r *repository) SetMatchStatus(ctx context.Context, tx *sql.Tx, userA, userB, status string) error {
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
+	match, err := entity.Matches(
+		qm.Where("(user_a = ? AND user_b = ?) OR (user_a = ? AND user_b = ?)", userA, userB, userB, userA),
+		qm.For("UPDATE"),
+	).One(ctx, exec)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+
+		return fmt.Errorf("get match for status update: %w", err)
+	}
+
+	match.Status = status
+
+	_, err = match.Update(ctx, exec, boil.Whitelist(entity.MatchColumns.Status))
+	if err != nil {
+		return fmt.Errorf("update match status: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) ArchiveConversationBetween(ctx context.Context, tx *sql.Tx, userA, userB string) (*string, error) {
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
+	convo, err := entity.Conversations(
+		qm.Where("(user_a = ? AND user_b = ?) OR (user_a = ? AND user_b = ?)", userA, userB, userB, userA),
+		qm.For("UPDATE"),
+	).One(ctx, exec)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("get conversation for archive: %w", err)
+	}
+
+	convo.VisibilityState = constants.VisibilityStateHidden
+	convo.RevealAt = null.Time{}
+
+	_, err = convo.Update(ctx, exec, boil.Whitelist(
+		entity.ConversationColumns.VisibilityState,
+		entity.ConversationColumns.RevealAt,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("update conversation visibility state: %w", err)
+	}
+
+	id := convo.ID
+
+	return &id, nil
 }
 
 func (r *repository) CreateRevealRequest(ctx context.Context, conversationID, userID string, expiresAt time.Time) error {
