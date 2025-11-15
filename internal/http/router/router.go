@@ -33,6 +33,7 @@ import (
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internalrealtime "github.com/Haerd-Limited/dating-api/internal/realtime"
 	internalsafety "github.com/Haerd-Limited/dating-api/internal/safety"
+	internaluser "github.com/Haerd-Limited/dating-api/internal/user"
 	internalverification "github.com/Haerd-Limited/dating-api/internal/verification"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 )
@@ -53,6 +54,7 @@ func New(
 	matchingService internalmatching.Service,
 	notificationService internalnotification.Service,
 	safetyService internalsafety.Service,
+	userService internaluser.Service,
 	adminAPIKey string,
 ) http.Handler {
 	// Create a new Chi router.
@@ -63,7 +65,7 @@ func New(
 	router.Use(middleware.Recoverer) // recovers from panics
 
 	authHandler := auth.NewAuthHandler(logger, authService)
-	profileHandler := profile.NewProfileHandler(logger, profileService)
+	profileHandler := profile.NewProfileHandler(logger, profileService, userService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	notificationHandler := apinotification.NewNotificationHandler(logger, notificationService)
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
@@ -187,15 +189,14 @@ func New(
 				r.Route("/users/me", func(r chi.Router) {
 					r.Get("/", profileHandler.GetMyProfile())
 					r.Patch("/", profileHandler.UpdateMyProfile())
-					r.Patch("/verify", profileHandler.Verify()) // Simple version that doesnt use AWS. call when not in uat/prod.
+					r.Patch("/verify", profileHandler.Verify())   // Simple version that doesnt use AWS. call when not in uat/prod.
+					r.Delete("/", profileHandler.DeleteAccount()) // Delete account and all user data
 
 					r.Route("/verification", func(r chi.Router) {
 						r.Post("/photo/start", verificationHandler.Start()) // returns {session_id, region}
 						r.Post("/photo/complete", verificationHandler.Complete())
 					})
-					// TODO(high-priority): create delete account endpoint that deletes all user data from DB and S3 bucket
 				})
-
 			})
 
 			r.Route("/admin", func(r chi.Router) {

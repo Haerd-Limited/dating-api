@@ -88,10 +88,12 @@ func (h *handler) Report() http.HandlerFunc {
 		var req dto.ReportRequest
 		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
 			h.logger.Sugar().Warnf("failed to decode and validate report request body : %s", err.Error())
+
 			if strings.Contains(err.Error(), "ReportRequest.SubjectType") && strings.Contains(err.Error(), "oneof") {
 				render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("subject_type must be one of: user, message, profile"))
 				return
 			}
+
 			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid request payload"))
 
 			return

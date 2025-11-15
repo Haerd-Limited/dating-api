@@ -21,6 +21,7 @@ type UserRepository interface {
 	CheckUserExistenceByPhoneNumber(ctx context.Context, number string) (bool, error)
 	GetUserByID(ctx context.Context, id string) (*entity.User, error)
 	UpdateUser(ctx context.Context, e *entity.User, cols []string) error
+	DeleteUser(ctx context.Context, userID string) error
 }
 
 type userRepository struct {
@@ -121,4 +122,14 @@ func (r *userRepository) CheckUserExistenceByPhoneNumber(ctx context.Context, nu
 	}
 
 	return exists, nil
+}
+
+// DeleteUser deletes a user by ID. This will cascade delete all related records.
+func (r *userRepository) DeleteUser(ctx context.Context, userID string) error {
+	_, err := entity.Users(entity.UserWhere.ID.EQ(userID)).DeleteAll(ctx, r.db)
+	if err != nil {
+		return fmt.Errorf("failed to delete user %s: %w", userID, err)
+	}
+
+	return nil
 }

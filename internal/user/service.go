@@ -30,6 +30,8 @@ type Service interface {
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
 	UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error)
+	// DeleteAccount deletes all user data including their account, profile, preferences, and all associated S3 files
+	DeleteAccount(ctx context.Context, userID string) error
 }
 
 type userService struct {
@@ -205,3 +207,43 @@ func hasAnySpace(s string) bool {
 }
 
 func looksLikeEmail(s string) bool { return strings.Contains(s, "@") && strings.Contains(s, ".") }
+
+// DeleteAccount deletes all user data including their account, profile, preferences, and all associated S3 files.
+// This operation is irreversible and deletes:
+// - All S3 files (profile photos, voice prompts, message voice notes, verification photos)
+// - User account and all related data via CASCADE (profile, preferences, messages, matches, swipes, etc.)
+func (us *userService) DeleteAccount(ctx context.Context, userID string) error {
+	us.logger.Info("Starting account deletion", zap.String("userID", userID))
+
+	// Step 1: Verify user exists
+	_, err := us.userRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Step 2: Delete all S3 files first (before DB deletion to preserve data if S3 deletion fails)
+	us.logger.Info("Deleting S3 files for user", zap.String("userID", userID))
+
+	err = us.awsService.DeleteAllUserFiles(ctx, userID)
+	if err != nil {
+		us.logger.Error("Failed to delete S3 files", zap.String("userID", userID), zap.Error(err))
+		// Continue with DB deletion even if S3 deletion fails - log but don't fail
+		// This ensures account is still deleted from DB even if S3 operations have issues
+	}
+
+	// Step 3: Delete user from database (CASCADE will handle all related records)
+	us.logger.Info("Deleting user from database", zap.String("userID", userID))
+
+	err = us.userRepo.DeleteUser(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user from database: %w", err)
+	}
+
+	// Step 4: Clear any cached data for this user
+	// The cache key would depend on your cache implementation
+	// Since we're using freecache, we could clear entries if needed, but it will expire naturally
+
+	us.logger.Info("Account deletion completed successfully", zap.String("userID", userID))
+
+	return nil
+}

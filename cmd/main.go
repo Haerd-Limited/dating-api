@@ -168,6 +168,7 @@ func main() {
 		matchingService,
 		notificationService,
 		safetyService,
+		userService,
 		cfg.AdminAPIKey,
 	)
 

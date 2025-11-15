@@ -13,6 +13,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
+	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
@@ -28,20 +29,24 @@ type Handler interface {
 	UpdateMyProfile() http.HandlerFunc
 	Verify() http.HandlerFunc
 	GetVoicePromptTranscript() http.HandlerFunc
+	DeleteAccount() http.HandlerFunc
 }
 
 type handler struct {
 	logger         *zap.Logger
 	profileService profile.Service
+	userService    user.Service
 }
 
 func NewProfileHandler(
 	logger *zap.Logger,
 	profileService profile.Service,
+	userService user.Service,
 ) Handler {
 	return &handler{
 		logger:         logger,
 		profileService: profileService,
+		userService:    userService,
 	}
 }
 
@@ -173,6 +178,26 @@ func (h *handler) GetVoicePromptTranscript() http.HandlerFunc {
 		render.Json(w, http.StatusOK, map[string]string{
 			"transcript": transcript,
 		})
+	}
+}
+
+func (h *handler) DeleteAccount() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		err := h.userService.DeleteAccount(ctx, userID)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "DeleteAccount", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Account successfully deleted"))
 	}
 }
 
