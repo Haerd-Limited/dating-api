@@ -5,8 +5,15 @@ This document describes Haerd's standard way of developing and contributing to t
 Notes:
 - '//...' represents omitted code to make the examples easier to understand
 
+## Table of Contents
+* [Architecture Overview](#architecture-overview)
+* [Creating a brand new feature without utilising existing services](#creating-a-brand-new-feature-without-utilising-existing-services)
+* [Creating a brand new feature utilising existing services](#creating-a-brand-new-feature-utilising-existing-services)
+* [FAQ](#faq)
+
 ## Architecture Overview
-![alt text](https://github.com/Haerd-Limited/dating-api/tree/main/images/clean-arch.png?raw=true)
+
+<img src="https://github.com/Haerd-Limited/dating-api/tree/main/images/clean-arch.png"/>
 
 In this repository we follow a clean/domain driven design architecture. Mentally you can think of the API/repository being split into 3 layers:
 - **The Handler Layer** - Contains handler methods that handles requests sent to the router found in 'internal/http/router/router.go'. Responsible for doing things like :
@@ -270,11 +277,11 @@ func NewInteractionRepository(db *sqlx.DB) InteractionRepository {
 
 All of the above allows us to follow SOLID principles and makes it easier to collaborate with others. 
 
-## Creating a brand new feature without utilising existing services 
+# Creating a brand new feature without utilising existing services 
 
 
 
-## Creating a brand new feature utilising existing services 
+# Creating a brand new feature utilising existing services 
 
 
 # FAQ
