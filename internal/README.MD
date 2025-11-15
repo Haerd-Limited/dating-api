@@ -18,7 +18,7 @@ Notes:
 In this repository we follow a clean/domain driven design architecture. Mentally you can think of the API/repository being split into 3 layers:
 - **The Handler Layer** - Contains handler methods that handles requests sent to the router found in 'internal/http/router/router.go'. Responsible for doing things like :
 
-1. Deserialising JSON into Go request structs and mapping these request structs to the relevant domain struct object which is then passed as an argument to service method calls. 
+1. Deserialising JSON into Go request structs and mapping these request structs to the relevant domain model which is then passed as an argument to service method calls. 
 
 ```golang
 //code from 'internal/api/interaction/handler.go'.
@@ -98,12 +98,12 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 }
 ```
 
-- **The Service Layer** - Sits in between the **handler layer** and **repository layer**. It's where business logic is applied to domain objects and these domain objects are converted to and from entity objects. Services can also carry out more complex request validation for when "github.com/go-playground/validator/v10" is not enough.
+- **The Service Layer** - Sits in between the **handler layer** and **repository layer**. It's where business logic is applied to domain models and these domain models are converted to and from entity objects. Services can also carry out more complex request validation for when "github.com/go-playground/validator/v10" is not enough.
 
 ```golang
 //code from 'internal/interaction/service.go'
 
-//Notice how the service method parameter is a domain object 'domain.Swipe'
+//Notice how the service method parameter is a domain model 'domain.Swipe'
 func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error) {
 	//...
 	matchable, err := is.interactionRepo.CheckIfMatchable(ctx, swipe.UserID, swipe.TargetUserID)
@@ -112,7 +112,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 	}
 
 	//...
-    // Notice how a function has been made to further validate the domain object incase the handler layer couldn't do all checks.
+    // Notice how a function has been made to further validate the domain model incase the handler layer couldn't do all checks.
 	err = is.validateSwipe(ctx, swipe, matchable)
 	if err != nil {
 		return "", fmt.Errorf("validate swipe userID=%s : %w", swipe.UserID, err)
@@ -126,7 +126,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 		if !matchable {
 			//...
-            //Notice how the swipe domain object is converted/mapped into an entity object before being passed to repository methods.
+            //Notice how the swipe domain model is converted/mapped into an entity object before being passed to repository methods.
             err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
 			if err != nil {
 				return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
@@ -159,7 +159,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 }
 ```
 
-- **The Repository Layer** - The closest layer to the database. Contains methods that are communicate with the database. Responsible for providing entity objects to the *service layer* so business logic can be applied to it. We generate the entity objects using 'github.com/aarondl/sqlboiler/v4' and the generate files and objects can be found in the 'internal/entity' folder.
+- **The Repository Layer** - The closest layer to the database. Contains methods that are communicate with the database. Responsible for providing entity objects to the *service layer* so business logic can be applied to its domain model equivalent. We generate the entity objects using 'github.com/aarondl/sqlboiler/v4' and the generate files and objects can be found in the 'internal/entity' folder.
 
 ```golang
 //Code from 'internal/interaction/storage/repository.go'
@@ -277,6 +277,61 @@ func NewInteractionRepository(db *sqlx.DB) InteractionRepository {
 
 All of the above allows us to follow SOLID principles and makes it easier to collaborate with others. 
 
+
+Everything, like other golang codebases, is initialised and starts from the main.go file. Note that not everything has to be instantiated directly in the main.go file. Sometimes things can be abstracted into their own folders and then be imported instead to keep the main.go file small. for example in our codebase, we create the handlers and router endpoints inside internal/http/router/router.go
+
+```golang
+//
+/* code from cmd/main.go. Lots of code has been removed to make it easier to read. If you read this then go to the actual main.go file,
+ you'll notice the actual code is the same as below but just repeated multiple times for difference domains e.g. conversation domain, 
+ */
+package main
+
+import (
+	//...
+)
+
+func main() {
+	//...
+	cfg, err := config.LoadConfig()
+	//..
+
+	logger := commonlogger.New(cfg)
+
+	// 1. create the database. the main dependecy for ALL domain repositories
+	db, err := sqlx.Connect("postgres", cfg.DatabaseURL)
+	//...
+
+    // 2. create the 'interaction domain' repository and pass in the database it needs to do its job
+	interactionRepo := interactionstorage.NewInteractionRepository(db)
+	//...
+
+    //3. create the 'interaction' service. passing in it's dependencies such as other services and repositories (the creation of the other services can be seen in the actual main.go file)
+	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService)
+	//...
+
+    //4. pass the service to the router so that the handlers and endpoints can be created inside router.go
+	mux := router.New(
+		logger,
+		cfg.JwtSecret,
+		interactionService,
+	)
+
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", cfg.Port),
+		Handler: mux,
+	}
+
+	go func() {
+		logger.Sugar().Infof("Server starting on port %s", cfg.Port)
+
+		err = server.ListenAndServe()
+		//...
+	}()
+
+	//...
+}
+```
 # Creating a brand new feature without utilising existing services 
 
 
@@ -285,6 +340,100 @@ All of the above allows us to follow SOLID principles and makes it easier to col
 
 
 # FAQ
+
+## What's is a domain?
+
+A domain is the business area your software addresses. It includes the concepts, rules, and processes that matter to the business, independent of technical details.
+
+### Domains in the Codebase
+Your codebase organizes domains as separate modules. Each domain has:
+- Domain models (in domain/ subdirectories)
+- Business logic (in service.go)
+- Data access (in storage/repository.go)
+- API handlers (in api/{domain}/handler.go)
+
+### Examples from the Codebase
+1. **Interaction Domain**
+The interaction domain handles swipes, likes, and passes.
+**Domain Model (internal/interaction/domain/domain.go)**:
+```golang
+type Swipe struct {
+	TargetUserID   string
+	Action         string
+	PromptID       *int64
+	UserID         string
+	Message        *string
+	MessageType    *string
+	VoiceNoteURL   *string
+	IdempotencyKey *string
+}
+```
+**Used in Service (internal/interaction/service.go):**
+```golang
+type Service interface {
+	CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error)
+	GetLikes(ctx context.Context, userID, direction string, offset, limit int) (domain.Likes, error)
+}
+```
+
+2. **Profile Domain**
+The profile domain manages user profiles and attributes.
+
+**Domain Model (internal/profile/domain/domain.go):**
+```golang
+type Profile struct {
+	DisplayName string
+	Birthdate   time.Time
+	HeightCM    int16
+	UserID      string
+	Verified    bool
+
+	// Location
+	Latitude  float64
+	Longitude float64
+	City      string
+	Country   string
+
+	// Single-selects
+	GenderID          int16
+	DatingIntentionID int16
+	ReligionID        int16
+	EducationLevelID  int16
+	PoliticalBeliefID int16
+	DrinkingID        int16
+	SmokingID         int16
+	MarijuanaID       int16
+	DrugsID           int16
+	ChildrenStatusID  *int16
+	FamilyPlanID      *int16
+	EthnicityIDs      []int16
+	CoverPhotoURL     *string
+	Emoji             string
+
+	// Extra text fields in user_profiles
+
+	// Work the user's workplace
+	Work        *string
+	JobTitle    *string
+	University  *string
+	ProfileMeta *map[string]any
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+```
+
+## Key Characteristics of Domains in Your Codebase
+1. **Self-contained**: Each domain (interaction, profile, conversation, etc.) has its own models, services, and repositories.
+
+2. **Business-focused**: Domain models represent business concepts (Swipe, Profile, Conversation, Report), not database tables.
+
+3. **Language alignment**: Domain terms match business language (e.g., "Swipe", "Match", "RevealRequest").
+
+4. **Separation from infrastructure**: Domain models are in domain/ packages, separate from entities (database models) in entity/.
+
+This structure keeps business logic separate from technical concerns, making the codebase easier to understand and maintain.
 
 ## What's the purpose of pkg/commonlibrary
 
