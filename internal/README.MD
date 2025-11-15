@@ -13,7 +13,7 @@ Notes:
 
 ## Architecture Overview
 
-<img src="https://github.com/Haerd-Limited/dating-api/tree/main/images/clean-arch.png"/>
+![clean-arch](../images/clean-arch.png)
 
 In this repository we follow a clean/domain driven design architecture. Mentally you can think of the API/repository being split into 3 layers:
 - **The Handler Layer** - Contains handler methods that handles requests sent to the router found in 'internal/http/router/router.go'. Responsible for doing things like :
