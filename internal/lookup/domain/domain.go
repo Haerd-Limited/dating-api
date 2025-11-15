@@ -38,8 +38,9 @@ type Gender struct {
 }
 
 type DatingIntention struct {
-	ID    int16
-	Label string
+	ID          int16
+	Label       string
+	Description string
 }
 
 type Habit struct {

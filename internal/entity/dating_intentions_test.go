@@ -896,7 +896,7 @@ func testDatingIntentionsSelect(t *testing.T) {
 }
 
 var (
-	datingIntentionDBTypes = map[string]string{`ID`: `smallint`, `Label`: `text`}
+	datingIntentionDBTypes = map[string]string{`ID`: `smallint`, `Label`: `text`, `Description`: `text`}
 	_                      = bytes.MinRead
 )
 

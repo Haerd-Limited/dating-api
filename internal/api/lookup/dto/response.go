@@ -79,8 +79,9 @@ type GetDatingIntentionsResponse struct {
 }
 
 type DatingIntention struct {
-	ID    int16  `json:"id"`
-	Label string `json:"label"`
+	ID          int16  `json:"id"`
+	Label       string `json:"label"`
+	Description string `json:"description"`
 }
 
 type GetEthnicitiesResponse struct {

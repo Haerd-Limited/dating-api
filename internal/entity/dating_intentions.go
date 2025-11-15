@@ -23,27 +23,32 @@ import (
 
 // DatingIntention is an object representing the database table.
 type DatingIntention struct {
-	ID    int16  `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Label string `boil:"label" json:"label" toml:"label" yaml:"label"`
+	ID          int16  `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Label       string `boil:"label" json:"label" toml:"label" yaml:"label"`
+	Description string `boil:"description" json:"description" toml:"description" yaml:"description"`
 
 	R *datingIntentionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L datingIntentionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var DatingIntentionColumns = struct {
-	ID    string
-	Label string
+	ID          string
+	Label       string
+	Description string
 }{
-	ID:    "id",
-	Label: "label",
+	ID:          "id",
+	Label:       "label",
+	Description: "description",
 }
 
 var DatingIntentionTableColumns = struct {
-	ID    string
-	Label string
+	ID          string
+	Label       string
+	Description string
 }{
-	ID:    "dating_intentions.id",
-	Label: "dating_intentions.label",
+	ID:          "dating_intentions.id",
+	Label:       "dating_intentions.label",
+	Description: "dating_intentions.description",
 }
 
 // Generated where
@@ -72,11 +77,13 @@ func (w whereHelperint16) NIN(slice []int16) qm.QueryMod {
 }
 
 var DatingIntentionWhere = struct {
-	ID    whereHelperint16
-	Label whereHelperstring
+	ID          whereHelperint16
+	Label       whereHelperstring
+	Description whereHelperstring
 }{
-	ID:    whereHelperint16{field: "\"dating_intentions\".\"id\""},
-	Label: whereHelperstring{field: "\"dating_intentions\".\"label\""},
+	ID:          whereHelperint16{field: "\"dating_intentions\".\"id\""},
+	Label:       whereHelperstring{field: "\"dating_intentions\".\"label\""},
+	Description: whereHelperstring{field: "\"dating_intentions\".\"description\""},
 }
 
 // DatingIntentionRels is where relationship names are stored.
@@ -116,9 +123,9 @@ func (r *datingIntentionR) GetUserProfiles() UserProfileSlice {
 type datingIntentionL struct{}
 
 var (
-	datingIntentionAllColumns            = []string{"id", "label"}
+	datingIntentionAllColumns            = []string{"id", "label", "description"}
 	datingIntentionColumnsWithoutDefault = []string{"label"}
-	datingIntentionColumnsWithDefault    = []string{"id"}
+	datingIntentionColumnsWithDefault    = []string{"id", "description"}
 	datingIntentionPrimaryKeyColumns     = []string{"id"}
 	datingIntentionGeneratedColumns      = []string{}
 )

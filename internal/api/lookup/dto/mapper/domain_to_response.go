@@ -123,8 +123,9 @@ func MapToGetDatingIntentionsResponse(domainDatingIntentions []domain.DatingInte
 	var datingIntentions []dto.DatingIntention
 	for _, datingIntention := range domainDatingIntentions {
 		datingIntentions = append(datingIntentions, dto.DatingIntention{
-			ID:    datingIntention.ID,
-			Label: datingIntention.Label,
+			ID:          datingIntention.ID,
+			Label:       datingIntention.Label,
+			Description: datingIntention.Description,
 		})
 	}
 
