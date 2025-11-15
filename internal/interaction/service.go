@@ -381,7 +381,9 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 		if isMatchable {
 			atleastOneIsMissing = swipe.Message == nil || swipe.MessageType == nil || swipe.IdempotencyKey == nil
 		} else {
-			atleastOneIsMissing = swipe.Message == nil || swipe.MessageType == nil || swipe.PromptID == nil || swipe.IdempotencyKey == nil
+			// Check if promptID is nil or 0 (0 is not a valid prompt_id)
+			hasValidPromptID := swipe.PromptID != nil && *swipe.PromptID != 0
+			atleastOneIsMissing = swipe.Message == nil || swipe.MessageType == nil || !hasValidPromptID || swipe.IdempotencyKey == nil
 		}
 
 		unableToSendLikeWithMessage := hasAny && atleastOneIsMissing
@@ -413,7 +415,9 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 		return fmt.Errorf("already interacted userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
 	}
 
-	sendingFirstLikeWithoutPromptID := (!alreadyInteracted && swipe.Action == constants.ActionLike && swipe.PromptID == nil) || (!alreadyInteracted && swipe.Action == constants.ActionSuperlike && swipe.PromptID == nil)
+	// Check if promptID is nil or 0 (0 is not a valid prompt_id)
+	hasValidPromptID := swipe.PromptID != nil && *swipe.PromptID != 0
+	sendingFirstLikeWithoutPromptID := (!alreadyInteracted && swipe.Action == constants.ActionLike && !hasValidPromptID) || (!alreadyInteracted && swipe.Action == constants.ActionSuperlike && !hasValidPromptID)
 	if sendingFirstLikeWithoutPromptID {
 		return ErrPromptIDRequiredToLikeUser
 	}
