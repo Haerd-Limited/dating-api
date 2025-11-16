@@ -150,7 +150,18 @@ func main() {
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 	mediaService := media.NewMediaService(logger, awsService)
-	onboardingService := onboarding.NewOnboardingService(logger, userService, authService, mediaService, profileService, lookupRepo)
+	onboardingService := onboarding.NewOnboardingService(
+		logger,
+		userService,
+		authService,
+		mediaService,
+		profileService,
+		lookupRepo,
+		cfg.EnablePreregCap,
+		cfg.MaxParticipants,
+		cfg.MaxMaleParticipants,
+		cfg.MaxFemaleParticipants,
+	)
 
 	mux := router.New(
 		logger,

@@ -30,6 +30,11 @@ type Config struct {
 	TwilioAuthToken            string `mapstructure:"TWILIO_AUTH_TOKEN" yaml:"twilio_auth_token"`
 	TwilioNumber               string `mapstructure:"TWILIO_NUMBER" yaml:"twilio_number"`
 	OpenAIAPIKey               string `mapstructure:"OPENAI_API_KEY" yaml:"openai_api_key" validate:"required"`
+	// Feature flags and limits for preregistration caps
+	EnablePreregCap       bool `mapstructure:"ENABLE_PREREG_CAP" yaml:"enable_prereg_cap"`
+	MaxParticipants       int  `mapstructure:"MAX_PARTICIPANTS" yaml:"max_participants"`
+	MaxMaleParticipants   int  `mapstructure:"MAX_MALE_PARTICIPANTS" yaml:"max_male_participants"`
+	MaxFemaleParticipants int  `mapstructure:"MAX_FEMALE_PARTICIPANTS" yaml:"max_female_participants"`
 }
 
 // LoadConfig loads from OS env; if ENV=local (or unset) it will attempt to load .env first.
@@ -38,6 +43,11 @@ func LoadConfig() (*Config, error) {
 
 	// Sensible default; can be overridden by real ENV
 	viper.SetDefault("ENV", "local")
+	// Defaults for prereg limits
+	viper.SetDefault("ENABLE_PREREG_CAP", true)
+	viper.SetDefault("MAX_PARTICIPANTS", 1500)
+	viper.SetDefault("MAX_MALE_PARTICIPANTS", 750)
+	viper.SetDefault("MAX_FEMALE_PARTICIPANTS", 750)
 
 	// If ENV explicitly set to "local" (or not set in OS), try .env without failing hard.
 	rawEnv := os.Getenv("ENV")
@@ -68,6 +78,10 @@ func LoadConfig() (*Config, error) {
 		TwilioNumber:               viper.GetString("TWILIO_NUMBER"),
 		AWSRekognitionRegion:       viper.GetString("AWS_REKOGNITION_REGION"),
 		OpenAIAPIKey:               viper.GetString("OPENAI_API_KEY"),
+		EnablePreregCap:            viper.GetBool("ENABLE_PREREG_CAP"),
+		MaxParticipants:            viper.GetInt("MAX_PARTICIPANTS"),
+		MaxMaleParticipants:        viper.GetInt("MAX_MALE_PARTICIPANTS"),
+		MaxFemaleParticipants:      viper.GetInt("MAX_FEMALE_PARTICIPANTS"),
 	}
 
 	// Validate the config.

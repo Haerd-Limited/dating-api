@@ -38,6 +38,9 @@ type Service interface {
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error
 	UpsertUserTheme(ctx context.Context, userID, baseColour string) error
 	VerifyProfile(ctx context.Context, userID string) error
+	// Stats
+	CountBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error)
+	CountBasicsCompleted(ctx context.Context) (int64, error)
 }
 
 type service struct {
@@ -94,6 +97,24 @@ func (s *service) VerifyProfile(ctx context.Context, userID string) error {
 	}
 
 	return nil
+}
+
+func (s *service) CountBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error) {
+	count, err := s.profileRepo.CountUsersBasicsCompletedByGender(ctx, genderID)
+	if err != nil {
+		return 0, fmt.Errorf("count basics-completed by gender: %w", err)
+	}
+
+	return count, nil
+}
+
+func (s *service) CountBasicsCompleted(ctx context.Context) (int64, error) {
+	count, err := s.profileRepo.CountUsersBasicsCompleted(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("count basics-completed: %w", err)
+	}
+
+	return count, nil
 }
 
 func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.VoicePrompt, error) {

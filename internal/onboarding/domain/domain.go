@@ -197,3 +197,14 @@ type Preferences struct {
 	SeekReligionIDs  *[]int32
 	SeekPoliticalIDs *[]int32
 }
+
+// PreregistrationStats summarizes the current preregistration counts and limits.
+type PreregistrationStats struct {
+	MaleCount    int64 `json:"male_count"`
+	FemaleCount  int64 `json:"female_count"`
+	MaxTotal     int   `json:"max_total"`
+	MaxMale      int   `json:"max_male"`
+	MaxFemale    int   `json:"max_female"`
+	CapEnforced  bool  `json:"cap_enforced"`
+	TotalCurrent int64 `json:"total_current"`
+}

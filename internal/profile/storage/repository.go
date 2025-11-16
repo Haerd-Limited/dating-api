@@ -34,6 +34,9 @@ type ProfileRepository interface {
 	GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error)
 	IsVerified(ctx context.Context, userID string) (bool, error)
 	UpdateVoicePromptTranscript(ctx context.Context, id int64, transcript string) error
+	// Stats helpers
+	CountUsersBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error)
+	CountUsersBasicsCompleted(ctx context.Context) (int64, error)
 }
 
 type profileRepository struct {
@@ -78,6 +81,83 @@ func (pr *profileRepository) UpdateVoicePromptTranscript(ctx context.Context, id
 	}
 
 	return nil
+}
+
+// CountUsersBasicsCompletedByGender returns count of users who have completed BASICS (i.e., advanced to LOCATION or beyond) for a given gender.
+func (pr *profileRepository) CountUsersBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error) {
+	// Any step AFTER BASICS means BASICS is completed. We count users with step in the following list.
+	const stepComplete = "COMPLETE"
+	stepsAfterBasics := []string{
+		"LOCATION",
+		"LIFESTYLE",
+		"BELIEFS",
+		"BACKGROUND",
+		"WORK_AND_EDUCATION",
+		"LANGUAGES",
+		"PHOTOS",
+		"PROMPTS",
+		"PROFILE",
+		stepComplete,
+	}
+
+	// Build placeholders for IN clause
+	args := make([]any, 0, len(stepsAfterBasics)+1)
+	args = append(args, genderID)
+
+	for _, s := range stepsAfterBasics {
+		args = append(args, s)
+	}
+
+	queryMods := []qm.QueryMod{
+		entity.UserProfileWhere.GenderID.EQ(null.Int16From(genderID)),
+		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
+		qm.Where("u.onboarding_step IN ("+strings.Repeat("?,", len(stepsAfterBasics)-1)+"?)", args[1:]...),
+	}
+
+	count, err := entity.UserProfiles(queryMods...).Count(ctx, pr.db)
+	if err != nil {
+		return 0, fmt.Errorf("count basics-completed by gender: %w", err)
+	}
+
+	return count, nil
+}
+
+// CountUsersBasicsCompleted returns total number of users that have completed BASICS.
+func (pr *profileRepository) CountUsersBasicsCompleted(ctx context.Context) (int64, error) {
+	stepsAfterBasics := []string{
+		"LOCATION",
+		"LIFESTYLE",
+		"BELIEFS",
+		"BACKGROUND",
+		"WORK_AND_EDUCATION",
+		"LANGUAGES",
+		"PHOTOS",
+		"PROMPTS",
+		"PROFILE",
+		"COMPLETE",
+	}
+
+	queryMods := []qm.QueryMod{
+		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
+		qm.Where("u.onboarding_step IN ("+strings.Repeat("?,", len(stepsAfterBasics)-1)+"?)", anySlice(stepsAfterBasics)...),
+	}
+
+	count, err := entity.UserProfiles(queryMods...).Count(ctx, pr.db)
+	if err != nil {
+		return 0, fmt.Errorf("count basics-completed: %w", err)
+	}
+
+	return count, nil
+}
+
+// helper to convert []string to []any
+func anySlice(ss []string) []any {
+	out := make([]any, len(ss))
+	for i := range ss {
+		out[i] = ss[i]
+	}
+
+	return out
 }
 
 func (pr *profileRepository) InsertProfile(ctx context.Context, userProfile *entity.UserProfile, tx *sql.Tx) error {

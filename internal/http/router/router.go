@@ -82,6 +82,8 @@ func New(
 	registerAliveEndpoint(router)
 	router.Route(
 		"/api/v1", func(r chi.Router) {
+			// Public endpoints
+			r.Get("/landing/stats", onboardingHandler.Stats())
 			r.Route(
 				"/auth", func(r chi.Router) {
 					r.Post("/request-code", authHandler.RequestCode())

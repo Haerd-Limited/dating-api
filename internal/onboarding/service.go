@@ -26,6 +26,8 @@ type Service interface {
 	Intro(ctx context.Context, introDetails domain.Intro) (domain.StepResult, error)
 	// Basics updates the user's basic details such as birthdate, height, gender, and dating intention, and returns onboarding steps.
 	Basics(ctx context.Context, basicDetails domain.Basics) (domain.StepResult, error)
+	// GetPreregistrationStats returns current counts and configured limits for the landing page.
+	GetPreregistrationStats(ctx context.Context) (domain.PreregistrationStats, error)
 	// Location updates the user's location details and returns the result of the operation or an error if it fails.
 	Location(ctx context.Context, locationDetails domain.Location) (domain.StepResult, error)
 	// Lifestyle updates the user's lifestyle preferences and returns the updated onboarding steps and lifestyle content.
@@ -52,6 +54,11 @@ type onboardingService struct {
 	lookupRepo     lookupstorage.LookupRepository
 	mediaService   media.Service
 	profileService profile.Service
+	// prereg caps
+	enablePreregCap       bool
+	maxTotalParticipants  int
+	maxMaleParticipants   int
+	maxFemaleParticipants int
 }
 
 func NewOnboardingService(
@@ -61,14 +68,22 @@ func NewOnboardingService(
 	mediaService media.Service,
 	profileService profile.Service,
 	lookupRepo lookupstorage.LookupRepository,
+	enablePreregCap bool,
+	maxTotal int,
+	maxMale int,
+	maxFemale int,
 ) Service {
 	return &onboardingService{
-		logger:         logger,
-		userService:    userService,
-		authService:    authService,
-		lookupRepo:     lookupRepo,
-		mediaService:   mediaService,
-		profileService: profileService,
+		logger:                logger,
+		userService:           userService,
+		authService:           authService,
+		lookupRepo:            lookupRepo,
+		mediaService:          mediaService,
+		profileService:        profileService,
+		enablePreregCap:       enablePreregCap,
+		maxTotalParticipants:  maxTotal,
+		maxMaleParticipants:   maxMale,
+		maxFemaleParticipants: maxFemale,
 	}
 }
 
@@ -77,6 +92,7 @@ var (
 	ErrMissingPrompts           = errors.New("missing prompts")
 	ErrNotEnoughPromptsProvided = errors.New("not enough prompts provided")
 	ErrTooManyPromptsProvided   = errors.New("too many prompts provided")
+	ErrPreregistrationCapped    = errors.New("preregistration cap reached")
 )
 
 const (
@@ -319,6 +335,51 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 	err := os.ensureStep(ctx, basicDetails.UserID, StepForBasics)
 	if err != nil {
 		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+	}
+
+	// Enforce prereg caps at the moment a user tries to complete BASICS (which moves them to LOCATION).
+	if os.enablePreregCap {
+		genderEntity, gErr := os.lookupRepo.GetGenderByID(ctx, basicDetails.GenderID)
+		if gErr != nil {
+			return domain.StepResult{}, fmt.Errorf("get gender: %w", gErr)
+		}
+
+		totalCompleted, tErr := os.profileService.CountBasicsCompleted(ctx)
+		if tErr != nil {
+			return domain.StepResult{}, fmt.Errorf("count basics-completed total: %w", tErr)
+		}
+
+		if os.maxTotalParticipants > 0 && int(totalCompleted) >= os.maxTotalParticipants {
+			if delErr := os.userService.DeleteAccount(ctx, basicDetails.UserID); delErr != nil {
+				return domain.StepResult{}, fmt.Errorf("delete account after total cap reached: %w", delErr)
+			}
+
+			return domain.StepResult{}, ErrPreregistrationCapped
+		}
+
+		byGender, cErr := os.profileService.CountBasicsCompletedByGender(ctx, basicDetails.GenderID)
+		if cErr != nil {
+			return domain.StepResult{}, fmt.Errorf("count basics-completed by gender: %w", cErr)
+		}
+
+		switch genderEntity.Label {
+		case "Male":
+			if os.maxMaleParticipants > 0 && int(byGender) >= os.maxMaleParticipants {
+				if delErr := os.userService.DeleteAccount(ctx, basicDetails.UserID); delErr != nil {
+					return domain.StepResult{}, fmt.Errorf("delete account after male cap reached: %w", delErr)
+				}
+
+				return domain.StepResult{}, ErrPreregistrationCapped
+			}
+		case "Female":
+			if os.maxFemaleParticipants > 0 && int(byGender) >= os.maxFemaleParticipants {
+				if delErr := os.userService.DeleteAccount(ctx, basicDetails.UserID); delErr != nil {
+					return domain.StepResult{}, fmt.Errorf("delete account after female cap reached: %w", delErr)
+				}
+
+				return domain.StepResult{}, ErrPreregistrationCapped
+			}
+		}
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, basicDetails.UserID)
@@ -707,5 +768,62 @@ func (os *onboardingService) Profile(ctx context.Context, profileDetails domain.
 
 	return domain.StepResult{
 		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+	}, nil
+}
+
+func (os *onboardingService) GetPreregistrationStats(ctx context.Context) (domain.PreregistrationStats, error) {
+	// Resolve gender IDs for Male/Female
+	genders, err := os.lookupRepo.GetGenders(ctx)
+	if err != nil {
+		return domain.PreregistrationStats{}, fmt.Errorf("get genders: %w", err)
+	}
+
+	var maleID int16
+
+	var femaleID int16
+
+	for _, g := range genders {
+		switch g.Label {
+		case "Male":
+			maleID = g.ID
+		case "Female":
+			femaleID = g.ID
+		}
+	}
+
+	maleCount := int64(0)
+	femaleCount := int64(0)
+
+	if maleID != 0 {
+		c, e := os.profileService.CountBasicsCompletedByGender(ctx, maleID)
+		if e != nil {
+			return domain.PreregistrationStats{}, fmt.Errorf("count male basics-completed: %w", e)
+		}
+
+		maleCount = c
+	}
+
+	if femaleID != 0 {
+		c, e := os.profileService.CountBasicsCompletedByGender(ctx, femaleID)
+		if e != nil {
+			return domain.PreregistrationStats{}, fmt.Errorf("count female basics-completed: %w", e)
+		}
+
+		femaleCount = c
+	}
+
+	total, err := os.profileService.CountBasicsCompleted(ctx)
+	if err != nil {
+		return domain.PreregistrationStats{}, fmt.Errorf("count total basics-completed: %w", err)
+	}
+
+	return domain.PreregistrationStats{
+		MaleCount:    maleCount,
+		FemaleCount:  femaleCount,
+		MaxTotal:     os.maxTotalParticipants,
+		MaxMale:      os.maxMaleParticipants,
+		MaxFemale:    os.maxFemaleParticipants,
+		CapEnforced:  os.enablePreregCap,
+		TotalCurrent: total,
 	}, nil
 }

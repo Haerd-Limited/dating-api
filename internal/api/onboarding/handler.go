@@ -26,6 +26,7 @@ type Handler interface {
 	GetStep() http.HandlerFunc
 	Intro() http.HandlerFunc
 	Basics() http.HandlerFunc
+	Stats() http.HandlerFunc
 	Location() http.HandlerFunc
 	Lifestyle() http.HandlerFunc
 	Beliefs() http.HandlerFunc
@@ -69,6 +70,20 @@ func (h *handler) GetStep() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
+	}
+}
+
+func (h *handler) Stats() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		result, err := h.onboardingService.GetPreregistrationStats(ctx)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "Stats", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, result)
 	}
 }
 
@@ -490,6 +505,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Username must be between 3 and 20 characters long"
 	case errors.Is(err, user.ErrNameContainsSpaces):
 		return http.StatusBadRequest, "Username cannot contain spaces"
+	case errors.Is(err, onboarding.ErrPreregistrationCapped):
+		return http.StatusConflict, "Registration for this cohort is full. Please check back later."
 
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
