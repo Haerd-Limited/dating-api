@@ -10,10 +10,12 @@ import (
 	"os/signal"
 	"runtime/debug"
 	"syscall"
+	"time"
 
 	"github.com/coocood/freecache"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
+	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	authstorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
@@ -174,6 +176,9 @@ func main() {
 	insRepo := insightstorage.NewRepository(db)
 	insSvc := insightsvc.NewService(logger, insRepo)
 
+	// Start background weekly scheduler for insights (runs inside API process).
+	runInsightsWeekly(ctx, logger, insSvc, insRepo)
+
 	mux := router.New(
 		logger,
 		cfg.JwtSecret,
@@ -227,4 +232,47 @@ func listenForShutdown(cancel context.CancelFunc) {
 	<-c
 	fmt.Println("Shutdown signal received")
 	cancel()
+}
+
+// runInsightsWeekly starts a goroutine that runs every day at 02:00 UTC.
+// On Mondays it computes last week's [Mon..Mon) window and stores a snapshot.
+func runInsightsWeekly(ctx context.Context, logger *zap.Logger, ins insightsvc.Service, repo insightstorage.Repository) {
+	go func() {
+		for {
+			now := time.Now().UTC()
+			// Next trigger at 02:00 UTC.
+			next := time.Date(now.Year(), now.Month(), now.Day(), 2, 0, 0, 0, time.UTC)
+			if !next.After(now) {
+				next = next.Add(24 * time.Hour)
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Until(next)):
+			}
+
+			// Only run the weekly snapshot on Mondays (Monday == 0 with this mapping)
+			today := time.Now().UTC()
+
+			weekday := (int(today.Weekday()) + 6) % 7
+			if weekday != 0 {
+				continue
+			}
+
+			weekEnd := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC) // this Monday start
+			weekStart := weekEnd.AddDate(0, 0, -7)
+
+			global, err := ins.GetPublicWeekly(ctx, weekStart)
+			if err != nil {
+				logger.Sugar().Warnw("insights weekly compute failed", "error", err)
+				continue
+			}
+
+			if err := repo.InsertGlobalWeeklySnapshot(ctx, "weekly_highlights", weekStart, weekEnd, global); err != nil {
+				logger.Sugar().Warnw("insights weekly snapshot insert failed", "error", err)
+			} else {
+				logger.Sugar().Infof("Insights weekly snapshot stored for %s", weekStart.Format("2006-01-02"))
+			}
+		}
+	}()
 }
