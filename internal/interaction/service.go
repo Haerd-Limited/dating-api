@@ -417,6 +417,7 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 
 	// Check if promptID is nil or 0 (0 is not a valid prompt_id)
 	hasValidPromptID := swipe.PromptID != nil && *swipe.PromptID != 0
+
 	sendingFirstLikeWithoutPromptID := (!alreadyInteracted && swipe.Action == constants.ActionLike && !hasValidPromptID) || (!alreadyInteracted && swipe.Action == constants.ActionSuperlike && !hasValidPromptID)
 	if sendingFirstLikeWithoutPromptID {
 		return ErrPromptIDRequiredToLikeUser

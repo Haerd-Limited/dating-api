@@ -1,7 +1,6 @@
 package matching
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/friendsofgo/errors"
@@ -50,7 +49,7 @@ func (h *handler) GetOverview() http.HandlerFunc {
 
 		result, err := h.matchingService.GetOverview(ctx, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetOverview", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetOverview", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -84,7 +83,7 @@ func (h *handler) SaveAnswer() http.HandlerFunc {
 
 		err = h.matchingService.SaveAnswer(ctx, mapper.MapSaveAnswerRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "SaveAnswer", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "SaveAnswer", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -108,27 +107,12 @@ func (h *handler) GetQuestions() http.HandlerFunc {
 
 		result, err := h.matchingService.GetQuestionsAndAnswers(ctx, category, offset, limit)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetQuestions", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetQuestions", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapDomainToQuestionAndAnswerResponse(result))
 	}
-}
-
-func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
-	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
-		return
-	}
-
-	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-	if statusCode == http.StatusInternalServerError {
-		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	} else {
-		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	}
-
-	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {

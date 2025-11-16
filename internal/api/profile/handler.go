@@ -62,7 +62,7 @@ func (h *handler) Verify() http.HandlerFunc {
 
 		err := h.profileService.VerifyProfile(ctx, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Verify", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Verify", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -82,7 +82,7 @@ func (h *handler) GetMyProfile() http.HandlerFunc {
 
 		userProfile, err := h.profileService.GetEnrichedProfile(ctx, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetMyProfile", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetMyProfile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -126,27 +126,12 @@ func (h *handler) UpdateMyProfile() http.HandlerFunc {
 
 		err = h.profileService.UpdateProfile(ctx, model)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "UpdateMyProfile", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "UpdateMyProfile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
 		render.Json(w, http.StatusOK, commonMappers.ToSimpleMessageResponse("Profile successfully updated"))
 	}
-}
-
-func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
-	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
-		return
-	}
-
-	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-	if statusCode == http.StatusInternalServerError {
-		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	} else {
-		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	}
-
-	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func (h *handler) GetVoicePromptTranscript() http.HandlerFunc {
@@ -171,7 +156,7 @@ func (h *handler) GetVoicePromptTranscript() http.HandlerFunc {
 
 		transcript, err := h.profileService.GetTranscript(ctx, id)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetVoicePromptTranscript", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetVoicePromptTranscript", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -193,7 +178,7 @@ func (h *handler) DeleteAccount() http.HandlerFunc {
 
 		err := h.userService.DeleteAccount(ctx, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "DeleteAccount", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "DeleteAccount", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 

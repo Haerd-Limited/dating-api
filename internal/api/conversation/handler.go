@@ -75,7 +75,7 @@ func (h *handler) InitiateReveal() http.HandlerFunc {
 
 		err := h.conversationService.InitiateReveal(ctx, userID, convoID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "InitiateReveal", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "InitiateReveal", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -109,14 +109,14 @@ func (h *handler) ConfirmReveal() http.HandlerFunc {
 
 		err := h.conversationService.ConfirmReveal(ctx, userID, convoID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "ConfirmReveal", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "ConfirmReveal", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
 		// Get photos after reveal
 		photos, err := h.conversationService.GetMatchPhotos(ctx, convoID, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetMatchPhotos", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetMatchPhotos", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -164,7 +164,7 @@ func (h *handler) MakeRevealDecision() http.HandlerFunc {
 
 		err = h.conversationService.MakeRevealDecision(ctx, userID, convoID, req.Decision)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "MakeRevealDecision", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "MakeRevealDecision", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -198,7 +198,7 @@ func (h *handler) GetMatchPhotos() http.HandlerFunc {
 
 		photos, err := h.conversationService.GetMatchPhotos(ctx, convoID, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetMatchPhotos", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetMatchPhotos", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -232,7 +232,7 @@ func (h *handler) GetConversationScore() http.HandlerFunc {
 
 		sharedScore, err := h.conversationService.GetConversationScore(ctx, userID, convoID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetConversationScore", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetConversationScore", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -252,7 +252,7 @@ func (h *handler) GetConversations() http.HandlerFunc {
 
 		conversations, err := h.conversationService.GetConversations(ctx, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetConversations", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetConversations", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -298,7 +298,7 @@ func (h *handler) SendMessage() http.HandlerFunc {
 
 		msg, err := h.conversationService.SendMessage(ctx, nil, mapper.MapSendMessageRequestToDomain(req, convoID, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "SendMessage", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "SendMessage", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -330,27 +330,12 @@ func (h *handler) GetConversationMessages() http.HandlerFunc {
 
 		messages, err := h.conversationService.GetMessages(ctx, convoID, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetConversationMessages", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetConversationMessages", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetConversationMessagesResponse(messages))
 	}
-}
-
-func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
-	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
-		return
-	}
-
-	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-	if statusCode == http.StatusInternalServerError {
-		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	} else {
-		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	}
-
-	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {

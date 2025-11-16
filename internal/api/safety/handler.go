@@ -62,9 +62,7 @@ func (h *handler) Block() http.HandlerFunc {
 
 		err := h.safetyService.BlockUser(ctx, domainReq)
 		if err != nil {
-			status, msg := mapBlockError(err)
-			render.Json(w, status, map[string]string{"error": msg})
-
+			render.HandleServiceErrorResponse(h.logger, w, r, "Block", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -103,9 +101,7 @@ func (h *handler) Report() http.HandlerFunc {
 
 		reportID, err := h.safetyService.CreateReport(ctx, domainReq)
 		if err != nil {
-			status, msg := mapReportError(err)
-			render.Json(w, status, commonMappers.ToSimpleErrorResponse(msg))
-
+			render.HandleServiceErrorResponse(h.logger, w, r, "Report", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -243,19 +239,12 @@ func (h *handler) AdminResolveReport() http.HandlerFunc {
 	}
 }
 
-func mapBlockError(err error) (int, string) {
+func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, safety.ErrSelfBlock):
 		return http.StatusBadRequest, "you cannot block yourself"
 	case errors.Is(err, safety.ErrInvalidBlockRequest):
 		return http.StatusBadRequest, "blocker_id and blocked_id are required"
-	default:
-		return http.StatusInternalServerError, messages.InternalServerErrorMsg
-	}
-}
-
-func mapReportError(err error) (int, string) {
-	switch {
 	case errors.Is(err, safety.ErrInvalidReportRequest):
 		return http.StatusBadRequest, "reporter_id and reported_user_id are required"
 	case errors.Is(err, safety.ErrSelfReport):

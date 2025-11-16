@@ -62,13 +62,21 @@ var (
 	ErrReportNotFound       = errors.New("report not found")
 )
 
-func (s *service) BlockUser(ctx context.Context, req safetydomain.BlockRequest) error {
+func (s *service) validateBlockRequest(req safetydomain.BlockRequest) error {
 	if req.BlockerID == "" || req.BlockedID == "" {
 		return ErrInvalidBlockRequest
 	}
 
 	if req.BlockerID == req.BlockedID {
 		return ErrSelfBlock
+	}
+
+	return nil
+}
+
+func (s *service) BlockUser(ctx context.Context, req safetydomain.BlockRequest) error {
+	if err := s.validateBlockRequest(req); err != nil {
+		return fmt.Errorf("validate block request: %w", err)
 	}
 
 	tx, err := s.uow.Begin(ctx)

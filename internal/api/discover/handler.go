@@ -2,7 +2,6 @@ package discover
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -54,7 +53,7 @@ func (h *handler) GetDiscover() http.HandlerFunc {
 
 		result, err := h.discoverService.GetDiscoverFeed(ctx, userID, limit, offset)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetDiscoverFeed", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetDiscoverFeed", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -90,7 +89,7 @@ func (h *handler) GetDiscoverWithFilters() http.HandlerFunc {
 
 		result, err := h.discoverService.GetDiscoverFeedWithFilters(ctx, userID, req.Limit, req.Offset, req.Filters)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetDiscoverFeedWithFilters", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetDiscoverFeedWithFilters", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -110,7 +109,7 @@ func (h *handler) GetVoiceWorthHearing() http.HandlerFunc {
 
 		result, err := h.discoverService.GetVoiceWorthHearing(ctx, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetVoiceWorthHearing", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetVoiceWorthHearing", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -127,23 +126,4 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}
-}
-
-func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
-	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
-		return
-	}
-
-	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-
-	switch {
-	case statusCode == http.StatusInternalServerError:
-		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	case statusCode >= 400:
-		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	default:
-		h.logger.Sugar().Infow(fmt.Sprintf("%s response", handlerName), "message", errMsg)
-	}
-
-	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }

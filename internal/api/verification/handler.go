@@ -2,7 +2,6 @@ package verification
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -49,7 +48,7 @@ func (h *handler) Start() http.HandlerFunc {
 
 		result, err := h.verificationService.StartPhotoVerification(ctx, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Start", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Start", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -83,27 +82,12 @@ func (h *handler) Complete() http.HandlerFunc {
 
 		result, err := h.verificationService.CompletePhotoVerification(ctx, userID, req.SessionID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Complete", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Complete", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
 		render.Json(w, http.StatusOK, dto.MapToCompleteResponse(result))
 	}
-}
-
-func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
-	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
-		return
-	}
-
-	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-	if statusCode == http.StatusInternalServerError {
-		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	} else {
-		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	}
-
-	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {

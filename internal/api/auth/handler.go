@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -169,27 +168,12 @@ func (h *handler) Refresh() http.HandlerFunc {
 
 		result, err := h.authService.RefreshToken(ctx, mapper.MapRefreshRequestToDomain(req))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Refresh", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Refresh", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToAuthResponse(result, "Tokens refreshed successfully"))
 	}
-}
-
-func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
-	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
-		return
-	}
-
-	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-	if statusCode == http.StatusInternalServerError {
-		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	} else {
-		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	}
-
-	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func (h *handler) Logout() http.HandlerFunc {
@@ -216,7 +200,7 @@ func (h *handler) Logout() http.HandlerFunc {
 
 		err := h.authService.RevokeRefreshToken(ctx, logoutInput)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Logout", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Logout", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 

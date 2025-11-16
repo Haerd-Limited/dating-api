@@ -76,7 +76,7 @@ func (h *handler) Create() http.HandlerFunc {
 
 		result, err := h.interactionService.CreateSwipe(ctx, mapper.SwipesRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "CreateSwipe", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "CreateSwipe", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -100,7 +100,7 @@ func (h *handler) GetLikes() http.HandlerFunc {
 
 		profiles, err := h.interactionService.GetLikes(ctx, userID, dir, offset, limit)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetLikes", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetLikes", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -135,19 +135,4 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}
-}
-
-func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
-	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
-		return
-	}
-
-	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-	if statusCode == http.StatusInternalServerError {
-		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	} else {
-		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	}
-
-	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }

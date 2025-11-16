@@ -64,7 +64,7 @@ func (h *handler) GetStep() http.HandlerFunc {
 
 		result, err := h.onboardingService.GetUserCurrentStep(ctx, userID)
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetStep", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetStep", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -99,7 +99,7 @@ func (h *handler) Intro() http.HandlerFunc {
 
 		result, err := h.onboardingService.Intro(ctx, mapper.MapIntroRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Intro", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Intro", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -133,7 +133,7 @@ func (h *handler) Basics() http.HandlerFunc {
 
 		result, err := h.onboardingService.Basics(ctx, mapper.MapBasicRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Basics", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Basics", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -168,7 +168,7 @@ func (h *handler) Location() http.HandlerFunc {
 
 		result, err := h.onboardingService.Location(ctx, mapper.MapLocationRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Location", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Location", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -203,7 +203,7 @@ func (h *handler) Lifestyle() http.HandlerFunc {
 
 		result, err := h.onboardingService.Lifestyle(ctx, mapper.MapLifestyleRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Lifestyle", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Lifestyle", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -238,7 +238,7 @@ func (h *handler) Beliefs() http.HandlerFunc {
 
 		result, err := h.onboardingService.Beliefs(ctx, mapper.MapBeliefsRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Beliefs", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Beliefs", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -273,7 +273,7 @@ func (h *handler) Background() http.HandlerFunc {
 
 		result, err := h.onboardingService.Background(ctx, mapper.MapBackgroundRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Background", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Background", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -308,7 +308,7 @@ func (h *handler) WorkAndEducation() http.HandlerFunc {
 
 		result, err := h.onboardingService.WorkAndEducation(ctx, mapper.MapWorkAndEducationRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "WorkAndEducation", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "WorkAndEducation", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -343,7 +343,7 @@ func (h *handler) Languages() http.HandlerFunc {
 
 		result, err := h.onboardingService.Languages(ctx, mapper.MapLanguagesRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Languages", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Languages", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -378,7 +378,7 @@ func (h *handler) Photos() http.HandlerFunc {
 
 		result, err := h.onboardingService.Photos(ctx, mapper.MapPhotosRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Photos", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Photos", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -413,7 +413,7 @@ func (h *handler) Prompts() http.HandlerFunc {
 
 		result, err := h.onboardingService.Prompts(ctx, mapper.MapPromptsRequestToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Prompts", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Prompts", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
@@ -448,27 +448,12 @@ func (h *handler) Profile() http.HandlerFunc {
 
 		result, err := h.onboardingService.Profile(ctx, mapper.MapProfileToDomain(req, userID))
 		if err != nil {
-			h.handleServiceErrorResponse(w, r, "Profile", err)
+			render.HandleServiceErrorResponse(h.logger, w, r, "Profile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
 		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
 	}
-}
-
-func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
-	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
-		return
-	}
-
-	statusCode, errMsg := mapErrorsToStatusCodeAndUserFriendlyMessages(err)
-	if statusCode == http.StatusInternalServerError {
-		h.logger.Sugar().Errorw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	} else {
-		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
-	}
-
-	render.Json(w, statusCode, commonMappers.ToSimpleErrorResponse(errMsg))
 }
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
