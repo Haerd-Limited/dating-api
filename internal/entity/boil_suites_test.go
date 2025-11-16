@@ -18,12 +18,15 @@ func TestParent(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokens)
 	t.Run("EducationLevels", testEducationLevels)
 	t.Run("Ethnicities", testEthnicities)
+	t.Run("Events", testEvents)
 	t.Run("FamilyPlans", testFamilyPlans)
 	t.Run("FamilyStatuses", testFamilyStatuses)
+	t.Run("Feedbacks", testFeedbacks)
 	t.Run("Genders", testGenders)
 	t.Run("GooseDBVersions", testGooseDBVersions)
 	t.Run("Habits", testHabits)
 	t.Run("ImportanceWeights", testImportanceWeights)
+	t.Run("InsightSnapshots", testInsightSnapshots)
 	t.Run("Interests", testInterests)
 	t.Run("Languages", testLanguages)
 	t.Run("Matches", testMatches)
@@ -62,6 +65,7 @@ func TestParent(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodes)
 	t.Run("VoicePrompts", testVoicePrompts)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeeklies)
+	t.Run("WrappedAnnuals", testWrappedAnnuals)
 }
 
 func TestDelete(t *testing.T) {
@@ -71,12 +75,15 @@ func TestDelete(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensDelete)
 	t.Run("EducationLevels", testEducationLevelsDelete)
 	t.Run("Ethnicities", testEthnicitiesDelete)
+	t.Run("Events", testEventsDelete)
 	t.Run("FamilyPlans", testFamilyPlansDelete)
 	t.Run("FamilyStatuses", testFamilyStatusesDelete)
+	t.Run("Feedbacks", testFeedbacksDelete)
 	t.Run("Genders", testGendersDelete)
 	t.Run("GooseDBVersions", testGooseDBVersionsDelete)
 	t.Run("Habits", testHabitsDelete)
 	t.Run("ImportanceWeights", testImportanceWeightsDelete)
+	t.Run("InsightSnapshots", testInsightSnapshotsDelete)
 	t.Run("Interests", testInterestsDelete)
 	t.Run("Languages", testLanguagesDelete)
 	t.Run("Matches", testMatchesDelete)
@@ -115,6 +122,7 @@ func TestDelete(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesDelete)
 	t.Run("VoicePrompts", testVoicePromptsDelete)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesDelete)
+	t.Run("WrappedAnnuals", testWrappedAnnualsDelete)
 }
 
 func TestQueryDeleteAll(t *testing.T) {
@@ -124,12 +132,15 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensQueryDeleteAll)
 	t.Run("EducationLevels", testEducationLevelsQueryDeleteAll)
 	t.Run("Ethnicities", testEthnicitiesQueryDeleteAll)
+	t.Run("Events", testEventsQueryDeleteAll)
 	t.Run("FamilyPlans", testFamilyPlansQueryDeleteAll)
 	t.Run("FamilyStatuses", testFamilyStatusesQueryDeleteAll)
+	t.Run("Feedbacks", testFeedbacksQueryDeleteAll)
 	t.Run("Genders", testGendersQueryDeleteAll)
 	t.Run("GooseDBVersions", testGooseDBVersionsQueryDeleteAll)
 	t.Run("Habits", testHabitsQueryDeleteAll)
 	t.Run("ImportanceWeights", testImportanceWeightsQueryDeleteAll)
+	t.Run("InsightSnapshots", testInsightSnapshotsQueryDeleteAll)
 	t.Run("Interests", testInterestsQueryDeleteAll)
 	t.Run("Languages", testLanguagesQueryDeleteAll)
 	t.Run("Matches", testMatchesQueryDeleteAll)
@@ -168,6 +179,7 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesQueryDeleteAll)
 	t.Run("VoicePrompts", testVoicePromptsQueryDeleteAll)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesQueryDeleteAll)
+	t.Run("WrappedAnnuals", testWrappedAnnualsQueryDeleteAll)
 }
 
 func TestSliceDeleteAll(t *testing.T) {
@@ -177,12 +189,15 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensSliceDeleteAll)
 	t.Run("EducationLevels", testEducationLevelsSliceDeleteAll)
 	t.Run("Ethnicities", testEthnicitiesSliceDeleteAll)
+	t.Run("Events", testEventsSliceDeleteAll)
 	t.Run("FamilyPlans", testFamilyPlansSliceDeleteAll)
 	t.Run("FamilyStatuses", testFamilyStatusesSliceDeleteAll)
+	t.Run("Feedbacks", testFeedbacksSliceDeleteAll)
 	t.Run("Genders", testGendersSliceDeleteAll)
 	t.Run("GooseDBVersions", testGooseDBVersionsSliceDeleteAll)
 	t.Run("Habits", testHabitsSliceDeleteAll)
 	t.Run("ImportanceWeights", testImportanceWeightsSliceDeleteAll)
+	t.Run("InsightSnapshots", testInsightSnapshotsSliceDeleteAll)
 	t.Run("Interests", testInterestsSliceDeleteAll)
 	t.Run("Languages", testLanguagesSliceDeleteAll)
 	t.Run("Matches", testMatchesSliceDeleteAll)
@@ -221,6 +236,7 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesSliceDeleteAll)
 	t.Run("VoicePrompts", testVoicePromptsSliceDeleteAll)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesSliceDeleteAll)
+	t.Run("WrappedAnnuals", testWrappedAnnualsSliceDeleteAll)
 }
 
 func TestExists(t *testing.T) {
@@ -230,12 +246,15 @@ func TestExists(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensExists)
 	t.Run("EducationLevels", testEducationLevelsExists)
 	t.Run("Ethnicities", testEthnicitiesExists)
+	t.Run("Events", testEventsExists)
 	t.Run("FamilyPlans", testFamilyPlansExists)
 	t.Run("FamilyStatuses", testFamilyStatusesExists)
+	t.Run("Feedbacks", testFeedbacksExists)
 	t.Run("Genders", testGendersExists)
 	t.Run("GooseDBVersions", testGooseDBVersionsExists)
 	t.Run("Habits", testHabitsExists)
 	t.Run("ImportanceWeights", testImportanceWeightsExists)
+	t.Run("InsightSnapshots", testInsightSnapshotsExists)
 	t.Run("Interests", testInterestsExists)
 	t.Run("Languages", testLanguagesExists)
 	t.Run("Matches", testMatchesExists)
@@ -274,6 +293,7 @@ func TestExists(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesExists)
 	t.Run("VoicePrompts", testVoicePromptsExists)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesExists)
+	t.Run("WrappedAnnuals", testWrappedAnnualsExists)
 }
 
 func TestFind(t *testing.T) {
@@ -283,12 +303,15 @@ func TestFind(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensFind)
 	t.Run("EducationLevels", testEducationLevelsFind)
 	t.Run("Ethnicities", testEthnicitiesFind)
+	t.Run("Events", testEventsFind)
 	t.Run("FamilyPlans", testFamilyPlansFind)
 	t.Run("FamilyStatuses", testFamilyStatusesFind)
+	t.Run("Feedbacks", testFeedbacksFind)
 	t.Run("Genders", testGendersFind)
 	t.Run("GooseDBVersions", testGooseDBVersionsFind)
 	t.Run("Habits", testHabitsFind)
 	t.Run("ImportanceWeights", testImportanceWeightsFind)
+	t.Run("InsightSnapshots", testInsightSnapshotsFind)
 	t.Run("Interests", testInterestsFind)
 	t.Run("Languages", testLanguagesFind)
 	t.Run("Matches", testMatchesFind)
@@ -327,6 +350,7 @@ func TestFind(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesFind)
 	t.Run("VoicePrompts", testVoicePromptsFind)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesFind)
+	t.Run("WrappedAnnuals", testWrappedAnnualsFind)
 }
 
 func TestBind(t *testing.T) {
@@ -336,12 +360,15 @@ func TestBind(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensBind)
 	t.Run("EducationLevels", testEducationLevelsBind)
 	t.Run("Ethnicities", testEthnicitiesBind)
+	t.Run("Events", testEventsBind)
 	t.Run("FamilyPlans", testFamilyPlansBind)
 	t.Run("FamilyStatuses", testFamilyStatusesBind)
+	t.Run("Feedbacks", testFeedbacksBind)
 	t.Run("Genders", testGendersBind)
 	t.Run("GooseDBVersions", testGooseDBVersionsBind)
 	t.Run("Habits", testHabitsBind)
 	t.Run("ImportanceWeights", testImportanceWeightsBind)
+	t.Run("InsightSnapshots", testInsightSnapshotsBind)
 	t.Run("Interests", testInterestsBind)
 	t.Run("Languages", testLanguagesBind)
 	t.Run("Matches", testMatchesBind)
@@ -380,6 +407,7 @@ func TestBind(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesBind)
 	t.Run("VoicePrompts", testVoicePromptsBind)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesBind)
+	t.Run("WrappedAnnuals", testWrappedAnnualsBind)
 }
 
 func TestOne(t *testing.T) {
@@ -389,12 +417,15 @@ func TestOne(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensOne)
 	t.Run("EducationLevels", testEducationLevelsOne)
 	t.Run("Ethnicities", testEthnicitiesOne)
+	t.Run("Events", testEventsOne)
 	t.Run("FamilyPlans", testFamilyPlansOne)
 	t.Run("FamilyStatuses", testFamilyStatusesOne)
+	t.Run("Feedbacks", testFeedbacksOne)
 	t.Run("Genders", testGendersOne)
 	t.Run("GooseDBVersions", testGooseDBVersionsOne)
 	t.Run("Habits", testHabitsOne)
 	t.Run("ImportanceWeights", testImportanceWeightsOne)
+	t.Run("InsightSnapshots", testInsightSnapshotsOne)
 	t.Run("Interests", testInterestsOne)
 	t.Run("Languages", testLanguagesOne)
 	t.Run("Matches", testMatchesOne)
@@ -433,6 +464,7 @@ func TestOne(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesOne)
 	t.Run("VoicePrompts", testVoicePromptsOne)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesOne)
+	t.Run("WrappedAnnuals", testWrappedAnnualsOne)
 }
 
 func TestAll(t *testing.T) {
@@ -442,12 +474,15 @@ func TestAll(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensAll)
 	t.Run("EducationLevels", testEducationLevelsAll)
 	t.Run("Ethnicities", testEthnicitiesAll)
+	t.Run("Events", testEventsAll)
 	t.Run("FamilyPlans", testFamilyPlansAll)
 	t.Run("FamilyStatuses", testFamilyStatusesAll)
+	t.Run("Feedbacks", testFeedbacksAll)
 	t.Run("Genders", testGendersAll)
 	t.Run("GooseDBVersions", testGooseDBVersionsAll)
 	t.Run("Habits", testHabitsAll)
 	t.Run("ImportanceWeights", testImportanceWeightsAll)
+	t.Run("InsightSnapshots", testInsightSnapshotsAll)
 	t.Run("Interests", testInterestsAll)
 	t.Run("Languages", testLanguagesAll)
 	t.Run("Matches", testMatchesAll)
@@ -486,6 +521,7 @@ func TestAll(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesAll)
 	t.Run("VoicePrompts", testVoicePromptsAll)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesAll)
+	t.Run("WrappedAnnuals", testWrappedAnnualsAll)
 }
 
 func TestCount(t *testing.T) {
@@ -495,12 +531,15 @@ func TestCount(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensCount)
 	t.Run("EducationLevels", testEducationLevelsCount)
 	t.Run("Ethnicities", testEthnicitiesCount)
+	t.Run("Events", testEventsCount)
 	t.Run("FamilyPlans", testFamilyPlansCount)
 	t.Run("FamilyStatuses", testFamilyStatusesCount)
+	t.Run("Feedbacks", testFeedbacksCount)
 	t.Run("Genders", testGendersCount)
 	t.Run("GooseDBVersions", testGooseDBVersionsCount)
 	t.Run("Habits", testHabitsCount)
 	t.Run("ImportanceWeights", testImportanceWeightsCount)
+	t.Run("InsightSnapshots", testInsightSnapshotsCount)
 	t.Run("Interests", testInterestsCount)
 	t.Run("Languages", testLanguagesCount)
 	t.Run("Matches", testMatchesCount)
@@ -539,6 +578,7 @@ func TestCount(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesCount)
 	t.Run("VoicePrompts", testVoicePromptsCount)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesCount)
+	t.Run("WrappedAnnuals", testWrappedAnnualsCount)
 }
 
 func TestHooks(t *testing.T) {
@@ -548,12 +588,15 @@ func TestHooks(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensHooks)
 	t.Run("EducationLevels", testEducationLevelsHooks)
 	t.Run("Ethnicities", testEthnicitiesHooks)
+	t.Run("Events", testEventsHooks)
 	t.Run("FamilyPlans", testFamilyPlansHooks)
 	t.Run("FamilyStatuses", testFamilyStatusesHooks)
+	t.Run("Feedbacks", testFeedbacksHooks)
 	t.Run("Genders", testGendersHooks)
 	t.Run("GooseDBVersions", testGooseDBVersionsHooks)
 	t.Run("Habits", testHabitsHooks)
 	t.Run("ImportanceWeights", testImportanceWeightsHooks)
+	t.Run("InsightSnapshots", testInsightSnapshotsHooks)
 	t.Run("Interests", testInterestsHooks)
 	t.Run("Languages", testLanguagesHooks)
 	t.Run("Matches", testMatchesHooks)
@@ -592,6 +635,7 @@ func TestHooks(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesHooks)
 	t.Run("VoicePrompts", testVoicePromptsHooks)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesHooks)
+	t.Run("WrappedAnnuals", testWrappedAnnualsHooks)
 }
 
 func TestInsert(t *testing.T) {
@@ -607,10 +651,14 @@ func TestInsert(t *testing.T) {
 	t.Run("EducationLevels", testEducationLevelsInsertWhitelist)
 	t.Run("Ethnicities", testEthnicitiesInsert)
 	t.Run("Ethnicities", testEthnicitiesInsertWhitelist)
+	t.Run("Events", testEventsInsert)
+	t.Run("Events", testEventsInsertWhitelist)
 	t.Run("FamilyPlans", testFamilyPlansInsert)
 	t.Run("FamilyPlans", testFamilyPlansInsertWhitelist)
 	t.Run("FamilyStatuses", testFamilyStatusesInsert)
 	t.Run("FamilyStatuses", testFamilyStatusesInsertWhitelist)
+	t.Run("Feedbacks", testFeedbacksInsert)
+	t.Run("Feedbacks", testFeedbacksInsertWhitelist)
 	t.Run("Genders", testGendersInsert)
 	t.Run("Genders", testGendersInsertWhitelist)
 	t.Run("GooseDBVersions", testGooseDBVersionsInsert)
@@ -619,6 +667,8 @@ func TestInsert(t *testing.T) {
 	t.Run("Habits", testHabitsInsertWhitelist)
 	t.Run("ImportanceWeights", testImportanceWeightsInsert)
 	t.Run("ImportanceWeights", testImportanceWeightsInsertWhitelist)
+	t.Run("InsightSnapshots", testInsightSnapshotsInsert)
+	t.Run("InsightSnapshots", testInsightSnapshotsInsertWhitelist)
 	t.Run("Interests", testInterestsInsert)
 	t.Run("Interests", testInterestsInsertWhitelist)
 	t.Run("Languages", testLanguagesInsert)
@@ -695,6 +745,8 @@ func TestInsert(t *testing.T) {
 	t.Run("VoicePrompts", testVoicePromptsInsertWhitelist)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesInsert)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesInsertWhitelist)
+	t.Run("WrappedAnnuals", testWrappedAnnualsInsert)
+	t.Run("WrappedAnnuals", testWrappedAnnualsInsertWhitelist)
 }
 
 func TestReload(t *testing.T) {
@@ -704,12 +756,15 @@ func TestReload(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensReload)
 	t.Run("EducationLevels", testEducationLevelsReload)
 	t.Run("Ethnicities", testEthnicitiesReload)
+	t.Run("Events", testEventsReload)
 	t.Run("FamilyPlans", testFamilyPlansReload)
 	t.Run("FamilyStatuses", testFamilyStatusesReload)
+	t.Run("Feedbacks", testFeedbacksReload)
 	t.Run("Genders", testGendersReload)
 	t.Run("GooseDBVersions", testGooseDBVersionsReload)
 	t.Run("Habits", testHabitsReload)
 	t.Run("ImportanceWeights", testImportanceWeightsReload)
+	t.Run("InsightSnapshots", testInsightSnapshotsReload)
 	t.Run("Interests", testInterestsReload)
 	t.Run("Languages", testLanguagesReload)
 	t.Run("Matches", testMatchesReload)
@@ -748,6 +803,7 @@ func TestReload(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesReload)
 	t.Run("VoicePrompts", testVoicePromptsReload)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesReload)
+	t.Run("WrappedAnnuals", testWrappedAnnualsReload)
 }
 
 func TestReloadAll(t *testing.T) {
@@ -757,12 +813,15 @@ func TestReloadAll(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensReloadAll)
 	t.Run("EducationLevels", testEducationLevelsReloadAll)
 	t.Run("Ethnicities", testEthnicitiesReloadAll)
+	t.Run("Events", testEventsReloadAll)
 	t.Run("FamilyPlans", testFamilyPlansReloadAll)
 	t.Run("FamilyStatuses", testFamilyStatusesReloadAll)
+	t.Run("Feedbacks", testFeedbacksReloadAll)
 	t.Run("Genders", testGendersReloadAll)
 	t.Run("GooseDBVersions", testGooseDBVersionsReloadAll)
 	t.Run("Habits", testHabitsReloadAll)
 	t.Run("ImportanceWeights", testImportanceWeightsReloadAll)
+	t.Run("InsightSnapshots", testInsightSnapshotsReloadAll)
 	t.Run("Interests", testInterestsReloadAll)
 	t.Run("Languages", testLanguagesReloadAll)
 	t.Run("Matches", testMatchesReloadAll)
@@ -801,6 +860,7 @@ func TestReloadAll(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesReloadAll)
 	t.Run("VoicePrompts", testVoicePromptsReloadAll)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesReloadAll)
+	t.Run("WrappedAnnuals", testWrappedAnnualsReloadAll)
 }
 
 func TestSelect(t *testing.T) {
@@ -810,12 +870,15 @@ func TestSelect(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensSelect)
 	t.Run("EducationLevels", testEducationLevelsSelect)
 	t.Run("Ethnicities", testEthnicitiesSelect)
+	t.Run("Events", testEventsSelect)
 	t.Run("FamilyPlans", testFamilyPlansSelect)
 	t.Run("FamilyStatuses", testFamilyStatusesSelect)
+	t.Run("Feedbacks", testFeedbacksSelect)
 	t.Run("Genders", testGendersSelect)
 	t.Run("GooseDBVersions", testGooseDBVersionsSelect)
 	t.Run("Habits", testHabitsSelect)
 	t.Run("ImportanceWeights", testImportanceWeightsSelect)
+	t.Run("InsightSnapshots", testInsightSnapshotsSelect)
 	t.Run("Interests", testInterestsSelect)
 	t.Run("Languages", testLanguagesSelect)
 	t.Run("Matches", testMatchesSelect)
@@ -854,6 +917,7 @@ func TestSelect(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesSelect)
 	t.Run("VoicePrompts", testVoicePromptsSelect)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesSelect)
+	t.Run("WrappedAnnuals", testWrappedAnnualsSelect)
 }
 
 func TestUpdate(t *testing.T) {
@@ -863,12 +927,15 @@ func TestUpdate(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensUpdate)
 	t.Run("EducationLevels", testEducationLevelsUpdate)
 	t.Run("Ethnicities", testEthnicitiesUpdate)
+	t.Run("Events", testEventsUpdate)
 	t.Run("FamilyPlans", testFamilyPlansUpdate)
 	t.Run("FamilyStatuses", testFamilyStatusesUpdate)
+	t.Run("Feedbacks", testFeedbacksUpdate)
 	t.Run("Genders", testGendersUpdate)
 	t.Run("GooseDBVersions", testGooseDBVersionsUpdate)
 	t.Run("Habits", testHabitsUpdate)
 	t.Run("ImportanceWeights", testImportanceWeightsUpdate)
+	t.Run("InsightSnapshots", testInsightSnapshotsUpdate)
 	t.Run("Interests", testInterestsUpdate)
 	t.Run("Languages", testLanguagesUpdate)
 	t.Run("Matches", testMatchesUpdate)
@@ -907,6 +974,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesUpdate)
 	t.Run("VoicePrompts", testVoicePromptsUpdate)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesUpdate)
+	t.Run("WrappedAnnuals", testWrappedAnnualsUpdate)
 }
 
 func TestSliceUpdateAll(t *testing.T) {
@@ -916,12 +984,15 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("DeviceTokens", testDeviceTokensSliceUpdateAll)
 	t.Run("EducationLevels", testEducationLevelsSliceUpdateAll)
 	t.Run("Ethnicities", testEthnicitiesSliceUpdateAll)
+	t.Run("Events", testEventsSliceUpdateAll)
 	t.Run("FamilyPlans", testFamilyPlansSliceUpdateAll)
 	t.Run("FamilyStatuses", testFamilyStatusesSliceUpdateAll)
+	t.Run("Feedbacks", testFeedbacksSliceUpdateAll)
 	t.Run("Genders", testGendersSliceUpdateAll)
 	t.Run("GooseDBVersions", testGooseDBVersionsSliceUpdateAll)
 	t.Run("Habits", testHabitsSliceUpdateAll)
 	t.Run("ImportanceWeights", testImportanceWeightsSliceUpdateAll)
+	t.Run("InsightSnapshots", testInsightSnapshotsSliceUpdateAll)
 	t.Run("Interests", testInterestsSliceUpdateAll)
 	t.Run("Languages", testLanguagesSliceUpdateAll)
 	t.Run("Matches", testMatchesSliceUpdateAll)
@@ -960,4 +1031,5 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("VerificationCodes", testVerificationCodesSliceUpdateAll)
 	t.Run("VoicePrompts", testVoicePromptsSliceUpdateAll)
 	t.Run("VoiceWorthHearingWeeklies", testVoiceWorthHearingWeekliesSliceUpdateAll)
+	t.Run("WrappedAnnuals", testWrappedAnnualsSliceUpdateAll)
 }

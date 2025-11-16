@@ -24,6 +24,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
+	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
@@ -354,6 +355,20 @@ func (s *service) SendMessage(ctx context.Context, tx *sql.Tx, msg domain.Messag
 	s.updateConversationRealtime(ctx, msg.SenderID, msg.ConversationID)
 
 	s.sendNewMessagePush(ctx, result)
+
+	// analytics: message sent
+	props := map[string]any{
+		"type":      string(result.Type),
+		"has_voice": result.Type == domain.MessageTypeVoice,
+		"len": func() int {
+			if result.TextBody == nil {
+				return 0
+			}
+			return len([]rune(*result.TextBody))
+		}(),
+		"client_msg_id": result.ClientMsgID,
+	}
+	commonanalytics.Track(ctx, "conversation.message_sent", &result.SenderID, nil, props)
 
 	return result, nil
 }

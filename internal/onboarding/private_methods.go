@@ -6,6 +6,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
+	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
@@ -146,6 +147,12 @@ func (os *onboardingService) bumpOnboardingStep(
 	if err != nil {
 		return domain.OnboardingStepsUnset, fmt.Errorf("update step: %w", err)
 	}
+
+	// analytics: onboarding step completed
+	userIDCopy := userID // capture address
+	commonanalytics.Track(ctx, "onboarding.completed_step", &userIDCopy, nil, map[string]any{
+		"step": string(expected),
+	})
 
 	return next, nil
 }

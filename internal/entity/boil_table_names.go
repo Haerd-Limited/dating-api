@@ -10,12 +10,15 @@ var TableNames = struct {
 	DeviceTokens             string
 	EducationLevels          string
 	Ethnicities              string
+	Events                   string
 	FamilyPlans              string
 	FamilyStatuses           string
+	Feedback                 string
 	Genders                  string
 	GooseDBVersion           string
 	Habits                   string
 	ImportanceWeights        string
+	InsightSnapshots         string
 	Interests                string
 	Languages                string
 	Matches                  string
@@ -57,6 +60,7 @@ var TableNames = struct {
 	VerificationCodes        string
 	VoicePrompts             string
 	VoiceWorthHearingWeekly  string
+	WrappedAnnual            string
 }{
 	ConversationParticipants: "conversation_participants",
 	Conversations:            "conversations",
@@ -64,12 +68,15 @@ var TableNames = struct {
 	DeviceTokens:             "device_tokens",
 	EducationLevels:          "education_levels",
 	Ethnicities:              "ethnicities",
+	Events:                   "events",
 	FamilyPlans:              "family_plans",
 	FamilyStatuses:           "family_statuses",
+	Feedback:                 "feedback",
 	Genders:                  "genders",
 	GooseDBVersion:           "goose_db_version",
 	Habits:                   "habits",
 	ImportanceWeights:        "importance_weights",
+	InsightSnapshots:         "insight_snapshots",
 	Interests:                "interests",
 	Languages:                "languages",
 	Matches:                  "matches",
@@ -111,4 +118,5 @@ var TableNames = struct {
 	VerificationCodes:        "verification_codes",
 	VoicePrompts:             "voice_prompts",
 	VoiceWorthHearingWeekly:  "voice_worth_hearing_weekly",
+	WrappedAnnual:            "wrapped_annual",
 }

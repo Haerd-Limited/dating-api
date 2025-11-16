@@ -26,6 +26,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	discoverstorage "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/http/router"
+	insightsvc "github.com/Haerd-Limited/dating-api/internal/insights"
+	insightstorage "github.com/Haerd-Limited/dating-api/internal/insights/storage"
 	"github.com/Haerd-Limited/dating-api/internal/interaction"
 	interactionstorage "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/lookup"
@@ -49,6 +51,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/internal/verification"
 	verificationstorage "github.com/Haerd-Limited/dating-api/internal/verification/storage"
+	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	commondb "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/db"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/ids"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
@@ -79,6 +82,10 @@ func main() {
 	if err != nil {
 		logger.Sugar().Fatalf("failed to run migrations: %v", err)
 	}
+
+	// Init analytics emitter (non-blocking event sink)
+	commonanalytics.InitDefault(db, logger, 2048)
+	defer commonanalytics.ShutdownDefault()
 
 	// In bytes, where 1024 * 1024 represents a single Megabyte, and 100 * 1024*1024 represents 100 Megabytes.
 	cacheSize := 100 * 1024 * 1024 // todo: use for intentions and stuff. no need to read db since never change
@@ -163,6 +170,10 @@ func main() {
 		cfg.MaxFemaleParticipants,
 	)
 
+	// Insights
+	insRepo := insightstorage.NewRepository(db)
+	insSvc := insightsvc.NewService(logger, insRepo)
+
 	mux := router.New(
 		logger,
 		cfg.JwtSecret,
@@ -179,6 +190,7 @@ func main() {
 		matchingService,
 		notificationService,
 		safetyService,
+		insSvc,
 		userService,
 		cfg.AdminAPIKey,
 	)

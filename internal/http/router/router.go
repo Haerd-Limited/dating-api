@@ -10,6 +10,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
+	apiinsights "github.com/Haerd-Limited/dating-api/internal/api/insights"
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction"
 	"github.com/Haerd-Limited/dating-api/internal/api/lookup"
 	"github.com/Haerd-Limited/dating-api/internal/api/matching"
@@ -23,6 +24,7 @@ import (
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
+	internalinsights "github.com/Haerd-Limited/dating-api/internal/insights"
 	internalinteraction "github.com/Haerd-Limited/dating-api/internal/interaction"
 	internallookup "github.com/Haerd-Limited/dating-api/internal/lookup"
 	internalmatching "github.com/Haerd-Limited/dating-api/internal/matching"
@@ -54,6 +56,7 @@ func New(
 	matchingService internalmatching.Service,
 	notificationService internalnotification.Service,
 	safetyService internalsafety.Service,
+	insightsService internalinsights.Service,
 	userService internaluser.Service,
 	adminAPIKey string,
 ) http.Handler {
@@ -77,6 +80,7 @@ func New(
 	verificationHandler := verification.NewVerificationHandler(logger, verificationService)
 	matchingHandler := matching.NewMatchingHandler(logger, matchingService)
 	safetyHandler := apisafety.NewHandler(logger, safetyService)
+	insightsHandler := apiinsights.NewHandler(logger, insightsService)
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
@@ -84,6 +88,9 @@ func New(
 		"/api/v1", func(r chi.Router) {
 			// Public endpoints
 			r.Get("/landing/stats", onboardingHandler.Stats())
+
+			r.Get("/insights/public/weekly", insightsHandler.GetPublicWeekly())
+
 			r.Route(
 				"/auth", func(r chi.Router) {
 					r.Post("/request-code", authHandler.RequestCode())
@@ -148,6 +155,11 @@ func New(
 
 				r.Route("/likes", func(r chi.Router) {
 					r.Get("/", interactionHandler.GetLikes())
+				})
+
+				r.Route("/insights", func(r chi.Router) {
+					r.Get("/me/weekly", insightsHandler.GetMeWeekly())
+					r.Get("/me/wrapped", insightsHandler.GetMyWrapped())
 				})
 
 				r.Route("/notifications", func(r chi.Router) {

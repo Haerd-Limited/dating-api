@@ -51,6 +51,19 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
+// Enum values for InsightScope
+const (
+	InsightScopeGlobal string = "global"
+	InsightScopeUser   string = "user"
+)
+
+func AllInsightScope() []string {
+	return []string{
+		InsightScopeGlobal,
+		InsightScopeUser,
+	}
+}
+
 // Enum values for MatchStatus
 const (
 	MatchStatusActive    string = "active"

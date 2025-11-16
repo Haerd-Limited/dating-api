@@ -929,4 +929,13 @@ make migrate-create (create a new migration scaffold)
 ```
 
 
+## Insights and Haerd Wrapped
+
+- New analytics pipeline captures events and computes weekly highlights and per-user stats.
+- Public: `GET /api/v1/insights/public/weekly`
+- User: `GET /api/v1/insights/me/weekly`, `GET /api/v1/insights/me/wrapped?year=YYYY`
+- Events are emitted from interaction, conversation, onboarding, and safety services.
+- Cron: `cmd/insights_cron` stores weekly snapshots in `insight_snapshots`.
+
+
 

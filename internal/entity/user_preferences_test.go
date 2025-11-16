@@ -683,7 +683,7 @@ func testUserPreferencesSelect(t *testing.T) {
 }
 
 var (
-	userPreferenceDBTypes = map[string]string{`UserID`: `uuid`, `DistanceKM`: `smallint`, `AgeMin`: `smallint`, `AgeMax`: `smallint`, `SeekGenderIds`: `ARRAYinteger`, `SeekIntentionIds`: `ARRAYinteger`, `SeekReligionIds`: `ARRAYinteger`, `SeekPoliticalBeliefIds`: `ARRAYinteger`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `SeekEthnicityIds`: `ARRAYinteger`}
+	userPreferenceDBTypes = map[string]string{`UserID`: `uuid`, `DistanceKM`: `smallint`, `AgeMin`: `smallint`, `AgeMax`: `smallint`, `SeekGenderIds`: `ARRAYinteger`, `SeekIntentionIds`: `ARRAYinteger`, `SeekReligionIds`: `ARRAYinteger`, `SeekPoliticalBeliefIds`: `ARRAYinteger`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `SeekEthnicityIds`: `ARRAYinteger`, `AnalyticsOptOut`: `boolean`}
 	_                     = bytes.MinRead
 )
 

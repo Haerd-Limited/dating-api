@@ -17,6 +17,7 @@ import (
 	safetymapper "github.com/Haerd-Limited/dating-api/internal/safety/mapper"
 	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
+	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 )
 
 type Service interface {
@@ -109,6 +110,11 @@ func (s *service) BlockUser(ctx context.Context, req safetydomain.BlockRequest) 
 	}
 
 	s.broadcastBlockEvent(req.BlockerID, req.BlockedID, convoID)
+
+	// analytics: user blocked
+	commonanalytics.Track(ctx, "safety.user_blocked", &req.BlockerID, nil, map[string]any{
+		"target_id": req.BlockedID,
+	})
 
 	return nil
 }

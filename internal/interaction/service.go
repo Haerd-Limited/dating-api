@@ -24,6 +24,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/internal/safety"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
+	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 )
@@ -147,6 +148,21 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 				return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
 			}
 
+			// analytics: swipe created (non-match path)
+			props := map[string]any{
+				"action":    swipe.Action,
+				"target_id": swipe.TargetUserID,
+				"prompt_id": swipe.PromptID,
+				"message":   swipe.Message,
+				"message_type": func() any {
+					if swipe.MessageType == nil {
+						return nil
+					}
+					return *swipe.MessageType
+				}(),
+			}
+			commonanalytics.Track(ctx, "interaction.swipe_created", &swipe.UserID, nil, props)
+
 			err = tx.Commit()
 			if err != nil {
 				return "", fmt.Errorf("commit tx: %w", err)
@@ -181,6 +197,21 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		if err != nil {
 			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
 		}
+
+		// analytics: swipe created (potential match path)
+		props := map[string]any{
+			"action":    swipe.Action,
+			"target_id": swipe.TargetUserID,
+			"prompt_id": swipe.PromptID,
+			"message":   swipe.Message,
+			"message_type": func() any {
+				if swipe.MessageType == nil {
+					return nil
+				}
+				return *swipe.MessageType
+			}(),
+		}
+		commonanalytics.Track(ctx, "interaction.swipe_created", &swipe.UserID, nil, props)
 
 		// Create a match (normalize order to keep uniqueness deterministic)
 		a, b := swipe.UserID, swipe.TargetUserID
@@ -266,6 +297,11 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 		is.sendMatchNotifications(ctx, swipe.UserID, swipe.TargetUserID, convoID)
 
+		// analytics: match created
+		commonanalytics.Track(ctx, "interaction.match_created", &swipe.UserID, nil, map[string]any{
+			"match_id": convoID,
+		})
+
 		return ResultMatched, nil
 
 	case constants.ActionPass:
@@ -273,6 +309,11 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		if err != nil {
 			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
 		}
+
+		// analytics: pass swipe
+		commonanalytics.Track(ctx, "interaction.swipe_created", &swipe.UserID, nil, map[string]any{
+			"action": "pass",
+		})
 
 		err = tx.Commit()
 		if err != nil {

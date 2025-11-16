@@ -4,9 +4,23 @@
 package entity
 
 var ViewNames = struct {
-	GeographyColumns string
-	GeometryColumns  string
+	GeographyColumns      string
+	GeometryColumns       string
+	VMatchEvents          string
+	VMessageEvents        string
+	VPromptPopularity     string
+	VRevealDecisionEvents string
+	VRevealRequestEvents  string
+	VSwipeEvents          string
+	VUserMessageCounts    string
 }{
-	GeographyColumns: "geography_columns",
-	GeometryColumns:  "geometry_columns",
+	GeographyColumns:      "geography_columns",
+	GeometryColumns:       "geometry_columns",
+	VMatchEvents:          "v_match_events",
+	VMessageEvents:        "v_message_events",
+	VPromptPopularity:     "v_prompt_popularity",
+	VRevealDecisionEvents: "v_reveal_decision_events",
+	VRevealRequestEvents:  "v_reveal_request_events",
+	VSwipeEvents:          "v_swipe_events",
+	VUserMessageCounts:    "v_user_message_counts",
 }

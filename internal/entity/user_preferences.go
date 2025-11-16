@@ -36,6 +36,7 @@ type UserPreference struct {
 	CreatedAt              time.Time        `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt              time.Time        `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	SeekEthnicityIds       types.Int64Array `boil:"seek_ethnicity_ids" json:"seek_ethnicity_ids,omitempty" toml:"seek_ethnicity_ids" yaml:"seek_ethnicity_ids,omitempty"`
+	AnalyticsOptOut        bool             `boil:"analytics_opt_out" json:"analytics_opt_out" toml:"analytics_opt_out" yaml:"analytics_opt_out"`
 
 	R *userPreferenceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userPreferenceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -53,6 +54,7 @@ var UserPreferenceColumns = struct {
 	CreatedAt              string
 	UpdatedAt              string
 	SeekEthnicityIds       string
+	AnalyticsOptOut        string
 }{
 	UserID:                 "user_id",
 	DistanceKM:             "distance_km",
@@ -65,6 +67,7 @@ var UserPreferenceColumns = struct {
 	CreatedAt:              "created_at",
 	UpdatedAt:              "updated_at",
 	SeekEthnicityIds:       "seek_ethnicity_ids",
+	AnalyticsOptOut:        "analytics_opt_out",
 }
 
 var UserPreferenceTableColumns = struct {
@@ -79,6 +82,7 @@ var UserPreferenceTableColumns = struct {
 	CreatedAt              string
 	UpdatedAt              string
 	SeekEthnicityIds       string
+	AnalyticsOptOut        string
 }{
 	UserID:                 "user_preferences.user_id",
 	DistanceKM:             "user_preferences.distance_km",
@@ -91,6 +95,7 @@ var UserPreferenceTableColumns = struct {
 	CreatedAt:              "user_preferences.created_at",
 	UpdatedAt:              "user_preferences.updated_at",
 	SeekEthnicityIds:       "user_preferences.seek_ethnicity_ids",
+	AnalyticsOptOut:        "user_preferences.analytics_opt_out",
 }
 
 // Generated where
@@ -110,6 +115,7 @@ var UserPreferenceWhere = struct {
 	CreatedAt              whereHelpertime_Time
 	UpdatedAt              whereHelpertime_Time
 	SeekEthnicityIds       whereHelpertypes_Int64Array
+	AnalyticsOptOut        whereHelperbool
 }{
 	UserID:                 whereHelperstring{field: "\"user_preferences\".\"user_id\""},
 	DistanceKM:             whereHelpernull_Int16{field: "\"user_preferences\".\"distance_km\""},
@@ -122,6 +128,7 @@ var UserPreferenceWhere = struct {
 	CreatedAt:              whereHelpertime_Time{field: "\"user_preferences\".\"created_at\""},
 	UpdatedAt:              whereHelpertime_Time{field: "\"user_preferences\".\"updated_at\""},
 	SeekEthnicityIds:       whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_ethnicity_ids\""},
+	AnalyticsOptOut:        whereHelperbool{field: "\"user_preferences\".\"analytics_opt_out\""},
 }
 
 // UserPreferenceRels is where relationship names are stored.
@@ -161,9 +168,9 @@ func (r *userPreferenceR) GetUser() *User {
 type userPreferenceL struct{}
 
 var (
-	userPreferenceAllColumns            = []string{"user_id", "distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids"}
+	userPreferenceAllColumns            = []string{"user_id", "distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out"}
 	userPreferenceColumnsWithoutDefault = []string{"user_id"}
-	userPreferenceColumnsWithDefault    = []string{"distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids"}
+	userPreferenceColumnsWithDefault    = []string{"distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out"}
 	userPreferencePrimaryKeyColumns     = []string{"user_id"}
 	userPreferenceGeneratedColumns      = []string{}
 )
