@@ -181,6 +181,7 @@ func New(
 					r.Post("/{id}/reveal/confirm", conversationHandler.ConfirmReveal())
 					r.Post("/{id}/reveal/decision", conversationHandler.MakeRevealDecision())
 					r.Get("/{id}/photos", conversationHandler.GetMatchPhotos())
+					//todo(high-priority): create unmatch endpoint
 				})
 
 				r.Route("/media", func(r chi.Router) {

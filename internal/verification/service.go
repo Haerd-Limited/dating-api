@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/aarondl/null/v8"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -19,6 +18,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/verification/domain"
 	"github.com/Haerd-Limited/dating-api/internal/verification/storage"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 type Service interface {
@@ -76,7 +76,7 @@ func (s *service) StartPhotoVerification(ctx context.Context, userID string) (do
 			zap.Error(err),
 		)
 
-		return domain.StartResult{}, fmt.Errorf("create face liveness session: %w", err)
+		return domain.StartResult{}, commonlogger.LogError(s.logger, "create face liveness session", err, zap.String("userID", userID), zap.String("clientToken", tok))
 	}
 
 	sessionID := aws.ToString(out.SessionId)
@@ -97,7 +97,7 @@ func (s *service) StartPhotoVerification(ctx context.Context, userID string) (do
 			zap.Error(err),
 		)
 
-		return domain.StartResult{}, fmt.Errorf("create attempt: %w", err)
+		return domain.StartResult{}, commonlogger.LogError(s.logger, "create attempt", err, zap.String("userID", userID), zap.String("sessionID", sessionID), zap.String("clientToken", tok))
 	}
 
 	s.logger.Info("start created attempt",
@@ -121,7 +121,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 	if err != nil {
 		s.logger.Error("get liveness results failed",
 			zap.String("user_id", userID), zap.String("session_id", sessionID), zap.Error(err))
-		return domain.CompleteResult{}, fmt.Errorf("get face liveness result: %w", err)
+		return domain.CompleteResult{}, commonlogger.LogError(s.logger, "get face liveness result", err, zap.String("userID", userID), zap.String("sessionID", sessionID))
 	}
 
 	if res.Confidence == nil {
@@ -134,7 +134,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 	if err != nil {
 		s.logger.Error("load attempt failed",
 			zap.String("user_id", userID), zap.String("session_id", sessionID), zap.Error(err))
-		return domain.CompleteResult{}, fmt.Errorf("get verification attempt: %w", err)
+		return domain.CompleteResult{}, commonlogger.LogError(s.logger, "get verification attempt", err, zap.String("userID", userID), zap.String("sessionID", sessionID))
 	}
 
 	if *res.Confidence < domain.LivenessPassThreshold {
@@ -150,7 +150,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 
 		reasonCodes, mErr := json.Marshal([]string{"liveness_low_confidence"})
 		if mErr != nil {
-			return domain.CompleteResult{}, fmt.Errorf("marshal reason codes: %w", mErr)
+			return domain.CompleteResult{}, commonlogger.LogError(s.logger, "marshal reason codes", mErr, zap.String("userID", userID), zap.String("sessionID", sessionID))
 		}
 
 		verificationAttempt.ReasonCodes = null.JSONFrom(reasonCodes)
@@ -164,7 +164,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 				zap.Strings("reasons", []string{"liveness_low_confidence"}),
 			)
 
-			return domain.CompleteResult{}, fmt.Errorf("mark attempt: %w", err)
+			return domain.CompleteResult{}, commonlogger.LogError(s.logger, "mark attempt", err, zap.String("userID", userID), zap.String("sessionID", sessionID), zap.String("attemptID", verificationAttempt.ID))
 		}
 
 		return domain.CompleteResult{Status: entity.VerificationStatusFailed, PhotoVerified: false, Reasons: []string{"liveness_failed"}}, nil
@@ -189,10 +189,10 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 		// don’t fail the whole flow if this write fails; it’s only for review/audit
 	}
 
-	// 2) Compare against user’s stored private photos
+	// 2) Compare against user's stored private photos
 	keys, err := s.verificationRepo.GetUserPrivatePhotoKeys(ctx, userID)
 	if err != nil || len(keys) == 0 {
-		return domain.CompleteResult{}, fmt.Errorf("no user photos to compare: %w", err)
+		return domain.CompleteResult{}, commonlogger.LogError(s.logger, "no user photos to compare", err, zap.String("userID", userID), zap.String("sessionID", sessionID))
 	}
 
 	var bestSim float64
@@ -235,17 +235,17 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 
 		err = s.verificationRepo.MarkAttempt(ctx, *verificationAttempt)
 		if err != nil {
-			return domain.CompleteResult{}, fmt.Errorf("mark attempt: %w", err)
+			return domain.CompleteResult{}, commonlogger.LogError(s.logger, "mark attempt", err, zap.String("userID", userID), zap.String("sessionID", sessionID), zap.String("attemptID", verificationAttempt.ID))
 		}
 
 		err = s.verificationRepo.SetUserPhotoVerified(ctx, userID, verificationAttempt.ID)
 		if err != nil {
-			return domain.CompleteResult{}, fmt.Errorf("set user photo verified: %w", err)
+			return domain.CompleteResult{}, commonlogger.LogError(s.logger, "set user photo verified", err, zap.String("userID", userID), zap.String("sessionID", sessionID), zap.String("attemptID", verificationAttempt.ID))
 		}
 
 		err = s.profileService.VerifyProfile(ctx, userID)
 		if err != nil {
-			return domain.CompleteResult{}, fmt.Errorf("verify profile: %w", err)
+			return domain.CompleteResult{}, commonlogger.LogError(s.logger, "verify profile", err, zap.String("userID", userID), zap.String("sessionID", sessionID))
 		}
 
 		s.logger.Info("verification passed",
@@ -265,7 +265,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 
 	reasonCodes, mErr := json.Marshal([]string{"low_similarity"})
 	if mErr != nil {
-		return domain.CompleteResult{}, fmt.Errorf("marshal reason codes: %w", mErr)
+		return domain.CompleteResult{}, commonlogger.LogError(s.logger, "marshal reason codes", mErr, zap.String("userID", userID), zap.String("sessionID", sessionID))
 	}
 
 	verificationAttempt.ReasonCodes = null.JSONFrom(reasonCodes)
@@ -273,7 +273,7 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 
 	err = s.verificationRepo.MarkAttempt(ctx, *verificationAttempt)
 	if err != nil {
-		return domain.CompleteResult{}, fmt.Errorf("mark attempt: %w", err)
+		return domain.CompleteResult{}, commonlogger.LogError(s.logger, "mark attempt", err, zap.String("userID", userID), zap.String("sessionID", sessionID), zap.String("attemptID", verificationAttempt.ID))
 	}
 
 	s.logger.Info("verification needs review",

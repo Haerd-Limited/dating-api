@@ -14,12 +14,13 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
 	scoredomain "github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID string) (*domain.Conversation, error) {
 	conversationEntity, err := s.conversationRepo.GetConversationByUserIDs(ctx, userID, matchID)
 	if err != nil {
-		return nil, fmt.Errorf("get conversation by user IDs: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get conversation by user IDs", err, zap.String("userID", userID), zap.String("matchID", matchID))
 	}
 
 	if conversationEntity == nil {
@@ -29,7 +30,7 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 	// todo: might be overkill. might be better to just make a get profile/displayname repo method
 	matchProfile, err := s.profileService.GetProfileCard(ctx, matchID)
 	if err != nil {
-		return nil, fmt.Errorf("get match profile card: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get match profile card", err, zap.String("userID", userID), zap.String("matchID", matchID))
 	}
 
 	var lastMessage *domain.Message
@@ -39,7 +40,7 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 
 		lastMessage, lmErr = s.getLastMessageByID(ctx, userID, matchID, conversationEntity.LastMessageID.Int64)
 		if lmErr != nil {
-			return nil, fmt.Errorf("get last message userID=%s matchID=%s: %w", userID, matchID, lmErr)
+			return nil, commonlogger.LogError(s.logger, "get last message", lmErr, zap.String("userID", userID), zap.String("matchID", matchID), zap.Int64("lastMessageID", conversationEntity.LastMessageID.Int64))
 		}
 	} else {
 		systemMsg := fmt.Sprintf("Start the chat with %s", matchProfile.DisplayName)
@@ -55,7 +56,7 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 
 	snapShot, err = s.scoreService.GetSnapshot(ctx, conversationEntity.ID, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get score snapshot: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get score snapshot", err, zap.String("userID", userID), zap.String("matchID", matchID), zap.String("conversationID", conversationEntity.ID))
 	}
 
 	scoreSnapShot := mapper.MapScoreDomainSnapShotToConversationDomain(snapShot)
@@ -63,7 +64,7 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 	// Get reveal request if exists
 	revealRequestEntity, err := s.conversationRepo.GetRevealRequest(ctx, conversationEntity.ID)
 	if err != nil {
-		return nil, fmt.Errorf("get reveal request: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get reveal request", err, zap.String("userID", userID), zap.String("matchID", matchID), zap.String("conversationID", conversationEntity.ID))
 	}
 
 	var revealRequest *domain.RevealRequest
@@ -80,7 +81,7 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 	// Get date mode from match
 	matches, err := s.conversationRepo.GetMatches(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get matches for date mode: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get matches for date mode", err, zap.String("userID", userID), zap.String("matchID", matchID))
 	}
 
 	var dateMode bool
@@ -98,7 +99,7 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 	if scoreSnapShot.Revealed {
 		matchPhotos, err := s.profileService.GetUserPhotos(ctx, matchID)
 		if err != nil {
-			return nil, fmt.Errorf("get match photos: %w", err)
+			return nil, commonlogger.LogError(s.logger, "get match photos", err, zap.String("userID", userID), zap.String("matchID", matchID))
 		}
 		// Convert profile photos to conversation photos
 		for _, photo := range matchPhotos {
@@ -113,7 +114,7 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 	// Get unread count for this conversation
 	unreadCount, err := s.conversationRepo.GetUnreadCount(ctx, conversationEntity.ID, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get unread count: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get unread count", err, zap.String("userID", userID), zap.String("matchID", matchID), zap.String("conversationID", conversationEntity.ID))
 	}
 
 	return &domain.Conversation{
@@ -141,12 +142,12 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 func (s *service) getLikedVoicePromptByConvoID(ctx context.Context, convoID string, userID string) (*domain.VoicePrompt, error) {
 	firstLike, err := s.getFirstLikeByConvoID(ctx, convoID)
 	if err != nil {
-		return nil, fmt.Errorf("get first like by convo id userID=%s convoID=%s: %w", userID, convoID, err)
+		return nil, commonlogger.LogError(s.logger, "get first like by convo id", err, zap.String("userID", userID), zap.String("convoID", convoID))
 	}
 
 	vp, err := s.profileService.GetVoicePromptByID(ctx, *firstLike.PromptID)
 	if err != nil {
-		return nil, fmt.Errorf("get voice prompt by id userID=%s convoID=%s swipeID=%v: %w", userID, convoID, firstLike.ID, err)
+		return nil, commonlogger.LogError(s.logger, "get voice prompt by id", err, zap.String("userID", userID), zap.String("convoID", convoID), zap.Int64("swipeID", firstLike.ID), zap.Int64("promptID", *firstLike.PromptID))
 	}
 
 	return &domain.VoicePrompt{
@@ -160,12 +161,12 @@ func (s *service) getLikedVoicePromptByConvoID(ctx context.Context, convoID stri
 func (s *service) getFirstLikeByConvoID(ctx context.Context, convoID string) (domain.Swipe, error) {
 	convo, err := s.conversationRepo.GetConversationByID(ctx, convoID)
 	if err != nil {
-		return domain.Swipe{}, fmt.Errorf("get conversation entity by id convoID=%s: %w", convoID, err)
+		return domain.Swipe{}, commonlogger.LogError(s.logger, "get conversation entity by id", err, zap.String("convoID", convoID))
 	}
 
 	firstLike, err := s.interactionRepo.GetFirstLikeSwipeByBetweenUsers(ctx, convo.UserA, convo.UserB)
 	if err != nil {
-		return domain.Swipe{}, fmt.Errorf("get first like swipe by between users convoID=%s: %w", convoID, err)
+		return domain.Swipe{}, commonlogger.LogError(s.logger, "get first like swipe by between users", err, zap.String("convoID", convoID), zap.String("userA", convo.UserA), zap.String("userB", convo.UserB))
 	}
 
 	if !firstLike.PromptID.Valid {
@@ -178,7 +179,7 @@ func (s *service) getFirstLikeByConvoID(ctx context.Context, convoID string) (do
 func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID string, lastMessageID int64) (*domain.Message, error) {
 	lastMessageEntity, err := s.conversationRepo.GetLastMessageByID(ctx, lastMessageID)
 	if err != nil {
-		return &domain.Message{}, fmt.Errorf("get last message entity userID=%s matchID=%s: %w", userID, matchID, err)
+		return &domain.Message{}, commonlogger.LogError(s.logger, "get last message entity", err, zap.String("userID", userID), zap.String("matchID", matchID), zap.Int64("lastMessageID", lastMessageID))
 	}
 
 	if lastMessageEntity == nil {
@@ -187,7 +188,7 @@ func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID
 
 	msg, err := mapper.MapMessageEntityToDomain(*lastMessageEntity)
 	if err != nil {
-		return &domain.Message{}, fmt.Errorf("map message entity userID=%s matchID=%s: %w", userID, matchID, err)
+		return &domain.Message{}, commonlogger.LogError(s.logger, "map message entity", err, zap.String("userID", userID), zap.String("matchID", matchID), zap.Int64("lastMessageID", lastMessageID))
 	}
 
 	return &msg, nil
@@ -196,7 +197,7 @@ func (s *service) getLastMessageByID(ctx context.Context, userID string, matchID
 func (s *service) getMatches(ctx context.Context, userID string) ([]domain.Match, error) {
 	matchEntities, err := s.conversationRepo.GetMatches(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get matches userID=%s: %w", userID, err)
+		return nil, commonlogger.LogError(s.logger, "get matches", err, zap.String("userID", userID))
 	}
 
 	if len(matchEntities) == 0 {
