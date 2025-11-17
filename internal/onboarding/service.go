@@ -669,7 +669,7 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	// insert photos into user photos table
 	err = os.profileService.UpsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToProfilePhotos(uploadedPhotos))
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "insert user photos", err, zap.String("userID", uploadedPhotos.UserID))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "insert user photos", err, zap.String("userID", uploadedPhotos.UserID), zap.Any("uploadedPhotos", uploadedPhotos))
 	}
 
 	// generate prompt urls.
