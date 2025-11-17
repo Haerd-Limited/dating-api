@@ -23,6 +23,7 @@ type ConversationRepository interface {
 	CreateConversation(ctx context.Context, userA, userB string, tx *sql.Tx) (*entity.Conversation, error)
 	GetMatches(ctx context.Context, userID string) ([]*entity.Match, error)
 	SetMatchStatus(ctx context.Context, tx *sql.Tx, userA, userB, status string) error
+	SetMatchStatusWithReason(ctx context.Context, tx *sql.Tx, userA, userB, status string, reason *string) error
 	SendMessageViaTx(ctx context.Context, tx *sql.Tx, msg entity.Message) (*entity.Message, error)
 	GetConversationByID(ctx context.Context, conversationID string) (*entity.Conversation, error)
 	GetMessagesByConversationID(ctx context.Context, conversationID, userID string) ([]*entity.Message, error)
@@ -542,6 +543,57 @@ func (r *repository) SetMatchStatus(ctx context.Context, tx *sql.Tx, userA, user
 	}
 
 	match.Status = status
+
+	_, err = match.Update(ctx, exec, boil.Whitelist(entity.MatchColumns.Status))
+	if err != nil {
+		return fmt.Errorf("update match status: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) SetMatchStatusWithReason(ctx context.Context, tx *sql.Tx, userA, userB, status string, reason *string) error {
+	var exec boil.ContextExecutor
+	if tx != nil {
+		exec = tx
+	} else {
+		exec = r.db
+	}
+
+	match, err := entity.Matches(
+		qm.Where("(user_a = ? AND user_b = ?) OR (user_a = ? AND user_b = ?)", userA, userB, userB, userA),
+		qm.For("UPDATE"),
+	).One(ctx, exec)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+
+		return fmt.Errorf("get match for status update: %w", err)
+	}
+
+	match.Status = status
+
+	// Update reason if provided
+	if reason != nil {
+		// Use raw SQL to update unmatch_reason since entity might not be regenerated yet
+		query := `
+			UPDATE matches 
+			SET status = $1, unmatch_reason = $2 
+			WHERE id = $3
+		`
+		if tx != nil {
+			_, err = tx.ExecContext(ctx, query, status, *reason, match.ID)
+		} else {
+			_, err = r.db.ExecContext(ctx, query, status, *reason, match.ID)
+		}
+
+		if err != nil {
+			return fmt.Errorf("update match status with reason: %w", err)
+		}
+
+		return nil
+	}
 
 	_, err = match.Update(ctx, exec, boil.Whitelist(entity.MatchColumns.Status))
 	if err != nil {

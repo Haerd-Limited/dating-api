@@ -44,6 +44,7 @@ type Service interface {
 	ConfirmReveal(ctx context.Context, userID, conversationID string) error
 	MakeRevealDecision(ctx context.Context, userID, conversationID, decision string) error
 	GetMatchPhotos(ctx context.Context, conversationID, userID string) ([]domain.Photo, error)
+	Unmatch(ctx context.Context, userID, conversationID string, reason string) error
 }
 
 type service struct {
@@ -739,6 +740,96 @@ func (s *service) GetMatchPhotos(ctx context.Context, conversationID, userID str
 	}
 
 	return photos, nil
+}
+
+func (s *service) Unmatch(ctx context.Context, userID, conversationID string, reason string) error {
+	// Check if user is participant in conversation
+	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "check conversation participant", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
+	}
+
+	if !isParticipant {
+		return storage.ErrNotConversationParticipant
+	}
+
+	// Get conversation to find the other user
+	conversation, err := s.conversationRepo.GetConversationByID(ctx, conversationID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "get conversation", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
+	}
+
+	if conversation == nil {
+		return storage.ErrNonExistentConversation
+	}
+
+	// Determine the other user
+	var otherUserID string
+	if conversation.UserA == userID {
+		otherUserID = conversation.UserB
+	} else {
+		otherUserID = conversation.UserA
+	}
+
+	// Use transaction to update match status and archive conversation
+	tx, err := s.uow.Begin(ctx)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "begin transaction", err)
+	}
+
+	defer func() { _ = tx.Rollback() }()
+
+	// Update match status to unmatched with reason
+	err = s.conversationRepo.SetMatchStatusWithReason(ctx, tx.Raw(), userID, otherUserID, string(domain.MatchStatusUnmatched), &reason)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "set match status with reason", err, zap.String("userID", userID), zap.String("otherUserID", otherUserID))
+	}
+
+	// Archive the conversation
+	_, err = s.conversationRepo.ArchiveConversationBetween(ctx, tx.Raw(), userID, otherUserID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "archive conversation", err, zap.String("userID", userID), zap.String("otherUserID", otherUserID))
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return commonlogger.LogError(s.logger, "commit transaction", err)
+	}
+
+	// Broadcast unmatch event to both users
+	s.broadcastUnmatch(ctx, conversationID, userID)
+
+	return nil
+}
+
+func (s *service) broadcastUnmatch(ctx context.Context, conversationID, actorID string) {
+	// Get participants
+	participants, err := s.conversationRepo.GetConversationParticipants(ctx, conversationID)
+	if err != nil {
+		s.logger.Error("broadcast unmatch: get participants", zap.Error(err))
+		return
+	}
+
+	// Send event to both users
+	evt := dto.Event{
+		ID:        realtime.NewEventID(),
+		Type:      "conversation.unmatched",
+		ActorID:   actorID,
+		Ts:        time.Now(),
+		ContextID: conversationID,
+		Data:      nil,
+		Version:   1,
+	}
+
+	b, err := json.Marshal(evt)
+	if err != nil {
+		s.logger.Error("broadcast unmatch: marshal event", zap.Error(err))
+		return
+	}
+
+	for _, participant := range participants {
+		s.hub.BroadcastToUser(participant.UserID, b)
+	}
 }
 
 func (s *service) broadcastRevealInitiated(ctx context.Context, conversationID, initiatorID string) {

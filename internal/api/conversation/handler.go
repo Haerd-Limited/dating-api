@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -34,6 +35,7 @@ type Handler interface {
 	ConfirmReveal() http.HandlerFunc
 	MakeRevealDecision() http.HandlerFunc
 	GetMatchPhotos() http.HandlerFunc
+	Unmatch() http.HandlerFunc
 }
 
 type handler struct {
@@ -335,6 +337,66 @@ func (h *handler) GetConversationMessages() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetConversationMessagesResponse(messages))
+	}
+}
+
+func (h *handler) Unmatch() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		convoID := chi.URLParam(r, "id")
+		if convoID == "" {
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(
+					"Conversation ID is required as a URL parameter",
+				))
+
+			return
+		}
+
+		var req dto.UnmatchRequest
+
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate unmatch request body", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("reason is required and cannot be empty"),
+			)
+
+			return
+		}
+
+		// Validate the request
+		if err := req.Validate(); err != nil {
+			h.logger.Sugar().Warnw("unmatch request validation failed", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse(err.Error()),
+			)
+
+			return
+		}
+
+		err = h.conversationService.Unmatch(ctx, userID, convoID, strings.TrimSpace(req.Reason))
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "Unmatch", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.UnmatchResponse{
+			Message: "Successfully unmatched",
+		})
 	}
 }
 

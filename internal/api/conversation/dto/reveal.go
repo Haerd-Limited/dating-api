@@ -2,6 +2,7 @@ package dto
 
 import (
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -52,4 +53,26 @@ type RevealRequest struct {
 	RequestedAt    time.Time `json:"requested_at"`
 	ExpiresAt      time.Time `json:"expires_at"`
 	Status         string    `json:"status"`
+}
+
+type UnmatchRequest struct {
+	Reason string `json:"reason" validate:"required"`
+}
+
+func (r *UnmatchRequest) Validate() error {
+	if r.Reason == "" {
+		return errors.New("reason is required")
+	}
+
+	// Trim whitespace and check if empty after trimming
+	trimmed := strings.TrimSpace(r.Reason)
+	if trimmed == "" {
+		return errors.New("reason cannot be empty or whitespace only")
+	}
+
+	return nil
+}
+
+type UnmatchResponse struct {
+	Message string `json:"message"`
 }

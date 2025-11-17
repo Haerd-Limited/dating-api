@@ -24,72 +24,79 @@ import (
 
 // Match is an object representing the database table.
 type Match struct {
-	ID         string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserA      string    `boil:"user_a" json:"user_a" toml:"user_a" yaml:"user_a"`
-	UserB      string    `boil:"user_b" json:"user_b" toml:"user_b" yaml:"user_b"`
-	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	RevealedAt null.Time `boil:"revealed_at" json:"revealed_at,omitempty" toml:"revealed_at" yaml:"revealed_at,omitempty"`
-	Status     string    `boil:"status" json:"status" toml:"status" yaml:"status"`
-	DateMode   bool      `boil:"date_mode" json:"date_mode" toml:"date_mode" yaml:"date_mode"`
+	ID            string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserA         string      `boil:"user_a" json:"user_a" toml:"user_a" yaml:"user_a"`
+	UserB         string      `boil:"user_b" json:"user_b" toml:"user_b" yaml:"user_b"`
+	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	RevealedAt    null.Time   `boil:"revealed_at" json:"revealed_at,omitempty" toml:"revealed_at" yaml:"revealed_at,omitempty"`
+	Status        string      `boil:"status" json:"status" toml:"status" yaml:"status"`
+	DateMode      bool        `boil:"date_mode" json:"date_mode" toml:"date_mode" yaml:"date_mode"`
+	UnmatchReason null.String `boil:"unmatch_reason" json:"unmatch_reason,omitempty" toml:"unmatch_reason" yaml:"unmatch_reason,omitempty"`
 
 	R *matchR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L matchL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var MatchColumns = struct {
-	ID         string
-	UserA      string
-	UserB      string
-	CreatedAt  string
-	RevealedAt string
-	Status     string
-	DateMode   string
+	ID            string
+	UserA         string
+	UserB         string
+	CreatedAt     string
+	RevealedAt    string
+	Status        string
+	DateMode      string
+	UnmatchReason string
 }{
-	ID:         "id",
-	UserA:      "user_a",
-	UserB:      "user_b",
-	CreatedAt:  "created_at",
-	RevealedAt: "revealed_at",
-	Status:     "status",
-	DateMode:   "date_mode",
+	ID:            "id",
+	UserA:         "user_a",
+	UserB:         "user_b",
+	CreatedAt:     "created_at",
+	RevealedAt:    "revealed_at",
+	Status:        "status",
+	DateMode:      "date_mode",
+	UnmatchReason: "unmatch_reason",
 }
 
 var MatchTableColumns = struct {
-	ID         string
-	UserA      string
-	UserB      string
-	CreatedAt  string
-	RevealedAt string
-	Status     string
-	DateMode   string
+	ID            string
+	UserA         string
+	UserB         string
+	CreatedAt     string
+	RevealedAt    string
+	Status        string
+	DateMode      string
+	UnmatchReason string
 }{
-	ID:         "matches.id",
-	UserA:      "matches.user_a",
-	UserB:      "matches.user_b",
-	CreatedAt:  "matches.created_at",
-	RevealedAt: "matches.revealed_at",
-	Status:     "matches.status",
-	DateMode:   "matches.date_mode",
+	ID:            "matches.id",
+	UserA:         "matches.user_a",
+	UserB:         "matches.user_b",
+	CreatedAt:     "matches.created_at",
+	RevealedAt:    "matches.revealed_at",
+	Status:        "matches.status",
+	DateMode:      "matches.date_mode",
+	UnmatchReason: "matches.unmatch_reason",
 }
 
 // Generated where
 
 var MatchWhere = struct {
-	ID         whereHelperstring
-	UserA      whereHelperstring
-	UserB      whereHelperstring
-	CreatedAt  whereHelpertime_Time
-	RevealedAt whereHelpernull_Time
-	Status     whereHelperstring
-	DateMode   whereHelperbool
+	ID            whereHelperstring
+	UserA         whereHelperstring
+	UserB         whereHelperstring
+	CreatedAt     whereHelpertime_Time
+	RevealedAt    whereHelpernull_Time
+	Status        whereHelperstring
+	DateMode      whereHelperbool
+	UnmatchReason whereHelpernull_String
 }{
-	ID:         whereHelperstring{field: "\"matches\".\"id\""},
-	UserA:      whereHelperstring{field: "\"matches\".\"user_a\""},
-	UserB:      whereHelperstring{field: "\"matches\".\"user_b\""},
-	CreatedAt:  whereHelpertime_Time{field: "\"matches\".\"created_at\""},
-	RevealedAt: whereHelpernull_Time{field: "\"matches\".\"revealed_at\""},
-	Status:     whereHelperstring{field: "\"matches\".\"status\""},
-	DateMode:   whereHelperbool{field: "\"matches\".\"date_mode\""},
+	ID:            whereHelperstring{field: "\"matches\".\"id\""},
+	UserA:         whereHelperstring{field: "\"matches\".\"user_a\""},
+	UserB:         whereHelperstring{field: "\"matches\".\"user_b\""},
+	CreatedAt:     whereHelpertime_Time{field: "\"matches\".\"created_at\""},
+	RevealedAt:    whereHelpernull_Time{field: "\"matches\".\"revealed_at\""},
+	Status:        whereHelperstring{field: "\"matches\".\"status\""},
+	DateMode:      whereHelperbool{field: "\"matches\".\"date_mode\""},
+	UnmatchReason: whereHelpernull_String{field: "\"matches\".\"unmatch_reason\""},
 }
 
 // MatchRels is where relationship names are stored.
@@ -148,9 +155,9 @@ func (r *matchR) GetUserBUser() *User {
 type matchL struct{}
 
 var (
-	matchAllColumns            = []string{"id", "user_a", "user_b", "created_at", "revealed_at", "status", "date_mode"}
+	matchAllColumns            = []string{"id", "user_a", "user_b", "created_at", "revealed_at", "status", "date_mode", "unmatch_reason"}
 	matchColumnsWithoutDefault = []string{"user_a", "user_b"}
-	matchColumnsWithDefault    = []string{"id", "created_at", "revealed_at", "status", "date_mode"}
+	matchColumnsWithDefault    = []string{"id", "created_at", "revealed_at", "status", "date_mode", "unmatch_reason"}
 	matchPrimaryKeyColumns     = []string{"id"}
 	matchGeneratedColumns      = []string{}
 )
