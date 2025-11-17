@@ -118,7 +118,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 	// todo(high-priority): allow voice note swipes
 	err = is.validateSwipe(ctx, swipe, matchable)
 	if err != nil {
-		return "", commonlogger.LogError(is.logger, "validate swipe", err, zap.String("userID", swipe.UserID))
+		return "", commonlogger.LogError(is.logger, "validate swipe", err, zap.Any("swipe", swipe))
 	}
 
 	switch swipe.Action {
