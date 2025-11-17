@@ -223,9 +223,10 @@ func (pr *profileRepository) UpsertUserPrompts(
 		}
 	}()
 
-	// Replace existing set for this user.
-	if _, err = tx.ExecContext(ctx, `DELETE FROM voice_prompts WHERE user_id = $1`, userID); err != nil {
-		return fmt.Errorf("delete existing voice_prompts: %w", err)
+	// Mark existing prompts as inactive instead of deleting them
+	// This preserves prompts that may be referenced in conversations/swipes
+	if _, err = tx.ExecContext(ctx, `UPDATE voice_prompts SET is_active = FALSE WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("mark existing voice_prompts as inactive: %w", err)
 	}
 
 	if len(prompts) == 0 {
@@ -274,7 +275,9 @@ func (pr *profileRepository) UpsertUserPrompts(
 		prompts[0].IsPrimary = true
 	}
 
-	// Insert all
+	// Insert all new prompts (they will be active by default due to database DEFAULT TRUE)
+	// Note: Once SQLBoiler entities are regenerated with is_active field, we should explicitly
+	// set prompts[i].IsActive = true here for clarity
 	for i := range prompts {
 		if err = prompts[i].Insert(ctx, tx, boil.Infer()); err != nil {
 			return fmt.Errorf("insert voice_prompt[%d]: %w", i, err)
@@ -575,7 +578,12 @@ func (pr *profileRepository) GetUserSpokenLanguages(ctx context.Context, userID 
 }
 
 func (pr *profileRepository) GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error) {
-	vp, err := entity.VoicePrompts(entity.VoicePromptWhere.UserID.EQ(null.StringFrom(userID))).All(ctx, pr.db)
+	// Only return active prompts for display purposes
+	// Historical prompts (inactive) are preserved for conversations but not shown in profile
+	vp, err := entity.VoicePrompts(
+		entity.VoicePromptWhere.UserID.EQ(null.StringFrom(userID)),
+		qm.Where("is_active = TRUE"),
+	).All(ctx, pr.db)
 	if err != nil {
 		return nil, err
 	}

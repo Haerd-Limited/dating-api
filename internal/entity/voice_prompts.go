@@ -34,6 +34,7 @@ type VoicePrompt struct {
 	IsPrimary     bool        `boil:"is_primary" json:"is_primary" toml:"is_primary" yaml:"is_primary"`
 	Position      null.Int16  `boil:"position" json:"position,omitempty" toml:"position" yaml:"position,omitempty"`
 	CoverPhotoURL null.String `boil:"cover_photo_url" json:"cover_photo_url,omitempty" toml:"cover_photo_url" yaml:"cover_photo_url,omitempty"`
+	IsActive      bool        `boil:"is_active" json:"is_active" toml:"is_active" yaml:"is_active"`
 
 	R *voicePromptR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L voicePromptL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -50,6 +51,7 @@ var VoicePromptColumns = struct {
 	IsPrimary     string
 	Position      string
 	CoverPhotoURL string
+	IsActive      string
 }{
 	ID:            "id",
 	UserID:        "user_id",
@@ -61,6 +63,7 @@ var VoicePromptColumns = struct {
 	IsPrimary:     "is_primary",
 	Position:      "position",
 	CoverPhotoURL: "cover_photo_url",
+	IsActive:      "is_active",
 }
 
 var VoicePromptTableColumns = struct {
@@ -74,6 +77,7 @@ var VoicePromptTableColumns = struct {
 	IsPrimary     string
 	Position      string
 	CoverPhotoURL string
+	IsActive      string
 }{
 	ID:            "voice_prompts.id",
 	UserID:        "voice_prompts.user_id",
@@ -85,6 +89,7 @@ var VoicePromptTableColumns = struct {
 	IsPrimary:     "voice_prompts.is_primary",
 	Position:      "voice_prompts.position",
 	CoverPhotoURL: "voice_prompts.cover_photo_url",
+	IsActive:      "voice_prompts.is_active",
 }
 
 // Generated where
@@ -100,6 +105,7 @@ var VoicePromptWhere = struct {
 	IsPrimary     whereHelperbool
 	Position      whereHelpernull_Int16
 	CoverPhotoURL whereHelpernull_String
+	IsActive      whereHelperbool
 }{
 	ID:            whereHelperint64{field: "\"voice_prompts\".\"id\""},
 	UserID:        whereHelpernull_String{field: "\"voice_prompts\".\"user_id\""},
@@ -111,6 +117,7 @@ var VoicePromptWhere = struct {
 	IsPrimary:     whereHelperbool{field: "\"voice_prompts\".\"is_primary\""},
 	Position:      whereHelpernull_Int16{field: "\"voice_prompts\".\"position\""},
 	CoverPhotoURL: whereHelpernull_String{field: "\"voice_prompts\".\"cover_photo_url\""},
+	IsActive:      whereHelperbool{field: "\"voice_prompts\".\"is_active\""},
 }
 
 // VoicePromptRels is where relationship names are stored.
@@ -188,9 +195,9 @@ func (r *voicePromptR) GetPromptSwipes() SwipeSlice {
 type voicePromptL struct{}
 
 var (
-	voicePromptAllColumns            = []string{"id", "user_id", "prompt_type", "audio_url", "duration_ms", "transcript", "created_at", "is_primary", "position", "cover_photo_url"}
+	voicePromptAllColumns            = []string{"id", "user_id", "prompt_type", "audio_url", "duration_ms", "transcript", "created_at", "is_primary", "position", "cover_photo_url", "is_active"}
 	voicePromptColumnsWithoutDefault = []string{"audio_url", "duration_ms"}
-	voicePromptColumnsWithDefault    = []string{"id", "user_id", "prompt_type", "transcript", "created_at", "is_primary", "position", "cover_photo_url"}
+	voicePromptColumnsWithDefault    = []string{"id", "user_id", "prompt_type", "transcript", "created_at", "is_primary", "position", "cover_photo_url", "is_active"}
 	voicePromptPrimaryKeyColumns     = []string{"id"}
 	voicePromptGeneratedColumns      = []string{}
 )
