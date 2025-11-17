@@ -27,6 +27,7 @@ import (
 	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
@@ -102,7 +103,7 @@ const messagePreviewMaxRunes = 120
 func (s *service) GetConversationScore(ctx context.Context, userID string, convoID string) (int, error) {
 	_, _, shared, err := s.scoreService.GetScores(ctx, convoID, userID, nil)
 	if err != nil {
-		return 0, fmt.Errorf("get scores userID= %s convoID= %s: %w", userID, convoID, err)
+		return 0, commonlogger.LogError(s.logger, "get scores", err, zap.String("userID", userID), zap.String("convoID", convoID))
 	}
 
 	return shared, nil
@@ -119,7 +120,7 @@ func (s *service) CreateConversationScores(ctx context.Context, convoID, userID,
 func (s *service) GetMessages(ctx context.Context, convoID string, userID string) ([]domain.Message, error) {
 	messageEntities, err := s.conversationRepo.GetMessagesByConversationID(ctx, convoID, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get messages userID=%s convoID=%s: %w", userID, convoID, err)
+		return nil, commonlogger.LogError(s.logger, "get messages", err, zap.String("userID", userID), zap.String("convoID", convoID))
 	}
 
 	// Assuming that both participants simply liked each-other.
@@ -128,7 +129,7 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 
 		firstLike, err = s.getFirstLikeByConvoID(ctx, convoID)
 		if err != nil {
-			return nil, fmt.Errorf("get first like by convo id userID=%s convoID=%s: %w", userID, convoID, err)
+			return nil, commonlogger.LogError(s.logger, "get first like by convo id", err, zap.String("userID", userID), zap.String("convoID", convoID))
 		}
 
 		_, err = s.SendMessage(ctx, nil, domain.Message{
@@ -139,12 +140,12 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 			ClientMsgID:    uuid.New().String(),
 		})
 		if err != nil {
-			return nil, fmt.Errorf("send message userID=%s convoID=%s: %w", userID, convoID, err)
+			return nil, commonlogger.LogError(s.logger, "send message", err, zap.String("userID", userID), zap.String("convoID", convoID))
 		}
 
 		messageEntities, err = s.conversationRepo.GetMessagesByConversationID(ctx, convoID, userID)
 		if err != nil {
-			return nil, fmt.Errorf("get messages userID=%s convoID=%s: %w", userID, convoID, err)
+			return nil, commonlogger.LogError(s.logger, "get messages", err, zap.String("userID", userID), zap.String("convoID", convoID))
 		}
 	}
 
@@ -162,14 +163,14 @@ func (s *service) GetMessages(ctx context.Context, convoID string, userID string
 	for index, messageEntity := range messageEntities {
 		msg, err = mapper.MapMessageEntityToDomain(*messageEntity)
 		if err != nil {
-			return nil, fmt.Errorf("map message entity userID=%s convoID=%s: %w", userID, convoID, err)
+			return nil, commonlogger.LogError(s.logger, "map message entity", err, zap.String("userID", userID), zap.String("convoID", convoID))
 		}
 
 		// get prompt for first message
 		if index == firstSentMessageIndex {
 			msg.LikedPrompt, err = s.getLikedVoicePromptByConvoID(ctx, convoID, userID)
 			if err != nil {
-				return nil, fmt.Errorf("get liked prompt by convo id userID=%s convoID=%s: %w", userID, convoID, err)
+				return nil, commonlogger.LogError(s.logger, "get liked prompt by convo id", err, zap.String("userID", userID), zap.String("convoID", convoID))
 			}
 
 			msg.IsFirstMessage = true
@@ -193,7 +194,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 	// this is to make sure user's are matched since a user can't have a convo before matching. and if unmatched, convo should be gone
 	matches, err := s.getMatches(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get matches userID=%s: %w", userID, err)
+		return nil, commonlogger.LogError(s.logger, "get matches", err, zap.String("userID", userID))
 	}
 
 	if len(matches) == 0 {
@@ -215,7 +216,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 
 		conversation, convoErr := s.getConversationByUserIds(ctx, userID, matchUserID)
 		if convoErr != nil {
-			return nil, fmt.Errorf("get conversation userID=%s matchUserID=%s: %w", userID, matchUserID, convoErr)
+			return nil, commonlogger.LogError(s.logger, "get conversation", convoErr, zap.String("userID", userID), zap.String("matchUserID", matchUserID))
 		}
 
 		if conversation == nil {
@@ -223,12 +224,12 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 			// create convo
 			_, createConvoErr := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, nil)
 			if createConvoErr != nil {
-				return nil, fmt.Errorf("create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, createConvoErr)
+				return nil, commonlogger.LogError(s.logger, "create conversation", createConvoErr, zap.String("userID", userID), zap.String("matchUserID", matchUserID))
 			}
 
 			conversation, convoErr = s.getConversationByUserIds(ctx, userID, matchUserID)
 			if convoErr != nil {
-				return nil, fmt.Errorf("get conversation userID=%s matchUserID=%s: %w", userID, matchUserID, convoErr)
+				return nil, commonlogger.LogError(s.logger, "get conversation", convoErr, zap.String("userID", userID), zap.String("matchUserID", matchUserID))
 			}
 		}
 
@@ -250,7 +251,7 @@ func (s *service) GetConversations(ctx context.Context, userID string) ([]domain
 func (s *service) CreateConversation(ctx context.Context, userID, matchUserID string) error {
 	_, err := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, nil)
 	if err != nil {
-		return fmt.Errorf("create conversation userID=%s matchUserID=%s: %w", userID, matchUserID, err)
+		return commonlogger.LogError(s.logger, "create conversation", err, zap.String("userID", userID), zap.String("matchUserID", matchUserID))
 	}
 
 	return nil
@@ -259,7 +260,7 @@ func (s *service) CreateConversation(ctx context.Context, userID, matchUserID st
 func (s *service) CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) (string, error) {
 	convoEntity, err := s.conversationRepo.CreateConversation(ctx, userID, matchUserID, tx)
 	if err != nil {
-		return "", fmt.Errorf("create conversation via tx userID=%s matchUserID=%s: %w", userID, matchUserID, err)
+		return "", commonlogger.LogError(s.logger, "create conversation via tx", err, zap.String("userID", userID), zap.String("matchUserID", matchUserID))
 	}
 
 	return convoEntity.ID, nil
@@ -329,7 +330,7 @@ func (s *service) validateMessage(msg domain.Message) error {
 func (s *service) SendMessage(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error) {
 	err := s.validateMessage(msg)
 	if err != nil {
-		return domain.Message{}, fmt.Errorf("validate message userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+		return domain.Message{}, commonlogger.LogError(s.logger, "validate message", err, zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
 	}
 
 	msg.ID = s.flake.Next()
@@ -337,17 +338,17 @@ func (s *service) SendMessage(ctx context.Context, tx *sql.Tx, msg domain.Messag
 
 	e, err := s.conversationRepo.SendMessageViaTx(ctx, tx, ent)
 	if err != nil {
-		return domain.Message{}, fmt.Errorf("send message via tx userID=%s conversationID=%s: %w", msg.SenderID, msg.ConversationID, err)
+		return domain.Message{}, commonlogger.LogError(s.logger, "send message via tx", err, zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
 	}
 
 	result, err := mapper.MapMessageEntityToDomain(*e)
 	if err != nil {
-		return domain.Message{}, fmt.Errorf("map message entity userID=%s: %w", msg.SenderID, err)
+		return domain.Message{}, commonlogger.LogError(s.logger, "map message entity", err, zap.String("userID", msg.SenderID))
 	}
 
 	result.ResultingScoreSnapShot, err = s.ApplyScore(ctx, tx, result)
 	if err != nil {
-		return domain.Message{}, fmt.Errorf("apply score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+		return domain.Message{}, commonlogger.LogError(s.logger, "apply score via tx", err, zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
 	}
 
 	s.sendMessageToConversation(result)
@@ -460,12 +461,12 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 		if tx == nil {
 			snap, err = s.scoreService.Apply(ctx, msg.ConversationID, msg.SenderID, contrib)
 			if err != nil {
-				return nil, fmt.Errorf("apply score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+				return nil, commonlogger.LogError(s.logger, "apply score", err, zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
 			}
 		} else {
 			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, contrib)
 			if err != nil {
-				return nil, fmt.Errorf("apply score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+				return nil, commonlogger.LogError(s.logger, "apply score via tx", err, zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
 			}
 		}
 
@@ -473,7 +474,8 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 
 	case domain.MessageTypeVoice:
 		if msg.MediaSeconds == nil {
-			return nil, fmt.Errorf("apply score voice msg missing media_seconds userID=%s convoID=%s", msg.SenderID, msg.ConversationID)
+			s.logger.Error("apply score voice msg missing media_seconds", zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
+			return nil, fmt.Errorf("apply score voice msg missing media_seconds")
 		}
 
 		secs := int(math.Round(*msg.MediaSeconds))
@@ -493,12 +495,12 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 		if tx == nil {
 			snap, err = s.scoreService.Apply(ctx, msg.ConversationID, msg.SenderID, contrib)
 			if err != nil {
-				return nil, fmt.Errorf("apply voice score userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+				return nil, commonlogger.LogError(s.logger, "apply voice score", err, zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
 			}
 		} else {
 			snap, err = s.scoreService.ApplyViaTx(ctx, tx, msg.ConversationID, msg.SenderID, contrib)
 			if err != nil {
-				return nil, fmt.Errorf("apply voice score via tx userID=%s convoID=%s: %w", msg.SenderID, msg.ConversationID, err)
+				return nil, commonlogger.LogError(s.logger, "apply voice score via tx", err, zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
 			}
 		}
 
@@ -508,8 +510,8 @@ func (s *service) ApplyScore(ctx context.Context, tx *sql.Tx, msg domain.Message
 	case domain.MessageTypeSystem:
 		// no scoring
 	default:
-		return nil, fmt.Errorf("unsupported message type userID=%s convoID=%s: %s",
-			msg.SenderID, msg.ConversationID, msg.Type)
+		s.logger.Error("unsupported message type", zap.String("userID", msg.SenderID), zap.String("conversationID", msg.ConversationID), zap.String("messageType", string(msg.Type)))
+		return nil, fmt.Errorf("unsupported message type: %s", msg.Type)
 	}
 
 	return result, nil
@@ -519,7 +521,7 @@ func (s *service) InitiateReveal(ctx context.Context, userID, conversationID str
 	// Check if user is participant in conversation
 	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
 	if err != nil {
-		return fmt.Errorf("check conversation participant userID=%s conversationID=%s: %w", userID, conversationID, err)
+		return commonlogger.LogError(s.logger, "check conversation participant", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
 	}
 
 	if !isParticipant {
@@ -529,7 +531,7 @@ func (s *service) InitiateReveal(ctx context.Context, userID, conversationID str
 	// Check if conversation is eligible for reveal (CanReveal = true)
 	snapshot, err := s.scoreService.GetSnapshot(ctx, conversationID, userID)
 	if err != nil {
-		return fmt.Errorf("get score snapshot: %w", err)
+		return commonlogger.LogError(s.logger, "get score snapshot", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
 	}
 
 	if !snapshot.CanReveal {
@@ -539,7 +541,7 @@ func (s *service) InitiateReveal(ctx context.Context, userID, conversationID str
 	// Check if reveal request already exists
 	existingRequest, err := s.conversationRepo.GetRevealRequest(ctx, conversationID)
 	if err != nil {
-		return fmt.Errorf("get existing reveal request: %w", err)
+		return commonlogger.LogError(s.logger, "get existing reveal request", err, zap.String("conversationID", conversationID))
 	}
 
 	if existingRequest != nil && existingRequest.Status == string(domain.RevealStatusPending) {
@@ -551,7 +553,7 @@ func (s *service) InitiateReveal(ctx context.Context, userID, conversationID str
 
 	err = s.conversationRepo.CreateRevealRequest(ctx, conversationID, userID, expiresAt)
 	if err != nil {
-		return fmt.Errorf("create reveal request: %w", err)
+		return commonlogger.LogError(s.logger, "create reveal request", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
 	}
 
 	// Send WebSocket event to other user
@@ -567,7 +569,7 @@ func (s *service) ConfirmReveal(ctx context.Context, userID, conversationID stri
 	// Check if user is participant in conversation
 	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
 	if err != nil {
-		return fmt.Errorf("check conversation participant: %w", err)
+		return commonlogger.LogError(s.logger, "check conversation participant", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
 	}
 
 	if !isParticipant {
@@ -577,7 +579,7 @@ func (s *service) ConfirmReveal(ctx context.Context, userID, conversationID stri
 	// Get reveal request
 	revealRequest, err := s.conversationRepo.GetRevealRequest(ctx, conversationID)
 	if err != nil {
-		return fmt.Errorf("get reveal request: %w", err)
+		return commonlogger.LogError(s.logger, "get reveal request", err, zap.String("conversationID", conversationID))
 	}
 
 	if revealRequest == nil {
@@ -593,7 +595,7 @@ func (s *service) ConfirmReveal(ctx context.Context, userID, conversationID stri
 		// Mark as expired
 		err = s.conversationRepo.UpdateRevealRequestStatus(ctx, conversationID, string(domain.RevealStatusExpired))
 		if err != nil {
-			return fmt.Errorf("update reveal request status to expired: %w", err)
+			return commonlogger.LogError(s.logger, "update reveal request status to expired", err, zap.String("conversationID", conversationID))
 		}
 
 		return ErrRevealRequestExpired
@@ -607,25 +609,25 @@ func (s *service) ConfirmReveal(ctx context.Context, userID, conversationID stri
 	// Set conversation to revealed
 	tx, err := s.uow.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
+		return commonlogger.LogError(s.logger, "begin transaction", err)
 	}
 
 	defer func() { _ = tx.Rollback() }()
 
 	err = s.conversationRepo.SetConversationToRevealed(ctx, tx.Raw(), conversationID)
 	if err != nil {
-		return fmt.Errorf("set conversation to revealed: %w", err)
+		return commonlogger.LogError(s.logger, "set conversation to revealed", err, zap.String("conversationID", conversationID))
 	}
 
 	// Update reveal request status
 	err = s.conversationRepo.UpdateRevealRequestStatus(ctx, conversationID, string(domain.RevealStatusConfirmed))
 	if err != nil {
-		return fmt.Errorf("update reveal request status: %w", err)
+		return commonlogger.LogError(s.logger, "update reveal request status", err, zap.String("conversationID", conversationID))
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf("commit transaction: %w", err)
+		return commonlogger.LogError(s.logger, "commit transaction", err)
 	}
 
 	// Broadcast to both users
@@ -646,7 +648,7 @@ func (s *service) MakeRevealDecision(ctx context.Context, userID, conversationID
 	// Check if user is participant in conversation
 	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
 	if err != nil {
-		return fmt.Errorf("check conversation participant: %w", err)
+		return commonlogger.LogError(s.logger, "check conversation participant", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
 	}
 
 	if !isParticipant {
@@ -656,7 +658,7 @@ func (s *service) MakeRevealDecision(ctx context.Context, userID, conversationID
 	// Check if conversation is revealed
 	snapshot, err := s.scoreService.GetSnapshot(ctx, conversationID, userID)
 	if err != nil {
-		return fmt.Errorf("get score snapshot: %w", err)
+		return commonlogger.LogError(s.logger, "get score snapshot", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
 	}
 
 	if !snapshot.Revealed {
@@ -666,14 +668,14 @@ func (s *service) MakeRevealDecision(ctx context.Context, userID, conversationID
 	// Save decision
 	err = s.conversationRepo.SaveRevealDecision(ctx, conversationID, userID, decision)
 	if err != nil {
-		return fmt.Errorf("save reveal decision: %w", err)
+		return commonlogger.LogError(s.logger, "save reveal decision", err, zap.String("userID", userID), zap.String("conversationID", conversationID), zap.String("decision", decision))
 	}
 
 	// Update date mode if decision is "date"
 	if decision == constants.RevealDecisionDate {
 		err = s.conversationRepo.SetDateMode(ctx, conversationID, true)
 		if err != nil {
-			return fmt.Errorf("set date mode: %w", err)
+			return commonlogger.LogError(s.logger, "set date mode", err, zap.String("conversationID", conversationID))
 		}
 	}
 
@@ -684,7 +686,7 @@ func (s *service) GetMatchPhotos(ctx context.Context, conversationID, userID str
 	// Check if user is participant in conversation
 	isParticipant, err := s.conversationRepo.IsConversationParticipant(ctx, conversationID, userID)
 	if err != nil {
-		return nil, fmt.Errorf("check conversation participant: %w", err)
+		return nil, commonlogger.LogError(s.logger, "check conversation participant", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
 	}
 
 	if !isParticipant {
@@ -694,7 +696,7 @@ func (s *service) GetMatchPhotos(ctx context.Context, conversationID, userID str
 	// Check if conversation is revealed
 	snapshot, err := s.scoreService.GetSnapshot(ctx, conversationID, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get score snapshot: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get score snapshot", err, zap.String("userID", userID), zap.String("conversationID", conversationID))
 	}
 
 	if !snapshot.Revealed {
@@ -704,7 +706,7 @@ func (s *service) GetMatchPhotos(ctx context.Context, conversationID, userID str
 	// Get the other participant's user ID
 	participants, err := s.conversationRepo.GetConversationParticipants(ctx, conversationID)
 	if err != nil {
-		return nil, fmt.Errorf("get conversation participants: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get conversation participants", err, zap.String("conversationID", conversationID))
 	}
 
 	var matchUserID string
@@ -723,7 +725,7 @@ func (s *service) GetMatchPhotos(ctx context.Context, conversationID, userID str
 	// Get photos from profile service
 	profilePhotos, err := s.profileService.GetUserPhotos(ctx, matchUserID)
 	if err != nil {
-		return nil, fmt.Errorf("get user photos: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get user photos", err, zap.String("matchUserID", matchUserID))
 	}
 
 	// Convert profile photos to conversation photos

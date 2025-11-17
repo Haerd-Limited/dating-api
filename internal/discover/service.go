@@ -3,7 +3,6 @@ package discover
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
@@ -74,7 +74,7 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 
 	totalSwipes, gatingSwipeAt, err := s.discoverRepo.GetSwipeUsageStats(ctx, userID, domain.DiscoverQuotaWindow, domain.DiscoverQuotaLimit, now)
 	if err != nil {
-		return domain.DiscoverFeedResult{}, fmt.Errorf("failed to compute swipe usage userID=%s: %w", userID, err)
+		return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to compute swipe usage", err, zap.String("userID", userID))
 	}
 
 	quota := domain.NewQuotaStatus(domain.DiscoverQuotaLimit, domain.DiscoverQuotaWindow, totalSwipes, gatingSwipeAt)
@@ -95,14 +95,14 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 	if filters != nil {
 		if preferenceUpdate := domain.NewPreferenceUpdateFromFilters(filters); preferenceUpdate != nil {
 			if err := s.discoverRepo.SaveUserDiscoverPreferences(ctx, userID, preferenceUpdate); err != nil {
-				return domain.DiscoverFeedResult{}, fmt.Errorf("failed to persist discover preferences userID=%s: %w", userID, err)
+				return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to persist discover preferences", err, zap.String("userID", userID))
 			}
 		}
 	}
 
 	candidates, err := s.discoverRepo.GetDiscoverFeedCandidatesWithFilters(ctx, userID, limit, offset, filters)
 	if err != nil {
-		return domain.DiscoverFeedResult{}, fmt.Errorf("failed to get candidate IDs userID=%s limit=%v offset=%v: %w", userID, limit, offset, err)
+		return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to get candidate IDs", err, zap.String("userID", userID), zap.Int("limit", limit), zap.Int("offset", offset))
 	}
 
 	if len(candidates) == 0 {
@@ -111,7 +111,7 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 
 	currentUserProfile, err := s.profileService.GetEnrichedProfile(ctx, userID)
 	if err != nil {
-		return domain.DiscoverFeedResult{}, fmt.Errorf("failed to get current user profile userID=%s: %w", userID, err)
+		return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to get current user profile", err, zap.String("userID", userID))
 	}
 
 	profiles := make([]profilecard.ProfileCard, 0, len(candidates))
@@ -121,7 +121,7 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 
 		p, profileErr := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
 		if profileErr != nil {
-			return domain.DiscoverFeedResult{}, fmt.Errorf("failed to get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to get profile card", profileErr, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID))
 		}
 
 		// Apply post-query filters that can't be done efficiently in SQL
@@ -131,7 +131,7 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 
 		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
 		if profileErr != nil {
-			return domain.DiscoverFeedResult{}, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, profileErr)
+			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to compute match", profileErr, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID))
 		}
 
 		profiles = append(profiles, p)
@@ -147,7 +147,7 @@ func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("get voice worth hearing userID=%s: %w", userID, err)
+		return nil, commonlogger.LogError(s.logger, "get voice worth hearing", err, zap.String("userID", userID))
 	}
 
 	ids := make([]string, 0, len(profiles))
@@ -166,7 +166,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 	count, err := s.discoverRepo.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get number of complete profiles of opposite gender userID=%s: %w", userID, err)
+		return nil, commonlogger.LogError(s.logger, "get number of complete profiles of opposite gender", err, zap.String("userID", userID))
 	}
 
 	if count <= constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
@@ -175,7 +175,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 	storedPreferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("get stored preferences userID=%s: %w", userID, err)
+		return nil, commonlogger.LogError(s.logger, "get stored preferences", err, zap.String("userID", userID))
 	}
 
 	matcher := newPreferenceMatcher(storedPreferences)
@@ -187,7 +187,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 	cachedIDs, err := s.discoverRepo.GetWeeklyVoiceWorthHearingIDs(ctx, userID, weekStart)
 	if err != nil {
-		return nil, fmt.Errorf("get cached voice worth hearing ids userID=%s: %w", userID, err)
+		return nil, commonlogger.LogError(s.logger, "get cached voice worth hearing ids", err, zap.String("userID", userID))
 	}
 
 	var candidates []*entity.UserProfile
@@ -196,14 +196,14 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 	case len(cachedIDs) > 0:
 		candidates, err = s.discoverRepo.GetVoiceWorthHearingByIDs(ctx, userID, cachedIDs)
 		if err != nil {
-			return nil, fmt.Errorf("hydrate cached candidates userID=%s: %w", userID, err)
+			return nil, commonlogger.LogError(s.logger, "hydrate cached candidates", err, zap.String("userID", userID))
 		}
 
 		candidates = orderCandidatesByIDs(candidates, cachedIDs)
 	default:
 		candidates, err = s.discoverRepo.GetVoiceWorthHearing(ctx, userID, candidateLimit)
 		if err != nil {
-			return nil, fmt.Errorf("get candidates userID=%s: %w", userID, err)
+			return nil, commonlogger.LogError(s.logger, "get candidates", err, zap.String("userID", userID))
 		}
 	}
 
@@ -213,7 +213,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 	currentUserProfile, err := s.profileService.GetEnrichedProfile(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current user profile userID=%s: %w", userID, err)
+		return nil, commonlogger.LogError(s.logger, "failed to get current user profile", err, zap.String("userID", userID))
 	}
 
 	var ethnicityByUser map[string][]int16
@@ -226,7 +226,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 		ethnicityByUser, err = s.discoverRepo.GetUsersEthnicityIDs(ctx, userIDs)
 		if err != nil {
-			return nil, fmt.Errorf("failed to load candidate ethnicities userID=%s: %w", userID, err)
+			return nil, commonlogger.LogError(s.logger, "failed to load candidate ethnicities", err, zap.String("userID", userID))
 		}
 	}
 
@@ -241,7 +241,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 	if len(cachedIDs) == 0 {
 		if err := s.discoverRepo.SaveWeeklyVoiceWorthHearingIDs(ctx, userID, weekStart, selectedIDs); err != nil {
-			return nil, fmt.Errorf("persist vwh cache userID=%s: %w", userID, err)
+			return nil, commonlogger.LogError(s.logger, "persist vwh cache", err, zap.String("userID", userID))
 		}
 	}
 
@@ -335,7 +335,7 @@ func (s *service) evaluateCandidate(
 
 	alreadyInteracted, err := s.discoverRepo.AlreadyInteracted(ctx, userID, candidate.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("already interacted userID=%s profileUserID=%s: %w", userID, candidate.UserID, err)
+		return nil, commonlogger.LogError(s.logger, "already interacted", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID))
 	}
 
 	evaluation.alreadyInteracted = alreadyInteracted
@@ -346,19 +346,19 @@ func (s *service) evaluateCandidate(
 
 	card, err := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
 	if err != nil {
-		return nil, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, candidate.UserID, err)
+		return nil, commonlogger.LogError(s.logger, "get profile card", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID))
 	}
 
 	likeCount, err := s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
 	if err != nil {
-		return nil, fmt.Errorf("get like and superlike count userID=%s profileUserID=%s: %w", userID, candidate.UserID, err)
+		return nil, commonlogger.LogError(s.logger, "get like and superlike count", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID))
 	}
 
 	card.LikeCount = &likeCount
 
 	card.MatchSummary, err = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
 	if err != nil {
-		return nil, fmt.Errorf("failed to compute match userID=%s profileUserID=%s: %w", userID, candidate.UserID, err)
+		return nil, commonlogger.LogError(s.logger, "failed to compute match", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID))
 	}
 
 	var datingIntentionID *int16

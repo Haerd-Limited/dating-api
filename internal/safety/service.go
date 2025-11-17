@@ -18,6 +18,7 @@ import (
 	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 type Service interface {
@@ -77,12 +78,12 @@ func (s *service) validateBlockRequest(req safetydomain.BlockRequest) error {
 
 func (s *service) BlockUser(ctx context.Context, req safetydomain.BlockRequest) error {
 	if err := s.validateBlockRequest(req); err != nil {
-		return fmt.Errorf("validate block request: %w", err)
+		return commonlogger.LogError(s.logger, "validate block request", err, zap.String("blockerID", req.BlockerID), zap.String("blockedID", req.BlockedID))
 	}
 
 	tx, err := s.uow.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+		return commonlogger.LogError(s.logger, "begin tx", err)
 	}
 
 	defer func() { _ = tx.Rollback() }()
@@ -91,22 +92,22 @@ func (s *service) BlockUser(ctx context.Context, req safetydomain.BlockRequest) 
 
 	err = s.repo.CreateBlock(ctx, blockEntity, tx.Raw())
 	if err != nil {
-		return fmt.Errorf("create block: %w", err)
+		return commonlogger.LogError(s.logger, "create block", err, zap.String("blockerID", req.BlockerID), zap.String("blockedID", req.BlockedID))
 	}
 
 	// Update match status to blocked
 	if err := s.conversationRepo.SetMatchStatus(ctx, tx.Raw(), req.BlockerID, req.BlockedID, string(conversationdomain.MatchStatusBlocked)); err != nil {
-		return fmt.Errorf("set match status: %w", err)
+		return commonlogger.LogError(s.logger, "set match status", err, zap.String("blockerID", req.BlockerID), zap.String("blockedID", req.BlockedID))
 	}
 
 	// Archive conversation if present
 	convoID, err := s.conversationRepo.ArchiveConversationBetween(ctx, tx.Raw(), req.BlockerID, req.BlockedID)
 	if err != nil {
-		return fmt.Errorf("archive conversation: %w", err)
+		return commonlogger.LogError(s.logger, "archive conversation", err, zap.String("blockerID", req.BlockerID), zap.String("blockedID", req.BlockedID))
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit tx: %w", err)
+		return commonlogger.LogError(s.logger, "commit tx", err)
 	}
 
 	s.broadcastBlockEvent(req.BlockerID, req.BlockedID, convoID)
@@ -126,7 +127,7 @@ func (s *service) IsBlocked(ctx context.Context, userID, otherUserID string) (bo
 func (s *service) GetBlockedUserIDs(ctx context.Context, userID string) ([]string, error) {
 	blocks, err := s.repo.ListBlocksForUser(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("list blocks for user: %w", err)
+		return nil, commonlogger.LogError(s.logger, "list blocks for user", err, zap.String("userID", userID))
 	}
 
 	if len(blocks) == 0 {
@@ -172,11 +173,11 @@ func (s *service) CreateReport(ctx context.Context, req safetydomain.ReportReque
 
 	reportEntity, err := safetymapper.ReportRequestToEntity(req)
 	if err != nil {
-		return "", fmt.Errorf("map report request: %w", err)
+		return "", commonlogger.LogError(s.logger, "map report request", err, zap.String("reporterUserID", req.ReporterUserID), zap.String("reportedUserID", req.ReportedUserID))
 	}
 
 	if err := s.repo.CreateReport(ctx, reportEntity, nil); err != nil {
-		return "", fmt.Errorf("create report: %w", err)
+		return "", commonlogger.LogError(s.logger, "create report", err, zap.String("reporterUserID", req.ReporterUserID), zap.String("reportedUserID", req.ReportedUserID))
 	}
 
 	return reportEntity.ID, nil
@@ -198,7 +199,7 @@ func (s *service) ListReports(ctx context.Context, filter safetydomain.ReportLis
 
 	reports, err := s.repo.ListReports(ctx, repoFilter)
 	if err != nil {
-		return nil, fmt.Errorf("list reports: %w", err)
+		return nil, commonlogger.LogError(s.logger, "list reports", err)
 	}
 
 	return safetymapper.ReportEntitiesToDomain(reports)
@@ -207,7 +208,7 @@ func (s *service) ListReports(ctx context.Context, filter safetydomain.ReportLis
 func (s *service) GetReport(ctx context.Context, reportID string) (*safetydomain.Report, error) {
 	reportEntity, err := s.repo.GetReportByID(ctx, reportID)
 	if err != nil {
-		return nil, fmt.Errorf("get report by id: %w", err)
+		return nil, commonlogger.LogError(s.logger, "get report by id", err, zap.String("reportID", reportID))
 	}
 
 	if reportEntity == nil {
@@ -216,7 +217,7 @@ func (s *service) GetReport(ctx context.Context, reportID string) (*safetydomain
 
 	reportDomain, err := safetymapper.ReportEntityToDomain(reportEntity)
 	if err != nil {
-		return nil, fmt.Errorf("map report entity to domain: %w", err)
+		return nil, commonlogger.LogError(s.logger, "map report entity to domain", err, zap.String("reportID", reportID))
 	}
 
 	return &reportDomain, nil
@@ -237,7 +238,7 @@ func (s *service) ResolveReport(ctx context.Context, req safetydomain.ResolveRep
 
 	reportEntity, err := s.repo.GetReportByID(ctx, req.ReportID)
 	if err != nil {
-		return fmt.Errorf("get report by id: %w", err)
+		return commonlogger.LogError(s.logger, "get report by id", err, zap.String("reportID", req.ReportID))
 	}
 
 	if reportEntity == nil {
@@ -246,28 +247,28 @@ func (s *service) ResolveReport(ctx context.Context, req safetydomain.ResolveRep
 
 	actionEntity, err := safetymapper.ResolveRequestToActionEntity(req)
 	if err != nil {
-		return fmt.Errorf("map resolve request: %w", err)
+		return commonlogger.LogError(s.logger, "map resolve request", err, zap.String("reportID", req.ReportID))
 	}
 
 	tx, err := s.uow.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+		return commonlogger.LogError(s.logger, "begin tx", err)
 	}
 
 	defer func() { _ = tx.Rollback() }()
 
 	if err := s.repo.InsertReportAction(ctx, actionEntity, tx.Raw()); err != nil {
-		return fmt.Errorf("insert report action: %w", err)
+		return commonlogger.LogError(s.logger, "insert report action", err, zap.String("reportID", req.ReportID))
 	}
 
 	safetymapper.ApplyResolutionToReportEntity(reportEntity, req)
 
 	if err := s.repo.UpdateReport(ctx, reportEntity, tx.Raw()); err != nil {
-		return fmt.Errorf("update report: %w", err)
+		return commonlogger.LogError(s.logger, "update report", err, zap.String("reportID", req.ReportID))
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit tx: %w", err)
+		return commonlogger.LogError(s.logger, "commit tx", err)
 	}
 
 	return nil

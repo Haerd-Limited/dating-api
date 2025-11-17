@@ -25,7 +25,7 @@ import (
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/auth"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
-	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=auth
@@ -90,7 +90,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 
 	identifier, err := as.normalizeIdentifier(in.Channel, in.Email, in.Phone)
 	if err != nil {
-		return nil, fmt.Errorf("invalid identifier: %w", err)
+		return nil, commonlogger.LogError(as.logger, "invalid identifier", err, zap.String("channel", in.Channel))
 	}
 
 	purpose := strings.ToLower(in.Purpose)
@@ -101,8 +101,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		rec, err := as.AuthRepo.FindActiveVerificationCode(ctx, in.Channel, identifier, purpose)
 		if err != nil {
 			// do not reveal which part failed
-			return nil, fmt.Errorf("failed to find active code channel=%s identifier=%s purpose=%s: %w",
-				in.Channel, identifier, purpose, err)
+			return nil, commonlogger.LogError(as.logger, "failed to find active code", err, zap.String("channel", in.Channel), zap.String("purpose", purpose))
 		}
 
 		if rec.Attempts >= rec.MaxAttempts {
@@ -126,7 +125,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 	// 4) Resolve user (create on register )
 	exists, err := as.UserService.UserExistsByIdentifier(ctx, in.Channel, identifier)
 	if err != nil {
-		return nil, fmt.Errorf("user lookup failed: %w", err)
+		return nil, commonlogger.LogError(as.logger, "user lookup failed", err, zap.String("channel", in.Channel))
 	}
 
 	var userDetails *userdomain.User
@@ -140,7 +139,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		if in.Channel == constants.SmsChannel {
 			userDetails, err = as.UserService.GetUserByPhoneNumber(ctx, identifier)
 			if err != nil {
-				return nil, fmt.Errorf("auth user: %w", err)
+				return nil, commonlogger.LogError(as.logger, "auth user", err, zap.String("channel", in.Channel))
 			}
 		} else {
 			return nil, ErrInvalidChannel
@@ -148,7 +147,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 
 		tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
 		if tokenErr != nil {
-			return nil, fmt.Errorf("issue tokens: %w", tokenErr)
+			return nil, commonlogger.LogError(as.logger, "issue tokens", tokenErr, zap.String("userID", userDetails.ID))
 		}
 
 		return &domain.AuthResult{
@@ -174,12 +173,12 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 			OnboardingStep: string(onboardingdomain.OnboardingStepsIntro),
 		})
 		if regErr != nil {
-			return nil, fmt.Errorf("failed to create user: %w", regErr)
+			return nil, commonlogger.LogError(as.logger, "failed to create user", regErr)
 		}
 
 		tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userID)
 		if tokenErr != nil {
-			return nil, fmt.Errorf("failed to generate tokens: %w", tokenErr)
+			return nil, commonlogger.LogError(as.logger, "failed to generate tokens", tokenErr, zap.String("userID", userID))
 		}
 
 		return &domain.AuthResult{
@@ -203,7 +202,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 
 	identifier, err := as.normalizeIdentifier(requestCodeDetails.Channel, requestCodeDetails.Email, requestCodeDetails.Phone)
 	if err != nil {
-		return "", fmt.Errorf("failed to normalize identifier: %w", err)
+		return "", commonlogger.LogError(as.logger, "failed to normalize identifier", err, zap.String("channel", requestCodeDetails.Channel))
 	}
 
 	mask := maskIdentifier(requestCodeDetails.Channel, identifier)
@@ -225,8 +224,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 
 	exists, err := as.UserService.UserExistsByIdentifier(ctx, requestCodeDetails.Channel, identifier)
 	if err != nil {
-		return mask, fmt.Errorf("existence check failed channel=%s identifier=%s : %w",
-			requestCodeDetails.Channel, identifier, err)
+		return mask, commonlogger.LogError(as.logger, "existence check failed", err, zap.String("channel", requestCodeDetails.Channel))
 	}
 
 	shouldSend := false
@@ -249,7 +247,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	// Generate a 6-digit numeric code
 	code, err := RandomDigits(6)
 	if err != nil {
-		return mask, fmt.Errorf("failed to generate code: %w", err)
+		return mask, commonlogger.LogError(as.logger, "failed to generate code", err, zap.String("channel", requestCodeDetails.Channel))
 	}
 
 	// Hash the code (never store plaintext)
@@ -268,7 +266,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	err = as.AuthRepo.InsertVerificationCode(ctx, rec)
 	if err != nil {
 		// still mask success to caller
-		return mask, fmt.Errorf("failed to insert verification code: %w", err)
+		return mask, commonlogger.LogError(as.logger, "failed to insert verification code", err, zap.String("channel", requestCodeDetails.Channel))
 	}
 
 	// Deliver
@@ -282,8 +280,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	}
 
 	if sendErr != nil {
-		return mask, fmt.Errorf("failed to send verification code channel=%s identifier=%s: %w",
-			requestCodeDetails.Channel, identifier, sendErr)
+		return mask, commonlogger.LogError(as.logger, "failed to send verification code", sendErr, zap.String("channel", requestCodeDetails.Channel))
 	}
 
 	return mask, nil
@@ -292,7 +289,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthResult, error) {
 	refreshToken, err := as.AuthRepo.GetRefreshToken(ctx, refreshInput.RefreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get refresh token refreshToken=%s: %w", utils.Redacted(refreshInput.RefreshToken), err)
+		return nil, commonlogger.LogError(as.logger, "failed to get refresh token", err)
 	}
 
 	if time.Now().After(refreshToken.ExpiresAt) {
@@ -305,12 +302,12 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Ref
 
 	err = as.AuthRepo.RevokeRefreshToken(ctx, refreshToken.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to revoke token: %w", err)
+		return nil, commonlogger.LogError(as.logger, "failed to revoke token", err, zap.String("tokenID", refreshToken.ID))
 	}
 
 	accessToken, err := auth.GenerateAccessToken(refreshToken.UserID, []byte(as.jwtSecret))
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", refreshToken.UserID, err)
+		return nil, commonlogger.LogError(as.logger, "failed to generate access token", err, zap.String("userID", refreshToken.UserID))
 	}
 
 	newRefreshToken := auth.GenerateRefreshToken(refreshToken.UserID)
@@ -319,7 +316,7 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Ref
 
 	err = as.AuthRepo.InsertRefreshToken(ctx, newRefreshTokenEntity)
 	if err != nil {
-		return nil, fmt.Errorf("failed to store new refresh token userID=%s: %w", refreshToken.UserID, err)
+		return nil, commonlogger.LogError(as.logger, "failed to store new refresh token", err, zap.String("userID", refreshToken.UserID))
 	}
 
 	return &domain.AuthResult{
@@ -340,7 +337,7 @@ func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshToke
 
 	err = as.AuthRepo.RevokeRefreshToken(ctx, refreshToken.ID)
 	if err != nil {
-		return fmt.Errorf("failed to revoke token id=%s: %w", refreshToken.ID, err)
+		return commonlogger.LogError(as.logger, "failed to revoke token", err, zap.String("tokenID", refreshToken.ID))
 	}
 
 	return nil
@@ -349,14 +346,14 @@ func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshToke
 func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthResult, error) {
 	accessToken, err := auth.GenerateAccessToken(userID, []byte(as.jwtSecret))
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate access token userID=%s: %w", userID, err)
+		return nil, commonlogger.LogError(as.logger, "failed to generate access token", err, zap.String("userID", userID))
 	}
 
 	refreshToken := auth.GenerateRefreshToken(userID)
 
 	err = as.AuthRepo.InsertRefreshToken(ctx, mapper.ToRefreshTokenEntity(refreshToken))
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert refresh token userID=%s: %w", refreshToken.UserID, err)
+		return nil, commonlogger.LogError(as.logger, "failed to insert refresh token", err, zap.String("userID", refreshToken.UserID))
 	}
 
 	return &domain.AuthResult{

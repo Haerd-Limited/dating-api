@@ -18,6 +18,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	verificationstorage "github.com/Haerd-Limited/dating-api/internal/verification/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
@@ -86,14 +87,14 @@ func (s *service) VerifyProfile(ctx context.Context, userID string) error {
 	// Load current profile
 	prof, err := s.getUserProfile(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("get user profile: %w", err)
+		return commonlogger.LogError(s.logger, "get user profile", err, zap.String("userID", userID))
 	}
 
 	prof.Verified = true
 
 	err = s.updateUserProfile(ctx, prof)
 	if err != nil {
-		return fmt.Errorf("update user profile: %w", err)
+		return commonlogger.LogError(s.logger, "update user profile", err, zap.String("userID", userID))
 	}
 
 	return nil
@@ -102,7 +103,7 @@ func (s *service) VerifyProfile(ctx context.Context, userID string) error {
 func (s *service) CountBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error) {
 	count, err := s.profileRepo.CountUsersBasicsCompletedByGender(ctx, genderID)
 	if err != nil {
-		return 0, fmt.Errorf("count basics-completed by gender: %w", err)
+		return 0, commonlogger.LogError(s.logger, "count basics-completed by gender", err, zap.Int16("genderID", genderID))
 	}
 
 	return count, nil
@@ -111,7 +112,7 @@ func (s *service) CountBasicsCompletedByGender(ctx context.Context, genderID int
 func (s *service) CountBasicsCompleted(ctx context.Context) (int64, error) {
 	count, err := s.profileRepo.CountUsersBasicsCompleted(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("count basics-completed: %w", err)
+		return 0, commonlogger.LogError(s.logger, "count basics-completed", err)
 	}
 
 	return count, nil
@@ -199,27 +200,27 @@ func (s *service) ScaffoldProfile(ctx context.Context, tx *sql.Tx, userID string
 func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domain.UpdateProfile, error) {
 	userProfile, err := s.getUserProfile(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("get user profile: %w", err)
+		return domain.UpdateProfile{}, commonlogger.LogError(s.logger, "get user profile", err, zap.String("userID", userID))
 	}
 
 	languageIds, err := s.profileRepo.GetUserSpokenLanguages(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("get user spoken languages: %w", err)
+		return domain.UpdateProfile{}, commonlogger.LogError(s.logger, "get user spoken languages", err, zap.String("userID", userID))
 	}
 
 	ethnicityIDs, err := s.profileRepo.GetUserEthnicities(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("get user ethnicities: %w", err)
+		return domain.UpdateProfile{}, commonlogger.LogError(s.logger, "get user ethnicities", err, zap.String("userID", userID))
 	}
 
 	VoicePrompts, err := s.getUserVoicePromptsForUpdate(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("get user voice prompts: %w", err)
+		return domain.UpdateProfile{}, commonlogger.LogError(s.logger, "get user voice prompts", err, zap.String("userID", userID))
 	}
 
 	Photos, err := s.getUserPhotos(ctx, userID)
 	if err != nil {
-		return domain.UpdateProfile{}, fmt.Errorf("get user photos: %w", err)
+		return domain.UpdateProfile{}, commonlogger.LogError(s.logger, "get user photos", err, zap.String("userID", userID))
 	}
 
 	return domain.UpdateProfile{
@@ -260,12 +261,12 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) error {
 	err := s.validateProfileUpdate(up)
 	if err != nil {
-		return fmt.Errorf("validate profile update: %w", err)
+		return commonlogger.LogError(s.logger, "validate profile update", err, zap.String("userID", up.UserID))
 	}
 	// Load current profile
 	prof, err := s.getUserProfile(ctx, up.UserID)
 	if err != nil {
-		return fmt.Errorf("get user profile: %w", err)
+		return commonlogger.LogError(s.logger, "get user profile", err, zap.String("userID", up.UserID))
 	}
 
 	// Basic
@@ -366,12 +367,12 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	if len(up.Photos) > 0 {
 		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID))
 		if err != nil {
-			return fmt.Errorf("insert user photos: %w", err)
+			return commonlogger.LogError(s.logger, "insert user photos", err, zap.String("userID", up.UserID))
 		}
 
 		err = s.verificationRepo.InvalidatePhotoVerification(ctx, up.UserID)
 		if err != nil {
-			return fmt.Errorf("invalidate photo verification: %w", err)
+			return commonlogger.LogError(s.logger, "invalidate photo verification", err, zap.String("userID", up.UserID))
 		}
 
 		prof.Verified = false
@@ -380,13 +381,13 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	// Persist
 	err = s.updateUserProfile(ctx, prof)
 	if err != nil {
-		return fmt.Errorf("update user profile: %w", err)
+		return commonlogger.LogError(s.logger, "update user profile", err, zap.String("userID", up.UserID))
 	}
 
 	if up.BaseColour != nil {
 		err = s.UpsertUserTheme(ctx, up.UserID, *up.BaseColour)
 		if err != nil {
-			return fmt.Errorf("upsert user theme: %w", err)
+			return commonlogger.LogError(s.logger, "upsert user theme", err, zap.String("userID", up.UserID))
 		}
 	}
 
@@ -394,28 +395,28 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	if up.EthnicityIDs != nil {
 		err = s.profileRepo.UpsertUserEthnicities(ctx, up.UserID, up.EthnicityIDs)
 		if err != nil {
-			return fmt.Errorf("upsert user ethnicities: %w", err)
+			return commonlogger.LogError(s.logger, "upsert user ethnicities", err, zap.String("userID", up.UserID))
 		}
 	}
 
 	if len(up.SpokenLanguages) > 0 {
 		err = s.profileRepo.UpsertUserSpokenLanguages(ctx, up.UserID, up.SpokenLanguages)
 		if err != nil {
-			return fmt.Errorf("upsert user spoken languages: %w", err)
+			return commonlogger.LogError(s.logger, "upsert user spoken languages", err, zap.String("userID", up.UserID))
 		}
 	}
 
 	if len(up.VoicePrompts) > 0 {
 		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, up.UserID))
 		if err != nil {
-			return fmt.Errorf("insert user voice prompts: %w", err)
+			return commonlogger.LogError(s.logger, "insert user voice prompts", err, zap.String("userID", up.UserID))
 		}
 	}
 
 	if up.BaseColour != nil {
 		err = s.UpsertUserTheme(ctx, up.UserID, *up.BaseColour)
 		if err != nil {
-			return fmt.Errorf("upsert user theme: %w", err)
+			return commonlogger.LogError(s.logger, "upsert user theme", err, zap.String("userID", up.UserID))
 		}
 	}
 

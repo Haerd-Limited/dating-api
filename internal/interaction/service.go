@@ -26,6 +26,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 )
 
@@ -93,20 +94,20 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 	// this should all be a single transaction
 	tx, err := is.uow.Begin(ctx)
 	if err != nil {
-		return "", fmt.Errorf("begin tx: %w", err)
+		return "", commonlogger.LogError(is.logger, "begin tx", err)
 	}
 
 	defer func() { _ = tx.Rollback() }()
 
 	matchable, err := is.interactionRepo.CheckIfMatchable(ctx, swipe.UserID, swipe.TargetUserID)
 	if err != nil {
-		return "", fmt.Errorf("check if matchable userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+		return "", commonlogger.LogError(is.logger, "check if matchable", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 	}
 
 	if is.safetyService != nil {
 		blocked, blockErr := is.safetyService.IsBlocked(ctx, swipe.UserID, swipe.TargetUserID)
 		if blockErr != nil {
-			return "", fmt.Errorf("check block status userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, blockErr)
+			return "", commonlogger.LogError(is.logger, "check block status", blockErr, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 		}
 
 		if blocked {
@@ -117,7 +118,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 	// todo(high-priority): allow voice note swipes
 	err = is.validateSwipe(ctx, swipe, matchable)
 	if err != nil {
-		return "", fmt.Errorf("validate swipe userID=%s : %w", swipe.UserID, err)
+		return "", commonlogger.LogError(is.logger, "validate swipe", err, zap.String("userID", swipe.UserID))
 	}
 
 	switch swipe.Action {
@@ -127,7 +128,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 			superlikesUsed, err := is.interactionRepo.CountSuperlikesSince(ctx, swipe.UserID, superlikeWindowStart, tx.Raw())
 			if err != nil {
-				return "", fmt.Errorf("get weekly superlike usage userID=%s: %w", swipe.UserID, err)
+				return "", commonlogger.LogError(is.logger, "get weekly superlike usage", err, zap.String("userID", swipe.UserID))
 			}
 
 			if superlikesUsed >= weeklySuperlikeAllowance {
@@ -145,7 +146,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 			err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
 			if err != nil {
-				return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
+				return "", commonlogger.LogError(is.logger, "insert swipe", err, zap.String("userID", swipe.UserID))
 			}
 
 			// analytics: swipe created (non-match path)
@@ -165,7 +166,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 			err = tx.Commit()
 			if err != nil {
-				return "", fmt.Errorf("commit tx: %w", err)
+				return "", commonlogger.LogError(is.logger, "commit tx", err)
 			}
 
 			evt := dto.Event{
@@ -221,21 +222,21 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 		err = is.interactionRepo.CreateMatch(ctx, entity.Match{UserA: a, UserB: b}, tx.Raw())
 		if err != nil {
-			return "", fmt.Errorf("create match userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+			return "", commonlogger.LogError(is.logger, "create match", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 		}
 
 		var convoID string
 
 		convoID, err = is.conversationService.CreateConversationViaTx(ctx, swipe.UserID, swipe.TargetUserID, tx.Raw())
 		if err != nil {
-			return "", fmt.Errorf("create conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+			return "", commonlogger.LogError(is.logger, "create conversation", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 		}
 
 		var targetUserSwipe *entity.Swipe
 
 		targetUserSwipe, err = is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, swipe.TargetUserID, swipe.UserID)
 		if err != nil {
-			return "", fmt.Errorf("get swipe by actorID and targetID actorID=%s targetUserID=%s: %w", swipe.TargetUserID, swipe.UserID, err)
+			return "", commonlogger.LogError(is.logger, "get swipe by actorID and targetID", err, zap.String("actorID", swipe.TargetUserID), zap.String("targetUserID", swipe.UserID))
 		}
 
 		targetUserSentMeALikeWithAMessage := targetUserSwipe.Message.Valid && targetUserSwipe.MessageType.Valid && targetUserSwipe.IdempotencyKey.Valid
@@ -251,7 +252,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
 			})
 			if err != nil {
-				return "", fmt.Errorf("send target user's message to conversation userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+				return "", commonlogger.LogError(is.logger, "send target user's message to conversation", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 			}
 		}
 
@@ -267,7 +268,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
 			})
 			if err != nil {
-				return "", fmt.Errorf("user reply to like userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+				return "", commonlogger.LogError(is.logger, "user reply to like", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 			}
 		}
 
@@ -307,7 +308,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 	case constants.ActionPass:
 		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
 		if err != nil {
-			return "", fmt.Errorf("insert swipe userID=%s : %w", swipe.UserID, err)
+			return "", commonlogger.LogError(is.logger, "insert swipe", err, zap.String("userID", swipe.UserID))
 		}
 
 		// analytics: pass swipe
@@ -317,7 +318,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 		err = tx.Commit()
 		if err != nil {
-			return "", fmt.Errorf("commit tx: %w", err)
+			return "", commonlogger.LogError(is.logger, "commit tx", err)
 		}
 
 		return ResultPassed, nil
@@ -348,7 +349,7 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		if is.safetyService != nil {
 			isBlocked, blockErr := is.safetyService.IsBlocked(ctx, userID, id)
 			if blockErr != nil {
-				return domain.Likes{}, fmt.Errorf("check block status userID=%s targetUserID=%s: %w", userID, id, blockErr)
+				return domain.Likes{}, commonlogger.LogError(is.logger, "check block status", blockErr, zap.String("userID", userID), zap.String("targetUserID", id))
 			}
 
 			if isBlocked {
@@ -358,7 +359,7 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 
 		alreadyMatched, likesErr := is.interactionRepo.AlreadyMatched(ctx, userID, id)
 		if likesErr != nil {
-			return domain.Likes{}, fmt.Errorf("check if already matched userID=%s targetUserID=%s: %w", userID, id, likesErr)
+			return domain.Likes{}, commonlogger.LogError(is.logger, "check if already matched", likesErr, zap.String("userID", userID), zap.String("targetUserID", id))
 		}
 
 		if alreadyMatched {
@@ -367,12 +368,12 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 
 		p, likesErr := is.profileService.GetProfileCard(ctx, id)
 		if likesErr != nil {
-			return domain.Likes{}, fmt.Errorf("get profile card userID=%s profileUserID=%s: %w", userID, id, likesErr)
+			return domain.Likes{}, commonlogger.LogError(is.logger, "get profile card", likesErr, zap.String("userID", userID), zap.String("profileUserID", id))
 		}
 
 		swipe, likesErr := is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, id, userID)
 		if likesErr != nil {
-			return domain.Likes{}, fmt.Errorf("get swipe by actorID and targetID userID=%s targetUserID=%s: %w", userID, id, likesErr)
+			return domain.Likes{}, commonlogger.LogError(is.logger, "get swipe by actorID and targetID", likesErr, zap.String("userID", userID), zap.String("targetUserID", id))
 		}
 
 		like := domain.Like{
@@ -385,7 +386,7 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		if swipe.PromptID.Valid {
 			voicePrompt, likesErr = is.profileService.GetVoicePromptByID(ctx, swipe.PromptID.Int64)
 			if likesErr != nil {
-				return domain.Likes{}, fmt.Errorf("get voice prompt by ID userID=%s targetUserID=%s: %w", userID, id, likesErr)
+				return domain.Likes{}, commonlogger.LogError(is.logger, "get voice prompt by ID", likesErr, zap.String("userID", userID), zap.String("targetUserID", id))
 			}
 
 			like.Prompt.PromptID = voicePrompt.PromptID
@@ -442,7 +443,7 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 	// Ensure that a user can only superlike or pass a vwh user
 	vwhIDs, err := is.discoverService.GetVoiceWorthHearingIDs(ctx, swipe.UserID)
 	if err != nil {
-		return fmt.Errorf("get voice worth hearing ids userID=%s: %w", swipe.UserID, err)
+		return commonlogger.LogError(is.logger, "get voice worth hearing ids", err, zap.String("userID", swipe.UserID))
 	}
 
 	userLikedAVwhUser := len(vwhIDs) != 0 && swipe.Action == constants.ActionLike && slices.Contains(vwhIDs, swipe.TargetUserID)
@@ -453,7 +454,7 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 	// If User is sending a like/superlike to someone who hasn't liked them back, then you must provide a promptID.
 	alreadyInteracted, err := is.discoverService.AlreadyInteracted(ctx, swipe.UserID, swipe.TargetUserID)
 	if err != nil {
-		return fmt.Errorf("already interacted userID=%s targetUserID=%s: %w", swipe.UserID, swipe.TargetUserID, err)
+		return commonlogger.LogError(is.logger, "already interacted", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 	}
 
 	// Check if promptID is nil or 0 (0 is not a valid prompt_id)

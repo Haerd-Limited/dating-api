@@ -9,6 +9,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/media/domain"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 type Service interface {
@@ -47,7 +48,7 @@ func NewMediaService(
 func (s *service) GeneratePhotoUploadUrl(ctx context.Context, userID string) (domain.UploadUrl, error) {
 	url, err := s.awsService.GenerateUploadURLs(ctx, userID, minUploadCountPhotos, mimeJPEG, presignTTL, nil)
 	if err != nil {
-		return domain.UploadUrl{}, fmt.Errorf("failed to generate photo upload url: %w", err)
+		return domain.UploadUrl{}, commonlogger.LogError(s.logger, "failed to generate photo upload url", err, zap.String("userID", userID))
 	}
 
 	if len(url) != minUploadCountPhotos {
@@ -65,7 +66,7 @@ func (s *service) GeneratePhotoUploadUrl(ctx context.Context, userID string) (do
 func (s *service) GenerateVoiceNoteUploadUrl(ctx context.Context, userID string, purpose string) (domain.UploadUrl, error) {
 	url, err := s.awsService.GenerateUploadURLs(ctx, userID, minUploadCountVoiceNotes, mimeM4A, presignTTL, &purpose)
 	if err != nil {
-		return domain.UploadUrl{}, fmt.Errorf("failed to generate voicenote upload url: %w", err)
+		return domain.UploadUrl{}, commonlogger.LogError(s.logger, "failed to generate voicenote upload url", err, zap.String("userID", userID), zap.String("purpose", purpose))
 	}
 
 	if len(url) != minUploadCountVoiceNotes {
@@ -83,7 +84,7 @@ func (s *service) GenerateVoiceNoteUploadUrl(ctx context.Context, userID string,
 func (s *service) GenerateUploadURLsForProfilePhotos(ctx context.Context, userID string) ([]domain.UploadUrl, error) {
 	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPhotos, mimeJPEG, presignTTL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate upload urls: %w", err)
+		return nil, commonlogger.LogError(s.logger, "failed to generate upload urls", err, zap.String("userID", userID))
 	}
 
 	var photoUploadUrls []domain.UploadUrl
@@ -102,7 +103,7 @@ func (s *service) GenerateUploadURLsForProfilePhotos(ctx context.Context, userID
 func (s *service) GenerateUploadURLsForProfilePrompts(ctx context.Context, userID string) ([]domain.UploadUrl, error) {
 	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, maxUploadCountPrompts, mimeM4A, presignTTL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate upload urls: %w", err)
+		return nil, commonlogger.LogError(s.logger, "failed to generate upload urls", err, zap.String("userID", userID))
 	}
 
 	var voicePromptUploadUrls []domain.UploadUrl

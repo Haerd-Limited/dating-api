@@ -12,6 +12,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 type Service interface {
@@ -42,7 +43,7 @@ func NewScoreService(
 func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID string, c domain.Contribution) (domain.ScoreSnapshot, error) {
 	cfg, err := s.getScoreConfig(ctx)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get score config: %w", err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "get score config", err)
 	}
 
 	// 1) compute raw points
@@ -88,13 +89,13 @@ func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID st
 	// 3) persist my score
 	err = s.conversationRepo.UpdateUserConversationScore(ctx, tx, convoID, userID, earned)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("update user conversation score userID=%s convoID=%s earned=%v: %w", userID, convoID, earned, err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "update user conversation score", err, zap.String("userID", userID), zap.String("convoID", convoID), zap.Int("earned", earned))
 	}
 
 	// 4) read both scores
 	me, them, shared, err := s.GetScores(ctx, convoID, userID, tx)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get scores userID=%s convoID=%s: %w", userID, convoID, err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "get scores", err, zap.String("userID", userID), zap.String("convoID", convoID))
 	}
 
 	canReveal := shared >= cfg.Threshold
@@ -118,14 +119,14 @@ func (s *service) ApplyViaTx(ctx context.Context, tx *sql.Tx, convoID, userID st
 func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Contribution) (domain.ScoreSnapshot, error) {
 	tx, err := s.uow.Begin(ctx)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("begin tx: %w", err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "begin tx", err)
 	}
 
 	defer func() { _ = tx.Rollback() }()
 
 	cfg, err := s.getScoreConfig(ctx)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get score config: %w", err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "get score config", err)
 	}
 
 	// 1) compute raw points
@@ -172,13 +173,13 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 	// 3) persist my score
 	err = s.conversationRepo.UpdateUserConversationScore(ctx, tx.Raw(), convoID, userID, earned)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("update user conversation score userID=%s convoID=%s earned=%v: %w", userID, convoID, earned, err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "update user conversation score", err, zap.String("userID", userID), zap.String("convoID", convoID), zap.Int("earned", earned))
 	}
 
 	// 4) read scores
 	me, them, shared, err := s.GetScores(ctx, convoID, userID, nil)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get scores userID=%s convoID=%s: %w", userID, convoID, err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "get scores", err, zap.String("userID", userID), zap.String("convoID", convoID))
 	}
 
 	canReveal := shared >= cfg.Threshold
@@ -187,7 +188,7 @@ func (s *service) Apply(ctx context.Context, convoID, userID string, c domain.Co
 
 	err = tx.Commit()
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("commit tx: %w", err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "commit tx", err)
 	}
 
 	// Extend your snapshot to include shared/min & canReveal.
@@ -208,12 +209,12 @@ func (s *service) GetScores(ctx context.Context, convoID, userID string, tx *sql
 	// 4) read both scores
 	me, err = s.conversationRepo.GetUserConversationScore(ctx, userID, convoID, tx)
 	if err != nil {
-		return 0, 0, 0, fmt.Errorf("get user conversation score: %w", err)
+		return 0, 0, 0, commonlogger.LogError(s.logger, "get user conversation score", err, zap.String("userID", userID), zap.String("convoID", convoID))
 	}
 
 	them, err = s.conversationRepo.GetOtherParticipantConversationScore(ctx, userID, convoID, tx)
 	if err != nil {
-		return 0, 0, 0, fmt.Errorf("get other participant conversation score: %w", err)
+		return 0, 0, 0, commonlogger.LogError(s.logger, "get other participant conversation score", err, zap.String("userID", userID), zap.String("convoID", convoID))
 	}
 
 	shared = me
@@ -227,17 +228,17 @@ func (s *service) GetScores(ctx context.Context, convoID, userID string, tx *sql
 func (s *service) GetSnapshot(ctx context.Context, convoID, userID string) (domain.ScoreSnapshot, error) {
 	cfg, err := s.getScoreConfig(ctx)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get score config: %w", err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "get score config", err)
 	}
 
 	convo, err := s.conversationRepo.GetConversationByID(ctx, convoID)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get conversation by ID convoID=%s: %w", convoID, err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "get conversation by ID", err, zap.String("convoID", convoID))
 	}
 
 	me, them, shared, err := s.GetScores(ctx, convoID, userID, nil)
 	if err != nil {
-		return domain.ScoreSnapshot{}, fmt.Errorf("get scores : %w", err)
+		return domain.ScoreSnapshot{}, commonlogger.LogError(s.logger, "get scores", err, zap.String("userID", userID), zap.String("convoID", convoID))
 	}
 
 	canReveal := shared >= cfg.Threshold
@@ -253,72 +254,72 @@ func (s *service) GetSnapshot(ctx context.Context, convoID, userID string) (doma
 func (s *service) getScoreConfig(ctx context.Context) (domain.ScoreCfg, error) {
 	settings, err := s.conversationRepo.GetScoreSettings(ctx)
 	if err != nil {
-		return domain.ScoreCfg{}, fmt.Errorf("get score settings: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "get score settings", err)
 	}
 
 	text, err := s.conversationRepo.GetScoringText(ctx)
 	if err != nil {
-		return domain.ScoreCfg{}, fmt.Errorf("get scoring text: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "get scoring text", err)
 	}
 
 	bonuses, err := s.conversationRepo.GetScoringBonuses(ctx)
 	if err != nil {
-		return domain.ScoreCfg{}, fmt.Errorf("get scoring bonuses: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "get scoring bonuses", err)
 	}
 
 	call, err := s.conversationRepo.GetScoringCall(ctx)
 	if err != nil {
-		return domain.ScoreCfg{}, fmt.Errorf("get scoring call: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "get scoring call", err)
 	}
 
 	voice, err := s.conversationRepo.GetScoringVoice(ctx)
 	if err != nil {
-		return domain.ScoreCfg{}, fmt.Errorf("get scoring voice: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "get scoring voice", err)
 	}
 
 	textBase, ok := text.Base.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert text base to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert text base to float64", fmt.Errorf("conversion failed"))
 	}
 
 	perChar, ok := text.PerChar.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert text per char to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert text per char to float64", fmt.Errorf("conversion failed"))
 	}
 
 	textMax, ok := text.MaxPerMessage.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert text max to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert text max to float64", fmt.Errorf("conversion failed"))
 	}
 
 	voicePerSec, ok := voice.PerSecond.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert voice per second to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert voice per second to float64", fmt.Errorf("conversion failed"))
 	}
 
 	voiceMax, ok := voice.MaxPerNote.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert voice max to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert voice max to float64", fmt.Errorf("conversion failed"))
 	}
 
 	callPerMin, ok := call.PerMinute.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert call per minute to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert call per minute to float64", fmt.Errorf("conversion failed"))
 	}
 
 	callMax, ok := call.MaxPerCall.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert call max to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert call max to float64", fmt.Errorf("conversion failed"))
 	}
 
 	firstMsgOfDay, ok := bonuses.FirstMessageOfDay.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert first message of day to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert first message of day to float64", fmt.Errorf("conversion failed"))
 	}
 
 	replyBonus, ok := bonuses.ReplyBonus.Float64()
 	if !ok {
-		return domain.ScoreCfg{}, fmt.Errorf("convert reply bonus to float64: %w", err)
+		return domain.ScoreCfg{}, commonlogger.LogError(s.logger, "convert reply bonus to float64", fmt.Errorf("conversion failed"))
 	}
 
 	return domain.ScoreCfg{

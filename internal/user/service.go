@@ -19,6 +19,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=user
@@ -79,7 +80,7 @@ const (
 func (us *userService) CreateUser(ctx context.Context, user domain.User) (string, error) {
 	tx, err := us.uow.Begin(ctx)
 	if err != nil {
-		return "", fmt.Errorf("begin tx: %w", err)
+		return "", commonlogger.LogError(us.logger, "begin tx", err)
 	}
 	defer func(tx uow.Tx) {
 		err = tx.Rollback()
@@ -87,22 +88,22 @@ func (us *userService) CreateUser(ctx context.Context, user domain.User) (string
 
 	userID, err := us.userRepo.InsertUser(ctx, mapper.ToUserEntity(user), tx.Raw())
 	if err != nil {
-		return "", fmt.Errorf("insert user: %w", err)
+		return "", commonlogger.LogError(us.logger, "insert user", err)
 	}
 
 	err = us.profileService.ScaffoldProfile(ctx, tx.Raw(), userID)
 	if err != nil {
-		return "", fmt.Errorf("create new default profile: %w", err)
+		return "", commonlogger.LogError(us.logger, "create new default profile", err, zap.String("userID", userID))
 	}
 
 	err = us.preferenceService.ScaffoldUserPreferences(ctx, tx.Raw(), userID)
 	if err != nil {
-		return "", fmt.Errorf("create new default preference: %w", err)
+		return "", commonlogger.LogError(us.logger, "create new default preference", err, zap.String("userID", userID))
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return "", fmt.Errorf("commit tx: %w", err)
+		return "", commonlogger.LogError(us.logger, "commit tx", err)
 	}
 
 	return userID, nil
@@ -120,7 +121,7 @@ func (us *userService) GetUserByPhoneNumber(ctx context.Context, phoneNumber str
 func (us *userService) GetUser(ctx context.Context, id string) (*domain.User, error) {
 	userEntity, err := us.userRepo.GetUserByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user by id(%s): %w", id, err)
+		return nil, commonlogger.LogError(us.logger, "failed to get user by id", err, zap.String("userID", id))
 	}
 
 	return mapper.UserEntityToUserDomain(userEntity), nil
@@ -147,7 +148,7 @@ func (us *userService) GetUsersByIDs(ctx context.Context, ids []string) ([]*doma
 func (us *userService) UpdateUser(ctx context.Context, user *domain.User) error {
 	err := us.validateAndSanitiseUserDetails(user)
 	if err != nil {
-		return fmt.Errorf("validate and sanitise user details: %w", err)
+		return commonlogger.LogError(us.logger, "validate and sanitise user details", err, zap.String("userID", user.ID))
 	}
 
 	updatedEntity, cols := mapper.ToUpdatedUserEntity(*user)
@@ -218,7 +219,7 @@ func (us *userService) DeleteAccount(ctx context.Context, userID string) error {
 	// Step 1: Verify user exists
 	_, err := us.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("failed to get user: %w", err)
+		return commonlogger.LogError(us.logger, "failed to get user", err, zap.String("userID", userID))
 	}
 
 	// Step 2: Delete all S3 files first (before DB deletion to preserve data if S3 deletion fails)
@@ -236,7 +237,7 @@ func (us *userService) DeleteAccount(ctx context.Context, userID string) error {
 
 	err = us.userRepo.DeleteUser(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("failed to delete user from database: %w", err)
+		return commonlogger.LogError(us.logger, "failed to delete user from database", err, zap.String("userID", userID))
 	}
 
 	// Step 4: Clear any cached data for this user
