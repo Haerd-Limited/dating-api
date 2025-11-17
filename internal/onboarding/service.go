@@ -17,6 +17,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 type Service interface {
@@ -102,7 +103,7 @@ const (
 func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error) {
 	u, err := os.userService.GetUser(ctx, userID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user by userID", err, zap.String("userID", userID))
 	}
 
 	currentStep := domain.Steps(u.OnboardingStep)
@@ -116,12 +117,12 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	case domain.OnboardingStepsBasics:
 		genders, err := os.getGenders(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("get genders: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get genders", err, zap.String("userID", userID))
 		}
 
 		datingIntentions, err := os.getDatingIntentions(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("get dating intentions: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get dating intentions", err, zap.String("userID", userID))
 		}
 
 		return domain.StepResult{
@@ -149,12 +150,12 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	case domain.OnboardingStepsBeliefs:
 		religions, err := os.getReligions(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("get religions: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get religions", err, zap.String("userID", userID))
 		}
 
 		politicalBeliefs, err := os.getPoliticalBeliefs(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("get political beliefs: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get political beliefs", err, zap.String("userID", userID))
 		}
 
 		return domain.StepResult{
@@ -167,12 +168,12 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	case domain.OnboardingStepsBackground:
 		educationLevels, err := os.getEducationLevels(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("get education levels: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get education levels", err, zap.String("userID", userID))
 		}
 
 		ethnicities, err := os.getEthnicities(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("get ethnicities: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get ethnicities", err, zap.String("userID", userID))
 		}
 
 		return domain.StepResult{
@@ -190,7 +191,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 	case domain.OnboardingStepsLanguages:
 		languages, err := os.getLanguages(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("get languages: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get languages", err, zap.String("userID", userID))
 		}
 
 		return domain.StepResult{
@@ -204,7 +205,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 		// GET 6 presigned urls from amazon s3
 		urls, err := os.mediaService.GenerateUploadURLsForProfilePhotos(ctx, userID)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("generate profile photo upload urls: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "generate profile photo upload urls", err, zap.String("userID", userID))
 		}
 
 		var photoUploadUrls []domain.UploadUrl
@@ -228,7 +229,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 		// generate prompt urls.
 		urls, err := os.mediaService.GenerateUploadURLsForProfilePrompts(ctx, userID)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("generate upload urls: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "generate upload urls", err, zap.String("userID", userID))
 		}
 
 		var voicePromptUploadUrls []domain.UploadUrl
@@ -244,7 +245,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 		// get prompts
 		prompts, err := os.getPrompts(ctx)
 		if err != nil {
-			return domain.StepResult{}, fmt.Errorf("get prompts: %w", err)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get prompts", err, zap.String("userID", userID))
 		}
 
 		return domain.StepResult{
@@ -264,7 +265,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
 		}, nil
 	default:
-		return domain.StepResult{}, fmt.Errorf("unknown onboarding step: %s", currentStep)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "unknown onboarding step", errors.New("unknown step"), zap.String("userID", userID), zap.String("step", string(currentStep)))
 	}
 }
 
@@ -273,7 +274,7 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 
 	err := os.ensureStep(ctx, introDetails.UserID, StepForIntro)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", introDetails.UserID), zap.String("step", string(StepForIntro)))
 	}
 
 	err = os.userService.UpdateUser(ctx, &userdomain.User{
@@ -283,12 +284,12 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 		LastName:  introDetails.LastName,
 	})
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user", err, zap.String("userID", introDetails.UserID))
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, introDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", introDetails.UserID))
 	}
 
 	var Lastname string
@@ -301,23 +302,23 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", introDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
 	// Get dating intentions and genders and populate Content
 	genders, err := os.getGenders(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get genders: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get genders", err, zap.String("userID", introDetails.UserID))
 	}
 
 	datingIntentions, err := os.getDatingIntentions(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get dating intentions: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get dating intentions", err, zap.String("userID", introDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, introDetails.UserID, StepForIntro)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", introDetails.UserID), zap.String("step", string(StepForIntro)))
 	}
 
 	return domain.StepResult{
@@ -334,24 +335,24 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 	err := os.ensureStep(ctx, basicDetails.UserID, StepForBasics)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", basicDetails.UserID), zap.String("step", string(StepForBasics)))
 	}
 
 	// Enforce prereg caps at the moment a user tries to complete BASICS (which moves them to LOCATION).
 	if os.enablePreregCap {
 		genderEntity, gErr := os.lookupRepo.GetGenderByID(ctx, basicDetails.GenderID)
 		if gErr != nil {
-			return domain.StepResult{}, fmt.Errorf("get gender: %w", gErr)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get gender", gErr, zap.String("userID", basicDetails.UserID), zap.Int16("genderID", basicDetails.GenderID))
 		}
 
 		totalCompleted, tErr := os.profileService.CountBasicsCompleted(ctx)
 		if tErr != nil {
-			return domain.StepResult{}, fmt.Errorf("count basics-completed total: %w", tErr)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "count basics-completed total", tErr, zap.String("userID", basicDetails.UserID))
 		}
 
 		if os.maxTotalParticipants > 0 && int(totalCompleted) >= os.maxTotalParticipants {
 			if delErr := os.userService.DeleteAccount(ctx, basicDetails.UserID); delErr != nil {
-				return domain.StepResult{}, fmt.Errorf("delete account after total cap reached: %w", delErr)
+				return domain.StepResult{}, commonlogger.LogError(os.logger, "delete account after total cap reached", delErr, zap.String("userID", basicDetails.UserID))
 			}
 
 			return domain.StepResult{}, ErrPreregistrationCapped
@@ -359,14 +360,14 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 		byGender, cErr := os.profileService.CountBasicsCompletedByGender(ctx, basicDetails.GenderID)
 		if cErr != nil {
-			return domain.StepResult{}, fmt.Errorf("count basics-completed by gender: %w", cErr)
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "count basics-completed by gender", cErr, zap.String("userID", basicDetails.UserID), zap.Int16("genderID", basicDetails.GenderID))
 		}
 
 		switch genderEntity.Label {
 		case "Male":
 			if os.maxMaleParticipants > 0 && int(byGender) >= os.maxMaleParticipants {
 				if delErr := os.userService.DeleteAccount(ctx, basicDetails.UserID); delErr != nil {
-					return domain.StepResult{}, fmt.Errorf("delete account after male cap reached: %w", delErr)
+					return domain.StepResult{}, commonlogger.LogError(os.logger, "delete account after male cap reached", delErr, zap.String("userID", basicDetails.UserID))
 				}
 
 				return domain.StepResult{}, ErrPreregistrationCapped
@@ -374,7 +375,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 		case "Female":
 			if os.maxFemaleParticipants > 0 && int(byGender) >= os.maxFemaleParticipants {
 				if delErr := os.userService.DeleteAccount(ctx, basicDetails.UserID); delErr != nil {
-					return domain.StepResult{}, fmt.Errorf("delete account after female cap reached: %w", delErr)
+					return domain.StepResult{}, commonlogger.LogError(os.logger, "delete account after female cap reached", delErr, zap.String("userID", basicDetails.UserID))
 				}
 
 				return domain.StepResult{}, ErrPreregistrationCapped
@@ -384,7 +385,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, basicDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", basicDetails.UserID))
 	}
 
 	userProfile.GenderID = &basicDetails.GenderID
@@ -400,12 +401,12 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", basicDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, basicDetails.UserID, StepForBasics)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", basicDetails.UserID), zap.String("step", string(StepForBasics)))
 	}
 
 	return domain.StepResult{
@@ -418,12 +419,12 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 	err := os.ensureStep(ctx, locationDetails.UserID, StepForLocation)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", locationDetails.UserID), zap.String("step", string(StepForLocation)))
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, locationDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", locationDetails.UserID))
 	}
 
 	userProfile.City = &locationDetails.City
@@ -433,17 +434,17 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", locationDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
 	habits, err := os.getHabits(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get habits: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get habits", err, zap.String("userID", locationDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, locationDetails.UserID, StepForLocation)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", locationDetails.UserID), zap.String("step", string(StepForLocation)))
 	}
 
 	return domain.StepResult{
@@ -457,12 +458,12 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 
 	err := os.ensureStep(ctx, lifestyleDetails.UserID, StepForLifestyle)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", lifestyleDetails.UserID), zap.String("step", string(StepForLifestyle)))
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, lifestyleDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", lifestyleDetails.UserID))
 	}
 
 	userProfile.MarijuanaID = &lifestyleDetails.MarijuanaID
@@ -472,22 +473,22 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", lifestyleDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
 	religions, err := os.getReligions(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get religions: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get religions", err, zap.String("userID", lifestyleDetails.UserID))
 	}
 
 	politicalBeliefs, err := os.getPoliticalBeliefs(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get political beliefs: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get political beliefs", err, zap.String("userID", lifestyleDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, lifestyleDetails.UserID, StepForLifestyle)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", lifestyleDetails.UserID), zap.String("step", string(StepForLifestyle)))
 	}
 
 	return domain.StepResult{
@@ -504,18 +505,18 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 
 	err := os.ensureStep(ctx, spokenLanguages.UserID, StepForLanguages)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", spokenLanguages.UserID), zap.String("step", string(StepForLanguages)))
 	}
 
 	err = os.profileService.UpsertUserSpokenLanguages(ctx, spokenLanguages.UserID, spokenLanguages.LanguageIDs)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("insert user spoken languages: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "insert user spoken languages", err, zap.String("userID", spokenLanguages.UserID))
 	}
 
 	// GET 6 presigned urls from amazon s3
 	urls, err := os.mediaService.GenerateUploadURLsForProfilePhotos(ctx, spokenLanguages.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("generate upload urls: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "generate upload urls", err, zap.String("userID", spokenLanguages.UserID))
 	}
 
 	var photoUploadUrls []domain.UploadUrl
@@ -530,7 +531,7 @@ func (os *onboardingService) Languages(ctx context.Context, spokenLanguages doma
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, spokenLanguages.UserID, StepForLanguages)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", spokenLanguages.UserID), zap.String("step", string(StepForLanguages)))
 	}
 
 	return domain.StepResult{
@@ -546,12 +547,12 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 
 	err := os.ensureStep(ctx, beliefDetails.UserID, StepForBeliefs)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", beliefDetails.UserID), zap.String("step", string(StepForBeliefs)))
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, beliefDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", beliefDetails.UserID))
 	}
 
 	userProfile.ReligionID = &beliefDetails.ReligionID
@@ -559,22 +560,22 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", beliefDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
 	educationLevels, err := os.getEducationLevels(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get education levels: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get education levels", err, zap.String("userID", beliefDetails.UserID))
 	}
 
 	ethnicities, err := os.getEthnicities(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get ethnicities: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get ethnicities", err, zap.String("userID", beliefDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, beliefDetails.UserID, StepForBeliefs)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", beliefDetails.UserID), zap.String("step", string(StepForBeliefs)))
 	}
 
 	return domain.StepResult{
@@ -591,12 +592,12 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 
 	err := os.ensureStep(ctx, backgroundDetails.UserID, StepForBackground)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", backgroundDetails.UserID), zap.String("step", string(StepForBackground)))
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, backgroundDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", backgroundDetails.UserID))
 	}
 
 	userProfile.EducationLevelID = &backgroundDetails.EducationLevelID
@@ -604,12 +605,12 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", backgroundDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, backgroundDetails.UserID, StepForBackground)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", backgroundDetails.UserID), zap.String("step", string(StepForBackground)))
 	}
 
 	return domain.StepResult{
@@ -622,12 +623,12 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 
 	err := os.ensureStep(ctx, waeDetails.UserID, StepForWorkAndEducation)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", waeDetails.UserID), zap.String("step", string(StepForWorkAndEducation)))
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, waeDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", waeDetails.UserID))
 	}
 
 	userProfile.Work = &waeDetails.Workplace
@@ -636,17 +637,17 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", waeDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
 	languages, err := os.getLanguages(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get languages: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get languages", err, zap.String("userID", waeDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, waeDetails.UserID, StepForWorkAndEducation)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", waeDetails.UserID), zap.String("step", string(StepForWorkAndEducation)))
 	}
 
 	return domain.StepResult{
@@ -662,19 +663,19 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 
 	err := os.ensureStep(ctx, uploadedPhotos.UserID, StepForPhotos)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", uploadedPhotos.UserID), zap.String("step", string(StepForPhotos)))
 	}
 
 	// insert photos into user photos table
 	err = os.profileService.UpsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToProfilePhotos(uploadedPhotos))
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("insert user photos: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "insert user photos", err, zap.String("userID", uploadedPhotos.UserID))
 	}
 
 	// generate prompt urls.
 	urls, err := os.mediaService.GenerateUploadURLsForProfilePrompts(ctx, uploadedPhotos.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("generate upload urls: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "generate upload urls", err, zap.String("userID", uploadedPhotos.UserID))
 	}
 
 	var voicePromptUploadUrls []domain.UploadUrl
@@ -690,12 +691,12 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	// get prompts
 	prompts, err := os.getPrompts(ctx)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get prompts: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get prompts", err, zap.String("userID", uploadedPhotos.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPhotos.UserID, StepForPhotos)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", uploadedPhotos.UserID), zap.String("step", string(StepForPhotos)))
 	}
 
 	return domain.StepResult{
@@ -712,23 +713,23 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 
 	err := os.ensureStep(ctx, uploadedPrompts.UserID, StepForPrompts)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", uploadedPrompts.UserID), zap.String("step", string(StepForPrompts)))
 	}
 
 	err = os.validatePrompts(uploadedPrompts)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("validate prompts: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "validate prompts", err, zap.String("userID", uploadedPrompts.UserID))
 	}
 
 	// insert prompts into user prompts table
 	err = os.profileService.UpsertUserPrompts(ctx, uploadedPrompts.UserID, mapper.MapPromptsToProfileVoicePrompts(uploadedPrompts))
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("insert user prompts: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "insert user prompts", err, zap.String("userID", uploadedPrompts.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID, StepForPrompts)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", uploadedPrompts.UserID), zap.String("step", string(StepForPrompts)))
 	}
 
 	return domain.StepResult{
@@ -741,29 +742,29 @@ func (os *onboardingService) Profile(ctx context.Context, profileDetails domain.
 
 	err := os.ensureStep(ctx, profileDetails.UserID, StepForProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("ensure step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", profileDetails.UserID), zap.String("step", string(StepForProfile)))
 	}
 
 	userProfile, err := os.profileService.GetProfileForUpdate(ctx, profileDetails.UserID)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("get user profile by userID: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", profileDetails.UserID))
 	}
 
 	userProfile.CoverPhotoURL = &profileDetails.ProfileCoverPhotoURL
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("update user profile: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", profileDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
 	err = os.profileService.UpsertUserTheme(ctx, profileDetails.UserID, profileDetails.ProfileBaseColour)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("upsert user theme: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "upsert user theme", err, zap.String("userID", profileDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, profileDetails.UserID, StepForProfile)
 	if err != nil {
-		return domain.StepResult{}, fmt.Errorf("bump onboarding step: %w", err)
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", profileDetails.UserID), zap.String("step", string(StepForProfile)))
 	}
 
 	return domain.StepResult{
@@ -775,7 +776,7 @@ func (os *onboardingService) GetPreregistrationStats(ctx context.Context) (domai
 	// Resolve gender IDs for Male/Female
 	genders, err := os.lookupRepo.GetGenders(ctx)
 	if err != nil {
-		return domain.PreregistrationStats{}, fmt.Errorf("get genders: %w", err)
+		return domain.PreregistrationStats{}, commonlogger.LogError(os.logger, "get genders", err)
 	}
 
 	var maleID int16
@@ -797,7 +798,7 @@ func (os *onboardingService) GetPreregistrationStats(ctx context.Context) (domai
 	if maleID != 0 {
 		c, e := os.profileService.CountBasicsCompletedByGender(ctx, maleID)
 		if e != nil {
-			return domain.PreregistrationStats{}, fmt.Errorf("count male basics-completed: %w", e)
+			return domain.PreregistrationStats{}, commonlogger.LogError(os.logger, "count male basics-completed", e, zap.Int16("genderID", maleID))
 		}
 
 		maleCount = c
@@ -806,7 +807,7 @@ func (os *onboardingService) GetPreregistrationStats(ctx context.Context) (domai
 	if femaleID != 0 {
 		c, e := os.profileService.CountBasicsCompletedByGender(ctx, femaleID)
 		if e != nil {
-			return domain.PreregistrationStats{}, fmt.Errorf("count female basics-completed: %w", e)
+			return domain.PreregistrationStats{}, commonlogger.LogError(os.logger, "count female basics-completed", e, zap.Int16("genderID", femaleID))
 		}
 
 		femaleCount = c
@@ -814,7 +815,7 @@ func (os *onboardingService) GetPreregistrationStats(ctx context.Context) (domai
 
 	total, err := os.profileService.CountBasicsCompleted(ctx)
 	if err != nil {
-		return domain.PreregistrationStats{}, fmt.Errorf("count total basics-completed: %w", err)
+		return domain.PreregistrationStats{}, commonlogger.LogError(os.logger, "count total basics-completed", err)
 	}
 
 	return domain.PreregistrationStats{
