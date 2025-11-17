@@ -787,7 +787,7 @@ Seek help from Lionel if you don't know how to do this.
 There's 0 unit tests or integrations tests as of the time of writing this README(I know, its poor), but hopefully by the time you're reading it we will have some. and if we do, maybe you can update this README ;)
 # FAQ
 
-## What's is a domain?
+## What is a domain?
 
 A domain is the business area your software addresses. It includes the concepts, rules, and processes that matter to the business, independent of technical details.
 
