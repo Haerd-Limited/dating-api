@@ -100,24 +100,24 @@ func New(
 				},
 			)
 
+			r.Route("/lookup", func(r chi.Router) {
+				r.Get("/prompts", lookupHandler.GetPrompts())
+				r.Get("/languages", lookupHandler.GetLanguages())
+				r.Get("/religions", lookupHandler.GetReligions())
+				r.Get("/political-beliefs", lookupHandler.GetPoliticalBeliefs())
+				r.Get("/ethnicities", lookupHandler.GetEthnicities())
+				r.Get("/genders", lookupHandler.GetGenders())
+				r.Get("/habits", lookupHandler.GetHabits())
+				r.Get("/dating-intentions", lookupHandler.GetDatingIntentions())
+				r.Get("/education-levels", lookupHandler.GetEducationLevels())
+				r.Get("/family-plans", lookupHandler.GetFamilyPlans())
+				r.Get("/family-status", lookupHandler.GetFamilyStatus())
+				r.Get("/report-categories", lookupHandler.GetReportCategories())
+			})
+
 			// --- Protected (must be logged in)
 			r.Group(func(r chi.Router) {
 				r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
-
-				r.Route("/lookup", func(r chi.Router) {
-					r.Get("/prompts", lookupHandler.GetPrompts())
-					r.Get("/languages", lookupHandler.GetLanguages())
-					r.Get("/religions", lookupHandler.GetReligions())
-					r.Get("/political-beliefs", lookupHandler.GetPoliticalBeliefs())
-					r.Get("/ethnicities", lookupHandler.GetEthnicities())
-					r.Get("/genders", lookupHandler.GetGenders())
-					r.Get("/habits", lookupHandler.GetHabits())
-					r.Get("/dating-intentions", lookupHandler.GetDatingIntentions())
-					r.Get("/education-levels", lookupHandler.GetEducationLevels())
-					r.Get("/family-plans", lookupHandler.GetFamilyPlans())
-					r.Get("/family-status", lookupHandler.GetFamilyStatus())
-					r.Get("/report-categories", lookupHandler.GetReportCategories())
-				})
 
 				r.Route("/safety", func(r chi.Router) {
 					r.Post("/block", safetyHandler.Block())
