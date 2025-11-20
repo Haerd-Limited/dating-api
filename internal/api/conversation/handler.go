@@ -30,7 +30,7 @@ type Handler interface {
 	GetConversations() http.HandlerFunc
 	SendMessage() http.HandlerFunc
 	GetConversationMessages() http.HandlerFunc
-	GetConversationScore() http.HandlerFunc
+	GetChemistryScore() http.HandlerFunc
 	InitiateReveal() http.HandlerFunc
 	ConfirmReveal() http.HandlerFunc
 	MakeRevealDecision() http.HandlerFunc
@@ -210,7 +210,7 @@ func (h *handler) GetMatchPhotos() http.HandlerFunc {
 	}
 }
 
-func (h *handler) GetConversationScore() http.HandlerFunc {
+func (h *handler) GetChemistryScore() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -232,13 +232,13 @@ func (h *handler) GetConversationScore() http.HandlerFunc {
 			return
 		}
 
-		sharedScore, err := h.conversationService.GetConversationScore(ctx, userID, convoID)
+		sharedScore, err := h.conversationService.GetChemistryScore(ctx, userID, convoID)
 		if err != nil {
-			render.HandleServiceErrorResponse(h.logger, w, r, "GetConversationScore", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetChemistryScore", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.MapToGetConversationScoreResponse(sharedScore))
+		render.Json(w, http.StatusOK, mapper.MapToGetChemistryScoreResponse(sharedScore))
 	}
 }
 

@@ -75,8 +75,8 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 	}
 }
 
-func MapToGetConversationScoreResponse(score int) dto.GetConversationScoreResponse {
-	return dto.GetConversationScoreResponse{
+func MapToGetChemistryScoreResponse(score int) dto.GetChemistryScoreResponse {
+	return dto.GetChemistryScoreResponse{
 		Score: score,
 	}
 }

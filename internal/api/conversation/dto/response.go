@@ -14,7 +14,7 @@ type GetConversationsResponse struct {
 	Conversations []Conversation `json:"conversations"`
 }
 
-type GetConversationScoreResponse struct {
+type GetChemistryScoreResponse struct {
 	Score int `json:"score"`
 }
 

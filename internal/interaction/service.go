@@ -439,7 +439,7 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 		return ErrSelfLike
 	}
 
-	//trusting frontend to not allow a user to send a simple like to a VWH user. And if the user becomes a VWH user during the time after the user's feed has been fetched, then let them like them
+	// trusting frontend to not allow a user to send a simple like to a VWH user. And if the user becomes a VWH user during the time after the user's feed has been fetched, then let them like them
 
 	// If User is sending a like/superlike to someone who hasn't liked them back, then you must provide a promptID.
 	alreadyInteracted, err := is.discoverService.AlreadyInteracted(ctx, swipe.UserID, swipe.TargetUserID)

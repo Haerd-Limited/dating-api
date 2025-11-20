@@ -174,7 +174,7 @@ func New(
 
 				r.Route("/conversations", func(r chi.Router) {
 					r.Get("/", conversationHandler.GetConversations())
-					r.Get("/{id}/score", conversationHandler.GetConversationScore())
+					r.Get("/{id}/score", conversationHandler.GetChemistryScore())
 					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
 					r.Post("/{id}/messages", conversationHandler.SendMessage())
 					r.Post("/{id}/reveal/initiate", conversationHandler.InitiateReveal())

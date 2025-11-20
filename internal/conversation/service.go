@@ -33,7 +33,7 @@ import (
 
 type Service interface {
 	GetConversations(ctx context.Context, userID string) ([]domain.Conversation, error)
-	GetConversationScore(ctx context.Context, userID string, convoID string) (int, error)
+	GetChemistryScore(ctx context.Context, userID string, convoID string) (int, error)
 	CreateConversation(ctx context.Context, userID, matchUserID string) error
 	CreateConversationViaTx(ctx context.Context, userID, matchUserID string, tx *sql.Tx) (string, error)
 	SendMessage(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error)
@@ -101,7 +101,7 @@ var (
 
 const messagePreviewMaxRunes = 120
 
-func (s *service) GetConversationScore(ctx context.Context, userID string, convoID string) (int, error) {
+func (s *service) GetChemistryScore(ctx context.Context, userID string, convoID string) (int, error) {
 	_, _, shared, err := s.scoreService.GetScores(ctx, convoID, userID, nil)
 	if err != nil {
 		return 0, commonlogger.LogError(s.logger, "get scores", err, zap.String("userID", userID), zap.String("convoID", convoID))
