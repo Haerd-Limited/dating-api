@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
@@ -62,6 +63,23 @@ func New(
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
+
+	// Add CORS middleware - must be before other middleware
+	router.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{
+			"http://haerd.com",
+			"https://haerd.com",
+			"http://localhost:3000",
+			"http://localhost:3001",
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:3001",
+		},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Admin-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
 
 	// Add middleware.
 	router.Use(middleware.Logger)    // logs every request
