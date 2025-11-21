@@ -74,6 +74,15 @@ type Gender struct {
 	Label string `json:"label"`
 }
 
+type GetSexualitiesResponse struct {
+	Sexualities []Sexuality `json:"sexualities"`
+}
+
+type Sexuality struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
 type GetDatingIntentionsResponse struct {
 	DatingIntentions []DatingIntention `json:"dating_intentions"`
 }

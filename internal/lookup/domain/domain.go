@@ -58,6 +58,11 @@ type EducationLevel struct {
 	Label string
 }
 
+type Sexuality struct {
+	ID    int16
+	Label string
+}
+
 type ReportCategory struct {
 	ID        int16
 	Key       string

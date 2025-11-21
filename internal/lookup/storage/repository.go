@@ -31,6 +31,7 @@ type LookupRepository interface {
 	GetHabits(ctx context.Context) (entity.HabitSlice, error)
 	GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error)
 	GetGenders(ctx context.Context) (entity.GenderSlice, error)
+	GetSexualities(ctx context.Context) (entity.SexualitySlice, error)
 	GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error)
 	GetFamilyPlans(ctx context.Context) (entity.FamilyPlanSlice, error)
 	GetFamilyStatus(ctx context.Context) (entity.FamilyStatusSlice, error)
@@ -155,6 +156,15 @@ func (lr *lookupRepository) GetGenders(ctx context.Context) (entity.GenderSlice,
 	}
 
 	return genders, nil
+}
+
+func (lr *lookupRepository) GetSexualities(ctx context.Context) (entity.SexualitySlice, error) {
+	sexualities, err := entity.Sexualities().All(ctx, lr.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return sexualities, nil
 }
 
 func (lr *lookupRepository) GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error) {

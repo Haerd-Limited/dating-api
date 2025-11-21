@@ -20,6 +20,7 @@ type Handler interface {
 	GetPoliticalBeliefs() http.HandlerFunc
 	GetEthnicities() http.HandlerFunc
 	GetGenders() http.HandlerFunc
+	GetSexualities() http.HandlerFunc
 	GetDatingIntentions() http.HandlerFunc
 	GetHabits() http.HandlerFunc
 	GetEducationLevels() http.HandlerFunc
@@ -152,6 +153,20 @@ func (h *handler) GetGenders() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetGendersResponse(genders))
+	}
+}
+
+func (h *handler) GetSexualities() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		sexualities, err := h.lookupService.GetSexualities(ctx)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GetSexualities", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapToGetSexualitiesResponse(sexualities))
 	}
 }
 
