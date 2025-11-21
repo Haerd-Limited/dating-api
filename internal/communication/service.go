@@ -41,7 +41,7 @@ func (s *service) SendEmailOTP(to, code string) error {
 func (s *service) SendSMSOTP(toNumber, code string) error {
 	params := &twilioApi.CreateMessageParams{}
 	params.SetTo(toNumber)
-	params.SetFrom(s.fromNumber)
+	params.SetFrom("Haerd") // Changed from s.fromNumber to "Haerd"
 	params.SetBody(fmt.Sprintf("Your Haerd code is %s", code))
 
 	_, err := s.client.Api.CreateMessage(params)
