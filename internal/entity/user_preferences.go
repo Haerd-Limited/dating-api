@@ -37,6 +37,7 @@ type UserPreference struct {
 	UpdatedAt              time.Time        `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	SeekEthnicityIds       types.Int64Array `boil:"seek_ethnicity_ids" json:"seek_ethnicity_ids,omitempty" toml:"seek_ethnicity_ids" yaml:"seek_ethnicity_ids,omitempty"`
 	AnalyticsOptOut        bool             `boil:"analytics_opt_out" json:"analytics_opt_out" toml:"analytics_opt_out" yaml:"analytics_opt_out"`
+	SeekSexualityIds       types.Int64Array `boil:"seek_sexuality_ids" json:"seek_sexuality_ids,omitempty" toml:"seek_sexuality_ids" yaml:"seek_sexuality_ids,omitempty"`
 
 	R *userPreferenceR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userPreferenceL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -55,6 +56,7 @@ var UserPreferenceColumns = struct {
 	UpdatedAt              string
 	SeekEthnicityIds       string
 	AnalyticsOptOut        string
+	SeekSexualityIds       string
 }{
 	UserID:                 "user_id",
 	DistanceKM:             "distance_km",
@@ -68,6 +70,7 @@ var UserPreferenceColumns = struct {
 	UpdatedAt:              "updated_at",
 	SeekEthnicityIds:       "seek_ethnicity_ids",
 	AnalyticsOptOut:        "analytics_opt_out",
+	SeekSexualityIds:       "seek_sexuality_ids",
 }
 
 var UserPreferenceTableColumns = struct {
@@ -83,6 +86,7 @@ var UserPreferenceTableColumns = struct {
 	UpdatedAt              string
 	SeekEthnicityIds       string
 	AnalyticsOptOut        string
+	SeekSexualityIds       string
 }{
 	UserID:                 "user_preferences.user_id",
 	DistanceKM:             "user_preferences.distance_km",
@@ -96,6 +100,7 @@ var UserPreferenceTableColumns = struct {
 	UpdatedAt:              "user_preferences.updated_at",
 	SeekEthnicityIds:       "user_preferences.seek_ethnicity_ids",
 	AnalyticsOptOut:        "user_preferences.analytics_opt_out",
+	SeekSexualityIds:       "user_preferences.seek_sexuality_ids",
 }
 
 // Generated where
@@ -116,6 +121,7 @@ var UserPreferenceWhere = struct {
 	UpdatedAt              whereHelpertime_Time
 	SeekEthnicityIds       whereHelpertypes_Int64Array
 	AnalyticsOptOut        whereHelperbool
+	SeekSexualityIds       whereHelpertypes_Int64Array
 }{
 	UserID:                 whereHelperstring{field: "\"user_preferences\".\"user_id\""},
 	DistanceKM:             whereHelpernull_Int16{field: "\"user_preferences\".\"distance_km\""},
@@ -129,6 +135,7 @@ var UserPreferenceWhere = struct {
 	UpdatedAt:              whereHelpertime_Time{field: "\"user_preferences\".\"updated_at\""},
 	SeekEthnicityIds:       whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_ethnicity_ids\""},
 	AnalyticsOptOut:        whereHelperbool{field: "\"user_preferences\".\"analytics_opt_out\""},
+	SeekSexualityIds:       whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_sexuality_ids\""},
 }
 
 // UserPreferenceRels is where relationship names are stored.
@@ -168,9 +175,9 @@ func (r *userPreferenceR) GetUser() *User {
 type userPreferenceL struct{}
 
 var (
-	userPreferenceAllColumns            = []string{"user_id", "distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out"}
+	userPreferenceAllColumns            = []string{"user_id", "distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out", "seek_sexuality_ids"}
 	userPreferenceColumnsWithoutDefault = []string{"user_id"}
-	userPreferenceColumnsWithDefault    = []string{"distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out"}
+	userPreferenceColumnsWithDefault    = []string{"distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out", "seek_sexuality_ids"}
 	userPreferencePrimaryKeyColumns     = []string{"user_id"}
 	userPreferenceGeneratedColumns      = []string{}
 )

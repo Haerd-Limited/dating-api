@@ -7,6 +7,7 @@ type DiscoverPreferenceUpdate struct {
 	MaxAge             *int
 	DatingIntentionIDs []int16
 	ReligionIDs        []int16
+	SexualityIDs       []int16
 	EthnicityIDs       []int16
 }
 
@@ -17,6 +18,7 @@ type StoredDiscoverPreferences struct {
 	MaxAge             *int
 	DatingIntentionIDs []int16
 	ReligionIDs        []int16
+	SexualityIDs       []int16
 	EthnicityIDs       []int16
 }
 
@@ -31,6 +33,7 @@ func (p *StoredDiscoverPreferences) HasAnyPreference() bool {
 		p.MaxAge != nil ||
 		len(p.DatingIntentionIDs) > 0 ||
 		len(p.ReligionIDs) > 0 ||
+		len(p.SexualityIDs) > 0 ||
 		len(p.EthnicityIDs) > 0
 }
 
@@ -67,6 +70,10 @@ func NewPreferenceUpdateFromFilters(filters *DiscoverFilters) *DiscoverPreferenc
 		update.ReligionIDs = append([]int16{}, filters.Religions.ReligionIDs...)
 	}
 
+	if filters.HasSexualitiesFilter() {
+		update.SexualityIDs = append([]int16{}, filters.Sexualities.SexualityIDs...)
+	}
+
 	if filters.HasEthnicitiesFilter() {
 		update.EthnicityIDs = append([]int16{}, filters.Ethnicities.EthnicityIDs...)
 	}
@@ -88,5 +95,6 @@ func (u *DiscoverPreferenceUpdate) hasValues() bool {
 		u.MaxAge != nil ||
 		len(u.DatingIntentionIDs) > 0 ||
 		len(u.ReligionIDs) > 0 ||
+		len(u.SexualityIDs) > 0 ||
 		len(u.EthnicityIDs) > 0
 }

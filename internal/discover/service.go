@@ -375,6 +375,13 @@ func (s *service) evaluateCandidate(
 		religionID = &value
 	}
 
+	var sexualityID *int16
+
+	if candidate.SexualityID.Valid {
+		value := candidate.SexualityID.Int16
+		sexualityID = &value
+	}
+
 	var candidateEthnicities []int16
 	if matcher != nil && matcher.requiresEthnicity() {
 		candidateEthnicities = ethnicityByUser[candidate.UserID]
@@ -384,8 +391,8 @@ func (s *service) evaluateCandidate(
 		evaluation.matchesAll = true
 		evaluation.matchesAny = true
 	} else {
-		evaluation.matchesAll = matcher.matchesAll(card.Age, card.DistanceKm, datingIntentionID, religionID, candidateEthnicities)
-		evaluation.matchesAny = matcher.matchesAny(card.Age, card.DistanceKm, datingIntentionID, religionID, candidateEthnicities)
+		evaluation.matchesAll = matcher.matchesAll(card.Age, card.DistanceKm, datingIntentionID, religionID, sexualityID, candidateEthnicities)
+		evaluation.matchesAny = matcher.matchesAny(card.Age, card.DistanceKm, datingIntentionID, religionID, sexualityID, candidateEthnicities)
 	}
 
 	evaluation.card = card
@@ -497,6 +504,7 @@ type preferenceMatcher struct {
 	prefs           *domain.StoredDiscoverPreferences
 	datingIntentSet map[int16]struct{}
 	religionSet     map[int16]struct{}
+	sexualitySet    map[int16]struct{}
 	ethnicitySet    map[int16]struct{}
 }
 
@@ -523,6 +531,13 @@ func newPreferenceMatcher(prefs *domain.StoredDiscoverPreferences) *preferenceMa
 		}
 	}
 
+	if len(prefs.SexualityIDs) > 0 {
+		matcher.sexualitySet = make(map[int16]struct{}, len(prefs.SexualityIDs))
+		for _, id := range prefs.SexualityIDs {
+			matcher.sexualitySet[id] = struct{}{}
+		}
+	}
+
 	if len(prefs.EthnicityIDs) > 0 {
 		matcher.ethnicitySet = make(map[int16]struct{}, len(prefs.EthnicityIDs))
 		for _, id := range prefs.EthnicityIDs {
@@ -537,7 +552,7 @@ func (m *preferenceMatcher) requiresEthnicity() bool {
 	return m != nil && len(m.ethnicitySet) > 0
 }
 
-func (m *preferenceMatcher) matchesAll(age int, distanceKm int, datingIntentionID *int16, religionID *int16, candidateEthnicities []int16) bool {
+func (m *preferenceMatcher) matchesAll(age int, distanceKm int, datingIntentionID *int16, religionID *int16, sexualityID *int16, candidateEthnicities []int16) bool {
 	if m == nil {
 		return true
 	}
@@ -572,6 +587,16 @@ func (m *preferenceMatcher) matchesAll(age int, distanceKm int, datingIntentionI
 		}
 	}
 
+	if len(m.sexualitySet) > 0 {
+		if sexualityID == nil {
+			return false
+		}
+
+		if _, ok := m.sexualitySet[*sexualityID]; !ok {
+			return false
+		}
+	}
+
 	if len(m.ethnicitySet) > 0 {
 		if len(candidateEthnicities) == 0 {
 			return false
@@ -589,7 +614,7 @@ func (m *preferenceMatcher) matchesAll(age int, distanceKm int, datingIntentionI
 	return true
 }
 
-func (m *preferenceMatcher) matchesAny(age int, distanceKm int, datingIntentionID *int16, religionID *int16, candidateEthnicities []int16) bool {
+func (m *preferenceMatcher) matchesAny(age int, distanceKm int, datingIntentionID *int16, religionID *int16, sexualityID *int16, candidateEthnicities []int16) bool {
 	if m == nil {
 		return true
 	}
@@ -610,6 +635,12 @@ func (m *preferenceMatcher) matchesAny(age int, distanceKm int, datingIntentionI
 
 	if len(m.religionSet) > 0 && religionID != nil {
 		if _, ok := m.religionSet[*religionID]; ok {
+			return true
+		}
+	}
+
+	if len(m.sexualitySet) > 0 && sexualityID != nil {
+		if _, ok := m.sexualitySet[*sexualityID]; ok {
 			return true
 		}
 	}

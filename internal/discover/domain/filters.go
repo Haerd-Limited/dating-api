@@ -14,6 +14,7 @@ type DiscoverFilters struct {
 	Distance         *DistanceFilter         `json:"distance,omitempty"`
 	DatingIntentions *DatingIntentionsFilter `json:"dating_intentions,omitempty"`
 	Religions        *ReligionsFilter        `json:"religions,omitempty"`
+	Sexualities      *SexualitiesFilter      `json:"sexualities,omitempty"`
 	Ethnicities      *EthnicitiesFilter      `json:"ethnicities,omitempty"`
 	Operator         FilterOperator          `json:"operator"` // How to combine filters (AND/OR)
 }
@@ -39,6 +40,11 @@ type ReligionsFilter struct {
 	ReligionIDs []int16 `json:"religion_ids,omitempty"`
 }
 
+// SexualitiesFilter filters profiles by sexualities
+type SexualitiesFilter struct {
+	SexualityIDs []int16 `json:"sexuality_ids,omitempty"`
+}
+
 // EthnicitiesFilter filters profiles by ethnicities
 type EthnicitiesFilter struct {
 	EthnicityIDs []int16 `json:"ethnicity_ids,omitempty"`
@@ -50,6 +56,7 @@ func (f *DiscoverFilters) IsEmpty() bool {
 		f.Distance == nil &&
 		f.DatingIntentions == nil &&
 		f.Religions == nil &&
+		f.Sexualities == nil &&
 		f.Ethnicities == nil
 }
 
@@ -71,6 +78,11 @@ func (f *DiscoverFilters) HasDatingIntentionsFilter() bool {
 // HasReligionsFilter returns true if religions filter is set
 func (f *DiscoverFilters) HasReligionsFilter() bool {
 	return f.Religions != nil && len(f.Religions.ReligionIDs) > 0
+}
+
+// HasSexualitiesFilter returns true if sexualities filter is set
+func (f *DiscoverFilters) HasSexualitiesFilter() bool {
+	return f.Sexualities != nil && len(f.Sexualities.SexualityIDs) > 0
 }
 
 // HasEthnicitiesFilter returns true if ethnicities filter is set

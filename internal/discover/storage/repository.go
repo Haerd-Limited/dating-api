@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"github.com/aarondl/null/v8"
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 
@@ -397,6 +399,11 @@ func (r *discoverRepository) buildFilterMods(filters *domain.DiscoverFilters) ([
 		mods = append(mods, entity.UserProfileWhere.ReligionID.IN(filters.Religions.ReligionIDs))
 	}
 
+	// Sexuality filter
+	if filters.HasSexualitiesFilter() {
+		mods = append(mods, entity.UserProfileWhere.SexualityID.IN(filters.Sexualities.SexualityIDs))
+	}
+
 	// Ethnicity filter (requires join with user_ethnicities table)
 	if filters.HasEthnicitiesFilter() {
 		mods = append(mods, qm.InnerJoin("user_ethnicities ue ON ue.user_id = user_profiles.user_id"))
@@ -437,44 +444,77 @@ func (r *discoverRepository) calculateMinBirthdateForAge(maxAge int) string {
 	return fmt.Sprintf("%d-01-01", year)
 }
 
-type userPreferenceRow struct {
-	DistanceKM       sql.NullInt64 `db:"distance_km"`
-	AgeMin           sql.NullInt64 `db:"age_min"`
-	AgeMax           sql.NullInt64 `db:"age_max"`
-	SeekIntentionIDs pq.Int64Array `db:"seek_intention_ids"`
-	SeekReligionIDs  pq.Int64Array `db:"seek_religion_ids"`
-	SeekEthnicityIDs pq.Int64Array `db:"seek_ethnicity_ids"`
-}
-
 func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, userID string, preferences *domain.DiscoverPreferenceUpdate) error {
 	if preferences == nil {
 		return nil
 	}
 
-	query := `
-		INSERT INTO user_preferences (user_id, distance_km, age_min, age_max, seek_intention_ids, seek_religion_ids, seek_ethnicity_ids)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		ON CONFLICT (user_id) DO UPDATE
-		SET distance_km = EXCLUDED.distance_km,
-		    age_min = EXCLUDED.age_min,
-		    age_max = EXCLUDED.age_max,
-		    seek_intention_ids = EXCLUDED.seek_intention_ids,
-		    seek_religion_ids = EXCLUDED.seek_religion_ids,
-		    seek_ethnicity_ids = EXCLUDED.seek_ethnicity_ids,
-		    updated_at = now()
-	`
+	up := &entity.UserPreference{
+		UserID: userID,
+	}
 
-	_, err := r.db.ExecContext(
-		ctx,
-		query,
-		userID,
-		toNullableInt64(preferences.DistanceKM),
-		toNullableInt64(preferences.MinAge),
-		toNullableInt64(preferences.MaxAge),
-		toNullableInt64Array(preferences.DatingIntentionIDs),
-		toNullableInt64Array(preferences.ReligionIDs),
-		toNullableInt64Array(preferences.EthnicityIDs),
-	)
+	// Set nullable int16 fields
+	if preferences.DistanceKM != nil {
+		up.DistanceKM = null.Int16From(int16(*preferences.DistanceKM))
+	}
+	if preferences.MinAge != nil {
+		up.AgeMin = null.Int16From(int16(*preferences.MinAge))
+	}
+	if preferences.MaxAge != nil {
+		up.AgeMax = null.Int16From(int16(*preferences.MaxAge))
+	}
+
+	// Set array fields (convert int16 to int64)
+	if len(preferences.DatingIntentionIDs) > 0 {
+		up.SeekIntentionIds = convertInt16SliceToInt64Array(preferences.DatingIntentionIDs)
+	}
+	if len(preferences.ReligionIDs) > 0 {
+		up.SeekReligionIds = convertInt16SliceToInt64Array(preferences.ReligionIDs)
+	}
+	if len(preferences.SexualityIDs) > 0 {
+		up.SeekSexualityIds = convertInt16SliceToInt64Array(preferences.SexualityIDs)
+	}
+	if len(preferences.EthnicityIDs) > 0 {
+		up.SeekEthnicityIds = convertInt16SliceToInt64Array(preferences.EthnicityIDs)
+	}
+
+	// Build column whitelist for upsert - only include fields that are set
+	updateCols := []string{entity.UserPreferenceColumns.UpdatedAt}
+	insertCols := []string{entity.UserPreferenceColumns.UserID}
+
+	if preferences.DistanceKM != nil {
+		updateCols = append(updateCols, entity.UserPreferenceColumns.DistanceKM)
+		insertCols = append(insertCols, entity.UserPreferenceColumns.DistanceKM)
+	}
+	if preferences.MinAge != nil {
+		updateCols = append(updateCols, entity.UserPreferenceColumns.AgeMin)
+		insertCols = append(insertCols, entity.UserPreferenceColumns.AgeMin)
+	}
+	if preferences.MaxAge != nil {
+		updateCols = append(updateCols, entity.UserPreferenceColumns.AgeMax)
+		insertCols = append(insertCols, entity.UserPreferenceColumns.AgeMax)
+	}
+	if len(preferences.DatingIntentionIDs) > 0 {
+		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekIntentionIds)
+		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekIntentionIds)
+	}
+	if len(preferences.ReligionIDs) > 0 {
+		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekReligionIds)
+		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekReligionIds)
+	}
+	if len(preferences.SexualityIDs) > 0 {
+		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekSexualityIds)
+		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekSexualityIds)
+	}
+	if len(preferences.EthnicityIDs) > 0 {
+		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekEthnicityIds)
+		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekEthnicityIds)
+	}
+
+	updateColumns := boil.Whitelist(updateCols...)
+	insertColumns := boil.Whitelist(insertCols...)
+
+	err := up.Upsert(ctx, r.db, true, []string{entity.UserPreferenceColumns.UserID}, updateColumns, insertColumns)
 	if err != nil {
 		return fmt.Errorf("save user discover preferences: %w", err)
 	}
@@ -482,17 +522,8 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 	return nil
 }
 
-// todo: update this to use sqlboiler and don't import domain objects here
 func (r *discoverRepository) GetUserDiscoverPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error) {
-	const query = `
-		SELECT distance_km, age_min, age_max, seek_intention_ids, seek_religion_ids, seek_ethnicity_ids
-		FROM user_preferences
-		WHERE user_id = $1
-	`
-
-	var row userPreferenceRow
-
-	err := r.db.GetContext(ctx, &row, query, userID)
+	up, err := entity.FindUserPreference(ctx, r.db, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -502,12 +533,13 @@ func (r *discoverRepository) GetUserDiscoverPreferences(ctx context.Context, use
 	}
 
 	return &domain.StoredDiscoverPreferences{
-		DistanceKM:         fromNullInt64(row.DistanceKM),
-		MinAge:             fromNullInt64(row.AgeMin),
-		MaxAge:             fromNullInt64(row.AgeMax),
-		DatingIntentionIDs: convertInt64SliceToInt16(row.SeekIntentionIDs),
-		ReligionIDs:        convertInt64SliceToInt16(row.SeekReligionIDs),
-		EthnicityIDs:       convertInt64SliceToInt16(row.SeekEthnicityIDs),
+		DistanceKM:         fromNullInt16(up.DistanceKM),
+		MinAge:             fromNullInt16(up.AgeMin),
+		MaxAge:             fromNullInt16(up.AgeMax),
+		DatingIntentionIDs: convertInt64ArrayToInt16Slice(up.SeekIntentionIds),
+		ReligionIDs:        convertInt64ArrayToInt16Slice(up.SeekReligionIds),
+		SexualityIDs:       convertInt64ArrayToInt16Slice(up.SeekSexualityIds),
+		EthnicityIDs:       convertInt64ArrayToInt16Slice(up.SeekEthnicityIds),
 	}, nil
 }
 
@@ -563,17 +595,7 @@ func convertToInterfaceSlice(int16Slice []int16) []interface{} {
 	return result
 }
 
-func toNullableInt64(value *int) interface{} {
-	if value == nil {
-		return nil
-	}
-
-	v := int64(*value)
-
-	return v
-}
-
-func toNullableInt64Array(values []int16) interface{} {
+func convertInt16SliceToInt64Array(values []int16) types.Int64Array {
 	if len(values) == 0 {
 		return nil
 	}
@@ -583,20 +605,10 @@ func toNullableInt64Array(values []int16) interface{} {
 		result[i] = int64(v)
 	}
 
-	return pq.Array(result)
+	return result
 }
 
-func fromNullInt64(value sql.NullInt64) *int {
-	if !value.Valid {
-		return nil
-	}
-
-	v := int(value.Int64)
-
-	return &v
-}
-
-func convertInt64SliceToInt16(values []int64) []int16 {
+func convertInt64ArrayToInt16Slice(values types.Int64Array) []int16 {
 	if len(values) == 0 {
 		return nil
 	}
@@ -607,6 +619,16 @@ func convertInt64SliceToInt16(values []int64) []int16 {
 	}
 
 	return result
+}
+
+func fromNullInt16(value null.Int16) *int {
+	if !value.Valid {
+		return nil
+	}
+
+	v := int(value.Int16)
+
+	return &v
 }
 
 func (r *discoverRepository) getOppositeGender(ctx context.Context, userID string) (*entity.Gender, error) {
