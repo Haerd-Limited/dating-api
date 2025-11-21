@@ -51,6 +51,7 @@ type UserProfile struct {
 	CoverPhotoURL     null.String `boil:"cover_photo_url" json:"cover_photo_url,omitempty" toml:"cover_photo_url" yaml:"cover_photo_url,omitempty"`
 	Emoji             null.String `boil:"emoji" json:"emoji,omitempty" toml:"emoji" yaml:"emoji,omitempty"`
 	Verified          bool        `boil:"verified" json:"verified" toml:"verified" yaml:"verified"`
+	SexualityID       null.Int16  `boil:"sexuality_id" json:"sexuality_id,omitempty" toml:"sexuality_id" yaml:"sexuality_id,omitempty"`
 
 	R *userProfileR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userProfileL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -84,6 +85,7 @@ var UserProfileColumns = struct {
 	CoverPhotoURL     string
 	Emoji             string
 	Verified          string
+	SexualityID       string
 }{
 	UserID:            "user_id",
 	DisplayName:       "display_name",
@@ -112,6 +114,7 @@ var UserProfileColumns = struct {
 	CoverPhotoURL:     "cover_photo_url",
 	Emoji:             "emoji",
 	Verified:          "verified",
+	SexualityID:       "sexuality_id",
 }
 
 var UserProfileTableColumns = struct {
@@ -142,6 +145,7 @@ var UserProfileTableColumns = struct {
 	CoverPhotoURL     string
 	Emoji             string
 	Verified          string
+	SexualityID       string
 }{
 	UserID:            "user_profiles.user_id",
 	DisplayName:       "user_profiles.display_name",
@@ -170,6 +174,7 @@ var UserProfileTableColumns = struct {
 	CoverPhotoURL:     "user_profiles.cover_photo_url",
 	Emoji:             "user_profiles.emoji",
 	Verified:          "user_profiles.verified",
+	SexualityID:       "user_profiles.sexuality_id",
 }
 
 // Generated where
@@ -202,6 +207,7 @@ var UserProfileWhere = struct {
 	CoverPhotoURL     whereHelpernull_String
 	Emoji             whereHelpernull_String
 	Verified          whereHelperbool
+	SexualityID       whereHelpernull_Int16
 }{
 	UserID:            whereHelperstring{field: "\"user_profiles\".\"user_id\""},
 	DisplayName:       whereHelperstring{field: "\"user_profiles\".\"display_name\""},
@@ -230,6 +236,7 @@ var UserProfileWhere = struct {
 	CoverPhotoURL:     whereHelpernull_String{field: "\"user_profiles\".\"cover_photo_url\""},
 	Emoji:             whereHelpernull_String{field: "\"user_profiles\".\"emoji\""},
 	Verified:          whereHelperbool{field: "\"user_profiles\".\"verified\""},
+	SexualityID:       whereHelpernull_Int16{field: "\"user_profiles\".\"sexuality_id\""},
 }
 
 // UserProfileRels is where relationship names are stored.
@@ -244,6 +251,7 @@ var UserProfileRels = struct {
 	Marijuana       string
 	PoliticalBelief string
 	Religion        string
+	Sexuality       string
 	Smoking         string
 	User            string
 }{
@@ -257,6 +265,7 @@ var UserProfileRels = struct {
 	Marijuana:       "Marijuana",
 	PoliticalBelief: "PoliticalBelief",
 	Religion:        "Religion",
+	Sexuality:       "Sexuality",
 	Smoking:         "Smoking",
 	User:            "User",
 }
@@ -273,6 +282,7 @@ type userProfileR struct {
 	Marijuana       *Habit           `boil:"Marijuana" json:"Marijuana" toml:"Marijuana" yaml:"Marijuana"`
 	PoliticalBelief *PoliticalBelief `boil:"PoliticalBelief" json:"PoliticalBelief" toml:"PoliticalBelief" yaml:"PoliticalBelief"`
 	Religion        *Religion        `boil:"Religion" json:"Religion" toml:"Religion" yaml:"Religion"`
+	Sexuality       *Sexuality       `boil:"Sexuality" json:"Sexuality" toml:"Sexuality" yaml:"Sexuality"`
 	Smoking         *Habit           `boil:"Smoking" json:"Smoking" toml:"Smoking" yaml:"Smoking"`
 	User            *User            `boil:"User" json:"User" toml:"User" yaml:"User"`
 }
@@ -442,6 +452,22 @@ func (r *userProfileR) GetReligion() *Religion {
 	return r.Religion
 }
 
+func (o *UserProfile) GetSexuality() *Sexuality {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetSexuality()
+}
+
+func (r *userProfileR) GetSexuality() *Sexuality {
+	if r == nil {
+		return nil
+	}
+
+	return r.Sexuality
+}
+
 func (o *UserProfile) GetSmoking() *Habit {
 	if o == nil {
 		return nil
@@ -478,9 +504,9 @@ func (r *userProfileR) GetUser() *User {
 type userProfileL struct{}
 
 var (
-	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified"}
+	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified", "sexuality_id"}
 	userProfileColumnsWithoutDefault = []string{"user_id", "display_name"}
-	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified"}
+	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified", "sexuality_id"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )
@@ -898,6 +924,17 @@ func (o *UserProfile) Religion(mods ...qm.QueryMod) religionQuery {
 	queryMods = append(queryMods, mods...)
 
 	return Religions(queryMods...)
+}
+
+// Sexuality pointed to by the foreign key.
+func (o *UserProfile) Sexuality(mods ...qm.QueryMod) sexualityQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.SexualityID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Sexualities(queryMods...)
 }
 
 // Smoking pointed to by the foreign key.
@@ -2162,6 +2199,130 @@ func (userProfileL) LoadReligion(ctx context.Context, e boil.ContextExecutor, si
 	return nil
 }
 
+// LoadSexuality allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (userProfileL) LoadSexuality(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserProfile interface{}, mods queries.Applicator) error {
+	var slice []*UserProfile
+	var object *UserProfile
+
+	if singular {
+		var ok bool
+		object, ok = maybeUserProfile.(*UserProfile)
+		if !ok {
+			object = new(UserProfile)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUserProfile)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUserProfile))
+			}
+		}
+	} else {
+		s, ok := maybeUserProfile.(*[]*UserProfile)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUserProfile)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUserProfile))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userProfileR{}
+		}
+		if !queries.IsNil(object.SexualityID) {
+			args[object.SexualityID] = struct{}{}
+		}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userProfileR{}
+			}
+
+			if !queries.IsNil(obj.SexualityID) {
+				args[obj.SexualityID] = struct{}{}
+			}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`sexualities`),
+		qm.WhereIn(`sexualities.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Sexuality")
+	}
+
+	var resultSlice []*Sexuality
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Sexuality")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for sexualities")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for sexualities")
+	}
+
+	if len(sexualityAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Sexuality = foreign
+		if foreign.R == nil {
+			foreign.R = &sexualityR{}
+		}
+		foreign.R.UserProfiles = append(foreign.R.UserProfiles, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if queries.Equal(local.SexualityID, foreign.ID) {
+				local.R.Sexuality = foreign
+				if foreign.R == nil {
+					foreign.R = &sexualityR{}
+				}
+				foreign.R.UserProfiles = append(foreign.R.UserProfiles, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadSmoking allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (userProfileL) LoadSmoking(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserProfile interface{}, mods queries.Applicator) error {
@@ -3193,6 +3354,86 @@ func (o *UserProfile) RemoveReligion(ctx context.Context, exec boil.ContextExecu
 
 	for i, ri := range related.R.UserProfiles {
 		if queries.Equal(o.ReligionID, ri.ReligionID) {
+			continue
+		}
+
+		ln := len(related.R.UserProfiles)
+		if ln > 1 && i < ln-1 {
+			related.R.UserProfiles[i] = related.R.UserProfiles[ln-1]
+		}
+		related.R.UserProfiles = related.R.UserProfiles[:ln-1]
+		break
+	}
+	return nil
+}
+
+// SetSexuality of the userProfile to the related item.
+// Sets o.R.Sexuality to related.
+// Adds o to related.R.UserProfiles.
+func (o *UserProfile) SetSexuality(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Sexuality) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"user_profiles\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"sexuality_id"}),
+		strmangle.WhereClause("\"", "\"", 2, userProfilePrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.UserID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	queries.Assign(&o.SexualityID, related.ID)
+	if o.R == nil {
+		o.R = &userProfileR{
+			Sexuality: related,
+		}
+	} else {
+		o.R.Sexuality = related
+	}
+
+	if related.R == nil {
+		related.R = &sexualityR{
+			UserProfiles: UserProfileSlice{o},
+		}
+	} else {
+		related.R.UserProfiles = append(related.R.UserProfiles, o)
+	}
+
+	return nil
+}
+
+// RemoveSexuality relationship.
+// Sets o.R.Sexuality to nil.
+// Removes o from all passed in related items' relationships struct.
+func (o *UserProfile) RemoveSexuality(ctx context.Context, exec boil.ContextExecutor, related *Sexuality) error {
+	var err error
+
+	queries.SetScanner(&o.SexualityID, nil)
+	if _, err = o.Update(ctx, exec, boil.Whitelist("sexuality_id")); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	if o.R != nil {
+		o.R.Sexuality = nil
+	}
+	if related == nil || related.R == nil {
+		return nil
+	}
+
+	for i, ri := range related.R.UserProfiles {
+		if queries.Equal(o.SexualityID, ri.SexualityID) {
 			continue
 		}
 

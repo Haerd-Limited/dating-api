@@ -328,6 +328,10 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		prof.DatingIntentionID = *up.DatingIntentionID
 	}
 
+	if up.SexualityID != nil {
+		prof.SexualityID = *up.SexualityID
+	}
+
 	if up.ReligionID != nil {
 		prof.ReligionID = *up.ReligionID
 	}
@@ -472,6 +476,11 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	result.DatingIntention, err = s.getDatingIntentionByID(ctx, userProfile.DatingIntentionID)
 	if err != nil {
 		return domain.EnrichedProfile{}, fmt.Errorf("get dating intention: %w", err)
+	}
+
+	result.Sexuality, err = s.getSexualityByID(ctx, userProfile.SexualityID)
+	if err != nil {
+		return domain.EnrichedProfile{}, fmt.Errorf("get sexuality: %w", err)
 	}
 
 	result.Religion, err = s.getReligionByID(ctx, userProfile.ReligionID)

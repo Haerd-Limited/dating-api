@@ -390,6 +390,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 	userProfile.GenderID = &basicDetails.GenderID
 	userProfile.DatingIntentionID = &basicDetails.DatingIntentionID
+	userProfile.SexualityID = &basicDetails.SexualityID
 	userProfile.HeightCM = &basicDetails.HeightCm
 
 	dob, err := time.Parse(time.DateOnly, basicDetails.Birthdate)

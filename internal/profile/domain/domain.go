@@ -18,6 +18,7 @@ type Profile struct {
 	// Single-selects
 	GenderID          int16
 	DatingIntentionID int16
+	SexualityID       int16
 	ReligionID        int16
 	EducationLevelID  int16
 	PoliticalBeliefID int16
@@ -60,6 +61,7 @@ type UpdateProfile struct {
 	// Single-selects
 	GenderID          *int16
 	DatingIntentionID *int16
+	SexualityID       *int16
 	ReligionID        *int16
 	EducationLevelID  *int16
 	PoliticalBeliefID *int16
@@ -100,6 +102,7 @@ type EnrichedProfile struct {
 
 	Gender          Gender
 	DatingIntention DatingIntention
+	Sexuality       Sexuality
 	Religion        Religion
 	EducationLevel  EducationLevel
 	PoliticalBelief PoliticalBelief
@@ -208,6 +211,11 @@ type DatingIntention struct {
 }
 
 type Habit struct {
+	ID    int16
+	Label string
+}
+
+type Sexuality struct {
 	ID    int16
 	Label string
 }

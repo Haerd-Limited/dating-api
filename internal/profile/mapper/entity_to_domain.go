@@ -60,6 +60,10 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 		d.DatingIntentionID = up.DatingIntentionID.Int16
 	}
 
+	if up.SexualityID.Valid {
+		d.SexualityID = up.SexualityID.Int16
+	}
+
 	if up.ReligionID.Valid {
 		d.ReligionID = up.ReligionID.Int16
 	}

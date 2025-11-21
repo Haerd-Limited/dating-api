@@ -82,6 +82,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("ScoringVoices", testScoringVoicesUpsert)
 
+	t.Run("Sexualities", testSexualitiesUpsert)
+
 	t.Run("SpatialRefSys", testSpatialRefSysUpsert)
 
 	t.Run("Swipes", testSwipesUpsert)

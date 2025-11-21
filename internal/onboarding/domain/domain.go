@@ -154,6 +154,7 @@ type Basics struct {
 	HeightCm          int16
 	GenderID          int16
 	DatingIntentionID int16
+	SexualityID       int16
 }
 
 type Intro struct {

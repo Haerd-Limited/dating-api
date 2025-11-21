@@ -21,6 +21,7 @@ func MapBasicRequestToDomain(req dto.BasicsRequest, userID string) domain.Basics
 		HeightCm:          req.HeightCm,
 		GenderID:          req.GenderID,
 		DatingIntentionID: req.DatingIntentionID,
+		SexualityID:       req.SexualityID,
 	}
 }
 

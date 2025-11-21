@@ -318,6 +318,22 @@ func (s *service) getDatingIntentionByID(ctx context.Context, datingIntentionID 
 	}, nil
 }
 
+func (s *service) getSexualityByID(ctx context.Context, sexualityID int16) (domain.Sexuality, error) {
+	sexualityEntity, err := s.lookupRepo.GetSexualityByID(ctx, sexualityID)
+	if err != nil {
+		return domain.Sexuality{}, fmt.Errorf("failed to get sexuality by ID: %w", err)
+	}
+
+	if sexualityEntity == nil {
+		return domain.Sexuality{}, errors.New("sexuality not found")
+	}
+
+	return domain.Sexuality{
+		ID:    sexualityEntity.ID,
+		Label: sexualityEntity.Label,
+	}, nil
+}
+
 func (s *service) getReligionByID(ctx context.Context, religionID int16) (domain.Religion, error) {
 	religionEntity, err := s.lookupRepo.GetReligionByID(ctx, religionID)
 	if err != nil {

@@ -92,6 +92,11 @@ func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []stri
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.DatingIntentionID)
 	}
 
+	if p.SexualityID != 0 {
+		ent.SexualityID = null.Int16From(p.SexualityID)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.SexualityID)
+	}
+
 	if p.ReligionID != 0 {
 		ent.ReligionID = null.Int16From(p.ReligionID)
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.ReligionID)

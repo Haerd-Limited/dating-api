@@ -21,6 +21,7 @@ type LookupRepository interface {
 	GetHabitByID(ctx context.Context, id int16) (*entity.Habit, error)
 	GetDatingIntentionByID(ctx context.Context, id int16) (*entity.DatingIntention, error)
 	GetGenderByID(ctx context.Context, id int16) (*entity.Gender, error)
+	GetSexualityByID(ctx context.Context, id int16) (*entity.Sexuality, error)
 	GetPromptTypeByID(ctx context.Context, id int16) (*entity.PromptType, error)
 	GetLanguages(ctx context.Context) (entity.LanguageSlice, error)
 	GetEducationLevels(ctx context.Context) (entity.EducationLevelSlice, error)
@@ -235,6 +236,15 @@ func (lr *lookupRepository) GetGenderByID(ctx context.Context, id int16) (*entit
 	}
 
 	return gender, nil
+}
+
+func (lr *lookupRepository) GetSexualityByID(ctx context.Context, id int16) (*entity.Sexuality, error) {
+	sexuality, err := entity.Sexualities(entity.SexualityWhere.ID.EQ(id)).One(ctx, lr.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return sexuality, nil
 }
 
 func (lr *lookupRepository) GetPromptTypeByID(ctx context.Context, id int16) (*entity.PromptType, error) {

@@ -59,6 +59,7 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 		Country:           req.Country,
 		GenderID:          req.GenderID,
 		DatingIntentionID: req.DatingIntentionID,
+		SexualityID:       req.SexualityID,
 		ReligionID:        req.ReligionID,
 		EducationLevelID:  req.EducationLevelID,
 		PoliticalBeliefID: req.PoliticalBeliefID,

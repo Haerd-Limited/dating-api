@@ -42,6 +42,7 @@ var TableNames = struct {
 	ScoringSettings          string
 	ScoringText              string
 	ScoringVoice             string
+	Sexualities              string
 	SpatialRefSys            string
 	Swipes                   string
 	UserAnswers              string
@@ -100,6 +101,7 @@ var TableNames = struct {
 	ScoringSettings:          "scoring_settings",
 	ScoringText:              "scoring_text",
 	ScoringVoice:             "scoring_voice",
+	Sexualities:              "sexualities",
 	SpatialRefSys:            "spatial_ref_sys",
 	Swipes:                   "swipes",
 	UserAnswers:              "user_answers",

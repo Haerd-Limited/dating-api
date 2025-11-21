@@ -1104,6 +1104,67 @@ func testUserProfileToOneReligionUsingReligion(t *testing.T) {
 	}
 }
 
+func testUserProfileToOneSexualityUsingSexuality(t *testing.T) {
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var local UserProfile
+	var foreign Sexuality
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, userProfileDBTypes, true, userProfileColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize UserProfile struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, sexualityDBTypes, false, sexualityColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Sexuality struct: %s", err)
+	}
+
+	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	queries.Assign(&local.SexualityID, foreign.ID)
+	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.Sexuality().One(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !queries.Equal(check.ID, foreign.ID) {
+		t.Errorf("want: %v, got %v", foreign.ID, check.ID)
+	}
+
+	ranAfterSelectHook := false
+	AddSexualityHook(boil.AfterSelectHook, func(ctx context.Context, e boil.ContextExecutor, o *Sexuality) error {
+		ranAfterSelectHook = true
+		return nil
+	})
+
+	slice := UserProfileSlice{&local}
+	if err = local.L.LoadSexuality(ctx, tx, false, (*[]*UserProfile)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Sexuality == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.Sexuality = nil
+	if err = local.L.LoadSexuality(ctx, tx, true, &local, nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.Sexuality == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	if !ranAfterSelectHook {
+		t.Error("failed to run AfterSelect hook for relationship")
+	}
+}
+
 func testUserProfileToOneHabitUsingSmoking(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
@@ -2316,6 +2377,115 @@ func testUserProfileToOneRemoveOpReligionUsingReligion(t *testing.T) {
 	}
 }
 
+func testUserProfileToOneSetOpSexualityUsingSexuality(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a UserProfile
+	var b, c Sexuality
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userProfileDBTypes, false, strmangle.SetComplement(userProfilePrimaryKeyColumns, userProfileColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, sexualityDBTypes, false, strmangle.SetComplement(sexualityPrimaryKeyColumns, sexualityColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, sexualityDBTypes, false, strmangle.SetComplement(sexualityPrimaryKeyColumns, sexualityColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*Sexuality{&b, &c} {
+		err = a.SetSexuality(ctx, tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.Sexuality != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.UserProfiles[0] != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if !queries.Equal(a.SexualityID, x.ID) {
+			t.Error("foreign key was wrong value", a.SexualityID)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(a.SexualityID))
+		reflect.Indirect(reflect.ValueOf(&a.SexualityID)).Set(zero)
+
+		if err = a.Reload(ctx, tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if !queries.Equal(a.SexualityID, x.ID) {
+			t.Error("foreign key was wrong value", a.SexualityID, x.ID)
+		}
+	}
+}
+
+func testUserProfileToOneRemoveOpSexualityUsingSexuality(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a UserProfile
+	var b Sexuality
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userProfileDBTypes, false, strmangle.SetComplement(userProfilePrimaryKeyColumns, userProfileColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, sexualityDBTypes, false, strmangle.SetComplement(sexualityPrimaryKeyColumns, sexualityColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.SetSexuality(ctx, tx, true, &b); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = a.RemoveSexuality(ctx, tx, &b); err != nil {
+		t.Error("failed to remove relationship")
+	}
+
+	count, err := a.Sexuality().Count(ctx, tx)
+	if err != nil {
+		t.Error(err)
+	}
+	if count != 0 {
+		t.Error("want no relationships remaining")
+	}
+
+	if a.R.Sexuality != nil {
+		t.Error("R struct entry should be nil")
+	}
+
+	if !queries.IsValuerNil(a.SexualityID) {
+		t.Error("foreign key value should be nil")
+	}
+
+	if len(b.R.UserProfiles) != 0 {
+		t.Error("failed to remove a from b's relationships")
+	}
+}
+
 func testUserProfileToOneSetOpHabitUsingSmoking(t *testing.T) {
 	var err error
 
@@ -2553,7 +2723,7 @@ func testUserProfilesSelect(t *testing.T) {
 }
 
 var (
-	userProfileDBTypes = map[string]string{`UserID`: `uuid`, `DisplayName`: `text`, `Birthdate`: `date`, `HeightCM`: `smallint`, `Geo`: `USER-DEFINED`, `City`: `text`, `Country`: `text`, `GenderID`: `smallint`, `DatingIntentionID`: `smallint`, `ReligionID`: `smallint`, `EducationLevelID`: `smallint`, `PoliticalBeliefID`: `smallint`, `DrinkingID`: `smallint`, `SmokingID`: `smallint`, `MarijuanaID`: `smallint`, `DrugsID`: `smallint`, `ChildrenStatusID`: `smallint`, `FamilyPlanID`: `smallint`, `Work`: `text`, `JobTitle`: `text`, `University`: `text`, `ProfileMeta`: `jsonb`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `CoverPhotoURL`: `text`, `Emoji`: `text`, `Verified`: `boolean`}
+	userProfileDBTypes = map[string]string{`UserID`: `uuid`, `DisplayName`: `text`, `Birthdate`: `date`, `HeightCM`: `smallint`, `Geo`: `USER-DEFINED`, `City`: `text`, `Country`: `text`, `GenderID`: `smallint`, `DatingIntentionID`: `smallint`, `ReligionID`: `smallint`, `EducationLevelID`: `smallint`, `PoliticalBeliefID`: `smallint`, `DrinkingID`: `smallint`, `SmokingID`: `smallint`, `MarijuanaID`: `smallint`, `DrugsID`: `smallint`, `ChildrenStatusID`: `smallint`, `FamilyPlanID`: `smallint`, `Work`: `text`, `JobTitle`: `text`, `University`: `text`, `ProfileMeta`: `jsonb`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `CoverPhotoURL`: `text`, `Emoji`: `text`, `Verified`: `boolean`, `SexualityID`: `smallint`}
 	_                  = bytes.MinRead
 )
 

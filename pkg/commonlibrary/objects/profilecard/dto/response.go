@@ -17,6 +17,7 @@ type ProfileCard struct {
 
 	Gender          string        `json:"gender"`
 	DatingIntention string        `json:"dating_intention"`
+	Sexuality       string        `json:"sexuality"`
 	Religion        string        `json:"religion"`
 	EducationLevel  string        `json:"education_level"`
 	PoliticalBelief string        `json:"political_belief"`
