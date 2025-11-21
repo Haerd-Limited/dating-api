@@ -42,3 +42,19 @@ func mapQuota(status domain.QuotaStatus) dto.DiscoverQuota {
 		Exhausted:            status.Exhausted(),
 	}
 }
+
+func MapToGetUserPreferencesResponse(preferences *domain.StoredDiscoverPreferences) dto.GetUserPreferencesResponse {
+	if preferences == nil {
+		return dto.GetUserPreferencesResponse{}
+	}
+
+	return dto.GetUserPreferencesResponse{
+		DistanceKM:         preferences.DistanceKM,
+		MinAge:             preferences.MinAge,
+		MaxAge:             preferences.MaxAge,
+		DatingIntentionIDs: preferences.DatingIntentionIDs,
+		ReligionIDs:        preferences.ReligionIDs,
+		SexualityIDs:       preferences.SexualityIDs,
+		EthnicityIDs:       preferences.EthnicityIDs,
+	}
+}

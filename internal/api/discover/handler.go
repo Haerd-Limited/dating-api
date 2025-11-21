@@ -21,6 +21,7 @@ type Handler interface {
 	GetDiscover() http.HandlerFunc
 	GetDiscoverWithFilters() http.HandlerFunc
 	GetVoiceWorthHearing() http.HandlerFunc
+	GetUserPreferences() http.HandlerFunc
 }
 
 type handler struct {
@@ -114,6 +115,26 @@ func (h *handler) GetVoiceWorthHearing() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetVoicesWorthHearingResponse(result))
+	}
+}
+
+func (h *handler) GetUserPreferences() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		preferences, err := h.discoverService.GetUserPreferences(ctx, userID)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetUserPreferences", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapToGetUserPreferencesResponse(preferences))
 	}
 }
 

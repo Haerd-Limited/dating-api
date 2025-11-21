@@ -25,6 +25,7 @@ type Service interface {
 	GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error)
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
+	GetUserPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error)
 }
 
 type service struct {
@@ -670,4 +671,18 @@ func (m *preferenceMatcher) ageWithinRange(age int) bool {
 	}
 
 	return true
+}
+
+func (s *service) GetUserPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error) {
+	preferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "get user discover preferences", err, zap.String("userID", userID))
+	}
+
+	// Return empty preferences if none exist
+	if preferences == nil {
+		return &domain.StoredDiscoverPreferences{}, nil
+	}
+
+	return preferences, nil
 }

@@ -163,6 +163,7 @@ func New(
 				r.Route("/discover", func(r chi.Router) {
 					r.Get("/", discoverHandler.GetDiscover())
 					r.Post("/filters", discoverHandler.GetDiscoverWithFilters())
+					r.Get("/preferences", discoverHandler.GetUserPreferences())
 				})
 				r.Get("/voice-prompts/{id}/transcript", profileHandler.GetVoicePromptTranscript())
 				r.Route("/vwh", func(r chi.Router) {

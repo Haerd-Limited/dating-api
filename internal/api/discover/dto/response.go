@@ -23,3 +23,13 @@ type DiscoverQuota struct {
 	NextBatchAvailableAt *time.Time `json:"nextBatchAvailableAt,omitempty"`
 	Exhausted            bool       `json:"exhausted"`
 }
+
+type GetUserPreferencesResponse struct {
+	DistanceKM         *int    `json:"distance_km,omitempty"`
+	MinAge             *int    `json:"min_age,omitempty"`
+	MaxAge             *int    `json:"max_age,omitempty"`
+	DatingIntentionIDs []int16 `json:"dating_intention_ids,omitempty"`
+	ReligionIDs        []int16 `json:"religion_ids,omitempty"`
+	SexualityIDs       []int16 `json:"sexuality_ids,omitempty"`
+	EthnicityIDs       []int16 `json:"ethnicity_ids,omitempty"`
+}

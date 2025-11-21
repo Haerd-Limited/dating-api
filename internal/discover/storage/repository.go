@@ -457,9 +457,11 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 	if preferences.DistanceKM != nil {
 		up.DistanceKM = null.Int16From(int16(*preferences.DistanceKM))
 	}
+
 	if preferences.MinAge != nil {
 		up.AgeMin = null.Int16From(int16(*preferences.MinAge))
 	}
+
 	if preferences.MaxAge != nil {
 		up.AgeMax = null.Int16From(int16(*preferences.MaxAge))
 	}
@@ -468,12 +470,15 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 	if len(preferences.DatingIntentionIDs) > 0 {
 		up.SeekIntentionIds = convertInt16SliceToInt64Array(preferences.DatingIntentionIDs)
 	}
+
 	if len(preferences.ReligionIDs) > 0 {
 		up.SeekReligionIds = convertInt16SliceToInt64Array(preferences.ReligionIDs)
 	}
+
 	if len(preferences.SexualityIDs) > 0 {
 		up.SeekSexualityIds = convertInt16SliceToInt64Array(preferences.SexualityIDs)
 	}
+
 	if len(preferences.EthnicityIDs) > 0 {
 		up.SeekEthnicityIds = convertInt16SliceToInt64Array(preferences.EthnicityIDs)
 	}
@@ -486,26 +491,32 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 		updateCols = append(updateCols, entity.UserPreferenceColumns.DistanceKM)
 		insertCols = append(insertCols, entity.UserPreferenceColumns.DistanceKM)
 	}
+
 	if preferences.MinAge != nil {
 		updateCols = append(updateCols, entity.UserPreferenceColumns.AgeMin)
 		insertCols = append(insertCols, entity.UserPreferenceColumns.AgeMin)
 	}
+
 	if preferences.MaxAge != nil {
 		updateCols = append(updateCols, entity.UserPreferenceColumns.AgeMax)
 		insertCols = append(insertCols, entity.UserPreferenceColumns.AgeMax)
 	}
+
 	if len(preferences.DatingIntentionIDs) > 0 {
 		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekIntentionIds)
 		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekIntentionIds)
 	}
+
 	if len(preferences.ReligionIDs) > 0 {
 		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekReligionIds)
 		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekReligionIds)
 	}
+
 	if len(preferences.SexualityIDs) > 0 {
 		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekSexualityIds)
 		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekSexualityIds)
 	}
+
 	if len(preferences.EthnicityIDs) > 0 {
 		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekEthnicityIds)
 		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekEthnicityIds)
