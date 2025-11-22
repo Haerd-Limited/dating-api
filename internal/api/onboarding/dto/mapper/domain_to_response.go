@@ -204,8 +204,17 @@ func MapIntroContentToDto(content domain.IntroContent) dto.IntroContent {
 		})
 	}
 
+	var sexualities []dto.Sexuality
+	for _, sexuality := range content.Sexualities {
+		sexualities = append(sexualities, dto.Sexuality{
+			ID:    sexuality.ID,
+			Label: sexuality.Label,
+		})
+	}
+
 	return dto.IntroContent{
 		DatingIntentions: datingIntentions,
 		Genders:          genders,
+		Sexualities:      sexualities,
 	}
 }

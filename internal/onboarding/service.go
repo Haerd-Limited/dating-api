@@ -125,11 +125,17 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 			return domain.StepResult{}, commonlogger.LogError(os.logger, "get dating intentions", err, zap.String("userID", userID))
 		}
 
+		sexualities, err := os.getSexualities(ctx)
+		if err != nil {
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get sexualities", err, zap.String("userID", userID))
+		}
+
 		return domain.StepResult{
 			OnboardingSteps: domain.OnboardingStepsBasics.GenerateOnboardingSteps(),
 			Content: domain.IntroContent{
 				DatingIntentions: datingIntentions,
 				Genders:          genders,
+				Sexualities:      sexualities,
 			},
 		}, nil
 	case domain.OnboardingStepsLocation:
@@ -305,7 +311,7 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", introDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
-	// Get dating intentions and genders and populate Content
+	// Get dating intentions, genders, and sexualities and populate Content
 	genders, err := os.getGenders(ctx)
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "get genders", err, zap.String("userID", introDetails.UserID))
@@ -314,6 +320,11 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 	datingIntentions, err := os.getDatingIntentions(ctx)
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "get dating intentions", err, zap.String("userID", introDetails.UserID))
+	}
+
+	sexualities, err := os.getSexualities(ctx)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get sexualities", err, zap.String("userID", introDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, introDetails.UserID, StepForIntro)
@@ -326,6 +337,7 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 		Content: domain.IntroContent{
 			DatingIntentions: datingIntentions,
 			Genders:          genders,
+			Sexualities:      sexualities,
 		},
 	}, nil
 }

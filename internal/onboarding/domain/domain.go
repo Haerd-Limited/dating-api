@@ -176,6 +176,7 @@ type OnboardingSteps struct {
 type IntroContent struct {
 	DatingIntentions []DatingIntention
 	Genders          []Gender
+	Sexualities      []Sexuality
 }
 
 type Gender struct {
@@ -184,6 +185,11 @@ type Gender struct {
 }
 
 type DatingIntention struct {
+	ID    int16
+	Label string
+}
+
+type Sexuality struct {
 	ID    int16
 	Label string
 }

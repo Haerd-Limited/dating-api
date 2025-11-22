@@ -108,6 +108,15 @@ func (os *onboardingService) getDatingIntentions(ctx context.Context) ([]domain.
 	return mapper.MapDatingIntentionsToDomain(datingIntentionsEntities), nil
 }
 
+func (os *onboardingService) getSexualities(ctx context.Context) ([]domain.Sexuality, error) {
+	sexualityEntities, err := os.lookupRepo.GetSexualities(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapper.MapSexualitiesToDomain(sexualityEntities), nil
+}
+
 // ensureStep makes sure that the step being called is the correct step to complete for the provided user. This prevents user's skipping steps in the onboarding process.
 func (os *onboardingService) ensureStep(ctx context.Context, userID string, expected domain.Steps) error {
 	u, err := os.userService.GetUser(ctx, userID)

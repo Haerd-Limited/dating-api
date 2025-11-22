@@ -90,6 +90,7 @@ type Habit struct {
 type IntroContent struct {
 	DatingIntentions []DatingIntention `json:"dating_intentions"`
 	Genders          []Gender          `json:"genders"`
+	Sexualities      []Sexuality       `json:"sexualities"`
 }
 
 type Gender struct {
@@ -98,6 +99,11 @@ type Gender struct {
 }
 
 type DatingIntention struct {
+	ID    int16  `json:"id"`
+	Label string `json:"label"`
+}
+
+type Sexuality struct {
 	ID    int16  `json:"id"`
 	Label string `json:"label"`
 }
