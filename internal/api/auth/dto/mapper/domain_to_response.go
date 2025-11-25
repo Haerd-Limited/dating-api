@@ -28,8 +28,13 @@ func ToAuthResponse(authResult *authDomain.AuthResult, message string) *dto.Auth
 	return result
 }
 
-func ToRequestCodeResponse(sentTo string) dto.RequestCodeResponse {
-	return dto.RequestCodeResponse{
-		SentTo: sentTo,
+func ToRequestCodeResponse(result *authDomain.RequestCodeResult) dto.RequestCodeResponse {
+	resp := dto.RequestCodeResponse{
+		SentTo: result.SentTo,
 	}
+	if result.OnboardingStep != nil {
+		stepStr := string(*result.OnboardingStep)
+		resp.OnboardingStep = &stepStr
+	}
+	return resp
 }

@@ -31,7 +31,7 @@ import (
 //go:generate mockgen -source=service.go -destination=service_mock.go -package=auth
 type Service interface {
 	VerifyCode(ctx context.Context, in domain.VerifyCode) (*domain.AuthResult, error)
-	RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error)
+	RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (*domain.RequestCodeResult, error)
 	RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthResult, error)
 	RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput domain.RevokeRefreshToken) error
 	GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthResult, error)
@@ -195,14 +195,14 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 	}
 }
 
-func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error) {
+func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (*domain.RequestCodeResult, error) {
 	if requestCodeDetails.Purpose == "" {
 		requestCodeDetails.Purpose = constants.LoginPurpose
 	}
 
 	identifier, err := as.normalizeIdentifier(requestCodeDetails.Channel, requestCodeDetails.Email, requestCodeDetails.Phone)
 	if err != nil {
-		return "", commonlogger.LogError(as.logger, "failed to normalize identifier", err, zap.String("channel", requestCodeDetails.Channel))
+		return &domain.RequestCodeResult{SentTo: ""}, commonlogger.LogError(as.logger, "failed to normalize identifier", err, zap.String("channel", requestCodeDetails.Channel))
 	}
 
 	mask := maskIdentifier(requestCodeDetails.Channel, identifier)
@@ -214,17 +214,33 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	n1, _ := as.AuthRepo.CountRecentSends(ctx, requestCodeDetails.Channel, identifier, purpose, window)
 	if n1 >= as.perIDPerHour {
 		// pretend success
-		return mask, fmt.Errorf("rate limit exceeded")
+		return &domain.RequestCodeResult{SentTo: mask}, fmt.Errorf("rate limit exceeded")
 	}
 
 	n2, _ := as.AuthRepo.CountRecentSendsByIP(ctx, clientIP(requestCodeDetails.IP), window)
 	if n2 >= as.perIPPerHour {
-		return mask, fmt.Errorf("rate limit exceeded")
+		return &domain.RequestCodeResult{SentTo: mask}, fmt.Errorf("rate limit exceeded")
 	}
 
 	exists, err := as.UserService.UserExistsByIdentifier(ctx, requestCodeDetails.Channel, identifier)
 	if err != nil {
-		return mask, commonlogger.LogError(as.logger, "existence check failed", err, zap.String("channel", requestCodeDetails.Channel))
+		return &domain.RequestCodeResult{SentTo: mask}, commonlogger.LogError(as.logger, "existence check failed", err, zap.String("channel", requestCodeDetails.Channel))
+	}
+
+	var onboardingStep *onboardingdomain.Steps
+
+	// For register purpose, if user exists, get their onboarding step
+	// Only return step if they're still in pre-registration (INTRO or BASICS)
+	if purpose == constants.RegisterPurpose && exists {
+		userDetails, getUserErr := as.UserService.GetUserByPhoneNumber(ctx, identifier)
+		if getUserErr == nil && userDetails != nil {
+			step := onboardingdomain.Steps(userDetails.OnboardingStep)
+			// Only return step if user is still in pre-registration phase
+			if step == onboardingdomain.OnboardingStepsIntro || step == onboardingdomain.OnboardingStepsBasics {
+				onboardingStep = &step
+			}
+		}
+		// Continue to send code even if user exists (for pre-registration resume)
 	}
 
 	shouldSend := false
@@ -233,7 +249,8 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	case constants.LoginPurpose:
 		shouldSend = exists
 	case constants.RegisterPurpose:
-		shouldSend = !exists
+		// Allow sending code even if user exists (for pre-registration resume)
+		shouldSend = true
 	default:
 		// unknown purpose -> treat as login
 		shouldSend = exists
@@ -241,13 +258,13 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 
 	if !shouldSend {
 		// Pretend success, do nothing further
-		return mask, fmt.Errorf("not sending code")
+		return &domain.RequestCodeResult{SentTo: mask}, fmt.Errorf("not sending code")
 	}
 
 	// Generate a 6-digit numeric code
 	code, err := RandomDigits(6)
 	if err != nil {
-		return mask, commonlogger.LogError(as.logger, "failed to generate code", err, zap.String("channel", requestCodeDetails.Channel))
+		return &domain.RequestCodeResult{SentTo: mask, OnboardingStep: onboardingStep}, commonlogger.LogError(as.logger, "failed to generate code", err, zap.String("channel", requestCodeDetails.Channel))
 	}
 
 	// Hash the code (never store plaintext)
@@ -266,7 +283,7 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	err = as.AuthRepo.InsertVerificationCode(ctx, rec)
 	if err != nil {
 		// still mask success to caller
-		return mask, commonlogger.LogError(as.logger, "failed to insert verification code", err, zap.String("channel", requestCodeDetails.Channel))
+		return &domain.RequestCodeResult{SentTo: mask, OnboardingStep: onboardingStep}, commonlogger.LogError(as.logger, "failed to insert verification code", err, zap.String("channel", requestCodeDetails.Channel))
 	}
 
 	// Deliver
@@ -280,10 +297,13 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	}
 
 	if sendErr != nil {
-		return mask, commonlogger.LogError(as.logger, "failed to send verification code", sendErr, zap.String("channel", requestCodeDetails.Channel))
+		return &domain.RequestCodeResult{SentTo: mask, OnboardingStep: onboardingStep}, commonlogger.LogError(as.logger, "failed to send verification code", sendErr, zap.String("channel", requestCodeDetails.Channel))
 	}
 
-	return mask, nil
+	return &domain.RequestCodeResult{
+		SentTo:         mask,
+		OnboardingStep: onboardingStep,
+	}, nil
 }
 
 func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthResult, error) {
