@@ -62,8 +62,4 @@ type (
 		ID             string
 		OnboardingStep domain.Steps
 	}
-	RequestCodeResult struct {
-		SentTo         string
-		OnboardingStep *domain.Steps // Only set when user exists during registration
-	}
 )

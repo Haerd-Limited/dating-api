@@ -14,6 +14,5 @@ type User struct {
 
 type RequestCodeResponse struct {
 	// Return generic OK to avoid user enumeration, plus optional masking hint
-	SentTo         string  `json:"sent_to"`          // e.g., "e***@example.com" or "+44******123"
-	OnboardingStep *string `json:"onboarding_step"` // Only set when user exists during registration
+	SentTo string `json:"sent_to"` // e.g., "e***@example.com" or "+44******123"
 }
