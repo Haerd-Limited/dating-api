@@ -12,6 +12,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/auth/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/auth/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/auth"
+	authDomain "github.com/Haerd-Limited/dating-api/internal/auth/domain"
 	"github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userstorage "github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -73,7 +74,7 @@ func (h *handler) RequestCode() http.HandlerFunc {
 
 		ip := requestIP(r)
 
-		sentTo, err := h.authService.RequestCode(ctx, mapper.MapRequestCodeRequestToDomain(req, ip))
+		result, err := h.authService.RequestCode(ctx, mapper.MapRequestCodeRequestToDomain(req, ip))
 		if err != nil {
 			switch {
 			case errors.Is(err, context.Canceled):
@@ -88,7 +89,12 @@ func (h *handler) RequestCode() http.HandlerFunc {
 			}
 		}
 
-		render.Json(w, http.StatusOK, mapper.ToRequestCodeResponse(sentTo))
+		// If there was an error but we still have a result (for anti-enumeration), use it
+		if result == nil {
+			result = &authDomain.RequestCodeResult{SentTo: ""}
+		}
+
+		render.Json(w, http.StatusOK, mapper.ToRequestCodeResponse(result))
 	}
 }
 
