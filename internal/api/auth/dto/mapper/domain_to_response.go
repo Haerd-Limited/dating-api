@@ -32,9 +32,11 @@ func ToRequestCodeResponse(result *authDomain.RequestCodeResult) dto.RequestCode
 	resp := dto.RequestCodeResponse{
 		SentTo: result.SentTo,
 	}
+
 	if result.OnboardingStep != nil {
 		stepStr := string(*result.OnboardingStep)
 		resp.OnboardingStep = &stepStr
 	}
+
 	return resp
 }

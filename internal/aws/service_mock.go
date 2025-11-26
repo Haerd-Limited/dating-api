@@ -16,7 +16,6 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	domain "github.com/Haerd-Limited/dating-api/internal/aws/domain"
 	storage "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/storage"
 )
 
@@ -24,6 +23,7 @@ import (
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockServiceMockRecorder is the mock recorder for MockService.
@@ -43,61 +43,61 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
-// DeleteFile mocks base method.
-func (m *MockService) DeleteFile(ctx context.Context, fileURL string) error {
+// DeleteAllUserFiles mocks base method.
+func (m *MockService) DeleteAllUserFiles(ctx context.Context, userID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteFile", ctx, fileURL)
+	ret := m.ctrl.Call(m, "DeleteAllUserFiles", ctx, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteFile indicates an expected call of DeleteFile.
-func (mr *MockServiceMockRecorder) DeleteFile(ctx, fileURL any) *gomock.Call {
+// DeleteAllUserFiles indicates an expected call of DeleteAllUserFiles.
+func (mr *MockServiceMockRecorder) DeleteAllUserFiles(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockService)(nil).DeleteFile), ctx, fileURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllUserFiles", reflect.TypeOf((*MockService)(nil).DeleteAllUserFiles), ctx, userID)
 }
 
 // GenerateUploadURLs mocks base method.
-func (m *MockService) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration) ([]storage.UploadSlot, error) {
+func (m *MockService) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration, purpose *string) ([]storage.UploadSlot, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateUploadURLs", ctx, userID, count, contentType, ttl)
+	ret := m.ctrl.Call(m, "GenerateUploadURLs", ctx, userID, count, contentType, ttl, purpose)
 	ret0, _ := ret[0].([]storage.UploadSlot)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateUploadURLs indicates an expected call of GenerateUploadURLs.
-func (mr *MockServiceMockRecorder) GenerateUploadURLs(ctx, userID, count, contentType, ttl any) *gomock.Call {
+func (mr *MockServiceMockRecorder) GenerateUploadURLs(ctx, userID, count, contentType, ttl, purpose any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateUploadURLs", reflect.TypeOf((*MockService)(nil).GenerateUploadURLs), ctx, userID, count, contentType, ttl)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateUploadURLs", reflect.TypeOf((*MockService)(nil).GenerateUploadURLs), ctx, userID, count, contentType, ttl, purpose)
 }
 
-// UploadImage mocks base method.
-func (m *MockService) UploadImage(ctx context.Context, input domain.ImageUpload) (*string, error) {
+// GetObjectBytes mocks base method.
+func (m *MockService) GetObjectBytes(ctx context.Context, key string) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadImage", ctx, input)
-	ret0, _ := ret[0].(*string)
+	ret := m.ctrl.Call(m, "GetObjectBytes", ctx, key)
+	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UploadImage indicates an expected call of UploadImage.
-func (mr *MockServiceMockRecorder) UploadImage(ctx, input any) *gomock.Call {
+// GetObjectBytes indicates an expected call of GetObjectBytes.
+func (mr *MockServiceMockRecorder) GetObjectBytes(ctx, key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadImage", reflect.TypeOf((*MockService)(nil).UploadImage), ctx, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObjectBytes", reflect.TypeOf((*MockService)(nil).GetObjectBytes), ctx, key)
 }
 
-// UploadVoiceNote mocks base method.
-func (m *MockService) UploadVoiceNote(ctx context.Context, input domain.VoiceNoteUpload) (*string, error) {
+// StoreBestFrame mocks base method.
+func (m *MockService) StoreBestFrame(ctx context.Context, body []byte, userID string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UploadVoiceNote", ctx, input)
-	ret0, _ := ret[0].(*string)
+	ret := m.ctrl.Call(m, "StoreBestFrame", ctx, body, userID)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UploadVoiceNote indicates an expected call of UploadVoiceNote.
-func (mr *MockServiceMockRecorder) UploadVoiceNote(ctx, input any) *gomock.Call {
+// StoreBestFrame indicates an expected call of StoreBestFrame.
+func (mr *MockServiceMockRecorder) StoreBestFrame(ctx, body, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UploadVoiceNote", reflect.TypeOf((*MockService)(nil).UploadVoiceNote), ctx, input)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreBestFrame", reflect.TypeOf((*MockService)(nil).StoreBestFrame), ctx, body, userID)
 }

@@ -22,6 +22,7 @@ import (
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockServiceMockRecorder is the mock recorder for MockService.
@@ -41,26 +42,11 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
-// AuthenticateUser mocks base method.
-func (m *MockService) AuthenticateUser(ctx context.Context, phoneNumber string) (*domain.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AuthenticateUser", ctx, phoneNumber)
-	ret0, _ := ret[0].(*domain.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AuthenticateUser indicates an expected call of AuthenticateUser.
-func (mr *MockServiceMockRecorder) AuthenticateUser(ctx, phoneNumber any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuthenticateUser", reflect.TypeOf((*MockService)(nil).AuthenticateUser), ctx, phoneNumber)
-}
-
 // CreateUser mocks base method.
-func (m *MockService) CreateUser(ctx context.Context, user domain.User) (*string, error) {
+func (m *MockService) CreateUser(ctx context.Context, user domain.User) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", ctx, user)
-	ret0, _ := ret[0].(*string)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -69,6 +55,20 @@ func (m *MockService) CreateUser(ctx context.Context, user domain.User) (*string
 func (mr *MockServiceMockRecorder) CreateUser(ctx, user any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockService)(nil).CreateUser), ctx, user)
+}
+
+// DeleteAccount mocks base method.
+func (m *MockService) DeleteAccount(ctx context.Context, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAccount", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAccount indicates an expected call of DeleteAccount.
+func (mr *MockServiceMockRecorder) DeleteAccount(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccount", reflect.TypeOf((*MockService)(nil).DeleteAccount), ctx, userID)
 }
 
 // GetUser mocks base method.
@@ -84,6 +84,21 @@ func (m *MockService) GetUser(ctx context.Context, id string) (*domain.User, err
 func (mr *MockServiceMockRecorder) GetUser(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockService)(nil).GetUser), ctx, id)
+}
+
+// GetUserByPhoneNumber mocks base method.
+func (m *MockService) GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (*domain.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByPhoneNumber", ctx, phoneNumber)
+	ret0, _ := ret[0].(*domain.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByPhoneNumber indicates an expected call of GetUserByPhoneNumber.
+func (mr *MockServiceMockRecorder) GetUserByPhoneNumber(ctx, phoneNumber any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByPhoneNumber", reflect.TypeOf((*MockService)(nil).GetUserByPhoneNumber), ctx, phoneNumber)
 }
 
 // GetUsersByIDs mocks base method.

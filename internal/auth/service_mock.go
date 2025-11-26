@@ -22,6 +22,7 @@ import (
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockServiceMockRecorder is the mock recorder for MockService.
@@ -72,10 +73,10 @@ func (mr *MockServiceMockRecorder) RefreshToken(ctx, refreshInput any) *gomock.C
 }
 
 // RequestCode mocks base method.
-func (m *MockService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (string, error) {
+func (m *MockService) RequestCode(ctx context.Context, requestCodeDetails domain.RequestCode) (*domain.RequestCodeResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RequestCode", ctx, requestCodeDetails)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(*domain.RequestCodeResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
