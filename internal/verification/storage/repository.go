@@ -17,14 +17,14 @@ import (
 )
 
 type VerificationRepository interface {
-	// Return S3 object keys (or presigned URLs) for the user’s PRIVATE profile photos
+	// Return S3 object keys (or presigned URLs) for the user's PRIVATE profile photos
 	GetUserPrivatePhotoKeys(ctx context.Context, userID string) ([]string, error)
 	CreateAttempt(ctx context.Context, a entity.VerificationAttempt) error
 	MarkAttempt(ctx context.Context, upd entity.VerificationAttempt) error
 	SetUserPhotoVerified(ctx context.Context, userID string, attemptID string) error
 	GetVerificationAttemptByUserIDAndSessionID(ctx context.Context, userID string, sessionID string) (*entity.VerificationAttempt, error)
 	CheckIfPendingAttemptsExist(ctx context.Context, userID string) (*entity.VerificationAttempt, error)
-	InvalidatePhotoVerification(ctx context.Context, userID string) error
+	InvalidatePhotoVerification(ctx context.Context, userID string, tx *sql.Tx) error
 }
 
 type verificationRepository struct {
@@ -37,8 +37,10 @@ func NewVerificationRepository(db *sqlx.DB) VerificationRepository {
 	}
 }
 
-func (r *verificationRepository) InvalidatePhotoVerification(ctx context.Context, userID string) error {
-	uvs, err := entity.FindUserVerificationStatus(ctx, r.db, userID)
+func (r *verificationRepository) InvalidatePhotoVerification(ctx context.Context, userID string, tx *sql.Tx) error {
+	exec := r.executor(tx)
+
+	uvs, err := entity.FindUserVerificationStatus(ctx, exec, userID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
@@ -50,13 +52,21 @@ func (r *verificationRepository) InvalidatePhotoVerification(ctx context.Context
 	uvs.PhotoVerified = false
 	uvs.PhotoVerifiedAt = null.Time{} // null
 	uvs.UpdatedAt = time.Now().UTC()
-	_, err = uvs.Update(ctx, r.db, boil.Whitelist(
+	_, err = uvs.Update(ctx, exec, boil.Whitelist(
 		entity.UserVerificationStatusColumns.PhotoVerified,
 		entity.UserVerificationStatusColumns.PhotoVerifiedAt,
 		entity.UserVerificationStatusColumns.UpdatedAt,
 	))
 
 	return err
+}
+
+func (r *verificationRepository) executor(tx *sql.Tx) boil.ContextExecutor {
+	if tx != nil {
+		return tx
+	}
+
+	return r.db
 }
 
 func (r *verificationRepository) CheckIfPendingAttemptsExist(ctx context.Context, userID string) (*entity.VerificationAttempt, error) {

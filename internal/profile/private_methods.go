@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -132,13 +133,13 @@ func (s *service) generatePaletteJsonFromBaseColour(baseColour string) ([]byte, 
 	return palJSON, nil
 }
 
-func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Profile) error {
+func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Profile, tx *sql.Tx) error {
 	updatedUserProfileEntity, whitelist, err := mapper.MapProfileToEntityForUpdate(userProfile)
 	if err != nil {
 		return fmt.Errorf("failed to map user profile to entity: %w", err)
 	}
 
-	err = s.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity, whitelist)
+	err = s.profileRepo.UpdateUserProfile(ctx, updatedUserProfileEntity, whitelist, tx)
 	if err != nil {
 		return fmt.Errorf("failed to update user profile: %w", err)
 	}

@@ -14,9 +14,8 @@ import (
 	sql "database/sql"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	entity "github.com/Haerd-Limited/dating-api/internal/entity"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockPreferenceRepository is a mock of PreferenceRepository interface.

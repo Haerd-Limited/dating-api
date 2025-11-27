@@ -19,12 +19,12 @@ import (
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type ProfileRepository interface {
 	InsertProfile(ctx context.Context, userProfile *entity.UserProfile, tx *sql.Tx) error
-	UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error
-	UpsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt) error
-	UpsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo) error
-	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
-	UpsertUserEthnicities(ctx context.Context, userID string, ethnicities []int16) error
-	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string) error
+	UpsertUserTheme(ctx context.Context, theme entity.UserTheme, tx *sql.Tx) error
+	UpsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt, tx *sql.Tx) error
+	UpsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo, tx *sql.Tx) error
+	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16, tx *sql.Tx) error
+	UpsertUserEthnicities(ctx context.Context, userID string, ethnicities []int16, tx *sql.Tx) error
+	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string, tx *sql.Tx) error
 	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
@@ -169,8 +169,10 @@ func (pr *profileRepository) InsertProfile(ctx context.Context, userProfile *ent
 	return nil
 }
 
-func (pr *profileRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme) error {
-	err := theme.Upsert(ctx, pr.db, true, []string{"user_id"},
+func (pr *profileRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme, tx *sql.Tx) error {
+	exec := pr.executor(tx)
+
+	err := theme.Upsert(ctx, exec, true, []string{"user_id"},
 		boil.Whitelist("base_hex", "palette", "updated_at"),
 		boil.Infer())
 	if err != nil {
@@ -209,23 +211,34 @@ func (pr *profileRepository) UpsertUserPrompts(
 	ctx context.Context,
 	userID string,
 	prompts []entity.VoicePrompt,
+	tx *sql.Tx,
 ) (err error) {
-	tx, err := pr.db.BeginTxx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
-	}
+	var execTx *sql.Tx
 
-	defer func() {
+	var beginTx *sqlx.Tx
+
+	if tx != nil {
+		execTx = tx
+	} else {
+		beginTx, err = pr.db.BeginTxx(ctx, &sql.TxOptions{})
 		if err != nil {
-			_ = tx.Rollback()
-		} else {
-			_ = tx.Commit()
+			return fmt.Errorf("begin tx: %w", err)
 		}
-	}()
+
+		execTx = beginTx.Tx
+
+		defer func() {
+			if err != nil {
+				_ = beginTx.Rollback()
+			} else {
+				_ = beginTx.Commit()
+			}
+		}()
+	}
 
 	// Mark existing prompts as inactive instead of deleting them
 	// This preserves prompts that may be referenced in conversations/swipes
-	if _, err = tx.ExecContext(ctx, `UPDATE voice_prompts SET is_active = FALSE WHERE user_id = $1`, userID); err != nil {
+	if _, err = execTx.ExecContext(ctx, `UPDATE voice_prompts SET is_active = FALSE WHERE user_id = $1`, userID); err != nil {
 		return fmt.Errorf("mark existing voice_prompts as inactive: %w", err)
 	}
 
@@ -279,7 +292,7 @@ func (pr *profileRepository) UpsertUserPrompts(
 	// Note: Once SQLBoiler entities are regenerated with is_active field, we should explicitly
 	// set prompts[i].IsActive = true here for clarity
 	for i := range prompts {
-		if err = prompts[i].Insert(ctx, tx, boil.Infer()); err != nil {
+		if err = prompts[i].Insert(ctx, execTx, boil.Infer()); err != nil {
 			return fmt.Errorf("insert voice_prompt[%d]: %w", i, err)
 		}
 	}
@@ -291,22 +304,33 @@ func (pr *profileRepository) UpsertUserPhotos(
 	ctx context.Context,
 	userID string,
 	photos []entity.Photo,
+	tx *sql.Tx,
 ) (err error) {
-	tx, err := pr.db.BeginTxx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+	var execTx *sql.Tx
+
+	var beginTx *sqlx.Tx
+
+	if tx != nil {
+		execTx = tx
+	} else {
+		beginTx, err = pr.db.BeginTxx(ctx, &sql.TxOptions{})
+		if err != nil {
+			return fmt.Errorf("begin tx: %w", err)
+		}
+
+		execTx = beginTx.Tx
+
+		defer func() {
+			if err != nil {
+				_ = beginTx.Rollback()
+			} else {
+				_ = beginTx.Commit()
+			}
+		}()
 	}
 
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		} else {
-			_ = tx.Commit()
-		}
-	}()
-
 	// Replace existing set for this user.
-	if _, err = tx.ExecContext(ctx, `DELETE FROM photos WHERE user_id = $1`, userID); err != nil {
+	if _, err = execTx.ExecContext(ctx, `DELETE FROM photos WHERE user_id = $1`, userID); err != nil {
 		return fmt.Errorf("delete existing photos: %w", err)
 	}
 
@@ -348,7 +372,7 @@ func (pr *profileRepository) UpsertUserPhotos(
 
 	// Insert all
 	for i := range photos {
-		if err = photos[i].Insert(ctx, tx, boil.Infer()); err != nil {
+		if err = photos[i].Insert(ctx, execTx, boil.Infer()); err != nil {
 			return fmt.Errorf("insert photo[%d]: %w", i, err)
 		}
 	}
@@ -360,22 +384,33 @@ func (pr *profileRepository) UpsertUserSpokenLanguages(
 	ctx context.Context,
 	userID string,
 	languages []int16,
+	tx *sql.Tx,
 ) (err error) {
-	tx, err := pr.db.BeginTxx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+	var execTx *sql.Tx
+
+	var beginTx *sqlx.Tx
+
+	if tx != nil {
+		execTx = tx
+	} else {
+		beginTx, err = pr.db.BeginTxx(ctx, &sql.TxOptions{})
+		if err != nil {
+			return fmt.Errorf("begin tx: %w", err)
+		}
+
+		execTx = beginTx.Tx
+
+		defer func() {
+			if err != nil {
+				_ = beginTx.Rollback()
+			} else {
+				_ = beginTx.Commit()
+			}
+		}()
 	}
 
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		} else {
-			_ = tx.Commit()
-		}
-	}()
-
 	// Clear existing selections
-	_, err = tx.ExecContext(ctx, `DELETE FROM user_languages WHERE user_id = $1`, userID)
+	_, err = execTx.ExecContext(ctx, `DELETE FROM user_languages WHERE user_id = $1`, userID)
 	if err != nil {
 		return fmt.Errorf("delete user_languages: %w", err)
 	}
@@ -422,7 +457,7 @@ func (pr *profileRepository) UpsertUserSpokenLanguages(
 	// Ignore duplicates that could arise from race conditions.
 	sb.WriteString(` ON CONFLICT (user_id, language_id) DO NOTHING`)
 
-	if _, err = tx.ExecContext(ctx, sb.String(), args...); err != nil {
+	if _, err = execTx.ExecContext(ctx, sb.String(), args...); err != nil {
 		return fmt.Errorf("insert user_languages: %w", err)
 	}
 
@@ -433,22 +468,33 @@ func (pr *profileRepository) UpsertUserEthnicities(
 	ctx context.Context,
 	userID string,
 	ethnicities []int16,
+	tx *sql.Tx,
 ) (err error) {
-	tx, err := pr.db.BeginTxx(ctx, &sql.TxOptions{})
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+	var execTx *sql.Tx
+
+	var beginTx *sqlx.Tx
+
+	if tx != nil {
+		execTx = tx
+	} else {
+		beginTx, err = pr.db.BeginTxx(ctx, &sql.TxOptions{})
+		if err != nil {
+			return fmt.Errorf("begin tx: %w", err)
+		}
+
+		execTx = beginTx.Tx
+
+		defer func() {
+			if err != nil {
+				_ = beginTx.Rollback()
+			} else {
+				_ = beginTx.Commit()
+			}
+		}()
 	}
 
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback()
-		} else {
-			_ = tx.Commit()
-		}
-	}()
-
 	// Clear existing selections
-	_, err = tx.ExecContext(ctx, `DELETE FROM user_ethnicities WHERE user_id = $1`, userID)
+	_, err = execTx.ExecContext(ctx, `DELETE FROM user_ethnicities WHERE user_id = $1`, userID)
 	if err != nil {
 		return fmt.Errorf("delete user_ethnicities: %w", err)
 	}
@@ -495,7 +541,7 @@ func (pr *profileRepository) UpsertUserEthnicities(
 	// Ignore duplicates that could arise from race conditions.
 	sb.WriteString(` ON CONFLICT (user_id, ethnicity_id) DO NOTHING`)
 
-	if _, err = tx.ExecContext(ctx, sb.String(), args...); err != nil {
+	if _, err = execTx.ExecContext(ctx, sb.String(), args...); err != nil {
 		return fmt.Errorf("insert user_ethnicities: %w", err)
 	}
 
@@ -541,12 +587,14 @@ func (pr *profileRepository) GetUserProfileByUserID(ctx context.Context, userID 
 	return userProfile, nil
 }
 
-func (pr *profileRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string) error {
+func (pr *profileRepository) UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string, tx *sql.Tx) error {
 	userProfile.UpdatedAt = time.Now().UTC()
 
 	whiteList = append(whiteList, "updated_at")
 
-	_, err := userProfile.Update(ctx, pr.db, boil.Whitelist(whiteList...))
+	exec := pr.executor(tx)
+
+	_, err := userProfile.Update(ctx, exec, boil.Whitelist(whiteList...))
 	if err != nil {
 		return err
 	}
@@ -589,6 +637,14 @@ func (pr *profileRepository) GetUserVoicePrompts(ctx context.Context, userID str
 	}
 
 	return vp, nil
+}
+
+func (pr *profileRepository) executor(tx *sql.Tx) boil.ContextExecutor {
+	if tx != nil {
+		return tx
+	}
+
+	return pr.db
 }
 
 func (pr *profileRepository) GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error) {

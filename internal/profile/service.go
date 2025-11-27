@@ -16,6 +16,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
+	"github.com/Haerd-Limited/dating-api/internal/uow"
 	verificationstorage "github.com/Haerd-Limited/dating-api/internal/verification/storage"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
@@ -51,6 +52,7 @@ type service struct {
 	verificationRepo verificationstorage.VerificationRepository
 	openaiService    openai.Service
 	awsService       aws.Service
+	uow              uow.UoW
 }
 
 func NewProfileService(
@@ -60,6 +62,7 @@ func NewProfileService(
 	verificationRepository verificationstorage.VerificationRepository,
 	openaiService openai.Service,
 	awsService aws.Service,
+	uow uow.UoW,
 ) Service {
 	return &service{
 		logger:           logger,
@@ -68,6 +71,7 @@ func NewProfileService(
 		verificationRepo: verificationRepository,
 		openaiService:    openaiService,
 		awsService:       awsService,
+		uow:              uow,
 	}
 }
 
@@ -93,7 +97,7 @@ func (s *service) VerifyProfile(ctx context.Context, userID string) error {
 
 	prof.Verified = true
 
-	err = s.updateUserProfile(ctx, prof)
+	err = s.updateUserProfile(ctx, prof, nil)
 	if err != nil {
 		return commonlogger.LogError(s.logger, "update user profile", err, zap.String("userID", userID))
 	}
@@ -258,12 +262,20 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 	}, nil
 }
 
-// todo(high-priority): make atomic with uow
 func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) error {
 	err := s.validateProfileUpdate(up)
 	if err != nil {
 		return commonlogger.LogError(s.logger, "validate profile update", err, zap.String("userID", up.UserID))
 	}
+
+	// Begin transaction
+	tx, err := s.uow.Begin(ctx)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "begin tx", err, zap.String("userID", up.UserID))
+	}
+
+	defer func() { _ = tx.Rollback() }()
+
 	// Load current profile
 	prof, err := s.getUserProfile(ctx, up.UserID)
 	if err != nil {
@@ -370,12 +382,12 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	if len(up.Photos) > 0 {
-		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID))
+		err = s.profileRepo.UpsertUserPhotos(ctx, up.UserID, mapper.MapUpdatedPhotosToEntity(up.Photos, up.UserID), tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "insert user photos", err, zap.String("userID", up.UserID))
 		}
 
-		err = s.verificationRepo.InvalidatePhotoVerification(ctx, up.UserID)
+		err = s.verificationRepo.InvalidatePhotoVerification(ctx, up.UserID, tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "invalidate photo verification", err, zap.String("userID", up.UserID))
 		}
@@ -384,13 +396,22 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	// Persist
-	err = s.updateUserProfile(ctx, prof)
+	err = s.updateUserProfile(ctx, prof, tx.Raw())
 	if err != nil {
 		return commonlogger.LogError(s.logger, "update user profile", err, zap.String("userID", up.UserID))
 	}
 
 	if up.BaseColour != nil {
-		err = s.UpsertUserTheme(ctx, up.UserID, *up.BaseColour)
+		paletteJSON, err := s.generatePaletteJsonFromBaseColour(*up.BaseColour)
+		if err != nil {
+			return commonlogger.LogError(s.logger, "generate palette json", err, zap.String("userID", up.UserID))
+		}
+
+		err = s.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
+			UserID:  up.UserID,
+			BaseHex: *up.BaseColour,
+			Palette: paletteJSON,
+		}, tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "upsert user theme", err, zap.String("userID", up.UserID))
 		}
@@ -398,31 +419,30 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 
 	// Update ethnicities if provided (including empty array to clear)
 	if up.EthnicityIDs != nil {
-		err = s.profileRepo.UpsertUserEthnicities(ctx, up.UserID, up.EthnicityIDs)
+		err = s.profileRepo.UpsertUserEthnicities(ctx, up.UserID, up.EthnicityIDs, tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "upsert user ethnicities", err, zap.String("userID", up.UserID))
 		}
 	}
 
 	if len(up.SpokenLanguages) > 0 {
-		err = s.profileRepo.UpsertUserSpokenLanguages(ctx, up.UserID, up.SpokenLanguages)
+		err = s.profileRepo.UpsertUserSpokenLanguages(ctx, up.UserID, up.SpokenLanguages, tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "upsert user spoken languages", err, zap.String("userID", up.UserID))
 		}
 	}
 
 	if len(up.VoicePrompts) > 0 {
-		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, up.UserID))
+		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, up.UserID), tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "insert user voice prompts", err, zap.String("userID", up.UserID))
 		}
 	}
 
-	if up.BaseColour != nil {
-		err = s.UpsertUserTheme(ctx, up.UserID, *up.BaseColour)
-		if err != nil {
-			return commonlogger.LogError(s.logger, "upsert user theme", err, zap.String("userID", up.UserID))
-		}
+	// Commit transaction
+	err = tx.Commit()
+	if err != nil {
+		return commonlogger.LogError(s.logger, "commit tx", err, zap.String("userID", up.UserID))
 	}
 
 	return nil
@@ -589,7 +609,7 @@ func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string
 		UserID:  userID,
 		BaseHex: baseColour,
 		Palette: palJSON,
-	})
+	}, nil)
 	if err != nil {
 		return fmt.Errorf("upsert user theme: %w", err)
 	}
@@ -602,7 +622,7 @@ func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts 
 		return fmt.Errorf("validate user prompts: %w", err)
 	}
 
-	return s.profileRepo.UpsertUserPrompts(ctx, userID, mapper.MapVoicePromptsUpdateToEntity(prompts, userID))
+	return s.profileRepo.UpsertUserPrompts(ctx, userID, mapper.MapVoicePromptsUpdateToEntity(prompts, userID), nil)
 }
 
 func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {
@@ -616,12 +636,13 @@ func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []
 		if _, dup := seen[p.Position]; dup {
 			return fmt.Errorf("%w: duplicate position=%d", ErrDuplicatePhotoPosition, p.Position)
 		}
+
 		seen[p.Position] = struct{}{}
 	}
 
-	return s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID))
+	return s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID), nil)
 }
 
 func (s *service) UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error {
-	return s.profileRepo.UpsertUserSpokenLanguages(ctx, userID, languages)
+	return s.profileRepo.UpsertUserSpokenLanguages(ctx, userID, languages, nil)
 }

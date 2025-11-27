@@ -14,9 +14,8 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "go.uber.org/mock/gomock"
-
 	storage "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/storage"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.

@@ -136,7 +136,7 @@ func main() {
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner, s3Reader, cfg.Env)
 	openaiService := openai.NewOpenAIService(cfg.OpenAIAPIKey, logger)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
-	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo, openaiService, awsService)
+	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo, openaiService, awsService, unitOfWork)
 	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger)
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
 	discoverService := discover.NewDiscoverService(logger, profileService, matchingService, discoverRepo)
