@@ -124,6 +124,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "You can only superlike or pass a Voices Worth Hearing user"
 	case errors.Is(err, interaction.ErrWeeklySuperlikeLimitReached):
 		return http.StatusForbidden, "You've already used your superlike this week"
+	case errors.Is(err, interaction.ErrUnverifiedUser):
+		return http.StatusForbidden, "You need to verify your account before you can match with someone"
 	case errors.Is(err, interaction.ErrInvalidDirection):
 		return http.StatusBadRequest, "Invalid direction. Direction must be 'incoming'"
 	case errors.Is(err, storage.ErrUserDoesNotExists):

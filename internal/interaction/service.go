@@ -79,6 +79,7 @@ var (
 	ErrMissingRequiredFieldsForLikeWithMessage = errors.New("message, message type, prompt id and idempotency key are required for sending a like with a message")
 	ErrWeeklySuperlikeLimitReached             = errors.New("weekly superlike limit reached")
 	ErrBlockedUser                             = errors.New("cannot interact with a blocked user")
+	ErrUnverifiedUser                          = errors.New("user must be verified before matching")
 )
 
 const (
@@ -190,7 +191,15 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return ResultSent, nil
 		}
 
-		// todo(high-priority): block unverified users from matching
+		// Block unverified users from matching
+		verified, err := is.profileService.IsVerified(ctx, swipe.UserID)
+		if err != nil {
+			return "", commonlogger.LogError(is.logger, "check user verification status", err, zap.String("userID", swipe.UserID))
+		}
+
+		if !verified {
+			return "", ErrUnverifiedUser
+		}
 
 		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
 		if err != nil {

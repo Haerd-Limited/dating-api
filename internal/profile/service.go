@@ -40,6 +40,7 @@ type Service interface {
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error
 	UpsertUserTheme(ctx context.Context, userID, baseColour string) error
 	VerifyProfile(ctx context.Context, userID string) error
+	IsVerified(ctx context.Context, userID string) (bool, error)
 	// Stats
 	CountBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error)
 	CountBasicsCompleted(ctx context.Context) (int64, error)
@@ -103,6 +104,10 @@ func (s *service) VerifyProfile(ctx context.Context, userID string) error {
 	}
 
 	return nil
+}
+
+func (s *service) IsVerified(ctx context.Context, userID string) (bool, error) {
+	return s.profileRepo.IsVerified(ctx, userID)
 }
 
 func (s *service) CountBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error) {
