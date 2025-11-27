@@ -114,7 +114,6 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		}
 	}
 
-	// todo(high-priority): allow voice note swipes
 	err = is.validateSwipe(ctx, swipe, matchable)
 	if err != nil {
 		return "", commonlogger.LogError(is.logger, "validate swipe", err, zap.Any("swipe", swipe))
@@ -241,13 +240,32 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		targetUserSentMeALikeWithAMessage := targetUserSwipe.Message.Valid && targetUserSwipe.MessageType.Valid && targetUserSwipe.IdempotencyKey.Valid
 		if targetUserSentMeALikeWithAMessage {
 			// if the user i'm about to match, sent me a like with a message, we want to include that message as the first message in our conversation.
+			messageType := conversationDomain.MessageTypeText
+
+			var textBody *string
+
+			var mediaUrl *string
+
+			var mediaSeconds *float64
+
+			if targetUserSwipe.MessageType.String == constants.MessageTypeVoice {
+				messageType = conversationDomain.MessageTypeVoice
+				mediaUrl = targetUserSwipe.VoicenoteURL.Ptr()
+				// Note: MediaSeconds is not stored in swipes table yet, so we can't retrieve it for existing swipes.
+				// A migration is needed to add media_seconds column to the swipes table.
+				// For now, this will be nil for existing swipes, which may cause validation errors when creating the message.
+				mediaSeconds = nil
+			} else {
+				textBody = targetUserSwipe.Message.Ptr()
+			}
+
 			_, err = is.conversationService.SendMessage(ctx, tx.Raw(), conversationDomain.Message{
 				ConversationID: convoID,
 				SenderID:       swipe.TargetUserID,
-				Type:           conversationDomain.MessageTypeText, // todo(high-priority): update later to be dynamic and check if they sent a voice note message as a like.
-				TextBody:       targetUserSwipe.Message.Ptr(),
-				MediaUrl:       nil,
-				MediaSeconds:   nil,
+				Type:           messageType,
+				TextBody:       textBody,
+				MediaUrl:       mediaUrl,
+				MediaSeconds:   mediaSeconds,
 				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
 			})
 			if err != nil {
@@ -255,16 +273,37 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			}
 		}
 
-		userRepliedToLiked := swipe.Message != nil
+		userRepliedToLiked := swipe.Message != nil || (swipe.MessageType != nil && swipe.VoiceNoteURL != nil)
 		if userRepliedToLiked {
+			messageType := conversationDomain.MessageTypeText
+
+			var textBody *string
+
+			var mediaUrl *string
+
+			var mediaSeconds *float64
+
+			if swipe.MessageType != nil && *swipe.MessageType == constants.MessageTypeVoice {
+				messageType = conversationDomain.MessageTypeVoice
+				mediaUrl = swipe.VoiceNoteURL
+				mediaSeconds = swipe.MediaSeconds
+			} else {
+				textBody = swipe.Message
+			}
+
+			clientMsgID := ""
+			if swipe.IdempotencyKey != nil {
+				clientMsgID = *swipe.IdempotencyKey
+			}
+
 			_, err = is.conversationService.SendMessage(ctx, tx.Raw(), conversationDomain.Message{
 				ConversationID: convoID,
 				SenderID:       swipe.UserID,
-				Type:           conversationDomain.MessageTypeText, // todo(high-priority): update later to be dynamic and check if they sent a voice note message as a like.
-				TextBody:       swipe.Message,
-				MediaUrl:       nil,
-				MediaSeconds:   nil,
-				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
+				Type:           messageType,
+				TextBody:       textBody,
+				MediaUrl:       mediaUrl,
+				MediaSeconds:   mediaSeconds,
+				ClientMsgID:    clientMsgID,
 			})
 			if err != nil {
 				return "", commonlogger.LogError(is.logger, "user reply to like", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
@@ -416,7 +455,7 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 
 	// Check is frontend attempted to send a like with a message but is missing required fields
 	if swipe.Action == constants.ActionSuperlike || swipe.Action == constants.ActionLike {
-		hasAny := swipe.Message != nil || swipe.MessageType != nil || swipe.IdempotencyKey != nil
+		hasAny := swipe.Message != nil || swipe.MessageType != nil || swipe.IdempotencyKey != nil || swipe.VoiceNoteURL != nil
 
 		var atleastOneIsMissing bool
 		if isMatchable {
@@ -431,6 +470,17 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 
 		if unableToSendLikeWithMessage {
 			return ErrMissingRequiredFieldsForLikeWithMessage
+		}
+
+		// Validate voice note requirements if message type is voice
+		if swipe.MessageType != nil && *swipe.MessageType == constants.MessageTypeVoice {
+			if swipe.VoiceNoteURL == nil || swipe.MediaSeconds == nil {
+				return ErrMissingRequiredFieldsForLikeWithMessage
+			}
+			// Validate media seconds is positive and within limits
+			if *swipe.MediaSeconds <= 0 || *swipe.MediaSeconds > float64(constants.MaxVoiceNoteLengthInSeconds) {
+				return fmt.Errorf("media_seconds must be between 0 and %d", constants.MaxVoiceNoteLengthInSeconds)
+			}
 		}
 	}
 

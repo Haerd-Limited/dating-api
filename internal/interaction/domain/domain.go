@@ -10,6 +10,7 @@ type Swipe struct {
 	Message        *string
 	MessageType    *string
 	VoiceNoteURL   *string
+	MediaSeconds   *float64
 	IdempotencyKey *string
 }
 

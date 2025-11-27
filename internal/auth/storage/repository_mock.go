@@ -14,8 +14,9 @@ import (
 	reflect "reflect"
 	time "time"
 
-	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 	gomock "go.uber.org/mock/gomock"
+
+	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 )
 
 // MockAuthRepository is a mock of AuthRepository interface.

@@ -14,5 +14,7 @@ func SwipesRequestToDomain(swipesReq dto.SwipesRequest, userID string) domain.Sw
 		IdempotencyKey: swipesReq.ClientMessageID,
 		Message:        swipesReq.Message,
 		MessageType:    swipesReq.MessageType,
+		VoiceNoteURL:   swipesReq.VoiceNoteURL,
+		MediaSeconds:   swipesReq.MediaSeconds,
 	}
 }

@@ -119,7 +119,7 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	case errors.Is(err, interaction.ErrInvalidAction):
 		return http.StatusBadRequest, fmt.Sprintf("Invalid action. Action must be '%s','%s' or '%s'", constants.ActionLike, constants.ActionPass, constants.ActionSuperlike)
 	case errors.Is(err, interaction.ErrMissingRequiredFieldsForLikeWithMessage):
-		return http.StatusBadRequest, "Sending a like with a message also requires message_type, message,prompt_id and a generated client_msg_id"
+		return http.StatusBadRequest, "Sending a like with a message requires message_type, message (or voice_note_url and media_seconds for voice notes), prompt_id and a generated client_msg_id"
 	case errors.Is(err, interaction.ErrLikedAVhwUser):
 		return http.StatusBadRequest, "You can only superlike or pass a Voices Worth Hearing user"
 	case errors.Is(err, interaction.ErrWeeklySuperlikeLimitReached):

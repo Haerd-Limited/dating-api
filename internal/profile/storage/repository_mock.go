@@ -14,8 +14,9 @@ import (
 	sql "database/sql"
 	reflect "reflect"
 
-	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 	gomock "go.uber.org/mock/gomock"
+
+	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 )
 
 // MockProfileRepository is a mock of ProfileRepository interface.

@@ -3,12 +3,14 @@ package dto
 import "github.com/go-playground/validator/v10"
 
 type SwipesRequest struct {
-	TargetUserID    string  `json:"target_user_id" validate:"required"`
-	Action          string  `json:"action" validate:"oneof=like pass superlike"`
-	PromptID        *int64  `json:"prompt_id"`
-	Message         *string `json:"message"`
-	MessageType     *string `json:"message_type"`
-	ClientMessageID *string `json:"client_msg_id"`
+	TargetUserID    string   `json:"target_user_id" validate:"required"`
+	Action          string   `json:"action" validate:"oneof=like pass superlike"`
+	PromptID        *int64   `json:"prompt_id"`
+	Message         *string  `json:"message"`
+	MessageType     *string  `json:"message_type"`
+	VoiceNoteURL    *string  `json:"voice_note_url"`
+	MediaSeconds    *float64 `json:"media_seconds"`
+	ClientMessageID *string  `json:"client_msg_id"`
 }
 
 func (sr SwipesRequest) Validate() error {
