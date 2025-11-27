@@ -81,6 +81,7 @@ var (
 	ErrInvalidHeight                = errors.New("invalid height")
 	ErrInvalidPromptPosition        = errors.New("invalid prompt position")
 	ErrDuplicatePromptPosition      = errors.New("duplicate prompt position")
+	ErrDuplicatePhotoPosition       = errors.New("duplicate photo position")
 )
 
 func (s *service) VerifyProfile(ctx context.Context, userID string) error {
@@ -605,9 +606,17 @@ func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts 
 }
 
 func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {
-	// todo(high-priority): check if position values are unique
 	if len(photos) != 6 {
 		return fmt.Errorf("%w: please provide exactly 6 photos", ErrNotEnoughPhotosProvided)
+	}
+
+	// Check if position values are unique
+	seen := make(map[int16]struct{}, len(photos))
+	for _, p := range photos {
+		if _, dup := seen[p.Position]; dup {
+			return fmt.Errorf("%w: duplicate position=%d", ErrDuplicatePhotoPosition, p.Position)
+		}
+		seen[p.Position] = struct{}{}
 	}
 
 	return s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID))

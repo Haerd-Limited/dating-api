@@ -194,6 +194,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Invalid prompt position"
 	case errors.Is(err, profile.ErrDuplicatePromptPosition):
 		return http.StatusBadRequest, "Duplicate prompt position"
+	case errors.Is(err, profile.ErrDuplicatePhotoPosition):
+		return http.StatusBadRequest, "Duplicate photo position"
 	case errors.Is(err, commonErrors.ErrInvalidMediaUrl):
 		return http.StatusBadRequest, "Invalid media url"
 	case errors.Is(err, profile.ErrInvalidHeight):

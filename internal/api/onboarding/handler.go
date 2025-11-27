@@ -483,6 +483,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Invalid prompt position"
 	case errors.Is(err, profile.ErrDuplicatePromptPosition):
 		return http.StatusBadRequest, "Duplicate prompt position"
+	case errors.Is(err, profile.ErrDuplicatePhotoPosition):
+		return http.StatusBadRequest, "Duplicate photo position"
 	case errors.Is(err, commonErrors.ErrInvalidEmail):
 		return http.StatusBadRequest, messages.InvalidEmailMsg
 	case errors.Is(err, onboarding.ErrIncorrectStepCalled):
