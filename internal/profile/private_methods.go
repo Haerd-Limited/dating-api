@@ -16,6 +16,7 @@ import (
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
+	"go.uber.org/zap"
 )
 
 func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
@@ -112,6 +113,7 @@ func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate) error {
 func (s *service) containsSocialMediaPromotion(input string) bool {
 	for _, token := range constant.BlockedTokens {
 		if strings.Contains(strings.ToLower(input), token) {
+			s.logger.Warn("containsSocialMediaPromotion", zap.String("input", input), zap.String("token", token))
 			return true
 		}
 	}
