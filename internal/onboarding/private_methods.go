@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
 	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
 // todo: call of below through lookup service if logic gets involved
@@ -164,4 +167,49 @@ func (os *onboardingService) bumpOnboardingStep(
 	})
 
 	return next, nil
+}
+
+func (os *onboardingService) sendPreregistrationNotification(ctx context.Context, userID string, genderID, sexualityID int16) {
+	// Get user details
+	userDetails, err := os.userService.GetUser(ctx, userID)
+	if err != nil {
+		commonlogger.LogError(os.logger, "failed to get user for notification", err, zap.String("userID", userID))
+		return
+	}
+
+	// Get gender label
+	genderEntity, err := os.lookupRepo.GetGenderByID(ctx, genderID)
+	if err != nil {
+		commonlogger.LogError(os.logger, "failed to get gender for notification", err, zap.String("userID", userID), zap.Int16("genderID", genderID))
+		return
+	}
+
+	// Get sexuality label
+	sexualityEntity, err := os.lookupRepo.GetSexualityByID(ctx, sexualityID)
+	if err != nil {
+		commonlogger.LogError(os.logger, "failed to get sexuality for notification", err, zap.String("userID", userID), zap.Int16("sexualityID", sexualityID))
+		return
+	}
+
+	// Build message
+	lastName := ""
+	if userDetails.LastName != nil {
+		lastName = *userDetails.LastName
+	}
+
+	message := fmt.Sprintf("New pre-registration completed!\nName: %s %s\nGender: %s\nSexuality: %s",
+		userDetails.FirstName, lastName, genderEntity.Label, sexualityEntity.Label)
+
+	// Send SMS notification to all configured phone numbers
+	for _, phoneNumber := range os.notificationPhoneNumbers {
+		if phoneNumber == "" {
+			continue
+		}
+		err = os.communicationService.SendSMS(phoneNumber, message)
+		if err != nil {
+			commonlogger.LogError(os.logger, "failed to send preregistration notification SMS", err,
+				zap.String("userID", userID), zap.String("phoneNumber", phoneNumber))
+			// Continue sending to other numbers even if one fails
+		}
+	}
 }

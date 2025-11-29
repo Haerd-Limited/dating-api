@@ -10,6 +10,7 @@ import (
 type Service interface {
 	SendEmailOTP(toEmail, code string) error
 	SendSMSOTP(toNumber, code string) error
+	SendSMS(toNumber, message string) error
 }
 
 type service struct {
@@ -43,6 +44,20 @@ func (s *service) SendSMSOTP(toNumber, code string) error {
 	params.SetTo(toNumber)
 	params.SetFrom("Haerd") // Changed from s.fromNumber to "Haerd"
 	params.SetBody(fmt.Sprintf("Your Haerd code is %s", code))
+
+	_, err := s.client.Api.CreateMessage(params)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *service) SendSMS(toNumber, message string) error {
+	params := &twilioApi.CreateMessageParams{}
+	params.SetTo(toNumber)
+	params.SetFrom("Haerd")
+	params.SetBody(message)
 
 	_, err := s.client.Api.CreateMessage(params)
 	if err != nil {

@@ -29,6 +29,7 @@ type Config struct {
 	TwilioAccountSID           string `mapstructure:"TWILIO_ACCOUNT_SID" yaml:"twilio_account_sid"`
 	TwilioAuthToken            string `mapstructure:"TWILIO_AUTH_TOKEN" yaml:"twilio_auth_token"`
 	TwilioNumber               string `mapstructure:"TWILIO_NUMBER" yaml:"twilio_number"`
+	NotificationPhoneNumbers    string `mapstructure:"NOTIFICATION_PHONE_NUMBERS" yaml:"notification_phone_numbers"` // Comma-separated list
 	OpenAIAPIKey               string `mapstructure:"OPENAI_API_KEY" yaml:"openai_api_key" validate:"required"`
 	// Feature flags and limits for preregistration caps
 	EnablePreregCap       bool `mapstructure:"ENABLE_PREREG_CAP" yaml:"enable_prereg_cap"`
@@ -76,6 +77,7 @@ func LoadConfig() (*Config, error) {
 		TwilioAccountSID:           viper.GetString("TWILIO_ACCOUNT_SID"),
 		TwilioAuthToken:            viper.GetString("TWILIO_AUTH_TOKEN"),
 		TwilioNumber:               viper.GetString("TWILIO_NUMBER"),
+		NotificationPhoneNumbers:    viper.GetString("NOTIFICATION_PHONE_NUMBERS"),
 		AWSRekognitionRegion:       viper.GetString("AWS_REKOGNITION_REGION"),
 		OpenAIAPIKey:               viper.GetString("OPENAI_API_KEY"),
 		EnablePreregCap:            viper.GetBool("ENABLE_PREREG_CAP"),

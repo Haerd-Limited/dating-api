@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strings"
 	"syscall"
 	"time"
 
@@ -159,6 +160,18 @@ func main() {
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 	mediaService := media.NewMediaService(logger, awsService)
+	// Parse notification phone numbers from comma-separated string
+	var notificationPhoneNumbers []string
+	if cfg.NotificationPhoneNumbers != "" {
+		phoneNumbers := strings.Split(cfg.NotificationPhoneNumbers, ",")
+		for _, phone := range phoneNumbers {
+			phone = strings.TrimSpace(phone)
+			if phone != "" {
+				notificationPhoneNumbers = append(notificationPhoneNumbers, phone)
+			}
+		}
+	}
+
 	onboardingService := onboarding.NewOnboardingService(
 		logger,
 		userService,
@@ -166,6 +179,8 @@ func main() {
 		mediaService,
 		profileService,
 		lookupRepo,
+		communicationService,
+		notificationPhoneNumbers,
 		cfg.EnablePreregCap,
 		cfg.MaxParticipants,
 		cfg.MaxMaleParticipants,
