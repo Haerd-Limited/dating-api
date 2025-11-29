@@ -160,7 +160,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		}, nil
 	case constants.RegisterPurpose:
 		if exists {
-			// User exists - check if they're still in pre-registration
+			// User exists - return their current step
 			if in.Channel == constants.SmsChannel {
 				userDetails, getUserErr := as.UserService.GetUserByPhoneNumber(ctx, identifier)
 				if getUserErr != nil {
@@ -168,24 +168,19 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 				}
 
 				currentStep := onboardingdomain.Steps(userDetails.OnboardingStep)
-				// If user is still in pre-registration (INTRO or BASICS), allow them to continue
-				if currentStep == onboardingdomain.OnboardingStepsIntro || currentStep == onboardingdomain.OnboardingStepsBasics {
-					tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
-					if tokenErr != nil {
-						return nil, commonlogger.LogError(as.logger, "failed to generate tokens", tokenErr, zap.String("userID", userDetails.ID))
-					}
-
-					return &domain.AuthResult{
-						RefreshToken: tokens.RefreshToken,
-						AccessToken:  tokens.AccessToken,
-						User: &domain.User{
-							ID:             userDetails.ID,
-							OnboardingStep: currentStep,
-						},
-					}, nil
+				tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
+				if tokenErr != nil {
+					return nil, commonlogger.LogError(as.logger, "failed to generate tokens", tokenErr, zap.String("userID", userDetails.ID))
 				}
-				// User has completed pre-registration, they should use login instead
-				return nil, ErrUserAlreadyRegistered
+
+				return &domain.AuthResult{
+					RefreshToken: tokens.RefreshToken,
+					AccessToken:  tokens.AccessToken,
+					User: &domain.User{
+						ID:             userDetails.ID,
+						OnboardingStep: currentStep,
+					},
+				}, nil
 			} else {
 				return nil, ErrInvalidChannel
 			}
@@ -257,17 +252,13 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 
 	var onboardingStep *onboardingdomain.Steps
 
-	// For register purpose, if user exists, check if they're still in pre-registration
-	if purpose == constants.RegisterPurpose && exists {
+	// If user exists, get their onboarding step
+	if exists {
 		if requestCodeDetails.Channel == constants.SmsChannel {
 			userDetails, getUserErr := as.UserService.GetUserByPhoneNumber(ctx, identifier)
 			if getUserErr == nil && userDetails != nil {
 				step := onboardingdomain.Steps(userDetails.OnboardingStep)
-				// Only return step if user is still in pre-registration phase (INTRO or BASICS)
-				if step == onboardingdomain.OnboardingStepsIntro || step == onboardingdomain.OnboardingStepsBasics {
-					onboardingStep = &step
-					// Allow sending code so they can continue pre-registration
-				}
+				onboardingStep = &step
 			}
 		}
 	}
@@ -278,8 +269,8 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	case constants.LoginPurpose:
 		shouldSend = exists
 	case constants.RegisterPurpose:
-		// Send code if user doesn't exist, or if user exists and is in pre-registration
-		shouldSend = !exists || (exists && onboardingStep != nil)
+		// Always send code for register purpose (whether user exists or not)
+		shouldSend = true
 	default:
 		// unknown purpose -> treat as login
 		shouldSend = exists

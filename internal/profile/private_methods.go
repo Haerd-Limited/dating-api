@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/Haerd-Limited/dating-api/internal/profile/constant"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
@@ -16,7 +18,6 @@ import (
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
-	"go.uber.org/zap"
 )
 
 func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
