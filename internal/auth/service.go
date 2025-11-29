@@ -269,8 +269,9 @@ func (as *authService) RequestCode(ctx context.Context, requestCodeDetails domai
 	case constants.LoginPurpose:
 		shouldSend = exists
 	case constants.RegisterPurpose:
-		// Always send code for register purpose (whether user exists or not)
-		shouldSend = true
+		// Only send code if user doesn't exist (new registration)
+		// If user exists, return their onboarding step but don't send code
+		shouldSend = !exists
 	default:
 		// unknown purpose -> treat as login
 		shouldSend = exists

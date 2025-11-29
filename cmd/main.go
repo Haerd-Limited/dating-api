@@ -160,17 +160,7 @@ func main() {
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 	mediaService := media.NewMediaService(logger, awsService)
-	// Parse notification phone numbers from comma-separated string
-	var notificationPhoneNumbers []string
-	if cfg.NotificationPhoneNumbers != "" {
-		phoneNumbers := strings.Split(cfg.NotificationPhoneNumbers, ",")
-		for _, phone := range phoneNumbers {
-			phone = strings.TrimSpace(phone)
-			if phone != "" {
-				notificationPhoneNumbers = append(notificationPhoneNumbers, phone)
-			}
-		}
-	}
+	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)
 
 	onboardingService := onboarding.NewOnboardingService(
 		logger,
@@ -290,4 +280,23 @@ func runInsightsWeekly(ctx context.Context, logger *zap.Logger, ins insightsvc.S
 			}
 		}
 	}()
+}
+
+// parsePhoneNumbers parses a comma-separated string of phone numbers and returns a slice of trimmed, non-empty numbers.
+func parsePhoneNumbers(phoneNumbersStr string) []string {
+	if phoneNumbersStr == "" {
+		return nil
+	}
+
+	numbers := strings.Split(phoneNumbersStr, ",")
+	result := make([]string, 0, len(numbers))
+
+	for _, phone := range numbers {
+		phone = strings.TrimSpace(phone)
+		if phone != "" {
+			result = append(result, phone)
+		}
+	}
+
+	return result
 }
