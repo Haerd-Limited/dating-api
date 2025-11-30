@@ -205,6 +205,7 @@ func (os *onboardingService) sendPreregistrationNotification(ctx context.Context
 		if phoneNumber == "" {
 			continue
 		}
+
 		err = os.communicationService.SendSMS(phoneNumber, message)
 		if err != nil {
 			commonlogger.LogError(os.logger, "failed to send preregistration notification SMS", err,

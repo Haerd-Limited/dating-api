@@ -51,6 +51,19 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
+// Enum values for FeedbackType
+const (
+	FeedbackTypePositive string = "positive"
+	FeedbackTypeNegative string = "negative"
+)
+
+func AllFeedbackType() []string {
+	return []string{
+		FeedbackTypePositive,
+		FeedbackTypeNegative,
+	}
+}
+
 // Enum values for InsightScope
 const (
 	InsightScopeGlobal string = "global"

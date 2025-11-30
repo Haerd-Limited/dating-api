@@ -17,6 +17,7 @@ type Service interface {
 	GenerateVoiceNoteUploadUrl(ctx context.Context, userID string, purpose string) (domain.UploadUrl, error)
 	GenerateUploadURLsForProfilePhotos(ctx context.Context, userID string) ([]domain.UploadUrl, error)
 	GenerateUploadURLsForProfilePrompts(ctx context.Context, userID string) ([]domain.UploadUrl, error)
+	GenerateFeedbackAttachmentUploadUrl(ctx context.Context, userID string, mediaType string) (domain.UploadUrl, error)
 }
 
 const (
@@ -27,7 +28,9 @@ const (
 	maxUploadBytes           = 5 << 20 // 5 MiB
 	presignTTL               = 20 * time.Minute
 	mimeJPEG                 = "image/jpeg"
+	mimePNG                  = "image/png"
 	mimeM4A                  = "audio/mp4" // m4a is an MP4 container; "audio/m4a" also seen but "audio/mp4" is safer
+	mimeMP4                  = "video/mp4"
 )
 
 type service struct {
@@ -117,4 +120,35 @@ func (s *service) GenerateUploadURLsForProfilePrompts(ctx context.Context, userI
 	}
 
 	return voicePromptUploadUrls, nil
+}
+
+func (s *service) GenerateFeedbackAttachmentUploadUrl(ctx context.Context, userID string, mediaType string) (domain.UploadUrl, error) {
+	var contentType string
+
+	purpose := "feedback"
+
+	switch mediaType {
+	case "image":
+		contentType = mimeJPEG
+	case "video":
+		contentType = mimeMP4
+	default:
+		return domain.UploadUrl{}, fmt.Errorf("invalid media type: %s, must be 'image' or 'video'", mediaType)
+	}
+
+	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, 1, contentType, presignTTL, &purpose)
+	if err != nil {
+		return domain.UploadUrl{}, commonlogger.LogError(s.logger, "failed to generate feedback attachment upload url", err, zap.String("userID", userID), zap.String("mediaType", mediaType))
+	}
+
+	if len(urls) != 1 {
+		return domain.UploadUrl{}, fmt.Errorf("failed to generate feedback attachment upload url: expected 1 url, got %d", len(urls))
+	}
+
+	return domain.UploadUrl{
+		Key:       urls[0].Key,
+		UploadUrl: urls[0].URL,
+		Headers:   urls[0].Headers,
+		MaxBytes:  maxUploadBytes,
+	}, nil
 }

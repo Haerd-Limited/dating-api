@@ -11,6 +11,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
+	apifeedback "github.com/Haerd-Limited/dating-api/internal/api/feedback"
 	apiinsights "github.com/Haerd-Limited/dating-api/internal/api/insights"
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction"
 	"github.com/Haerd-Limited/dating-api/internal/api/lookup"
@@ -25,6 +26,7 @@ import (
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
+	internalfeedback "github.com/Haerd-Limited/dating-api/internal/feedback"
 	internalinsights "github.com/Haerd-Limited/dating-api/internal/insights"
 	internalinteraction "github.com/Haerd-Limited/dating-api/internal/interaction"
 	internallookup "github.com/Haerd-Limited/dating-api/internal/lookup"
@@ -59,6 +61,7 @@ func New(
 	safetyService internalsafety.Service,
 	insightsService internalinsights.Service,
 	userService internaluser.Service,
+	feedbackService internalfeedback.Service,
 	adminAPIKey string,
 ) http.Handler {
 	// Create a new Chi router.
@@ -99,6 +102,7 @@ func New(
 	matchingHandler := matching.NewMatchingHandler(logger, matchingService)
 	safetyHandler := apisafety.NewHandler(logger, safetyService)
 	insightsHandler := apiinsights.NewHandler(logger, insightsService)
+	feedbackHandler := apifeedback.NewFeedbackHandler(logger, feedbackService)
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
@@ -212,6 +216,12 @@ func New(
 
 					r.Get("/voice/presign", mediaHandler.GenerateVoiceNoteUploadUrl())
 					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
+
+					r.Get("/feedback/presign", mediaHandler.GenerateFeedbackAttachmentUploadUrl())
+				})
+
+				r.Route("/feedback", func(r chi.Router) {
+					r.Post("/", feedbackHandler.CreateFeedback())
 				})
 
 				r.Route("/matching", func(r chi.Router) {

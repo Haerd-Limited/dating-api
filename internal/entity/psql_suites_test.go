@@ -26,6 +26,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Feedbacks", testFeedbacksUpsert)
 
+	t.Run("FeedbackAttachments", testFeedbackAttachmentsUpsert)
+
 	t.Run("Genders", testGendersUpsert)
 
 	t.Run("GooseDBVersions", testGooseDBVersionsUpsert)

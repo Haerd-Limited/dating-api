@@ -168,6 +168,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 				}
 
 				currentStep := onboardingdomain.Steps(userDetails.OnboardingStep)
+
 				tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
 				if tokenErr != nil {
 					return nil, commonlogger.LogError(as.logger, "failed to generate tokens", tokenErr, zap.String("userID", userDetails.ID))

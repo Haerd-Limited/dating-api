@@ -14,6 +14,7 @@ var TableNames = struct {
 	FamilyPlans              string
 	FamilyStatuses           string
 	Feedback                 string
+	FeedbackAttachments      string
 	Genders                  string
 	GooseDBVersion           string
 	Habits                   string
@@ -73,6 +74,7 @@ var TableNames = struct {
 	FamilyPlans:              "family_plans",
 	FamilyStatuses:           "family_statuses",
 	Feedback:                 "feedback",
+	FeedbackAttachments:      "feedback_attachments",
 	Genders:                  "genders",
 	GooseDBVersion:           "goose_db_version",
 	Habits:                   "habits",

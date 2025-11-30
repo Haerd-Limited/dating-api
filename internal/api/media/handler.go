@@ -18,6 +18,7 @@ import (
 type Handler interface {
 	GeneratePhotoUploadUrl() http.HandlerFunc
 	GenerateVoiceNoteUploadUrl() http.HandlerFunc
+	GenerateFeedbackAttachmentUploadUrl() http.HandlerFunc
 }
 
 type handler struct {
@@ -79,6 +80,37 @@ func (h *handler) GenerateVoiceNoteUploadUrl() http.HandlerFunc {
 		url, err := h.mediaService.GenerateVoiceNoteUploadUrl(ctx, userID, purpose)
 		if err != nil {
 			h.handleServiceErrorResponse(w, r, "GenerateVoiceNoteUploadUrl", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapUploadURLToResponse(url))
+	}
+}
+
+func (h *handler) GenerateFeedbackAttachmentUploadUrl() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		mediaType := r.URL.Query().Get("media_type")
+		if mediaType == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("media_type query parameter is required"))
+			return
+		}
+
+		if mediaType != "image" && mediaType != "video" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("media_type must be 'image' or 'video'"))
+			return
+		}
+
+		url, err := h.mediaService.GenerateFeedbackAttachmentUploadUrl(ctx, userID, mediaType)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "GenerateFeedbackAttachmentUploadUrl", err)
 			return
 		}
 

@@ -13,6 +13,7 @@ const (
 	MessageTypeVoice                            = "voicenote"
 	PurposeVoiceNote                            = "voicenote"
 	PurposePrompt                               = "prompt"
+	PurposeFeedback                             = "feedback"
 	MinimumNumberOfUsersRequiredToBuildVwhUsers = 5
 	MaxNumberOfVWHUsersToSelect                 = 3
 	VisibilityStateHidden                       = "HIDDEN"

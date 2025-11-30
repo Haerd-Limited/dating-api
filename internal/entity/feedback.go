@@ -18,20 +18,19 @@ import (
 	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/aarondl/sqlboiler/v4/queries/qmhelper"
-	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/aarondl/strmangle"
 	"github.com/friendsofgo/errors"
 )
 
 // Feedback is an object representing the database table.
 type Feedback struct {
-	ID        string            `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID    null.String       `boil:"user_id" json:"user_id,omitempty" toml:"user_id" yaml:"user_id,omitempty"`
-	Channel   string            `boil:"channel" json:"channel" toml:"channel" yaml:"channel"`
-	Text      null.String       `boil:"text" json:"text,omitempty" toml:"text" yaml:"text,omitempty"`
-	Rating    null.Int          `boil:"rating" json:"rating,omitempty" toml:"rating" yaml:"rating,omitempty"`
-	Tags      types.StringArray `boil:"tags" json:"tags,omitempty" toml:"tags" yaml:"tags,omitempty"`
-	CreatedAt time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ID        string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID    string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Type      string      `boil:"type" json:"type" toml:"type" yaml:"type"`
+	Title     null.String `boil:"title" json:"title,omitempty" toml:"title" yaml:"title,omitempty"`
+	Text      string      `boil:"text" json:"text" toml:"text" yaml:"text"`
+	CreatedAt time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 
 	R *feedbackR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L feedbackL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -40,129 +39,72 @@ type Feedback struct {
 var FeedbackColumns = struct {
 	ID        string
 	UserID    string
-	Channel   string
+	Type      string
+	Title     string
 	Text      string
-	Rating    string
-	Tags      string
 	CreatedAt string
+	UpdatedAt string
 }{
 	ID:        "id",
 	UserID:    "user_id",
-	Channel:   "channel",
+	Type:      "type",
+	Title:     "title",
 	Text:      "text",
-	Rating:    "rating",
-	Tags:      "tags",
 	CreatedAt: "created_at",
+	UpdatedAt: "updated_at",
 }
 
 var FeedbackTableColumns = struct {
 	ID        string
 	UserID    string
-	Channel   string
+	Type      string
+	Title     string
 	Text      string
-	Rating    string
-	Tags      string
 	CreatedAt string
+	UpdatedAt string
 }{
 	ID:        "feedback.id",
 	UserID:    "feedback.user_id",
-	Channel:   "feedback.channel",
+	Type:      "feedback.type",
+	Title:     "feedback.title",
 	Text:      "feedback.text",
-	Rating:    "feedback.rating",
-	Tags:      "feedback.tags",
 	CreatedAt: "feedback.created_at",
+	UpdatedAt: "feedback.updated_at",
 }
 
 // Generated where
 
-type whereHelpernull_Int struct{ field string }
-
-func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
-}
-func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
-	values := make([]interface{}, 0, len(slice))
-	for _, value := range slice {
-		values = append(values, value)
-	}
-	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
-}
-
-func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
-type whereHelpertypes_StringArray struct{ field string }
-
-func (w whereHelpertypes_StringArray) EQ(x types.StringArray) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpertypes_StringArray) NEQ(x types.StringArray) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpertypes_StringArray) LT(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_StringArray) LTE(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertypes_StringArray) GT(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_StringArray) GTE(x types.StringArray) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpertypes_StringArray) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpertypes_StringArray) IsNotNull() qm.QueryMod {
-	return qmhelper.WhereIsNotNull(w.field)
-}
-
 var FeedbackWhere = struct {
 	ID        whereHelperstring
-	UserID    whereHelpernull_String
-	Channel   whereHelperstring
-	Text      whereHelpernull_String
-	Rating    whereHelpernull_Int
-	Tags      whereHelpertypes_StringArray
+	UserID    whereHelperstring
+	Type      whereHelperstring
+	Title     whereHelpernull_String
+	Text      whereHelperstring
 	CreatedAt whereHelpertime_Time
+	UpdatedAt whereHelpertime_Time
 }{
 	ID:        whereHelperstring{field: "\"feedback\".\"id\""},
-	UserID:    whereHelpernull_String{field: "\"feedback\".\"user_id\""},
-	Channel:   whereHelperstring{field: "\"feedback\".\"channel\""},
-	Text:      whereHelpernull_String{field: "\"feedback\".\"text\""},
-	Rating:    whereHelpernull_Int{field: "\"feedback\".\"rating\""},
-	Tags:      whereHelpertypes_StringArray{field: "\"feedback\".\"tags\""},
+	UserID:    whereHelperstring{field: "\"feedback\".\"user_id\""},
+	Type:      whereHelperstring{field: "\"feedback\".\"type\""},
+	Title:     whereHelpernull_String{field: "\"feedback\".\"title\""},
+	Text:      whereHelperstring{field: "\"feedback\".\"text\""},
 	CreatedAt: whereHelpertime_Time{field: "\"feedback\".\"created_at\""},
+	UpdatedAt: whereHelpertime_Time{field: "\"feedback\".\"updated_at\""},
 }
 
 // FeedbackRels is where relationship names are stored.
 var FeedbackRels = struct {
-}{}
+	User                string
+	FeedbackAttachments string
+}{
+	User:                "User",
+	FeedbackAttachments: "FeedbackAttachments",
+}
 
 // feedbackR is where relationships are stored.
 type feedbackR struct {
+	User                *User                   `boil:"User" json:"User" toml:"User" yaml:"User"`
+	FeedbackAttachments FeedbackAttachmentSlice `boil:"FeedbackAttachments" json:"FeedbackAttachments" toml:"FeedbackAttachments" yaml:"FeedbackAttachments"`
 }
 
 // NewStruct creates a new relationship struct
@@ -170,13 +112,45 @@ func (*feedbackR) NewStruct() *feedbackR {
 	return &feedbackR{}
 }
 
+func (o *Feedback) GetUser() *User {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetUser()
+}
+
+func (r *feedbackR) GetUser() *User {
+	if r == nil {
+		return nil
+	}
+
+	return r.User
+}
+
+func (o *Feedback) GetFeedbackAttachments() FeedbackAttachmentSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetFeedbackAttachments()
+}
+
+func (r *feedbackR) GetFeedbackAttachments() FeedbackAttachmentSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.FeedbackAttachments
+}
+
 // feedbackL is where Load methods for each relationship are stored.
 type feedbackL struct{}
 
 var (
-	feedbackAllColumns            = []string{"id", "user_id", "channel", "text", "rating", "tags", "created_at"}
-	feedbackColumnsWithoutDefault = []string{"channel"}
-	feedbackColumnsWithDefault    = []string{"id", "user_id", "text", "rating", "tags", "created_at"}
+	feedbackAllColumns            = []string{"id", "user_id", "type", "title", "text", "created_at", "updated_at"}
+	feedbackColumnsWithoutDefault = []string{"user_id", "type", "text"}
+	feedbackColumnsWithDefault    = []string{"id", "title", "created_at", "updated_at"}
 	feedbackPrimaryKeyColumns     = []string{"id"}
 	feedbackGeneratedColumns      = []string{}
 )
@@ -486,6 +460,364 @@ func (q feedbackQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 	return count > 0, nil
 }
 
+// User pointed to by the foreign key.
+func (o *Feedback) User(mods ...qm.QueryMod) userQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.UserID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Users(queryMods...)
+}
+
+// FeedbackAttachments retrieves all the feedback_attachment's FeedbackAttachments with an executor.
+func (o *Feedback) FeedbackAttachments(mods ...qm.QueryMod) feedbackAttachmentQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"feedback_attachments\".\"feedback_id\"=?", o.ID),
+	)
+
+	return FeedbackAttachments(queryMods...)
+}
+
+// LoadUser allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (feedbackL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybeFeedback interface{}, mods queries.Applicator) error {
+	var slice []*Feedback
+	var object *Feedback
+
+	if singular {
+		var ok bool
+		object, ok = maybeFeedback.(*Feedback)
+		if !ok {
+			object = new(Feedback)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeFeedback)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeFeedback))
+			}
+		}
+	} else {
+		s, ok := maybeFeedback.(*[]*Feedback)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeFeedback)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeFeedback))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &feedbackR{}
+		}
+		args[object.UserID] = struct{}{}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &feedbackR{}
+			}
+
+			args[obj.UserID] = struct{}{}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`users`),
+		qm.WhereIn(`users.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load User")
+	}
+
+	var resultSlice []*User
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice User")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for users")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for users")
+	}
+
+	if len(userAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.User = foreign
+		if foreign.R == nil {
+			foreign.R = &userR{}
+		}
+		foreign.R.Feedbacks = append(foreign.R.Feedbacks, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.UserID == foreign.ID {
+				local.R.User = foreign
+				if foreign.R == nil {
+					foreign.R = &userR{}
+				}
+				foreign.R.Feedbacks = append(foreign.R.Feedbacks, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadFeedbackAttachments allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (feedbackL) LoadFeedbackAttachments(ctx context.Context, e boil.ContextExecutor, singular bool, maybeFeedback interface{}, mods queries.Applicator) error {
+	var slice []*Feedback
+	var object *Feedback
+
+	if singular {
+		var ok bool
+		object, ok = maybeFeedback.(*Feedback)
+		if !ok {
+			object = new(Feedback)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeFeedback)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeFeedback))
+			}
+		}
+	} else {
+		s, ok := maybeFeedback.(*[]*Feedback)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeFeedback)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeFeedback))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &feedbackR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &feedbackR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`feedback_attachments`),
+		qm.WhereIn(`feedback_attachments.feedback_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load feedback_attachments")
+	}
+
+	var resultSlice []*FeedbackAttachment
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice feedback_attachments")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on feedback_attachments")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for feedback_attachments")
+	}
+
+	if len(feedbackAttachmentAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.FeedbackAttachments = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &feedbackAttachmentR{}
+			}
+			foreign.R.Feedback = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.FeedbackID {
+				local.R.FeedbackAttachments = append(local.R.FeedbackAttachments, foreign)
+				if foreign.R == nil {
+					foreign.R = &feedbackAttachmentR{}
+				}
+				foreign.R.Feedback = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetUser of the feedback to the related item.
+// Sets o.R.User to related.
+// Adds o to related.R.Feedbacks.
+func (o *Feedback) SetUser(ctx context.Context, exec boil.ContextExecutor, insert bool, related *User) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"feedback\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+		strmangle.WhereClause("\"", "\"", 2, feedbackPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.ID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.UserID = related.ID
+	if o.R == nil {
+		o.R = &feedbackR{
+			User: related,
+		}
+	} else {
+		o.R.User = related
+	}
+
+	if related.R == nil {
+		related.R = &userR{
+			Feedbacks: FeedbackSlice{o},
+		}
+	} else {
+		related.R.Feedbacks = append(related.R.Feedbacks, o)
+	}
+
+	return nil
+}
+
+// AddFeedbackAttachments adds the given related objects to the existing relationships
+// of the feedback, optionally inserting them as new records.
+// Appends related to o.R.FeedbackAttachments.
+// Sets related.R.Feedback appropriately.
+func (o *Feedback) AddFeedbackAttachments(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*FeedbackAttachment) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.FeedbackID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"feedback_attachments\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"feedback_id"}),
+				strmangle.WhereClause("\"", "\"", 2, feedbackAttachmentPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.FeedbackID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &feedbackR{
+			FeedbackAttachments: related,
+		}
+	} else {
+		o.R.FeedbackAttachments = append(o.R.FeedbackAttachments, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &feedbackAttachmentR{
+				Feedback: o,
+			}
+		} else {
+			rel.R.Feedback = o
+		}
+	}
+	return nil
+}
+
 // Feedbacks retrieves all the records using an executor.
 func Feedbacks(mods ...qm.QueryMod) feedbackQuery {
 	mods = append(mods, qm.From("\"feedback\""))
@@ -540,6 +872,9 @@ func (o *Feedback) Insert(ctx context.Context, exec boil.ContextExecutor, column
 
 		if o.CreatedAt.IsZero() {
 			o.CreatedAt = currTime
+		}
+		if o.UpdatedAt.IsZero() {
+			o.UpdatedAt = currTime
 		}
 	}
 
@@ -617,6 +952,12 @@ func (o *Feedback) Insert(ctx context.Context, exec boil.ContextExecutor, column
 // See boil.Columns.UpdateColumnSet documentation to understand column list inference for updates.
 // Update does not automatically update the record in case of default values. Use .Reload() to refresh the records.
 func (o *Feedback) Update(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) (int64, error) {
+	if !boil.TimestampsAreSkipped(ctx) {
+		currTime := time.Now().In(boil.GetLocation())
+
+		o.UpdatedAt = currTime
+	}
+
 	var err error
 	if err = o.doBeforeUpdateHooks(ctx, exec); err != nil {
 		return 0, err
@@ -753,6 +1094,7 @@ func (o *Feedback) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 		if o.CreatedAt.IsZero() {
 			o.CreatedAt = currTime
 		}
+		o.UpdatedAt = currTime
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {

@@ -494,6 +494,278 @@ func testFeedbacksInsertWhitelist(t *testing.T) {
 	}
 }
 
+func testFeedbackToManyFeedbackAttachments(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Feedback
+	var b, c FeedbackAttachment
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, feedbackDBTypes, true, feedbackColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Feedback struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, feedbackAttachmentDBTypes, false, feedbackAttachmentColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, feedbackAttachmentDBTypes, false, feedbackAttachmentColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.FeedbackID = a.ID
+	c.FeedbackID = a.ID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.FeedbackAttachments().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.FeedbackID == b.FeedbackID {
+			bFound = true
+		}
+		if v.FeedbackID == c.FeedbackID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := FeedbackSlice{&a}
+	if err = a.L.LoadFeedbackAttachments(ctx, tx, false, (*[]*Feedback)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.FeedbackAttachments); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.FeedbackAttachments = nil
+	if err = a.L.LoadFeedbackAttachments(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.FeedbackAttachments); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
+func testFeedbackToManyAddOpFeedbackAttachments(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Feedback
+	var b, c, d, e FeedbackAttachment
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, feedbackDBTypes, false, strmangle.SetComplement(feedbackPrimaryKeyColumns, feedbackColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*FeedbackAttachment{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, feedbackAttachmentDBTypes, false, strmangle.SetComplement(feedbackAttachmentPrimaryKeyColumns, feedbackAttachmentColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*FeedbackAttachment{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddFeedbackAttachments(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.FeedbackID {
+			t.Error("foreign key was wrong value", a.ID, first.FeedbackID)
+		}
+		if a.ID != second.FeedbackID {
+			t.Error("foreign key was wrong value", a.ID, second.FeedbackID)
+		}
+
+		if first.R.Feedback != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.Feedback != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.FeedbackAttachments[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.FeedbackAttachments[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.FeedbackAttachments().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testFeedbackToOneUserUsingUser(t *testing.T) {
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var local Feedback
+	var foreign User
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &local, feedbackDBTypes, false, feedbackColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Feedback struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &foreign, userDBTypes, false, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+
+	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	local.UserID = foreign.ID
+	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.User().One(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if check.ID != foreign.ID {
+		t.Errorf("want: %v, got %v", foreign.ID, check.ID)
+	}
+
+	ranAfterSelectHook := false
+	AddUserHook(boil.AfterSelectHook, func(ctx context.Context, e boil.ContextExecutor, o *User) error {
+		ranAfterSelectHook = true
+		return nil
+	})
+
+	slice := FeedbackSlice{&local}
+	if err = local.L.LoadUser(ctx, tx, false, (*[]*Feedback)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.User == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.User = nil
+	if err = local.L.LoadUser(ctx, tx, true, &local, nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.User == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	if !ranAfterSelectHook {
+		t.Error("failed to run AfterSelect hook for relationship")
+	}
+}
+
+func testFeedbackToOneSetOpUserUsingUser(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a Feedback
+	var b, c User
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, feedbackDBTypes, false, strmangle.SetComplement(feedbackPrimaryKeyColumns, feedbackColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*User{&b, &c} {
+		err = a.SetUser(ctx, tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.User != x {
+			t.Error("relationship struct not set to correct value")
+		}
+
+		if x.R.Feedbacks[0] != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+		if a.UserID != x.ID {
+			t.Error("foreign key was wrong value", a.UserID)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(a.UserID))
+		reflect.Indirect(reflect.ValueOf(&a.UserID)).Set(zero)
+
+		if err = a.Reload(ctx, tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if a.UserID != x.ID {
+			t.Error("foreign key was wrong value", a.UserID, x.ID)
+		}
+	}
+}
+
 func testFeedbacksReload(t *testing.T) {
 	t.Parallel()
 
@@ -568,7 +840,7 @@ func testFeedbacksSelect(t *testing.T) {
 }
 
 var (
-	feedbackDBTypes = map[string]string{`ID`: `uuid`, `UserID`: `uuid`, `Channel`: `text`, `Text`: `text`, `Rating`: `integer`, `Tags`: `ARRAYtext`, `CreatedAt`: `timestamp with time zone`}
+	feedbackDBTypes = map[string]string{`ID`: `uuid`, `UserID`: `uuid`, `Type`: `enum.feedback_type('positive','negative')`, `Title`: `text`, `Text`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`}
 	_               = bytes.MinRead
 )
 

@@ -80,6 +80,12 @@ func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count
 
 		if purpose != nil && *purpose == "voicenote" {
 			key = fmt.Sprintf("%s/messages/voice-notes/%s.%s", KeyBase, uuid.NewString(), ext)
+		} else if purpose != nil && *purpose == "feedback" {
+			if strings.Contains(contentType, "video") {
+				key = fmt.Sprintf("%s/feedback-attachments/videos/%s.%s", KeyBase, uuid.NewString(), ext)
+			} else {
+				key = fmt.Sprintf("%s/feedback-attachments/images/%s.%s", KeyBase, uuid.NewString(), ext)
+			}
 		} else if strings.Contains(contentType, "audio") {
 			key = fmt.Sprintf("%s/prompts/%s.%s", KeyBase, uuid.NewString(), ext)
 		} else {
@@ -137,6 +143,15 @@ func extForContentType(ct string) string {
 		return "webm"
 	case "audio/ogg", "audio/opus":
 		return "ogg"
+		// video
+	case "video/mp4":
+		return "mp4"
+	case "video/quicktime", "video/x-quicktime":
+		return "mov"
+	case "video/webm":
+		return "webm"
+	case "video/x-msvideo", "video/avi":
+		return "avi"
 	}
 
 	return ""

@@ -109,6 +109,7 @@ var UserRels = struct {
 	UserAConversations        string
 	UserBConversations        string
 	DeviceTokens              string
+	Feedbacks                 string
 	UserAMatches              string
 	UserBMatches              string
 	MessageReceipts           string
@@ -140,6 +141,7 @@ var UserRels = struct {
 	UserAConversations:        "UserAConversations",
 	UserBConversations:        "UserBConversations",
 	DeviceTokens:              "DeviceTokens",
+	Feedbacks:                 "Feedbacks",
 	UserAMatches:              "UserAMatches",
 	UserBMatches:              "UserBMatches",
 	MessageReceipts:           "MessageReceipts",
@@ -174,6 +176,7 @@ type userR struct {
 	UserAConversations        ConversationSlice            `boil:"UserAConversations" json:"UserAConversations" toml:"UserAConversations" yaml:"UserAConversations"`
 	UserBConversations        ConversationSlice            `boil:"UserBConversations" json:"UserBConversations" toml:"UserBConversations" yaml:"UserBConversations"`
 	DeviceTokens              DeviceTokenSlice             `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
+	Feedbacks                 FeedbackSlice                `boil:"Feedbacks" json:"Feedbacks" toml:"Feedbacks" yaml:"Feedbacks"`
 	UserAMatches              MatchSlice                   `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
 	UserBMatches              MatchSlice                   `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
 	MessageReceipts           MessageReceiptSlice          `boil:"MessageReceipts" json:"MessageReceipts" toml:"MessageReceipts" yaml:"MessageReceipts"`
@@ -329,6 +332,22 @@ func (r *userR) GetDeviceTokens() DeviceTokenSlice {
 	}
 
 	return r.DeviceTokens
+}
+
+func (o *User) GetFeedbacks() FeedbackSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetFeedbacks()
+}
+
+func (r *userR) GetFeedbacks() FeedbackSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.Feedbacks
 }
 
 func (o *User) GetUserAMatches() MatchSlice {
@@ -1097,6 +1116,20 @@ func (o *User) DeviceTokens(mods ...qm.QueryMod) deviceTokenQuery {
 	)
 
 	return DeviceTokens(queryMods...)
+}
+
+// Feedbacks retrieves all the feedback's Feedbacks with an executor.
+func (o *User) Feedbacks(mods ...qm.QueryMod) feedbackQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"feedback\".\"user_id\"=?", o.ID),
+	)
+
+	return Feedbacks(queryMods...)
 }
 
 // UserAMatches retrieves all the match's Matches with an executor via user_a column.
@@ -2320,6 +2353,119 @@ func (userL) LoadDeviceTokens(ctx context.Context, e boil.ContextExecutor, singu
 				local.R.DeviceTokens = append(local.R.DeviceTokens, foreign)
 				if foreign.R == nil {
 					foreign.R = &deviceTokenR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadFeedbacks allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadFeedbacks(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`feedback`),
+		qm.WhereIn(`feedback.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load feedback")
+	}
+
+	var resultSlice []*Feedback
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice feedback")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on feedback")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for feedback")
+	}
+
+	if len(feedbackAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Feedbacks = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &feedbackR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.Feedbacks = append(local.R.Feedbacks, foreign)
+				if foreign.R == nil {
+					foreign.R = &feedbackR{}
 				}
 				foreign.R.User = local
 				break
@@ -5270,6 +5416,59 @@ func (o *User) AddDeviceTokens(ctx context.Context, exec boil.ContextExecutor, i
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &deviceTokenR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddFeedbacks adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.Feedbacks.
+// Sets related.R.User appropriately.
+func (o *User) AddFeedbacks(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Feedback) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"feedback\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, feedbackPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			Feedbacks: related,
+		}
+	} else {
+		o.R.Feedbacks = append(o.R.Feedbacks, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &feedbackR{
 				User: o,
 			}
 		} else {

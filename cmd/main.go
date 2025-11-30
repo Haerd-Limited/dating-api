@@ -28,6 +28,8 @@ import (
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	discoverstorage "github.com/Haerd-Limited/dating-api/internal/discover/storage"
+	"github.com/Haerd-Limited/dating-api/internal/feedback"
+	feedbackstorage "github.com/Haerd-Limited/dating-api/internal/feedback/storage"
 	"github.com/Haerd-Limited/dating-api/internal/http/router"
 	insightsvc "github.com/Haerd-Limited/dating-api/internal/insights"
 	insightstorage "github.com/Haerd-Limited/dating-api/internal/insights/storage"
@@ -119,6 +121,7 @@ func main() {
 	conversationRepo := conversationstorage.NewConversationRepository(db)
 	interactionRepo := interactionstorage.NewInteractionRepository(db)
 	safetyRepo := safetystorage.NewRepository(db)
+	feedbackRepo := feedbackstorage.NewRepository(db)
 	userRepo := storage.NewUserRepository(db)
 	authRepo := authstorage.NewAuthRepository(db)
 	matchingRepo := matchingstorage.NewMatchingRepository(db, logger)
@@ -160,6 +163,7 @@ func main() {
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 	mediaService := media.NewMediaService(logger, awsService)
+	feedbackService := feedback.NewService(logger, feedbackRepo, unitOfWork)
 	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)
 
 	onboardingService := onboarding.NewOnboardingService(
@@ -202,6 +206,7 @@ func main() {
 		safetyService,
 		insSvc,
 		userService,
+		feedbackService,
 		cfg.AdminAPIKey,
 	)
 
