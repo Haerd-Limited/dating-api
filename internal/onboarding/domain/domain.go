@@ -158,10 +158,11 @@ type Basics struct {
 }
 
 type Intro struct {
-	Email     string
-	UserID    string
-	FirstName string
-	LastName  *string
+	Email                string
+	UserID               string
+	FirstName            string
+	LastName             *string
+	HowDidYouHearAboutUs *string
 }
 
 type OnboardingSteps struct {

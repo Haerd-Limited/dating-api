@@ -10,12 +10,23 @@ func UserEntityToUserDomain(user *entity.User) *domain.User {
 		return nil
 	}
 
-	return &domain.User{
+	userDomain := &domain.User{
 		ID:             user.ID,
 		Email:          user.Email.String,
 		PhoneNumber:    user.Phone.String,
 		FirstName:      user.FirstName,
-		LastName:       &user.LastName.String,
 		OnboardingStep: user.OnboardingStep,
 	}
+
+	if user.LastName.Valid {
+		userDomain.LastName = &user.LastName.String
+	}
+
+	// TODO: Uncomment after running migration and regenerating SQLBoiler entities
+	// Run: sqlboiler psql
+	// if user.HowDidYouHearAboutUs.Valid {
+	// 	userDomain.HowDidYouHearAboutUs = &user.HowDidYouHearAboutUs.String
+	// }
+
+	return userDomain
 }

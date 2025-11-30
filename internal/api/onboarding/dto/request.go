@@ -116,8 +116,9 @@ func (br BasicsRequest) Validate() error {
 type IntroRequest struct {
 	Email string `json:"email" validate:"required,email"`
 	// PhoneNumber string  `json:"phone_number" validate:"required"`
-	FirstName string  `json:"first_name" validate:"required"`
-	LastName  *string `json:"last_name"`
+	FirstName            string  `json:"first_name" validate:"required"`
+	LastName             *string `json:"last_name"`
+	HowDidYouHearAboutUs *string `json:"how_did_you_hear_about_us"`
 }
 
 func (rr IntroRequest) Validate() error {

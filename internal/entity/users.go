@@ -24,79 +24,86 @@ import (
 
 // User is an object representing the database table.
 type User struct {
-	ID             string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Email          null.String `boil:"email" json:"email,omitempty" toml:"email" yaml:"email,omitempty"`
-	FirstName      string      `boil:"first_name" json:"first_name" toml:"first_name" yaml:"first_name"`
-	LastName       null.String `boil:"last_name" json:"last_name,omitempty" toml:"last_name" yaml:"last_name,omitempty"`
-	Phone          null.String `boil:"phone" json:"phone,omitempty" toml:"phone" yaml:"phone,omitempty"`
-	CreatedAt      time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt      time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	OnboardingStep string      `boil:"onboarding_step" json:"onboarding_step" toml:"onboarding_step" yaml:"onboarding_step"`
+	ID                   string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Email                null.String `boil:"email" json:"email,omitempty" toml:"email" yaml:"email,omitempty"`
+	FirstName            string      `boil:"first_name" json:"first_name" toml:"first_name" yaml:"first_name"`
+	LastName             null.String `boil:"last_name" json:"last_name,omitempty" toml:"last_name" yaml:"last_name,omitempty"`
+	Phone                null.String `boil:"phone" json:"phone,omitempty" toml:"phone" yaml:"phone,omitempty"`
+	CreatedAt            time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt            time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	OnboardingStep       string      `boil:"onboarding_step" json:"onboarding_step" toml:"onboarding_step" yaml:"onboarding_step"`
+	HowDidYouHearAboutUs null.String `boil:"how_did_you_hear_about_us" json:"how_did_you_hear_about_us,omitempty" toml:"how_did_you_hear_about_us" yaml:"how_did_you_hear_about_us,omitempty"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserColumns = struct {
-	ID             string
-	Email          string
-	FirstName      string
-	LastName       string
-	Phone          string
-	CreatedAt      string
-	UpdatedAt      string
-	OnboardingStep string
+	ID                   string
+	Email                string
+	FirstName            string
+	LastName             string
+	Phone                string
+	CreatedAt            string
+	UpdatedAt            string
+	OnboardingStep       string
+	HowDidYouHearAboutUs string
 }{
-	ID:             "id",
-	Email:          "email",
-	FirstName:      "first_name",
-	LastName:       "last_name",
-	Phone:          "phone",
-	CreatedAt:      "created_at",
-	UpdatedAt:      "updated_at",
-	OnboardingStep: "onboarding_step",
+	ID:                   "id",
+	Email:                "email",
+	FirstName:            "first_name",
+	LastName:             "last_name",
+	Phone:                "phone",
+	CreatedAt:            "created_at",
+	UpdatedAt:            "updated_at",
+	OnboardingStep:       "onboarding_step",
+	HowDidYouHearAboutUs: "how_did_you_hear_about_us",
 }
 
 var UserTableColumns = struct {
-	ID             string
-	Email          string
-	FirstName      string
-	LastName       string
-	Phone          string
-	CreatedAt      string
-	UpdatedAt      string
-	OnboardingStep string
+	ID                   string
+	Email                string
+	FirstName            string
+	LastName             string
+	Phone                string
+	CreatedAt            string
+	UpdatedAt            string
+	OnboardingStep       string
+	HowDidYouHearAboutUs string
 }{
-	ID:             "users.id",
-	Email:          "users.email",
-	FirstName:      "users.first_name",
-	LastName:       "users.last_name",
-	Phone:          "users.phone",
-	CreatedAt:      "users.created_at",
-	UpdatedAt:      "users.updated_at",
-	OnboardingStep: "users.onboarding_step",
+	ID:                   "users.id",
+	Email:                "users.email",
+	FirstName:            "users.first_name",
+	LastName:             "users.last_name",
+	Phone:                "users.phone",
+	CreatedAt:            "users.created_at",
+	UpdatedAt:            "users.updated_at",
+	OnboardingStep:       "users.onboarding_step",
+	HowDidYouHearAboutUs: "users.how_did_you_hear_about_us",
 }
 
 // Generated where
 
 var UserWhere = struct {
-	ID             whereHelperstring
-	Email          whereHelpernull_String
-	FirstName      whereHelperstring
-	LastName       whereHelpernull_String
-	Phone          whereHelpernull_String
-	CreatedAt      whereHelpertime_Time
-	UpdatedAt      whereHelpertime_Time
-	OnboardingStep whereHelperstring
+	ID                   whereHelperstring
+	Email                whereHelpernull_String
+	FirstName            whereHelperstring
+	LastName             whereHelpernull_String
+	Phone                whereHelpernull_String
+	CreatedAt            whereHelpertime_Time
+	UpdatedAt            whereHelpertime_Time
+	OnboardingStep       whereHelperstring
+	HowDidYouHearAboutUs whereHelpernull_String
 }{
-	ID:             whereHelperstring{field: "\"users\".\"id\""},
-	Email:          whereHelpernull_String{field: "\"users\".\"email\""},
-	FirstName:      whereHelperstring{field: "\"users\".\"first_name\""},
-	LastName:       whereHelpernull_String{field: "\"users\".\"last_name\""},
-	Phone:          whereHelpernull_String{field: "\"users\".\"phone\""},
-	CreatedAt:      whereHelpertime_Time{field: "\"users\".\"created_at\""},
-	UpdatedAt:      whereHelpertime_Time{field: "\"users\".\"updated_at\""},
-	OnboardingStep: whereHelperstring{field: "\"users\".\"onboarding_step\""},
+	ID:                   whereHelperstring{field: "\"users\".\"id\""},
+	Email:                whereHelpernull_String{field: "\"users\".\"email\""},
+	FirstName:            whereHelperstring{field: "\"users\".\"first_name\""},
+	LastName:             whereHelpernull_String{field: "\"users\".\"last_name\""},
+	Phone:                whereHelpernull_String{field: "\"users\".\"phone\""},
+	CreatedAt:            whereHelpertime_Time{field: "\"users\".\"created_at\""},
+	UpdatedAt:            whereHelpertime_Time{field: "\"users\".\"updated_at\""},
+	OnboardingStep:       whereHelperstring{field: "\"users\".\"onboarding_step\""},
+	HowDidYouHearAboutUs: whereHelpernull_String{field: "\"users\".\"how_did_you_hear_about_us\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -706,9 +713,9 @@ func (r *userR) GetVoiceWorthHearingWeeklies() VoiceWorthHearingWeeklySlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "email", "first_name", "last_name", "phone", "created_at", "updated_at", "onboarding_step"}
+	userAllColumns            = []string{"id", "email", "first_name", "last_name", "phone", "created_at", "updated_at", "onboarding_step", "how_did_you_hear_about_us"}
 	userColumnsWithoutDefault = []string{"first_name"}
-	userColumnsWithDefault    = []string{"id", "email", "last_name", "phone", "created_at", "updated_at", "onboarding_step"}
+	userColumnsWithDefault    = []string{"id", "email", "last_name", "phone", "created_at", "updated_at", "onboarding_step", "how_did_you_hear_about_us"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )

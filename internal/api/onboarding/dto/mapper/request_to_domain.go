@@ -7,10 +7,11 @@ import (
 
 func MapIntroRequestToDomain(request dto.IntroRequest, userID string) domain.Intro {
 	return domain.Intro{
-		UserID:    userID,
-		FirstName: request.FirstName,
-		LastName:  request.LastName,
-		Email:     request.Email,
+		UserID:               userID,
+		FirstName:            request.FirstName,
+		LastName:             request.LastName,
+		Email:                request.Email,
+		HowDidYouHearAboutUs: request.HowDidYouHearAboutUs,
 	}
 }
 

@@ -291,10 +291,11 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 	}
 
 	err = os.userService.UpdateUser(ctx, &userdomain.User{
-		ID:        introDetails.UserID,
-		Email:     introDetails.Email,
-		FirstName: introDetails.FirstName,
-		LastName:  introDetails.LastName,
+		ID:                   introDetails.UserID,
+		Email:                introDetails.Email,
+		FirstName:            introDetails.FirstName,
+		LastName:             introDetails.LastName,
+		HowDidYouHearAboutUs: introDetails.HowDidYouHearAboutUs,
 	})
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user", err, zap.String("userID", introDetails.UserID))
