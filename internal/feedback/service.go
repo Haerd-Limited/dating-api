@@ -3,10 +3,12 @@ package feedback
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	feedbackdomain "github.com/Haerd-Limited/dating-api/internal/feedback/domain"
 	feedbackmapper "github.com/Haerd-Limited/dating-api/internal/feedback/mapper"
@@ -20,20 +22,26 @@ type Service interface {
 }
 
 type service struct {
-	logger *zap.Logger
-	repo   feedbackstorage.Repository
-	uow    uow.UoW
+	logger                   *zap.Logger
+	repo                     feedbackstorage.Repository
+	uow                      uow.UoW
+	communicationService     communication.Service
+	notificationPhoneNumbers []string
 }
 
 func NewService(
 	logger *zap.Logger,
 	repo feedbackstorage.Repository,
 	uow uow.UoW,
+	communicationService communication.Service,
+	notificationPhoneNumbers []string,
 ) Service {
 	return &service{
-		logger: logger,
-		repo:   repo,
-		uow:    uow,
+		logger:                   logger,
+		repo:                     repo,
+		uow:                      uow,
+		communicationService:     communicationService,
+		notificationPhoneNumbers: notificationPhoneNumbers,
 	}
 }
 
@@ -109,6 +117,11 @@ func (s *service) CreateFeedback(ctx context.Context, req feedbackdomain.CreateF
 		return commonlogger.LogError(s.logger, "commit tx", err)
 	}
 
+	// Send SMS notification to CEOs for negative feedback
+	if req.Type == feedbackdomain.FeedbackTypeNegative {
+		s.sendNegativeFeedbackNotification(ctx, req, feedbackID)
+	}
+
 	return nil
 }
 
@@ -132,4 +145,46 @@ func (s *service) validateFeedbackRequest(req feedbackdomain.CreateFeedbackReque
 	}
 
 	return nil
+}
+
+func (s *service) sendNegativeFeedbackNotification(ctx context.Context, req feedbackdomain.CreateFeedbackRequest, feedbackID string) {
+	// Build message with feedback details
+	message := fmt.Sprintf("🚨 Negative Feedback Received\n\nFeedback ID: %s\nUser ID: %s\n\nTitle: %s\n\nMessage: %s",
+		feedbackID,
+		req.UserID,
+		*req.Title,
+		req.Text)
+
+	// Add attachment info if present
+	if len(req.AttachmentUrls) > 0 {
+		message += fmt.Sprintf("\n\nAttachments: %d file(s)", len(req.AttachmentUrls))
+
+		for i, url := range req.AttachmentUrls {
+			if i >= 3 { // Limit to first 3 URLs to keep message length reasonable
+				remaining := len(req.AttachmentUrls) - 3
+				if remaining > 0 {
+					message += fmt.Sprintf("\n... and %d more", remaining)
+				}
+
+				break
+			}
+
+			message += fmt.Sprintf("\n- %s", url)
+		}
+	}
+
+	// Send SMS to all configured phone numbers
+	for _, phoneNumber := range s.notificationPhoneNumbers {
+		if phoneNumber == "" {
+			continue
+		}
+
+		err := s.communicationService.SendSMS(phoneNumber, message)
+		if err != nil {
+			commonlogger.LogError(s.logger, "failed to send negative feedback notification SMS", err,
+				zap.String("feedbackID", feedbackID),
+				zap.String("phoneNumber", phoneNumber))
+			// Continue sending to other numbers even if one fails
+		}
+	}
 }

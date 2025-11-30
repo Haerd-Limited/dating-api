@@ -163,8 +163,8 @@ func main() {
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 	mediaService := media.NewMediaService(logger, awsService)
-	feedbackService := feedback.NewService(logger, feedbackRepo, unitOfWork)
 	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)
+	feedbackService := feedback.NewService(logger, feedbackRepo, unitOfWork, communicationService, notificationPhoneNumbers)
 
 	onboardingService := onboarding.NewOnboardingService(
 		logger,
