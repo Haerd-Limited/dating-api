@@ -200,6 +200,11 @@ func (os *onboardingService) sendPreregistrationNotification(ctx context.Context
 	message := fmt.Sprintf("New pre-registration completed!\nName: %s %s\nGender: %s\nSexuality: %s",
 		userDetails.FirstName, lastName, genderEntity.Label, sexualityEntity.Label)
 
+	// Add "how did you hear about us" if provided
+	if userDetails.HowDidYouHearAboutUs != nil && *userDetails.HowDidYouHearAboutUs != "" {
+		message += fmt.Sprintf("\nHow did you hear about us: %s", *userDetails.HowDidYouHearAboutUs)
+	}
+
 	// Send SMS notification to all configured phone numbers
 	for _, phoneNumber := range os.notificationPhoneNumbers {
 		if phoneNumber == "" {
