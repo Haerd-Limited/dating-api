@@ -11,6 +11,7 @@ type Pack struct {
 	CategoryName               string
 	NumberOfCompletedQuestions int
 	TotalQuestions             int
+	ProgressPercent            float64
 }
 type MatchBadge struct {
 	QuestionID    int64
@@ -48,6 +49,7 @@ type Question struct {
 	CategoryName string
 	Text         string
 	IsActive     bool
+	SortOrder    int
 	CreatedAt    time.Time
 }
 
@@ -68,8 +70,9 @@ type UserAnswer struct {
 }
 
 type QuestionAndAnswers struct {
-	Question Question
-	Answers  []AnswerOption
+	Question   Question
+	Answers    []AnswerOption
+	UserAnswer *UserAnswer // Optional: existing answer if question was previously answered
 }
 
 type QuestionsAndAnswers struct {
@@ -77,7 +80,18 @@ type QuestionsAndAnswers struct {
 	Total  int // total rows matching the filter (for UI page counts)
 	Limit  int // request limit
 	Offset int // request offset
+	// Progress summary (only populated when viewAll=true)
+	ProgressSummary *ProgressSummary
 	// NextOffset *int // nil if no more
 	// PrevOffset *int // nil if already at 0
 	// HasMore    bool // convenience
+}
+
+type ProgressSummary struct {
+	CategoryKey                string
+	CategoryName               string
+	NumberOfCompletedQuestions int
+	TotalQuestions             int
+	ProgressPercent            float64
+	NextQuestionID             *int64 // ID of next unanswered question, nil if all answered
 }

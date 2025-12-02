@@ -28,6 +28,13 @@ type MatchingRepository interface {
 	HasMandatoryMismatch(ctx context.Context, aID, bID string) (bool, error)
 	PerspectiveSums(ctx context.Context, aID, bID string) (earned int, total int, overlap int, err error)
 	TopBadges(ctx context.Context, aID, bID string, limit int) ([]domain.MatchBadge, error)
+
+	// Sequential question methods
+	GetNextUnansweredQuestion(ctx context.Context, userID, categoryKey string) (*entity.Question, error)
+	GetUserAnsweredQuestionIDs(ctx context.Context, userID, categoryKey string) ([]int64, error)
+	GetQuestionsInOrder(ctx context.Context, categoryKey string) (entity.QuestionSlice, error)
+	GetUserAnswerForQuestion(ctx context.Context, userID string, questionID int64) (*entity.UserAnswer, error)
+	GetQuestionSortOrderAndCategory(ctx context.Context, questionID int64) (sortOrder int, categoryKey string, err error)
 }
 
 type repository struct {
@@ -257,7 +264,7 @@ func (r *repository) ListQuestions(ctx context.Context, categoryKey *string, lim
 		qm.InnerJoin("question_categories qc ON qc.id = questions.category_id"),
 		qm.Load(entity.QuestionRels.Category),
 		qm.Select("questions.*"),
-		qm.OrderBy("questions.id ASC"),
+		qm.OrderBy("questions.sort_order ASC"),
 		qm.Limit(limit),
 		qm.Offset(offset),
 	}
@@ -309,4 +316,134 @@ func (r *repository) CountAnsweredByCategory(ctx context.Context, userID, catego
 	}
 
 	return n, nil
+}
+
+// GetNextUnansweredQuestion returns the next question a user should answer in a category.
+// Returns the first question if none answered, or the next unanswered question in sequence.
+func (r *repository) GetNextUnansweredQuestion(ctx context.Context, userID, categoryKey string) (*entity.Question, error) {
+	// Get all questions in order for the category
+	allQuestions, err := r.GetQuestionsInOrder(ctx, categoryKey)
+	if err != nil {
+		return nil, fmt.Errorf("GetNextUnansweredQuestion: %w", err)
+	}
+
+	// Get answered question IDs for this user in this category
+	answeredIDs, err := r.GetUserAnsweredQuestionIDs(ctx, userID, categoryKey)
+	if err != nil {
+		return nil, fmt.Errorf("GetNextUnansweredQuestion: %w", err)
+	}
+
+	// Create a set of answered IDs for quick lookup
+	answeredSet := make(map[int64]struct{}, len(answeredIDs))
+	for _, id := range answeredIDs {
+		answeredSet[id] = struct{}{}
+	}
+
+	// Find the first unanswered question
+	for _, q := range allQuestions {
+		if _, answered := answeredSet[q.ID]; !answered {
+			return q, nil
+		}
+	}
+
+	// All questions answered
+	return nil, nil
+}
+
+// GetUserAnsweredQuestionIDs returns all question IDs that a user has answered in a category.
+func (r *repository) GetUserAnsweredQuestionIDs(ctx context.Context, userID, categoryKey string) ([]int64, error) {
+	const q = `
+		SELECT q.id
+		FROM user_answers ua
+		JOIN questions q ON q.id = ua.question_id
+		JOIN question_categories qc ON qc.id = q.category_id
+		WHERE ua.user_id = $1::uuid
+		  AND qc.key = $2
+		ORDER BY q.sort_order ASC;
+	`
+
+	rows, err := queries.Raw(q, userID, categoryKey).QueryContext(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("GetUserAnsweredQuestionIDs: %w", err)
+	}
+	defer func(rows *sql.Rows) {
+		err = rows.Close()
+		if err != nil {
+			r.logger.Error("GetUserAnsweredQuestionIDs close", zap.Error(err))
+		}
+	}(rows)
+
+	var questionIDs []int64
+
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("GetUserAnsweredQuestionIDs scan: %w", err)
+		}
+
+		questionIDs = append(questionIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetUserAnsweredQuestionIDs rows: %w", err)
+	}
+
+	return questionIDs, nil
+}
+
+// GetQuestionsInOrder returns all questions in a category ordered by sort_order.
+func (r *repository) GetQuestionsInOrder(ctx context.Context, categoryKey string) (entity.QuestionSlice, error) {
+	qmods := []qm.QueryMod{
+		entity.QuestionWhere.IsActive.EQ(true),
+		qm.InnerJoin("question_categories qc ON qc.id = questions.category_id"),
+		qm.Load(entity.QuestionRels.Category),
+		qm.Select("questions.*"),
+		qm.Where("qc.key = ?", categoryKey),
+		qm.OrderBy("questions.sort_order ASC"),
+	}
+
+	questions, err := entity.Questions(qmods...).All(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("GetQuestionsInOrder: %w", err)
+	}
+
+	return questions, nil
+}
+
+// GetUserAnswerForQuestion returns a user's answer for a specific question, if it exists.
+func (r *repository) GetUserAnswerForQuestion(ctx context.Context, userID string, questionID int64) (*entity.UserAnswer, error) {
+	answer, err := entity.UserAnswers(
+		entity.UserAnswerWhere.UserID.EQ(userID),
+		entity.UserAnswerWhere.QuestionID.EQ(questionID),
+	).One(ctx, r.db)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // No answer exists
+		}
+
+		return nil, fmt.Errorf("GetUserAnswerForQuestion: %w", err)
+	}
+
+	return answer, nil
+}
+
+// GetQuestionSortOrderAndCategory returns the sort_order and category_key for a question.
+func (r *repository) GetQuestionSortOrderAndCategory(ctx context.Context, questionID int64) (sortOrder int, categoryKey string, err error) {
+	const q = `
+		SELECT q.sort_order, qc.key
+		FROM questions q
+		JOIN question_categories qc ON qc.id = q.category_id
+		WHERE q.id = $1;
+	`
+
+	err = queries.Raw(q, questionID).QueryRowContext(ctx, r.db).Scan(&sortOrder, &categoryKey)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, "", fmt.Errorf("question %d not found", questionID)
+		}
+
+		return 0, "", fmt.Errorf("GetQuestionSortOrderAndCategory: %w", err)
+	}
+
+	return sortOrder, categoryKey, nil
 }

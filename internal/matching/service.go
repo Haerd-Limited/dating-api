@@ -15,7 +15,7 @@ import (
 
 type Service interface {
 	GetOverview(ctx context.Context, userID string) (domain.Overview, error)
-	GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int) (domain.QuestionsAndAnswers, error)
+	GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool) (domain.QuestionsAndAnswers, error)
 	SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error
 	ComputeMatch(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.MatchSummary, error)
 }
@@ -42,6 +42,7 @@ var (
 	ErrInvalidImportance           = fmt.Errorf("invalid importance")
 	ErrInvalidAnswerID             = fmt.Errorf("invalid answer_id")
 	ErrAcceptableAnswerIDsRequired = fmt.Errorf("acceptable_answer_ids required")
+	ErrSequentialAnsweringRequired = fmt.Errorf("questions must be answered sequentially")
 )
 
 const defaultBadgeLimit = 3
@@ -65,11 +66,20 @@ func (s *service) GetOverview(ctx context.Context, userID string) (domain.Overvi
 			return domain.Overview{}, fmt.Errorf("failed to get count answered questions category=%v : %w", c.Key, cErr)
 		}
 
+		// Calculate progress percent
+		var progressPercent float64
+		if totalCategoryQuestionCount > 0 {
+			progressPercent = (float64(answeredQuestionsCount) / float64(totalCategoryQuestionCount)) * 100.0
+			// Round to 1 decimal place
+			progressPercent = math.Round(progressPercent*10) / 10
+		}
+
 		pack := domain.Pack{
 			CategoryKey:                c.Key,
 			CategoryName:               c.Name,
 			NumberOfCompletedQuestions: answeredQuestionsCount,
 			TotalQuestions:             totalCategoryQuestionCount,
+			ProgressPercent:            progressPercent,
 		}
 		questionPacks = append(questionPacks, pack)
 	}
@@ -240,11 +250,174 @@ func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) 
 		return fmt.Errorf("%w when importance is %q", ErrAcceptableAnswerIDsRequired, cmd.Importance)
 	}
 
-	// 6) persist
+	// 6) Validate sequential answering (unless updating an existing answer)
+	existingAnswer, err := s.matchingRepo.GetUserAnswerForQuestion(ctx, cmd.UserID, cmd.QuestionID)
+	if err != nil {
+		return fmt.Errorf("failed to check existing answer: %w", err)
+	}
+
+	// If this is a new answer (not an update), validate sequential order
+	if existingAnswer == nil {
+		if err := s.validateSequentialAnswering(ctx, cmd.UserID, cmd.QuestionID); err != nil {
+			return err
+		}
+	}
+
+	// 7) persist
 	return s.matchingRepo.UpsertUserAnswer(ctx, mapper.MapSaveAnswerCommandToUserAnswerEntity(cmd))
 }
 
-func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int) (domain.QuestionsAndAnswers, error) {
+func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool) (domain.QuestionsAndAnswers, error) {
+	// If userID is provided and viewAll is false, return only the next unanswered question
+	if userID != nil && category != "" && !viewAll {
+		nextQuestion, err := s.matchingRepo.GetNextUnansweredQuestion(ctx, *userID, category)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get next unanswered question: %w", err)
+		}
+
+		// If no unanswered questions, return empty result
+		if nextQuestion == nil {
+			total, err := s.matchingRepo.CountQuestions(ctx, &category)
+			if err != nil {
+				return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions: %w", err)
+			}
+
+			return domain.QuestionsAndAnswers{
+				Items:  []domain.QuestionAndAnswers{},
+				Total:  total,
+				Limit:  limit,
+				Offset: 0,
+			}, nil
+		}
+
+		// Get question answers
+		answerEntities, err := s.matchingRepo.GetQuestionAnswers(ctx, nextQuestion.ID)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question answers: %w", err)
+		}
+
+		// Check if user has an existing answer (for update flow)
+		var userAnswer *domain.UserAnswer
+
+		existingAnswer, err := s.matchingRepo.GetUserAnswerForQuestion(ctx, *userID, nextQuestion.ID)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get existing answer: %w", err)
+		}
+
+		if existingAnswer != nil {
+			userAnswer = mapper.MapUserAnswerEntityToDomain(existingAnswer)
+		}
+
+		domainQuestion := mapper.MapQuestionEntityToDomain(nextQuestion)
+		items := []domain.QuestionAndAnswers{
+			{
+				Question:   domainQuestion,
+				Answers:    mapper.MapAnswerEntitiesToDomain(answerEntities),
+				UserAnswer: userAnswer,
+			},
+		}
+
+		total, err := s.matchingRepo.CountQuestions(ctx, &category)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions: %w", err)
+		}
+
+		return domain.QuestionsAndAnswers{
+			Items:  items,
+			Total:  total,
+			Limit:  1,
+			Offset: 0,
+		}, nil
+	}
+
+	// If viewAll is true and userID is provided, return all questions in the category with their answered status
+	if viewAll && userID != nil && category != "" {
+		// Get all questions in order for this category
+		allQuestionEntities, err := s.matchingRepo.GetQuestionsInOrder(ctx, category)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get questions in order: %w", err)
+		}
+
+		// Get category info
+		categories, err := s.getQuestionCategories(ctx)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get categories: %w", err)
+		}
+
+		var categoryName string
+
+		for _, c := range categories {
+			if c.Key == category {
+				categoryName = c.Name
+				break
+			}
+		}
+
+		items := make([]domain.QuestionAndAnswers, 0, len(allQuestionEntities))
+		answeredCount := 0
+
+		var nextQuestionID *int64
+
+		for _, qe := range allQuestionEntities {
+			// Get question answers
+			answerEntities, err := s.matchingRepo.GetQuestionAnswers(ctx, qe.ID)
+			if err != nil {
+				return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question answers: %w", err)
+			}
+
+			// Check for existing answer
+			var userAnswer *domain.UserAnswer
+
+			existingAnswer, err := s.matchingRepo.GetUserAnswerForQuestion(ctx, *userID, qe.ID)
+			if err != nil {
+				return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get existing answer: %w", err)
+			}
+
+			if existingAnswer != nil {
+				userAnswer = mapper.MapUserAnswerEntityToDomain(existingAnswer)
+				answeredCount++
+			} else if nextQuestionID == nil {
+				// First unanswered question
+				nextQuestionID = &qe.ID
+			}
+
+			domainQuestion := mapper.MapQuestionEntityToDomain(qe)
+			items = append(items, domain.QuestionAndAnswers{
+				Question:   domainQuestion,
+				Answers:    mapper.MapAnswerEntitiesToDomain(answerEntities),
+				UserAnswer: userAnswer,
+			})
+		}
+
+		total, err := s.matchingRepo.CountQuestions(ctx, &category)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions: %w", err)
+		}
+
+		// Calculate progress percent
+		var progressPercent float64
+		if total > 0 {
+			progressPercent = (float64(answeredCount) / float64(total)) * 100.0
+			progressPercent = math.Round(progressPercent*10) / 10
+		}
+
+		return domain.QuestionsAndAnswers{
+			Items:  items,
+			Total:  total,
+			Limit:  total, // Return all, so limit equals total
+			Offset: 0,
+			ProgressSummary: &domain.ProgressSummary{
+				CategoryKey:                category,
+				CategoryName:               categoryName,
+				NumberOfCompletedQuestions: answeredCount,
+				TotalQuestions:             total,
+				ProgressPercent:            progressPercent,
+				NextQuestionID:             nextQuestionID,
+			},
+		}, nil
+	}
+
+	// Backward compatibility: return questions in order with pagination
 	domainQuestions, err := s.listQuestions(ctx, category, offset, limit)
 	if err != nil {
 		return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to list questions category=%v : %w", category, err)
@@ -258,9 +431,24 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question answers questionID=%v : %w", q.ID, aErr)
 		}
 
+		// If userID provided, check for existing answer
+		var userAnswer *domain.UserAnswer
+
+		if userID != nil {
+			existingAnswer, err := s.matchingRepo.GetUserAnswerForQuestion(ctx, *userID, q.ID)
+			if err != nil {
+				return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get existing answer: %w", err)
+			}
+
+			if existingAnswer != nil {
+				userAnswer = mapper.MapUserAnswerEntityToDomain(existingAnswer)
+			}
+		}
+
 		items = append(items, domain.QuestionAndAnswers{
-			Question: q,
-			Answers:  mapper.MapAnswerEntitiesToDomain(answerEntities),
+			Question:   q,
+			Answers:    mapper.MapAnswerEntitiesToDomain(answerEntities),
+			UserAnswer: userAnswer,
 		})
 	}
 
@@ -310,26 +498,54 @@ func (s *service) getQuestionCategories(ctx context.Context) ([]domain.QuestionC
 	return categories, nil
 }
 
-/*
-func (s *service) getUserAnswers(ctx context.Context, userID string) ([]domain.UserAnswer, error) {
-	entities, err := s.matchingRepo.GetUserAnswers(ctx, userID)
+// validateSequentialAnswering ensures that all previous questions in the category have been answered
+// before allowing the user to answer the current question.
+func (s *service) validateSequentialAnswering(ctx context.Context, userID string, questionID int64) error {
+	// Get the question's sort_order and category
+	_, categoryKey, err := s.matchingRepo.GetQuestionSortOrderAndCategory(ctx, questionID)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to get question info: %w", err)
 	}
 
-	var answers []domain.UserAnswer
-
-	for _, a := range entities {
-		answers = append(answers, domain.UserAnswer{
-			QuestionID:          a.QuestionID,
-			AnswerID:            a.AnswerID,
-			AcceptableAnswerIds: a.AcceptableAnswerIds,
-			Importance:          a.Importance,
-			IsPrivate:           a.IsPrivate,
-			UpdatedAt:           a.UpdatedAt,
-		})
+	// Get all questions in order for this category
+	allQuestions, err := s.matchingRepo.GetQuestionsInOrder(ctx, categoryKey)
+	if err != nil {
+		return fmt.Errorf("failed to get questions in order: %w", err)
 	}
 
-	return answers, nil
+	// Find the target question's position (index) in the ordered list
+	var targetIndex int = -1
+
+	for i, q := range allQuestions {
+		if q.ID == questionID {
+			targetIndex = i
+			break
+		}
+	}
+
+	if targetIndex == -1 {
+		return fmt.Errorf("question %d not found in category %s", questionID, categoryKey)
+	}
+
+	// Get all answered question IDs for this user in this category
+	answeredIDs, err := s.matchingRepo.GetUserAnsweredQuestionIDs(ctx, userID, categoryKey)
+	if err != nil {
+		return fmt.Errorf("failed to get answered questions: %w", err)
+	}
+
+	answeredSet := make(map[int64]struct{}, len(answeredIDs))
+	for _, id := range answeredIDs {
+		answeredSet[id] = struct{}{}
+	}
+
+	// Check if all questions before this one (by index) have been answered
+	for i := 0; i < targetIndex; i++ {
+		q := allQuestions[i]
+		if _, answered := answeredSet[q.ID]; !answered {
+			return fmt.Errorf("%w: previous questions in category must be answered before question %d",
+				ErrSequentialAnsweringRequired, questionID)
+		}
+	}
+
+	return nil
 }
-*/

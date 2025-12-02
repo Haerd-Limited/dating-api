@@ -993,7 +993,7 @@ func testQuestionsSelect(t *testing.T) {
 }
 
 var (
-	questionDBTypes = map[string]string{`ID`: `bigint`, `CategoryID`: `bigint`, `Text`: `text`, `Type`: `text`, `IsActive`: `boolean`, `CreatedAt`: `timestamp with time zone`}
+	questionDBTypes = map[string]string{`ID`: `bigint`, `CategoryID`: `bigint`, `Text`: `text`, `Type`: `text`, `IsActive`: `boolean`, `CreatedAt`: `timestamp with time zone`, `SortOrder`: `integer`}
 	_               = bytes.MinRead
 )
 

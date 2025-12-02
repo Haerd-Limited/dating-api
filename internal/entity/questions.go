@@ -29,6 +29,7 @@ type Question struct {
 	Type       string    `boil:"type" json:"type" toml:"type" yaml:"type"`
 	IsActive   bool      `boil:"is_active" json:"is_active" toml:"is_active" yaml:"is_active"`
 	CreatedAt  time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	SortOrder  int       `boil:"sort_order" json:"sort_order" toml:"sort_order" yaml:"sort_order"`
 
 	R *questionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L questionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,6 +42,7 @@ var QuestionColumns = struct {
 	Type       string
 	IsActive   string
 	CreatedAt  string
+	SortOrder  string
 }{
 	ID:         "id",
 	CategoryID: "category_id",
@@ -48,6 +50,7 @@ var QuestionColumns = struct {
 	Type:       "type",
 	IsActive:   "is_active",
 	CreatedAt:  "created_at",
+	SortOrder:  "sort_order",
 }
 
 var QuestionTableColumns = struct {
@@ -57,6 +60,7 @@ var QuestionTableColumns = struct {
 	Type       string
 	IsActive   string
 	CreatedAt  string
+	SortOrder  string
 }{
 	ID:         "questions.id",
 	CategoryID: "questions.category_id",
@@ -64,6 +68,7 @@ var QuestionTableColumns = struct {
 	Type:       "questions.type",
 	IsActive:   "questions.is_active",
 	CreatedAt:  "questions.created_at",
+	SortOrder:  "questions.sort_order",
 }
 
 // Generated where
@@ -75,6 +80,7 @@ var QuestionWhere = struct {
 	Type       whereHelperstring
 	IsActive   whereHelperbool
 	CreatedAt  whereHelpertime_Time
+	SortOrder  whereHelperint
 }{
 	ID:         whereHelperint64{field: "\"questions\".\"id\""},
 	CategoryID: whereHelperint64{field: "\"questions\".\"category_id\""},
@@ -82,6 +88,7 @@ var QuestionWhere = struct {
 	Type:       whereHelperstring{field: "\"questions\".\"type\""},
 	IsActive:   whereHelperbool{field: "\"questions\".\"is_active\""},
 	CreatedAt:  whereHelpertime_Time{field: "\"questions\".\"created_at\""},
+	SortOrder:  whereHelperint{field: "\"questions\".\"sort_order\""},
 }
 
 // QuestionRels is where relationship names are stored.
@@ -159,8 +166,8 @@ func (r *questionR) GetUserAnswers() UserAnswerSlice {
 type questionL struct{}
 
 var (
-	questionAllColumns            = []string{"id", "category_id", "text", "type", "is_active", "created_at"}
-	questionColumnsWithoutDefault = []string{"category_id", "text"}
+	questionAllColumns            = []string{"id", "category_id", "text", "type", "is_active", "created_at", "sort_order"}
+	questionColumnsWithoutDefault = []string{"category_id", "text", "sort_order"}
 	questionColumnsWithDefault    = []string{"id", "type", "is_active", "created_at"}
 	questionPrimaryKeyColumns     = []string{"id"}
 	questionGeneratedColumns      = []string{}

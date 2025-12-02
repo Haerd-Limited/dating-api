@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"time"
+
 	"github.com/Haerd-Limited/dating-api/internal/api/matching/dto"
 	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
 )
@@ -13,6 +15,7 @@ func MapDomainToGetOverviewResponse(d domain.Overview) dto.GetOverviewResponse {
 			CategoryName:               pack.CategoryName,
 			NumberOfCompletedQuestions: pack.NumberOfCompletedQuestions,
 			TotalQuestions:             pack.TotalQuestions,
+			ProgressPercent:            pack.ProgressPercent,
 		})
 	}
 
@@ -36,6 +39,7 @@ func MapDomainToQuestionAndAnswerResponse(d domain.QuestionsAndAnswers) dto.GetQ
 			CategoryKey:  qa.Question.CategoryKey,
 			CategoryName: qa.Question.CategoryName,
 			Text:         qa.Question.Text,
+			IsAnswered:   qa.UserAnswer != nil,
 		}
 		q.Answers = make([]dto.AnswerResponse, 0, len(qa.Answers))
 
@@ -47,7 +51,31 @@ func MapDomainToQuestionAndAnswerResponse(d domain.QuestionsAndAnswers) dto.GetQ
 			})
 		}
 
+		// Map user answer if present
+		if qa.UserAnswer != nil {
+			q.UserAnswer = &dto.UserAnswerResponse{
+				QuestionID:          qa.UserAnswer.QuestionID,
+				AnswerID:            qa.UserAnswer.AnswerID,
+				AcceptableAnswerIds: qa.UserAnswer.AcceptableAnswerIds,
+				Importance:          qa.UserAnswer.Importance,
+				IsPrivate:           qa.UserAnswer.IsPrivate,
+				UpdatedAt:           qa.UserAnswer.UpdatedAt.Format(time.RFC3339),
+			}
+		}
+
 		out.Questions = append(out.Questions, q)
+	}
+
+	// Map progress summary if present
+	if d.ProgressSummary != nil {
+		out.ProgressSummary = &dto.ProgressSummaryResponse{
+			CategoryKey:                d.ProgressSummary.CategoryKey,
+			CategoryName:               d.ProgressSummary.CategoryName,
+			NumberOfCompletedQuestions: d.ProgressSummary.NumberOfCompletedQuestions,
+			TotalQuestions:             d.ProgressSummary.TotalQuestions,
+			ProgressPercent:            d.ProgressSummary.ProgressPercent,
+			NextQuestionID:             d.ProgressSummary.NextQuestionID,
+		}
 	}
 
 	return out

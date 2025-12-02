@@ -95,7 +95,7 @@ func (h *handler) GetQuestions() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		_, ok := commoncontext.UserIDFromContext(ctx)
+		userID, ok := commoncontext.UserIDFromContext(ctx)
 		if !ok {
 			render.UnauthorizedResponse(w, r, h.logger)
 			return
@@ -104,8 +104,14 @@ func (h *handler) GetQuestions() http.HandlerFunc {
 		limit := request.ParseQueryInt(r, "limit", 5)
 		offset := request.ParseQueryInt(r, "offset", 0)
 		category := r.URL.Query().Get("category")
+		viewAll := r.URL.Query().Get("view") == "all"
 
-		result, err := h.matchingService.GetQuestionsAndAnswers(ctx, category, offset, limit)
+		var userIDPtr *string
+		if userID != "" {
+			userIDPtr = &userID
+		}
+
+		result, err := h.matchingService.GetQuestionsAndAnswers(ctx, category, offset, limit, userIDPtr, viewAll)
 		if err != nil {
 			render.HandleServiceErrorResponse(h.logger, w, r, "GetQuestions", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
@@ -123,6 +129,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Invalid answer id"
 	case errors.Is(err, matching.ErrInvalidImportance):
 		return http.StatusBadRequest, "Invalid importance"
+	case errors.Is(err, matching.ErrSequentialAnsweringRequired):
+		return http.StatusBadRequest, "Questions must be answered sequentially"
 	default:
 		return http.StatusInternalServerError, commonMessages.InternalServerErrorMsg
 	}
