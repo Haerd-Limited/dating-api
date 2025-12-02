@@ -96,6 +96,43 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 
 	purpose := strings.ToLower(in.Purpose)
 
+	// For register purpose, check if user exists first
+	// If user exists, skip code verification and return tokens directly (allows resuming pre-registration)
+	if purpose == constants.RegisterPurpose {
+		exists, err := as.UserService.UserExistsByIdentifier(ctx, in.Channel, identifier)
+		if err != nil {
+			return nil, commonlogger.LogError(as.logger, "user lookup failed", err, zap.String("identifier", utils.Redacted(identifier)), zap.String("channel", in.Channel))
+		}
+
+		if exists {
+			// User exists - skip code verification and return tokens directly
+			if in.Channel == constants.SmsChannel {
+				userDetails, getUserErr := as.UserService.GetUserByPhoneNumber(ctx, identifier)
+				if getUserErr != nil {
+					return nil, commonlogger.LogError(as.logger, "failed to get user", getUserErr, zap.String("identifier", utils.Redacted(identifier)), zap.String("channel", in.Channel))
+				}
+
+				currentStep := onboardingdomain.Steps(userDetails.OnboardingStep)
+				tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
+				if tokenErr != nil {
+					return nil, commonlogger.LogError(as.logger, "failed to generate tokens", tokenErr, zap.String("userID", userDetails.ID))
+				}
+
+				return &domain.AuthResult{
+					RefreshToken: tokens.RefreshToken,
+					AccessToken:  tokens.AccessToken,
+					User: &domain.User{
+						ID:             userDetails.ID,
+						OnboardingStep: currentStep,
+					},
+				}, nil
+			} else {
+				return nil, ErrInvalidChannel
+			}
+		}
+		// User doesn't exist - continue with code verification below
+	}
+
 	// Reduce twilio usage when testing
 	if strings.ToLower(as.env) == constants.ProductionEnvironment {
 		// 1) Find latest active code
@@ -160,33 +197,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 			},
 		}, nil
 	case constants.RegisterPurpose:
-		if exists {
-			// User exists - return their current step
-			if in.Channel == constants.SmsChannel {
-				userDetails, getUserErr := as.UserService.GetUserByPhoneNumber(ctx, identifier)
-				if getUserErr != nil {
-					return nil, commonlogger.LogError(as.logger, "failed to get user", getUserErr, zap.String("identifier", utils.Redacted(identifier)), zap.String("channel", in.Channel))
-				}
-
-				currentStep := onboardingdomain.Steps(userDetails.OnboardingStep)
-
-				tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
-				if tokenErr != nil {
-					return nil, commonlogger.LogError(as.logger, "failed to generate tokens", tokenErr, zap.String("userID", userDetails.ID))
-				}
-
-				return &domain.AuthResult{
-					RefreshToken: tokens.RefreshToken,
-					AccessToken:  tokens.AccessToken,
-					User: &domain.User{
-						ID:             userDetails.ID,
-						OnboardingStep: currentStep,
-					},
-				}, nil
-			} else {
-				return nil, ErrInvalidChannel
-			}
-		}
+		// This branch only runs if user doesn't exist (we handled existing users above)
 
 		if in.Phone == nil {
 			return nil, ErrPhoneNumberRequired
