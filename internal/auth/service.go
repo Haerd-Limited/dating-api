@@ -113,6 +113,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 				}
 
 				currentStep := onboardingdomain.Steps(userDetails.OnboardingStep)
+
 				tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userDetails.ID)
 				if tokenErr != nil {
 					return nil, commonlogger.LogError(as.logger, "failed to generate tokens", tokenErr, zap.String("userID", userDetails.ID))
@@ -198,7 +199,6 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		}, nil
 	case constants.RegisterPurpose:
 		// This branch only runs if user doesn't exist (we handled existing users above)
-
 		if in.Phone == nil {
 			return nil, ErrPhoneNumberRequired
 		}
