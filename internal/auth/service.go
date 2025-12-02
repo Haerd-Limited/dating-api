@@ -101,7 +101,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		rec, err := as.AuthRepo.FindActiveVerificationCode(ctx, in.Channel, identifier, purpose)
 		if err != nil {
 			// do not reveal which part failed
-			return nil, commonlogger.LogError(as.logger, "failed to find active code", err, zap.String("channel", in.Channel), zap.String("purpose", purpose))
+			return nil, commonlogger.LogError(as.logger, "failed to find active code", err, zap.String("identifier", identifier), zap.String("channel", in.Channel), zap.String("purpose", purpose))
 		}
 
 		if rec.Attempts >= rec.MaxAttempts {
@@ -125,7 +125,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 	// 4) Resolve user (create on register )
 	exists, err := as.UserService.UserExistsByIdentifier(ctx, in.Channel, identifier)
 	if err != nil {
-		return nil, commonlogger.LogError(as.logger, "user lookup failed", err, zap.String("channel", in.Channel))
+		return nil, commonlogger.LogError(as.logger, "user lookup failed", err, zap.String("identifier", identifier), zap.String("channel", in.Channel))
 	}
 
 	var userDetails *userdomain.User
@@ -139,7 +139,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		if in.Channel == constants.SmsChannel {
 			userDetails, err = as.UserService.GetUserByPhoneNumber(ctx, identifier)
 			if err != nil {
-				return nil, commonlogger.LogError(as.logger, "auth user", err, zap.String("channel", in.Channel))
+				return nil, commonlogger.LogError(as.logger, "auth user", err, zap.String("identifier", identifier), zap.String("channel", in.Channel))
 			}
 		} else {
 			return nil, ErrInvalidChannel
@@ -164,7 +164,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 			if in.Channel == constants.SmsChannel {
 				userDetails, getUserErr := as.UserService.GetUserByPhoneNumber(ctx, identifier)
 				if getUserErr != nil {
-					return nil, commonlogger.LogError(as.logger, "failed to get user", getUserErr, zap.String("channel", in.Channel))
+					return nil, commonlogger.LogError(as.logger, "failed to get user", getUserErr, zap.String("identifier", identifier), zap.String("channel", in.Channel))
 				}
 
 				currentStep := onboardingdomain.Steps(userDetails.OnboardingStep)
@@ -197,7 +197,7 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 			OnboardingStep: string(onboardingdomain.OnboardingStepsIntro),
 		})
 		if regErr != nil {
-			return nil, commonlogger.LogError(as.logger, "failed to create user", regErr)
+			return nil, commonlogger.LogError(as.logger, "failed to create user", regErr, zap.String("step", string(onboardingdomain.OnboardingStepsIntro)))
 		}
 
 		tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userID)
