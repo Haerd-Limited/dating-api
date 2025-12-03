@@ -65,8 +65,6 @@ func ToUpdatedUserEntity(u domain.User) (*entity.User, []string) {
 		cols = append(cols, entity.UserColumns.OnboardingStep)
 	}
 
-	// TODO: Uncomment after running migration and regenerating SQLBoiler entities
-	// Run: sqlboiler psql
 	if u.HowDidYouHearAboutUs != nil {
 		e.HowDidYouHearAboutUs = null.StringFromPtr(u.HowDidYouHearAboutUs)
 		cols = append(cols, entity.UserColumns.HowDidYouHearAboutUs)

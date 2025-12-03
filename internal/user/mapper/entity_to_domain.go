@@ -22,11 +22,9 @@ func UserEntityToUserDomain(user *entity.User) *domain.User {
 		userDomain.LastName = &user.LastName.String
 	}
 
-	// TODO: Uncomment after running migration and regenerating SQLBoiler entities
-	// Run: sqlboiler psql
-	// if user.HowDidYouHearAboutUs.Valid {
-	// 	userDomain.HowDidYouHearAboutUs = &user.HowDidYouHearAboutUs.String
-	// }
+	if user.HowDidYouHearAboutUs.Valid {
+		userDomain.HowDidYouHearAboutUs = &user.HowDidYouHearAboutUs.String
+	}
 
 	return userDomain
 }
