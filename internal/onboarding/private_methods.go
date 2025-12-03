@@ -203,6 +203,13 @@ func (os *onboardingService) sendPreregistrationNotification(ctx context.Context
 	// Add "how did you hear about us" if provided
 	if userDetails.HowDidYouHearAboutUs != nil && *userDetails.HowDidYouHearAboutUs != "" {
 		message += fmt.Sprintf("\nHow did you hear about us: %s", *userDetails.HowDidYouHearAboutUs)
+	} else {
+		// Log for debugging: check if field is nil or empty
+		if userDetails.HowDidYouHearAboutUs == nil {
+			commonlogger.LogError(os.logger, "HowDidYouHearAboutUs is nil for user", nil, zap.String("userID", userID), zap.String("howDidYouHearAboutUs", *userDetails.HowDidYouHearAboutUs))
+		} else if *userDetails.HowDidYouHearAboutUs == "" {
+			commonlogger.LogError(os.logger, "HowDidYouHearAboutUs is empty string for user", nil, zap.String("userID", userID), zap.String("howDidYouHearAboutUs", *userDetails.HowDidYouHearAboutUs))
+		}
 	}
 
 	// Send SMS notification to all configured phone numbers
