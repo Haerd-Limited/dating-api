@@ -60,6 +60,7 @@ import (
 	commondb "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/db"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/ids"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	s3Storage "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/storage"
 )
 
@@ -164,7 +165,17 @@ func main() {
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
 	mediaService := media.NewMediaService(logger, awsService)
 	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)
+	backendEngineerPhoneNumbers := parsePhoneNumbers(cfg.BackendEngineerPhoneNumbers)
+	frontendEngineerPhoneNumbers := parsePhoneNumbers(cfg.FrontendEngineerPhoneNumbers)
 	feedbackService := feedback.NewService(logger, feedbackRepo, unitOfWork, communicationService, notificationPhoneNumbers)
+
+	// Initialize error notification handler for SMS alerts
+	render.InitErrorNotificationHandler(
+		communicationService,
+		backendEngineerPhoneNumbers,
+		frontendEngineerPhoneNumbers,
+		logger,
+	)
 
 	onboardingService := onboarding.NewOnboardingService(
 		logger,
