@@ -242,6 +242,11 @@ func New(
 						r.Post("/photo/complete", verificationHandler.Complete())
 					})
 				})
+
+				// User profiles by ID
+				r.Route("/users", func(r chi.Router) {
+					r.Get("/{userID}", profileHandler.GetUserProfile())
+				})
 			})
 
 			r.Route("/admin", func(r chi.Router) {

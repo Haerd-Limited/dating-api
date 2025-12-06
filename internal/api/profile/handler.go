@@ -26,6 +26,7 @@ import (
 
 type Handler interface {
 	GetMyProfile() http.HandlerFunc
+	GetUserProfile() http.HandlerFunc
 	UpdateMyProfile() http.HandlerFunc
 	Verify() http.HandlerFunc
 	GetVoicePromptTranscript() http.HandlerFunc
@@ -87,6 +88,28 @@ func (h *handler) GetMyProfile() http.HandlerFunc {
 		}
 
 		//todo:update to use a toresponse mapper
+		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile))
+	}
+}
+
+func (h *handler) GetUserProfile() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Extract userID from URL parameter
+		userID := chi.URLParam(r, "userID")
+		if userID == "" {
+			render.Json(w, http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("User ID is required"))
+			return
+		}
+
+		userProfile, err := h.profileService.GetEnrichedProfile(ctx, userID)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetUserProfile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
 		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile))
 	}
 }
