@@ -18,6 +18,7 @@ const (
 	MaxNumberOfVWHUsersToSelect                 = 3
 	VisibilityStateHidden                       = "HIDDEN"
 	VisibilityStateVisible                      = "VISIBLE"
+	VisibilityStateRevealed                     = "REVEALED"
 	MaxVoiceNoteLengthInSeconds                 = 60
 	MaxTextLengthRunes                          = 1000
 	MaximumNumberOfPrompts                      = 6

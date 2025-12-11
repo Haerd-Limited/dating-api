@@ -244,7 +244,7 @@ func (s *service) GetSnapshot(ctx context.Context, convoID, userID string) (doma
 	canReveal := shared >= cfg.Threshold
 
 	var revealed bool
-	if convo.VisibilityState == constants.VisibilityStateVisible {
+	if convo.VisibilityState == constants.VisibilityStateRevealed {
 		revealed = true
 	}
 

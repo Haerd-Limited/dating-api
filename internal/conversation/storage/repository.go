@@ -98,7 +98,7 @@ func (r *repository) SetConversationToRevealed(ctx context.Context, tx *sql.Tx, 
 	}
 
 	convo.RevealAt = null.TimeFrom(time.Now().UTC())
-	convo.VisibilityState = constants.VisibilityStateVisible
+	convo.VisibilityState = constants.VisibilityStateRevealed
 
 	_, err = convo.Update(ctx, exec, boil.Whitelist(
 		entity.ConversationColumns.RevealAt,
