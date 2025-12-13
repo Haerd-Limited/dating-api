@@ -81,6 +81,7 @@ func (enh *ErrorNotificationHandler) sendErrorNotification(handlerName string, s
 	}
 
 	var phoneNumbers []string
+
 	var recipientType string
 
 	if statusCode == http.StatusInternalServerError {

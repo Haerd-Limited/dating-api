@@ -206,7 +206,6 @@ func (os *onboardingService) sendPreregistrationNotification(ctx context.Context
 	} else {
 		// Log for debugging: check if field is nil or empty
 		commonlogger.LogError(os.logger, "HowDidYouHearAboutUs is nil for user", nil, zap.String("userID", userID), zap.String("howDidYouHearAboutUs", *userDetails.HowDidYouHearAboutUs))
-
 	}
 
 	// Send SMS notification to all configured phone numbers
