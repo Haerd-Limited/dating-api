@@ -150,11 +150,7 @@ func (is *repository) CreateMatch(ctx context.Context, match entity.Match, tx *s
 
 func (is *repository) GetMatches(ctx context.Context, userID string) ([]*entity.Match, error) {
 	matches, err := entity.Matches(
-		entity.MatchWhere.UserB.EQ(userID),
-		qm.Or2(
-			entity.MatchWhere.UserA.EQ(userID),
-		),
-		entity.MatchWhere.Status.EQ(string(entity.MatchStatusActive)),
+		qm.Where("(user_a = ? OR user_b = ?) AND status = ?", userID, userID, string(entity.MatchStatusActive)),
 	).All(ctx, is.db)
 	if err != nil {
 		return nil, err

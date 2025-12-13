@@ -509,11 +509,7 @@ func (r *repository) CreateConversation(ctx context.Context, userA, userB string
 
 func (r *repository) GetMatches(ctx context.Context, userID string) ([]*entity.Match, error) {
 	matches, err := entity.Matches(
-		entity.MatchWhere.UserB.EQ(userID),
-		qm.Or2(
-			entity.MatchWhere.UserA.EQ(userID),
-		),
-		entity.MatchWhere.Status.EQ(string(entity.MatchStatusActive)),
+		qm.Where("(user_a = ? OR user_b = ?) AND status = ?", userID, userID, string(entity.MatchStatusActive)),
 	).All(ctx, r.db)
 	if err != nil {
 		return nil, err
