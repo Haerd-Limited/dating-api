@@ -50,7 +50,7 @@ func NewProfileRepository(db *sqlx.DB) ProfileRepository {
 }
 
 func (pr *profileRepository) IsVerified(ctx context.Context, userID string) (bool, error) {
-	profile, err := entity.UserProfiles(entity.UserWhere.ID.EQ(userID)).One(ctx, pr.db)
+	profile, err := entity.UserProfiles(entity.UserProfileWhere.UserID.EQ(userID)).One(ctx, pr.db)
 	if err != nil {
 		return false, err
 	}
