@@ -22,7 +22,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/profile"
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime"
 	apisafety "github.com/Haerd-Limited/dating-api/internal/api/safety"
-	apisession "github.com/Haerd-Limited/dating-api/internal/api/session"
 	"github.com/Haerd-Limited/dating-api/internal/api/verification"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
@@ -39,7 +38,6 @@ import (
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internalrealtime "github.com/Haerd-Limited/dating-api/internal/realtime"
 	internalsafety "github.com/Haerd-Limited/dating-api/internal/safety"
-	internalsession "github.com/Haerd-Limited/dating-api/internal/session"
 	internaluser "github.com/Haerd-Limited/dating-api/internal/user"
 	internalverification "github.com/Haerd-Limited/dating-api/internal/verification"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
@@ -64,7 +62,6 @@ func New(
 	insightsService internalinsights.Service,
 	userService internaluser.Service,
 	feedbackService internalfeedback.Service,
-	sessionService internalsession.Service,
 	adminAPIKey string,
 ) http.Handler {
 	// Create a new Chi router.
@@ -106,7 +103,6 @@ func New(
 	safetyHandler := apisafety.NewHandler(logger, safetyService)
 	insightsHandler := apiinsights.NewHandler(logger, insightsService)
 	feedbackHandler := apifeedback.NewFeedbackHandler(logger, feedbackService)
-	sessionHandler := apisession.NewSessionHandler(logger, sessionService)
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
@@ -227,10 +223,6 @@ func New(
 
 				r.Route("/feedback", func(r chi.Router) {
 					r.Post("/", feedbackHandler.CreateFeedback())
-				})
-
-				r.Route("/session", func(r chi.Router) {
-					r.Post("/track-open", sessionHandler.TrackAppOpen())
 				})
 
 				r.Route("/matching", func(r chi.Router) {
