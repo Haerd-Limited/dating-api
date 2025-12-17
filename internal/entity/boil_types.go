@@ -145,12 +145,16 @@ func AllReportStatus() []string {
 
 // Enum values for VerificationType
 const (
-	VerificationTypePhoto string = "photo"
+	VerificationTypePhoto       string = "photo"
+	VerificationTypeManualVideo string = "manual_video"
+	VerificationTypeVideo       string = "video"
 )
 
 func AllVerificationType() []string {
 	return []string{
 		VerificationTypePhoto,
+		VerificationTypeManualVideo,
+		VerificationTypeVideo,
 	}
 }
 

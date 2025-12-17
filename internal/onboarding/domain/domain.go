@@ -6,6 +6,11 @@ type Profile struct {
 	ProfileCoverPhotoURL string
 }
 
+type VideoVerification struct {
+	UserID   string
+	VideoKey string
+}
+
 type Prompts struct {
 	UploadedPrompts []VoicePrompt
 	UserID          string

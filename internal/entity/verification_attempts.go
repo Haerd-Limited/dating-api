@@ -24,77 +24,107 @@ import (
 
 // VerificationAttempt is an object representing the database table.
 type VerificationAttempt struct {
-	ID             string       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID         string       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	Type           string       `boil:"type" json:"type" toml:"type" yaml:"type"`
-	Status         string       `boil:"status" json:"status" toml:"status" yaml:"status"`
-	SessionID      null.String  `boil:"session_id" json:"session_id,omitempty" toml:"session_id" yaml:"session_id,omitempty"`
-	LivenessScore  null.Float64 `boil:"liveness_score" json:"liveness_score,omitempty" toml:"liveness_score" yaml:"liveness_score,omitempty"`
-	MatchScore     null.Float64 `boil:"match_score" json:"match_score,omitempty" toml:"match_score" yaml:"match_score,omitempty"`
-	ReasonCodes    null.JSON    `boil:"reason_codes" json:"reason_codes,omitempty" toml:"reason_codes" yaml:"reason_codes,omitempty"`
-	BestFrameS3Key null.String  `boil:"best_frame_s3_key" json:"best_frame_s3_key,omitempty" toml:"best_frame_s3_key" yaml:"best_frame_s3_key,omitempty"`
-	CreatedAt      time.Time    `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt      time.Time    `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	ClientToken    null.String  `boil:"client_token" json:"client_token,omitempty" toml:"client_token" yaml:"client_token,omitempty"`
+	ID               string       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID           string       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Type             string       `boil:"type" json:"type" toml:"type" yaml:"type"`
+	Status           string       `boil:"status" json:"status" toml:"status" yaml:"status"`
+	SessionID        null.String  `boil:"session_id" json:"session_id,omitempty" toml:"session_id" yaml:"session_id,omitempty"`
+	LivenessScore    null.Float64 `boil:"liveness_score" json:"liveness_score,omitempty" toml:"liveness_score" yaml:"liveness_score,omitempty"`
+	MatchScore       null.Float64 `boil:"match_score" json:"match_score,omitempty" toml:"match_score" yaml:"match_score,omitempty"`
+	ReasonCodes      null.JSON    `boil:"reason_codes" json:"reason_codes,omitempty" toml:"reason_codes" yaml:"reason_codes,omitempty"`
+	BestFrameS3Key   null.String  `boil:"best_frame_s3_key" json:"best_frame_s3_key,omitempty" toml:"best_frame_s3_key" yaml:"best_frame_s3_key,omitempty"`
+	CreatedAt        time.Time    `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt        time.Time    `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	ClientToken      null.String  `boil:"client_token" json:"client_token,omitempty" toml:"client_token" yaml:"client_token,omitempty"`
+	VideoS3Key       null.String  `boil:"video_s3_key" json:"video_s3_key,omitempty" toml:"video_s3_key" yaml:"video_s3_key,omitempty"`
+	ChallengeCode    null.String  `boil:"challenge_code" json:"challenge_code,omitempty" toml:"challenge_code" yaml:"challenge_code,omitempty"`
+	SubmittedAt      null.Time    `boil:"submitted_at" json:"submitted_at,omitempty" toml:"submitted_at" yaml:"submitted_at,omitempty"`
+	ReviewedAt       null.Time    `boil:"reviewed_at" json:"reviewed_at,omitempty" toml:"reviewed_at" yaml:"reviewed_at,omitempty"`
+	ReviewNotes      null.String  `boil:"review_notes" json:"review_notes,omitempty" toml:"review_notes" yaml:"review_notes,omitempty"`
+	VerificationCode null.String  `boil:"verification_code" json:"verification_code,omitempty" toml:"verification_code" yaml:"verification_code,omitempty"`
 
 	R *verificationAttemptR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L verificationAttemptL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var VerificationAttemptColumns = struct {
-	ID             string
-	UserID         string
-	Type           string
-	Status         string
-	SessionID      string
-	LivenessScore  string
-	MatchScore     string
-	ReasonCodes    string
-	BestFrameS3Key string
-	CreatedAt      string
-	UpdatedAt      string
-	ClientToken    string
+	ID               string
+	UserID           string
+	Type             string
+	Status           string
+	SessionID        string
+	LivenessScore    string
+	MatchScore       string
+	ReasonCodes      string
+	BestFrameS3Key   string
+	CreatedAt        string
+	UpdatedAt        string
+	ClientToken      string
+	VideoS3Key       string
+	ChallengeCode    string
+	SubmittedAt      string
+	ReviewedAt       string
+	ReviewNotes      string
+	VerificationCode string
 }{
-	ID:             "id",
-	UserID:         "user_id",
-	Type:           "type",
-	Status:         "status",
-	SessionID:      "session_id",
-	LivenessScore:  "liveness_score",
-	MatchScore:     "match_score",
-	ReasonCodes:    "reason_codes",
-	BestFrameS3Key: "best_frame_s3_key",
-	CreatedAt:      "created_at",
-	UpdatedAt:      "updated_at",
-	ClientToken:    "client_token",
+	ID:               "id",
+	UserID:           "user_id",
+	Type:             "type",
+	Status:           "status",
+	SessionID:        "session_id",
+	LivenessScore:    "liveness_score",
+	MatchScore:       "match_score",
+	ReasonCodes:      "reason_codes",
+	BestFrameS3Key:   "best_frame_s3_key",
+	CreatedAt:        "created_at",
+	UpdatedAt:        "updated_at",
+	ClientToken:      "client_token",
+	VideoS3Key:       "video_s3_key",
+	ChallengeCode:    "challenge_code",
+	SubmittedAt:      "submitted_at",
+	ReviewedAt:       "reviewed_at",
+	ReviewNotes:      "review_notes",
+	VerificationCode: "verification_code",
 }
 
 var VerificationAttemptTableColumns = struct {
-	ID             string
-	UserID         string
-	Type           string
-	Status         string
-	SessionID      string
-	LivenessScore  string
-	MatchScore     string
-	ReasonCodes    string
-	BestFrameS3Key string
-	CreatedAt      string
-	UpdatedAt      string
-	ClientToken    string
+	ID               string
+	UserID           string
+	Type             string
+	Status           string
+	SessionID        string
+	LivenessScore    string
+	MatchScore       string
+	ReasonCodes      string
+	BestFrameS3Key   string
+	CreatedAt        string
+	UpdatedAt        string
+	ClientToken      string
+	VideoS3Key       string
+	ChallengeCode    string
+	SubmittedAt      string
+	ReviewedAt       string
+	ReviewNotes      string
+	VerificationCode string
 }{
-	ID:             "verification_attempts.id",
-	UserID:         "verification_attempts.user_id",
-	Type:           "verification_attempts.type",
-	Status:         "verification_attempts.status",
-	SessionID:      "verification_attempts.session_id",
-	LivenessScore:  "verification_attempts.liveness_score",
-	MatchScore:     "verification_attempts.match_score",
-	ReasonCodes:    "verification_attempts.reason_codes",
-	BestFrameS3Key: "verification_attempts.best_frame_s3_key",
-	CreatedAt:      "verification_attempts.created_at",
-	UpdatedAt:      "verification_attempts.updated_at",
-	ClientToken:    "verification_attempts.client_token",
+	ID:               "verification_attempts.id",
+	UserID:           "verification_attempts.user_id",
+	Type:             "verification_attempts.type",
+	Status:           "verification_attempts.status",
+	SessionID:        "verification_attempts.session_id",
+	LivenessScore:    "verification_attempts.liveness_score",
+	MatchScore:       "verification_attempts.match_score",
+	ReasonCodes:      "verification_attempts.reason_codes",
+	BestFrameS3Key:   "verification_attempts.best_frame_s3_key",
+	CreatedAt:        "verification_attempts.created_at",
+	UpdatedAt:        "verification_attempts.updated_at",
+	ClientToken:      "verification_attempts.client_token",
+	VideoS3Key:       "verification_attempts.video_s3_key",
+	ChallengeCode:    "verification_attempts.challenge_code",
+	SubmittedAt:      "verification_attempts.submitted_at",
+	ReviewedAt:       "verification_attempts.reviewed_at",
+	ReviewNotes:      "verification_attempts.review_notes",
+	VerificationCode: "verification_attempts.verification_code",
 }
 
 // Generated where
@@ -138,31 +168,43 @@ func (w whereHelpernull_Float64) IsNull() qm.QueryMod    { return qmhelper.Where
 func (w whereHelpernull_Float64) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var VerificationAttemptWhere = struct {
-	ID             whereHelperstring
-	UserID         whereHelperstring
-	Type           whereHelperstring
-	Status         whereHelperstring
-	SessionID      whereHelpernull_String
-	LivenessScore  whereHelpernull_Float64
-	MatchScore     whereHelpernull_Float64
-	ReasonCodes    whereHelpernull_JSON
-	BestFrameS3Key whereHelpernull_String
-	CreatedAt      whereHelpertime_Time
-	UpdatedAt      whereHelpertime_Time
-	ClientToken    whereHelpernull_String
+	ID               whereHelperstring
+	UserID           whereHelperstring
+	Type             whereHelperstring
+	Status           whereHelperstring
+	SessionID        whereHelpernull_String
+	LivenessScore    whereHelpernull_Float64
+	MatchScore       whereHelpernull_Float64
+	ReasonCodes      whereHelpernull_JSON
+	BestFrameS3Key   whereHelpernull_String
+	CreatedAt        whereHelpertime_Time
+	UpdatedAt        whereHelpertime_Time
+	ClientToken      whereHelpernull_String
+	VideoS3Key       whereHelpernull_String
+	ChallengeCode    whereHelpernull_String
+	SubmittedAt      whereHelpernull_Time
+	ReviewedAt       whereHelpernull_Time
+	ReviewNotes      whereHelpernull_String
+	VerificationCode whereHelpernull_String
 }{
-	ID:             whereHelperstring{field: "\"verification_attempts\".\"id\""},
-	UserID:         whereHelperstring{field: "\"verification_attempts\".\"user_id\""},
-	Type:           whereHelperstring{field: "\"verification_attempts\".\"type\""},
-	Status:         whereHelperstring{field: "\"verification_attempts\".\"status\""},
-	SessionID:      whereHelpernull_String{field: "\"verification_attempts\".\"session_id\""},
-	LivenessScore:  whereHelpernull_Float64{field: "\"verification_attempts\".\"liveness_score\""},
-	MatchScore:     whereHelpernull_Float64{field: "\"verification_attempts\".\"match_score\""},
-	ReasonCodes:    whereHelpernull_JSON{field: "\"verification_attempts\".\"reason_codes\""},
-	BestFrameS3Key: whereHelpernull_String{field: "\"verification_attempts\".\"best_frame_s3_key\""},
-	CreatedAt:      whereHelpertime_Time{field: "\"verification_attempts\".\"created_at\""},
-	UpdatedAt:      whereHelpertime_Time{field: "\"verification_attempts\".\"updated_at\""},
-	ClientToken:    whereHelpernull_String{field: "\"verification_attempts\".\"client_token\""},
+	ID:               whereHelperstring{field: "\"verification_attempts\".\"id\""},
+	UserID:           whereHelperstring{field: "\"verification_attempts\".\"user_id\""},
+	Type:             whereHelperstring{field: "\"verification_attempts\".\"type\""},
+	Status:           whereHelperstring{field: "\"verification_attempts\".\"status\""},
+	SessionID:        whereHelpernull_String{field: "\"verification_attempts\".\"session_id\""},
+	LivenessScore:    whereHelpernull_Float64{field: "\"verification_attempts\".\"liveness_score\""},
+	MatchScore:       whereHelpernull_Float64{field: "\"verification_attempts\".\"match_score\""},
+	ReasonCodes:      whereHelpernull_JSON{field: "\"verification_attempts\".\"reason_codes\""},
+	BestFrameS3Key:   whereHelpernull_String{field: "\"verification_attempts\".\"best_frame_s3_key\""},
+	CreatedAt:        whereHelpertime_Time{field: "\"verification_attempts\".\"created_at\""},
+	UpdatedAt:        whereHelpertime_Time{field: "\"verification_attempts\".\"updated_at\""},
+	ClientToken:      whereHelpernull_String{field: "\"verification_attempts\".\"client_token\""},
+	VideoS3Key:       whereHelpernull_String{field: "\"verification_attempts\".\"video_s3_key\""},
+	ChallengeCode:    whereHelpernull_String{field: "\"verification_attempts\".\"challenge_code\""},
+	SubmittedAt:      whereHelpernull_Time{field: "\"verification_attempts\".\"submitted_at\""},
+	ReviewedAt:       whereHelpernull_Time{field: "\"verification_attempts\".\"reviewed_at\""},
+	ReviewNotes:      whereHelpernull_String{field: "\"verification_attempts\".\"review_notes\""},
+	VerificationCode: whereHelpernull_String{field: "\"verification_attempts\".\"verification_code\""},
 }
 
 // VerificationAttemptRels is where relationship names are stored.
@@ -221,9 +263,9 @@ func (r *verificationAttemptR) GetLastAttemptUserVerificationStatuses() UserVeri
 type verificationAttemptL struct{}
 
 var (
-	verificationAttemptAllColumns            = []string{"id", "user_id", "type", "status", "session_id", "liveness_score", "match_score", "reason_codes", "best_frame_s3_key", "created_at", "updated_at", "client_token"}
+	verificationAttemptAllColumns            = []string{"id", "user_id", "type", "status", "session_id", "liveness_score", "match_score", "reason_codes", "best_frame_s3_key", "created_at", "updated_at", "client_token", "video_s3_key", "challenge_code", "submitted_at", "reviewed_at", "review_notes", "verification_code"}
 	verificationAttemptColumnsWithoutDefault = []string{"user_id"}
-	verificationAttemptColumnsWithDefault    = []string{"id", "type", "status", "session_id", "liveness_score", "match_score", "reason_codes", "best_frame_s3_key", "created_at", "updated_at", "client_token"}
+	verificationAttemptColumnsWithDefault    = []string{"id", "type", "status", "session_id", "liveness_score", "match_score", "reason_codes", "best_frame_s3_key", "created_at", "updated_at", "client_token", "video_s3_key", "challenge_code", "submitted_at", "reviewed_at", "review_notes", "verification_code"}
 	verificationAttemptPrimaryKeyColumns     = []string{"id"}
 	verificationAttemptGeneratedColumns      = []string{}
 )

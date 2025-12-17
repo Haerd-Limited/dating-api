@@ -1015,7 +1015,7 @@ func testVerificationAttemptsSelect(t *testing.T) {
 }
 
 var (
-	verificationAttemptDBTypes = map[string]string{`ID`: `uuid`, `UserID`: `uuid`, `Type`: `enum.verification_type('photo')`, `Status`: `enum.verification_status('pending','passed','failed','needs_review')`, `SessionID`: `text`, `LivenessScore`: `double precision`, `MatchScore`: `double precision`, `ReasonCodes`: `jsonb`, `BestFrameS3Key`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `ClientToken`: `text`}
+	verificationAttemptDBTypes = map[string]string{`ID`: `uuid`, `UserID`: `uuid`, `Type`: `enum.verification_type('photo','manual_video','video')`, `Status`: `enum.verification_status('pending','passed','failed','needs_review')`, `SessionID`: `text`, `LivenessScore`: `double precision`, `MatchScore`: `double precision`, `ReasonCodes`: `jsonb`, `BestFrameS3Key`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `ClientToken`: `text`, `VideoS3Key`: `text`, `ChallengeCode`: `text`, `SubmittedAt`: `timestamp with time zone`, `ReviewedAt`: `timestamp with time zone`, `ReviewNotes`: `text`, `VerificationCode`: `text`}
 	_                          = bytes.MinRead
 )
 

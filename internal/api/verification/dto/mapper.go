@@ -17,3 +17,17 @@ func MapToCompleteResponse(dto domain.CompleteResult) CompleteResponse {
 		PhotoVerified: dto.PhotoVerified,
 	}
 }
+
+func MapToStartVideoResponse(d domain.StartVideoResult) StartVideoResponse {
+	return StartVideoResponse{
+		Code:      d.Code,
+		UploadURL: d.UploadURL,
+		UploadKey: d.UploadKey,
+	}
+}
+
+func MapToSubmitVideoResponse(d domain.SubmitVideoResult) SubmitVideoResponse {
+	return SubmitVideoResponse{
+		Status: d.Status,
+	}
+}

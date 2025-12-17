@@ -13,6 +13,14 @@ func (pr ProfileRequest) Validate() error {
 	return validator.New().Struct(pr)
 }
 
+type VideoVerificationRequest struct {
+	VideoKey string `json:"video_key" validate:"required"`
+}
+
+func (vvr VideoVerificationRequest) Validate() error {
+	return validator.New().Struct(vvr)
+}
+
 type PromptsRequest struct {
 	UploadedPrompts []VoicePrompt `json:"uploaded_prompts" validate:"required,min=4,max=6,dive"`
 }

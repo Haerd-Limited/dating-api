@@ -3,20 +3,21 @@ package domain
 type Steps string
 
 const (
-	OnboardingStepsUnset            Steps = "UNSET"
-	OnboardingStepsNone             Steps = "NONE"
-	OnboardingStepsIntro            Steps = "INTRO"
-	OnboardingStepsBasics           Steps = "BASICS"
-	OnboardingStepsLocation         Steps = "LOCATION"
-	OnboardingStepsLifestyle        Steps = "LIFESTYLE"
-	OnboardingStepsBeliefs          Steps = "BELIEFS"
-	OnboardingStepsBackground       Steps = "BACKGROUND"
-	OnboardingStepsWorkAndEducation Steps = "WORK_AND_EDUCATION"
-	OnboardingStepsLanguages        Steps = "LANGUAGES"
-	OnboardingStepsPhotos           Steps = "PHOTOS"
-	OnboardingStepsPrompts          Steps = "PROMPTS"
-	OnboardingStepsProfile          Steps = "PROFILE"
-	OnboardingStepsComplete         Steps = "COMPLETE"
+	OnboardingStepsUnset             Steps = "UNSET"
+	OnboardingStepsNone              Steps = "NONE"
+	OnboardingStepsIntro             Steps = "INTRO"
+	OnboardingStepsBasics            Steps = "BASICS"
+	OnboardingStepsLocation          Steps = "LOCATION"
+	OnboardingStepsLifestyle         Steps = "LIFESTYLE"
+	OnboardingStepsBeliefs           Steps = "BELIEFS"
+	OnboardingStepsBackground        Steps = "BACKGROUND"
+	OnboardingStepsWorkAndEducation  Steps = "WORK_AND_EDUCATION"
+	OnboardingStepsLanguages         Steps = "LANGUAGES"
+	OnboardingStepsPhotos            Steps = "PHOTOS"
+	OnboardingStepsPrompts           Steps = "PROMPTS"
+	OnboardingStepsProfile           Steps = "PROFILE"
+	OnboardingStepsVideoVerification Steps = "VIDEO_VERIFICATION"
+	OnboardingStepsComplete          Steps = "COMPLETE"
 )
 
 // GenerateOnboardingSteps generates the OnboardingSteps result/response to return to the frontend for step s.
@@ -84,5 +85,6 @@ var OrderedSteps = []Steps{
 	OnboardingStepsPhotos,
 	OnboardingStepsPrompts,
 	OnboardingStepsProfile,
+	OnboardingStepsVideoVerification,
 	OnboardingStepsComplete,
 }

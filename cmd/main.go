@@ -185,6 +185,7 @@ func main() {
 		profileService,
 		lookupRepo,
 		communicationService,
+		verificationService,
 		notificationPhoneNumbers,
 		cfg.EnablePreregCap,
 		cfg.MaxParticipants,

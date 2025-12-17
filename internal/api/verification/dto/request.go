@@ -9,3 +9,11 @@ type CompleteRequest struct {
 func (cr CompleteRequest) Validate() error {
 	return validator.New().Struct(cr)
 }
+
+type SubmitVideoRequest struct {
+	VideoKey string `json:"video_key" validate:"required"`
+}
+
+func (svr SubmitVideoRequest) Validate() error {
+	return validator.New().Struct(svr)
+}

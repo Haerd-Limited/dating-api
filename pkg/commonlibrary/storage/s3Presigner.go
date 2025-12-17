@@ -86,6 +86,8 @@ func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count
 			} else {
 				key = fmt.Sprintf("%s/feedback-attachments/images/%s.%s", KeyBase, uuid.NewString(), ext)
 			}
+		} else if purpose != nil && *purpose == "verification-video" {
+			key = fmt.Sprintf("%s/verification/videos/%s.%s", KeyBase, uuid.NewString(), ext)
 		} else if strings.Contains(contentType, "audio") {
 			key = fmt.Sprintf("%s/prompts/%s.%s", KeyBase, uuid.NewString(), ext)
 		} else {

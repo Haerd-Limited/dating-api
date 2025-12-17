@@ -3,8 +3,11 @@ package verification
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/aarondl/null/v8"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -24,6 +27,8 @@ import (
 type Service interface {
 	StartPhotoVerification(ctx context.Context, userID string) (domain.StartResult, error)
 	CompletePhotoVerification(ctx context.Context, userID, sessionID string) (domain.CompleteResult, error)
+	StartVideoVerification(ctx context.Context, userID string) (domain.StartVideoResult, error)
+	SubmitVideoVerification(ctx context.Context, userID, videoS3Key string) (domain.SubmitVideoResult, error)
 }
 
 type service struct {
@@ -290,4 +295,150 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 		PhotoVerified: false,
 		Reasons:       []string{"face_not_close_enough"},
 	}, nil
+}
+
+func (s *service) StartVideoVerification(ctx context.Context, userID string) (domain.StartVideoResult, error) {
+	// Check for existing pending video attempt
+	existing, err := s.verificationRepo.CheckIfPendingVideoAttemptExists(ctx, userID)
+	if err == nil && existing != nil {
+		// Reuse existing attempt - get the code from database
+		code, codeErr := s.verificationRepo.GetVerificationCode(ctx, existing.ID)
+		if codeErr != nil || code == "" {
+			// If code is missing, generate new one and update
+			newCode, genErr := generateFourDigitCode()
+			if genErr != nil {
+				return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "generate code", genErr, zap.String("userID", userID))
+			}
+
+			code = newCode
+			// Update the attempt with the new code
+			updateErr := s.verificationRepo.UpdateVerificationCode(ctx, existing.ID, code)
+			if updateErr != nil {
+				return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "update verification code", updateErr, zap.String("userID", userID))
+			}
+		}
+
+		s.logger.Info("start reused pending video attempt",
+			zap.String("user_id", userID),
+			zap.String("attempt_id", existing.ID),
+		)
+
+		// Generate presigned URL for video upload
+		purpose := "verification-video"
+
+		urls, urlErr := s.awsService.GenerateUploadURLs(ctx, userID, 1, "video/mp4", 20*time.Minute, &purpose)
+		if urlErr != nil {
+			return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "generate upload url", urlErr, zap.String("userID", userID))
+		}
+
+		if len(urls) == 0 {
+			return domain.StartVideoResult{}, errors.New("failed to generate upload url")
+		}
+
+		return domain.StartVideoResult{
+			Code:      code,
+			UploadURL: urls[0].URL,
+			UploadKey: urls[0].Key,
+		}, nil
+	}
+
+	// Generate random 4-digit code (1000-9999)
+	code, err := generateFourDigitCode()
+	if err != nil {
+		return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "generate code", err, zap.String("userID", userID))
+	}
+
+	// Generate presigned URL for video upload
+	purpose := "verification-video"
+
+	urls, err := s.awsService.GenerateUploadURLs(ctx, userID, 1, "video/mp4", 20*time.Minute, &purpose)
+	if err != nil {
+		return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "generate upload url", err, zap.String("userID", userID))
+	}
+
+	if len(urls) == 0 {
+		return domain.StartVideoResult{}, errors.New("failed to generate upload url")
+	}
+
+	// Create verification attempt
+	// Note: After entity regeneration, VerificationCode field will be available
+	// For now, create attempt and then update with code via raw SQL
+	attempt := entity.VerificationAttempt{
+		UserID:           userID,
+		Type:             "video",
+		Status:           entity.VerificationStatusPending,
+		VerificationCode: null.StringFrom(code),
+	}
+
+	err = s.verificationRepo.CreateAttempt(ctx, attempt)
+	if err != nil {
+		s.logger.Error("persist video attempt failed",
+			zap.String("user_id", userID),
+			zap.String("code", code),
+			zap.Error(err),
+		)
+
+		return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "create video attempt", err, zap.String("userID", userID))
+	}
+
+	// Update attempt with verification code
+	// After entity regeneration, this can be done via the entity model
+	updateErr := s.verificationRepo.UpdateVerificationCode(ctx, attempt.ID, code)
+	if updateErr != nil {
+		return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "update verification code", updateErr, zap.String("userID", userID))
+	}
+
+	s.logger.Info("start created video attempt",
+		zap.String("user_id", userID),
+		zap.String("code", code),
+	)
+
+	return domain.StartVideoResult{
+		Code:      code,
+		UploadURL: urls[0].URL,
+		UploadKey: urls[0].Key,
+	}, nil
+}
+
+func (s *service) SubmitVideoVerification(ctx context.Context, userID, videoS3Key string) (domain.SubmitVideoResult, error) {
+	// Update attempt with video S3 key and mark as needs_review
+	err := s.verificationRepo.UpdateVideoAttemptWithKey(ctx, userID, videoS3Key)
+	if err != nil {
+		s.logger.Error("submit video verification failed",
+			zap.String("user_id", userID),
+			zap.String("video_s3_key", videoS3Key),
+			zap.Error(err),
+		)
+
+		return domain.SubmitVideoResult{}, commonlogger.LogError(s.logger, "update video attempt", err, zap.String("userID", userID), zap.String("videoS3Key", videoS3Key))
+	}
+
+	s.logger.Info("video verification submitted",
+		zap.String("user_id", userID),
+		zap.String("video_s3_key", videoS3Key),
+	)
+
+	return domain.SubmitVideoResult{
+		Status: "submitted",
+	}, nil
+}
+
+// generateFourDigitCode generates a random 4-digit code (1000-9999)
+func generateFourDigitCode() (string, error) {
+	const digits = "0123456789"
+
+	b := make([]byte, 4)
+
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random code: %w", err)
+	}
+
+	// Ensure first digit is 1-9 (so code is between 1000-9999)
+	b[0] = digits[1+int(b[0])%9] // 1-9
+	for i := 1; i < 4; i++ {
+		b[i] = digits[int(b[i])%10] // 0-9
+	}
+
+	return string(b), nil
 }

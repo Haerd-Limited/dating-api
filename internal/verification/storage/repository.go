@@ -25,6 +25,12 @@ type VerificationRepository interface {
 	GetVerificationAttemptByUserIDAndSessionID(ctx context.Context, userID string, sessionID string) (*entity.VerificationAttempt, error)
 	CheckIfPendingAttemptsExist(ctx context.Context, userID string) (*entity.VerificationAttempt, error)
 	InvalidatePhotoVerification(ctx context.Context, userID string, tx *sql.Tx) error
+	// Video verification methods
+	CheckIfPendingVideoAttemptExists(ctx context.Context, userID string) (*entity.VerificationAttempt, error)
+	GetVideoAttemptByUserID(ctx context.Context, userID string) (*entity.VerificationAttempt, error)
+	UpdateVideoAttemptWithKey(ctx context.Context, userID string, videoS3Key string) error
+	GetVerificationCode(ctx context.Context, attemptID string) (string, error)
+	UpdateVerificationCode(ctx context.Context, attemptID string, code string) error
 }
 
 type verificationRepository struct {
@@ -157,6 +163,14 @@ func (r *verificationRepository) MarkAttempt(ctx context.Context, upd entity.Ver
 		cols = append(cols, entity.VerificationAttemptColumns.BestFrameS3Key)
 	}
 
+	if upd.VideoS3Key.Valid {
+		cols = append(cols, entity.VerificationAttemptColumns.VideoS3Key)
+	}
+
+	if upd.VerificationCode.Valid {
+		cols = append(cols, entity.VerificationAttemptColumns.VerificationCode)
+	}
+
 	// Always bump updated_at
 	upd.UpdatedAt = time.Now().UTC()
 
@@ -233,4 +247,85 @@ func (r *verificationRepository) GetUserPrivatePhotoKeys(ctx context.Context, us
 	}
 
 	return keys, nil
+}
+
+func (r *verificationRepository) CheckIfPendingVideoAttemptExists(ctx context.Context, userID string) (*entity.VerificationAttempt, error) {
+	attempt, err := entity.VerificationAttempts(
+		entity.VerificationAttemptWhere.UserID.EQ(userID),
+		entity.VerificationAttemptWhere.Type.EQ("video"),
+		entity.VerificationAttemptWhere.Status.EQ(entity.VerificationStatusPending),
+		qm.OrderBy(entity.VerificationAttemptColumns.CreatedAt+" DESC"),
+		qm.Limit(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return attempt, nil
+}
+
+func (r *verificationRepository) GetVideoAttemptByUserID(ctx context.Context, userID string) (*entity.VerificationAttempt, error) {
+	attempt, err := entity.VerificationAttempts(
+		entity.VerificationAttemptWhere.UserID.EQ(userID),
+		entity.VerificationAttemptWhere.Type.EQ("video"),
+		qm.OrderBy(entity.VerificationAttemptColumns.CreatedAt+" DESC"),
+		qm.Limit(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return attempt, nil
+}
+
+func (r *verificationRepository) UpdateVideoAttemptWithKey(ctx context.Context, userID string, videoS3Key string) error {
+	attempt, err := r.GetVideoAttemptByUserID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("get video attempt: %w", err)
+	}
+
+	// Set video_s3_key and status fields
+	// Note: After entity regeneration, these will be: attempt.VideoS3Key and attempt.VerificationCode
+	// For now, we'll use reflection or update via raw SQL, but since MarkAttempt uses whitelist,
+	// we need to handle the new fields. Let's use a direct update for now.
+	attempt.Status = entity.VerificationStatusNeedsReview
+
+	// Update via raw query since we need to set fields that don't exist in current entity
+	_, err = r.db.ExecContext(ctx,
+		`UPDATE verification_attempts SET video_s3_key = $1, status = $2, updated_at = now() WHERE id = $3`,
+		videoS3Key,
+		entity.VerificationStatusNeedsReview,
+		attempt.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("update video attempt with key: %w", err)
+	}
+
+	return nil
+}
+
+func (r *verificationRepository) GetVerificationCode(ctx context.Context, attemptID string) (string, error) {
+	var code sql.NullString
+
+	err := r.db.QueryRowContext(ctx,
+		"SELECT verification_code FROM verification_attempts WHERE id = $1", attemptID).Scan(&code)
+	if err != nil {
+		return "", fmt.Errorf("get verification code: %w", err)
+	}
+
+	if !code.Valid {
+		return "", nil
+	}
+
+	return code.String, nil
+}
+
+func (r *verificationRepository) UpdateVerificationCode(ctx context.Context, attemptID string, code string) error {
+	_, err := r.db.ExecContext(ctx,
+		"UPDATE verification_attempts SET verification_code = $1 WHERE id = $2", code, attemptID)
+	if err != nil {
+		return fmt.Errorf("update verification code: %w", err)
+	}
+
+	return nil
 }

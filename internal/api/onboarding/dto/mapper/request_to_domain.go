@@ -121,3 +121,10 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) domain.Pro
 		UploadedPrompts: voicePrompts,
 	}
 }
+
+func MapVideoVerificationRequestToDomain(req dto.VideoVerificationRequest, userID string) domain.VideoVerification {
+	return domain.VideoVerification{
+		UserID:   userID,
+		VideoKey: req.VideoKey,
+	}
+}

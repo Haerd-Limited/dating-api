@@ -17,6 +17,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
+	"github.com/Haerd-Limited/dating-api/internal/verification"
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
@@ -47,6 +48,8 @@ type Service interface {
 	// Prompts handles the submission of user-uploaded prompts and updates the onboarding process with the provided data.
 	Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.StepResult, error)
 	Profile(ctx context.Context, profileDetails domain.Profile) (domain.StepResult, error)
+	// VideoVerification handles the video verification step in onboarding
+	VideoVerification(ctx context.Context, videoDetails domain.VideoVerification) (domain.StepResult, error)
 }
 
 type onboardingService struct {
@@ -57,6 +60,7 @@ type onboardingService struct {
 	mediaService             media.Service
 	profileService           profile.Service
 	communicationService     communication.Service
+	verificationService      verification.Service
 	notificationPhoneNumbers []string
 	// prereg caps
 	enablePreregCap       bool
@@ -73,6 +77,7 @@ func NewOnboardingService(
 	profileService profile.Service,
 	lookupRepo lookupstorage.LookupRepository,
 	communicationService communication.Service,
+	verificationService verification.Service,
 	notificationPhoneNumbers []string,
 	enablePreregCap bool,
 	maxTotal int,
@@ -87,6 +92,7 @@ func NewOnboardingService(
 		mediaService:             mediaService,
 		profileService:           profileService,
 		communicationService:     communicationService,
+		verificationService:      verificationService,
 		notificationPhoneNumbers: notificationPhoneNumbers,
 		enablePreregCap:          enablePreregCap,
 		maxTotalParticipants:     maxTotal,
@@ -272,7 +278,10 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 		return domain.StepResult{
 			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
 		}, nil
-
+	case domain.OnboardingStepsVideoVerification:
+		return domain.StepResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+		}, nil
 	case domain.OnboardingStepsComplete:
 		return domain.StepResult{
 			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
@@ -791,6 +800,31 @@ func (os *onboardingService) Profile(ctx context.Context, profileDetails domain.
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, profileDetails.UserID, StepForProfile)
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", profileDetails.UserID), zap.String("step", string(StepForProfile)))
+	}
+
+	return domain.StepResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+	}, nil
+}
+
+func (os *onboardingService) VideoVerification(ctx context.Context, videoDetails domain.VideoVerification) (domain.StepResult, error) {
+	const StepForVideoVerification = domain.OnboardingStepsVideoVerification
+
+	err := os.ensureStep(ctx, videoDetails.UserID, StepForVideoVerification)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", videoDetails.UserID), zap.String("step", string(StepForVideoVerification)))
+	}
+
+	// Submit video verification
+	_, err = os.verificationService.SubmitVideoVerification(ctx, videoDetails.UserID, videoDetails.VideoKey)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "submit video verification", err, zap.String("userID", videoDetails.UserID))
+	}
+
+	// Bump onboarding step to COMPLETE
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, videoDetails.UserID, StepForVideoVerification)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", videoDetails.UserID), zap.String("step", string(StepForVideoVerification)))
 	}
 
 	return domain.StepResult{

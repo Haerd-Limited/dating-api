@@ -12,3 +12,13 @@ type CompleteResponse struct {
 	Reasons       []string `json:"reasons,omitempty"`
 	PhotoVerified bool     `json:"photo_verified"`
 }
+
+type StartVideoResponse struct {
+	Code      string `json:"code"`
+	UploadURL string `json:"upload_url"`
+	UploadKey string `json:"upload_key"`
+}
+
+type SubmitVideoResponse struct {
+	Status string `json:"status"`
+}

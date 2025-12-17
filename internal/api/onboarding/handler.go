@@ -36,6 +36,7 @@ type Handler interface {
 	Photos() http.HandlerFunc
 	Prompts() http.HandlerFunc
 	Profile() http.HandlerFunc
+	VideoVerification() http.HandlerFunc
 }
 
 type handler struct {
@@ -464,6 +465,40 @@ func (h *handler) Profile() http.HandlerFunc {
 		result, err := h.onboardingService.Profile(ctx, mapper.MapProfileToDomain(req, userID))
 		if err != nil {
 			render.HandleServiceErrorResponse(h.logger, w, r, "Profile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
+	}
+}
+
+func (h *handler) VideoVerification() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		var req dto.VideoVerificationRequest
+
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate video verification request body", "error", err)
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("video_key is required"),
+			)
+
+			return
+		}
+
+		result, err := h.onboardingService.VideoVerification(ctx, mapper.MapVideoVerificationRequestToDomain(req, userID))
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "VideoVerification", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 

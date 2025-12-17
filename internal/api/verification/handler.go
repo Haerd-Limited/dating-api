@@ -19,6 +19,8 @@ import (
 type Handler interface {
 	Start() http.HandlerFunc
 	Complete() http.HandlerFunc
+	StartVideo() http.HandlerFunc
+	SubmitVideo() http.HandlerFunc
 }
 
 type handler struct {
@@ -87,6 +89,60 @@ func (h *handler) Complete() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, dto.MapToCompleteResponse(result))
+	}
+}
+
+func (h *handler) StartVideo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		result, err := h.verificationService.StartVideoVerification(ctx, userID)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "StartVideo", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.MapToStartVideoResponse(result))
+	}
+}
+
+func (h *handler) SubmitVideo() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		var req dto.SubmitVideoRequest
+
+		err := request.DecodeAndValidate(r.Body, &req)
+		if err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate submit video request body", "error", err.Error())
+			render.Json(
+				w,
+				http.StatusBadRequest,
+				commonMappers.ToSimpleErrorResponse("video_key is required"),
+			)
+
+			return
+		}
+
+		result, err := h.verificationService.SubmitVideoVerification(ctx, userID, req.VideoKey)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "SubmitVideo", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.MapToSubmitVideoResponse(result))
 	}
 }
 

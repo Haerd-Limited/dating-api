@@ -162,6 +162,7 @@ func New(
 						r.Post("/photos", onboardingHandler.Photos())
 						r.Post("/prompts", onboardingHandler.Prompts())
 						r.Post("/profile", onboardingHandler.Profile())
+						r.Post("/video-verification", onboardingHandler.VideoVerification())
 					},
 				)
 
@@ -241,6 +242,8 @@ func New(
 					r.Route("/verification", func(r chi.Router) {
 						r.Post("/photo/start", verificationHandler.Start()) // returns {session_id, region}
 						r.Post("/photo/complete", verificationHandler.Complete())
+						r.Post("/video/start", verificationHandler.StartVideo())   // returns {code, upload_url, upload_key}
+						r.Post("/video/submit", verificationHandler.SubmitVideo()) // submits video for review
 					})
 				})
 
