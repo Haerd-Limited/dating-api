@@ -145,6 +145,7 @@ func New(
 			// --- Protected (must be logged in)
 			r.Group(func(r chi.Router) {
 				r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
+				r.Use(haerdmiddleware.AppOpenTracker())
 
 				r.Route("/safety", func(r chi.Router) {
 					r.Post("/block", safetyHandler.Block())
@@ -264,6 +265,15 @@ func New(
 					r.Get("/", safetyHandler.AdminListReports())
 					r.Get("/{reportID}", safetyHandler.AdminGetReport())
 					r.Post("/{reportID}/resolve", safetyHandler.AdminResolveReport())
+				})
+
+				r.Route("/analytics", func(r chi.Router) {
+					r.Route("/retention", func(r chi.Router) {
+						r.Get("/", insightsHandler.GetRetentionStats())
+						r.Get("/cohorts", insightsHandler.GetRetentionCohorts())
+						r.Get("/global", insightsHandler.GetGlobalRetentionStats())
+						r.Get("/users/{userID}", insightsHandler.GetUserRetentionProfile())
+					})
 				})
 			})
 		},

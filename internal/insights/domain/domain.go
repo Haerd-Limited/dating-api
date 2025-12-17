@@ -40,3 +40,29 @@ type Wrapped struct {
 	ConversationDepthPct *float64 // placeholder
 	MatchToConvoRatePct  *float64 // placeholder
 }
+
+type RetentionStats struct {
+	TotalUsers               int64
+	DAU                      int64 // Daily Active Users
+	WAU                      int64 // Weekly Active Users
+	MAU                      int64 // Monthly Active Users
+	AverageTimeToFirstReturn *time.Duration
+}
+
+type RetentionCohort struct {
+	SignupDate     time.Time
+	Day1Retention  float64 // % who returned on day 1
+	Day7Retention  float64 // % who returned within 7 days
+	Day30Retention float64 // % who returned within 30 days
+	CohortSize     int64
+}
+
+type UserRetentionProfile struct {
+	UserID                  string
+	SignupDate              time.Time
+	FirstAppOpen            *time.Time
+	LatestAppOpen           *time.Time
+	TotalAppOpens           int64
+	AverageTimeBetweenOpens *time.Duration
+	DaysSinceLastOpen       *int64
+}

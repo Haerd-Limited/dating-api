@@ -2,8 +2,10 @@ package insights
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/insights/dto"
@@ -18,6 +20,10 @@ type Handler interface {
 	GetPublicWeekly() http.HandlerFunc
 	GetMeWeekly() http.HandlerFunc
 	GetMyWrapped() http.HandlerFunc
+	GetRetentionStats() http.HandlerFunc
+	GetRetentionCohorts() http.HandlerFunc
+	GetUserRetentionProfile() http.HandlerFunc
+	GetGlobalRetentionStats() http.HandlerFunc
 }
 
 type handler struct {
@@ -99,6 +105,133 @@ func (h *handler) GetMyWrapped() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, dto.MapWrapped(result))
+	}
+}
+
+func (h *handler) GetRetentionStats() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Parse query parameters
+		fromStr := r.URL.Query().Get("from")
+		toStr := r.URL.Query().Get("to")
+
+		if fromStr == "" || toStr == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("from and to query parameters are required (format: YYYY-MM-DD)"))
+			return
+		}
+
+		from, err := time.Parse("2006-01-02", fromStr)
+		if err != nil {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid from date format, expected YYYY-MM-DD"))
+			return
+		}
+
+		to, err := time.Parse("2006-01-02", toStr)
+		if err != nil {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid to date format, expected YYYY-MM-DD"))
+			return
+		}
+
+		result, err := h.insightsSvc.GetRetentionStats(ctx, from, to)
+		if err != nil {
+			h.logger.Sugar().Warnw("get retention stats failed", "error", err, "from", from, "to", to)
+			render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
+
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.MapRetentionStats(result))
+	}
+}
+
+func (h *handler) GetRetentionCohorts() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Parse query parameters
+		signupDateStr := r.URL.Query().Get("signup_date")
+		daysAfterStr := r.URL.Query().Get("days_after")
+
+		if signupDateStr == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("signup_date query parameter is required (format: YYYY-MM-DD)"))
+			return
+		}
+
+		signupDate, err := time.Parse("2006-01-02", signupDateStr)
+		if err != nil {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid signup_date format, expected YYYY-MM-DD"))
+			return
+		}
+
+		daysAfter := 7 // default
+
+		if daysAfterStr != "" {
+			// Parse as integer
+			if d, err := strconv.Atoi(daysAfterStr); err == nil {
+				daysAfter = d
+			}
+		}
+
+		result, err := h.insightsSvc.GetRetentionCohorts(ctx, signupDate, daysAfter)
+		if err != nil {
+			h.logger.Sugar().Warnw("get retention cohorts failed", "error", err, "signupDate", signupDate, "daysAfter", daysAfter)
+			render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
+
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.MapRetentionCohort(result))
+	}
+}
+
+func (h *handler) GetUserRetentionProfile() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID := chi.URLParam(r, "userID")
+		if userID == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("userID is required"))
+			return
+		}
+
+		result, err := h.insightsSvc.GetUserRetentionProfile(ctx, userID)
+		if err != nil {
+			h.logger.Sugar().Warnw("get user retention profile failed", "error", err, "userID", userID)
+			render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
+
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.MapUserRetentionProfile(result))
+	}
+}
+
+func (h *handler) GetGlobalRetentionStats() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		dateStr := r.URL.Query().Get("date")
+		if dateStr == "" {
+			// Default to today
+			dateStr = time.Now().UTC().Format("2006-01-02")
+		}
+
+		date, err := time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid date format, expected YYYY-MM-DD"))
+			return
+		}
+
+		result, err := h.insightsSvc.GetGlobalRetentionStats(ctx, date)
+		if err != nil {
+			h.logger.Sugar().Warnw("get global retention stats failed", "error", err, "date", date)
+			render.Json(w, http.StatusInternalServerError, commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg))
+
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.MapRetentionStats(result))
 	}
 }
 
