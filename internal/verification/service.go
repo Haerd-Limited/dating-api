@@ -4,6 +4,7 @@ package verification
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,6 +30,12 @@ type Service interface {
 	CompletePhotoVerification(ctx context.Context, userID, sessionID string) (domain.CompleteResult, error)
 	StartVideoVerification(ctx context.Context, userID string) (domain.StartVideoResult, error)
 	SubmitVideoVerification(ctx context.Context, userID, videoS3Key string) (domain.SubmitVideoResult, error)
+	// Admin video verification methods
+	ListVideoAttempts(ctx context.Context, filter domain.VideoAttemptFilter) ([]domain.VideoAttempt, error)
+	GetVideoAttempt(ctx context.Context, attemptID string) (*domain.VideoAttempt, error)
+	GetVideoDownloadURL(ctx context.Context, videoS3Key string) (string, error)
+	ApproveVideoAttempt(ctx context.Context, attemptID string, notes *string) error
+	RejectVideoAttempt(ctx context.Context, attemptID string, rejectionReason string, notes *string) error
 }
 
 type service struct {
@@ -434,4 +441,195 @@ func generateFourDigitCode() (string, error) {
 	}
 
 	return string(b), nil
+}
+
+var (
+	ErrVideoAttemptNotFound      = errors.New("video attempt not found")
+	ErrInvalidVideoAttemptStatus = errors.New("invalid video attempt status")
+	ErrRejectionReasonRequired   = errors.New("rejection reason is required")
+)
+
+func (s *service) ListVideoAttempts(ctx context.Context, filter domain.VideoAttemptFilter) ([]domain.VideoAttempt, error) {
+	attempts, err := s.verificationRepo.ListVideoAttempts(ctx, filter)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "list video attempts", err)
+	}
+
+	result := make([]domain.VideoAttempt, 0, len(attempts))
+
+	for _, attempt := range attempts {
+		videoAttempt := s.entityToVideoAttempt(attempt)
+		result = append(result, videoAttempt)
+	}
+
+	return result, nil
+}
+
+func (s *service) GetVideoAttempt(ctx context.Context, attemptID string) (*domain.VideoAttempt, error) {
+	attempt, err := s.verificationRepo.GetVideoAttemptByID(ctx, attemptID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrVideoAttemptNotFound
+		}
+
+		return nil, commonlogger.LogError(s.logger, "get video attempt", err, zap.String("attemptID", attemptID))
+	}
+
+	if attempt.Type != "video" {
+		return nil, ErrVideoAttemptNotFound
+	}
+
+	videoAttempt := s.entityToVideoAttempt(attempt)
+
+	return &videoAttempt, nil
+}
+
+func (s *service) GetVideoDownloadURL(ctx context.Context, videoS3Key string) (string, error) {
+	if videoS3Key == "" {
+		return "", errors.New("video S3 key is required")
+	}
+
+	// Generate presigned URL with 1 hour expiration
+	url, err := s.awsService.GenerateDownloadURL(ctx, videoS3Key, 1*time.Hour)
+	if err != nil {
+		return "", commonlogger.LogError(s.logger, "generate download URL", err, zap.String("videoS3Key", videoS3Key))
+	}
+
+	return url, nil
+}
+
+func (s *service) ApproveVideoAttempt(ctx context.Context, attemptID string, notes *string) error {
+	attempt, err := s.verificationRepo.GetVideoAttemptByID(ctx, attemptID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrVideoAttemptNotFound
+		}
+
+		return commonlogger.LogError(s.logger, "get video attempt", err, zap.String("attemptID", attemptID))
+	}
+
+	if attempt.Type != "video" {
+		return ErrVideoAttemptNotFound
+	}
+
+	// Validate status - can only approve pending or needs_review attempts
+	if attempt.Status != entity.VerificationStatusPending && attempt.Status != entity.VerificationStatusNeedsReview {
+		return fmt.Errorf("%w: cannot approve attempt with status %s", ErrInvalidVideoAttemptStatus, attempt.Status)
+	}
+
+	// Update status to passed
+	err = s.verificationRepo.UpdateVideoAttemptStatus(ctx, attemptID, entity.VerificationStatusPassed, nil)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "update video attempt status", err, zap.String("attemptID", attemptID))
+	}
+
+	// Update user verification status (similar to photo verification)
+	err = s.verificationRepo.SetUserPhotoVerified(ctx, attempt.UserID, attemptID)
+	if err != nil {
+		s.logger.Warn("failed to set user photo verified after video approval",
+			zap.String("userID", attempt.UserID),
+			zap.String("attemptID", attemptID),
+			zap.Error(err))
+		// Don't fail the whole operation if this fails
+	}
+
+	// Verify profile
+	err = s.profileService.VerifyProfile(ctx, attempt.UserID)
+	if err != nil {
+		s.logger.Warn("failed to verify profile after video approval",
+			zap.String("userID", attempt.UserID),
+			zap.String("attemptID", attemptID),
+			zap.Error(err))
+		// Don't fail the whole operation if this fails
+	}
+
+	s.logger.Info("video verification approved",
+		zap.String("attempt_id", attemptID),
+		zap.String("user_id", attempt.UserID),
+		zap.String("notes", func() string {
+			if notes != nil {
+				return *notes
+			}
+
+			return ""
+		}()))
+
+	return nil
+}
+
+func (s *service) RejectVideoAttempt(ctx context.Context, attemptID string, rejectionReason string, notes *string) error {
+	if rejectionReason == "" {
+		return ErrRejectionReasonRequired
+	}
+
+	attempt, err := s.verificationRepo.GetVideoAttemptByID(ctx, attemptID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrVideoAttemptNotFound
+		}
+
+		return commonlogger.LogError(s.logger, "get video attempt", err, zap.String("attemptID", attemptID))
+	}
+
+	if attempt.Type != "video" {
+		return ErrVideoAttemptNotFound
+	}
+
+	// Validate status - can only reject pending or needs_review attempts
+	if attempt.Status != entity.VerificationStatusPending && attempt.Status != entity.VerificationStatusNeedsReview {
+		return fmt.Errorf("%w: cannot reject attempt with status %s", ErrInvalidVideoAttemptStatus, attempt.Status)
+	}
+
+	// Update status to failed with rejection reason
+	err = s.verificationRepo.UpdateVideoAttemptStatus(ctx, attemptID, entity.VerificationStatusFailed, &rejectionReason)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "update video attempt status", err, zap.String("attemptID", attemptID))
+	}
+
+	s.logger.Info("video verification rejected",
+		zap.String("attempt_id", attemptID),
+		zap.String("user_id", attempt.UserID),
+		zap.String("rejection_reason", rejectionReason),
+		zap.String("notes", func() string {
+			if notes != nil {
+				return *notes
+			}
+
+			return ""
+		}()))
+
+	return nil
+}
+
+// entityToVideoAttempt converts an entity.VerificationAttempt to domain.VideoAttempt
+func (s *service) entityToVideoAttempt(attempt *entity.VerificationAttempt) domain.VideoAttempt {
+	var verificationCode string
+	if attempt.VerificationCode.Valid {
+		verificationCode = attempt.VerificationCode.String
+	}
+
+	var videoS3Key string
+	if attempt.VideoS3Key.Valid {
+		videoS3Key = attempt.VideoS3Key.String
+	}
+
+	var rejectionReason *string
+
+	if attempt.ReasonCodes.Valid && len(attempt.ReasonCodes.JSON) > 0 {
+		var reasonCodes []string
+		if err := json.Unmarshal(attempt.ReasonCodes.JSON, &reasonCodes); err == nil && len(reasonCodes) > 0 {
+			rejectionReason = &reasonCodes[0]
+		}
+	}
+
+	return domain.VideoAttempt{
+		ID:               attempt.ID,
+		UserID:           attempt.UserID,
+		VerificationCode: verificationCode,
+		VideoS3Key:       videoS3Key,
+		Status:           attempt.Status,
+		RejectionReason:  rejectionReason,
+		CreatedAt:        attempt.CreatedAt,
+		UpdatedAt:        attempt.UpdatedAt,
+	}
 }

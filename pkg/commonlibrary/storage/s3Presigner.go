@@ -34,6 +34,7 @@ type Presigner interface {
 		contentType string,
 		ttl time.Duration,
 		purpose *string) ([]UploadSlot, error)
+	GenerateDownloadURL(ctx context.Context, key string, ttl time.Duration) (string, error)
 }
 
 func NewPresigner(ctx context.Context, env, region, bucket string, loadOpts ...func(*config.LoadOptions) error) (Presigner, error) {
@@ -119,6 +120,27 @@ func (p *presigner) GenerateUploadURLs(ctx context.Context, userID string, count
 	}
 
 	return slots, nil
+}
+
+// GenerateDownloadURL generates a presigned GET URL for downloading/viewing an S3 object
+func (p *presigner) GenerateDownloadURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	if key == "" {
+		return "", errors.New("key is required")
+	}
+
+	req := &s3.GetObjectInput{
+		Bucket: aws.String(p.bucket),
+		Key:    aws.String(key),
+	}
+
+	out, err := p.presigner.PresignGetObject(ctx, req, func(po *s3.PresignOptions) {
+		po.Expires = ttl
+	})
+	if err != nil {
+		return "", fmt.Errorf("presign get for key %s: %w", key, err)
+	}
+
+	return out.URL, nil
 }
 
 func extForContentType(ct string) string {

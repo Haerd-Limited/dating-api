@@ -270,6 +270,16 @@ func New(
 						r.Get("/users/{userID}", insightsHandler.GetUserRetentionProfile())
 					})
 				})
+
+				r.Route("/verification", func(r chi.Router) {
+					r.Route("/video-attempts", func(r chi.Router) {
+						r.Get("/", verificationHandler.AdminListVideoAttempts())
+						r.Get("/{attemptID}", verificationHandler.AdminGetVideoAttempt())
+						r.Get("/{attemptID}/video-url", verificationHandler.AdminGetVideoDownloadURL())
+						r.Post("/{attemptID}/approve", verificationHandler.AdminApproveVideoAttempt())
+						r.Post("/{attemptID}/reject", verificationHandler.AdminRejectVideoAttempt())
+					})
+				})
 			})
 		},
 	)

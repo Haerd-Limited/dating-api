@@ -17,3 +17,20 @@ type SubmitVideoRequest struct {
 func (svr SubmitVideoRequest) Validate() error {
 	return validator.New().Struct(svr)
 }
+
+type ApproveVideoRequest struct {
+	Notes *string `json:"notes,omitempty"`
+}
+
+func (avr ApproveVideoRequest) Validate() error {
+	return validator.New().Struct(avr)
+}
+
+type RejectVideoRequest struct {
+	RejectionReason string  `json:"rejection_reason" validate:"required"`
+	Notes           *string `json:"notes,omitempty"`
+}
+
+func (rvr RejectVideoRequest) Validate() error {
+	return validator.New().Struct(rvr)
+}

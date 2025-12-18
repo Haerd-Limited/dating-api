@@ -18,6 +18,8 @@ type Service interface {
 	// Optional: store best frame for a short retention
 	StoreBestFrame(ctx context.Context, body []byte, userID string) (string, error)
 	GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration, purpose *string) ([]commonStorage.UploadSlot, error)
+	// GenerateDownloadURL generates a presigned GET URL for downloading/viewing an S3 object
+	GenerateDownloadURL(ctx context.Context, key string, ttl time.Duration) (string, error)
 	// DeleteAllUserFiles deletes all S3 files belonging to a user
 	DeleteAllUserFiles(ctx context.Context, userID string) error
 }
@@ -59,6 +61,10 @@ func (s *awsService) StoreBestFrame(ctx context.Context, body []byte, userID str
 
 func (s *awsService) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration, purpose *string) ([]commonStorage.UploadSlot, error) {
 	return s.S3Presigner.GenerateUploadURLs(ctx, userID, count, contentType, ttl, purpose)
+}
+
+func (s *awsService) GenerateDownloadURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	return s.S3Presigner.GenerateDownloadURL(ctx, key, ttl)
 }
 
 func (s *awsService) GetObjectBytes(ctx context.Context, key string) ([]byte, error) {

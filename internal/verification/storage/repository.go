@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
+	"github.com/Haerd-Limited/dating-api/internal/verification/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
@@ -31,6 +33,10 @@ type VerificationRepository interface {
 	UpdateVideoAttemptWithKey(ctx context.Context, userID string, videoS3Key string) error
 	GetVerificationCode(ctx context.Context, attemptID string) (string, error)
 	UpdateVerificationCode(ctx context.Context, attemptID string, code string) error
+	// Admin video verification methods
+	ListVideoAttempts(ctx context.Context, filter domain.VideoAttemptFilter) ([]*entity.VerificationAttempt, error)
+	GetVideoAttemptByID(ctx context.Context, attemptID string) (*entity.VerificationAttempt, error)
+	UpdateVideoAttemptStatus(ctx context.Context, attemptID string, status string, rejectionReason *string) error
 }
 
 type verificationRepository struct {
@@ -325,6 +331,92 @@ func (r *verificationRepository) UpdateVerificationCode(ctx context.Context, att
 		"UPDATE verification_attempts SET verification_code = $1 WHERE id = $2", code, attemptID)
 	if err != nil {
 		return fmt.Errorf("update verification code: %w", err)
+	}
+
+	return nil
+}
+
+func (r *verificationRepository) ListVideoAttempts(ctx context.Context, filter domain.VideoAttemptFilter) ([]*entity.VerificationAttempt, error) {
+	mods := []qm.QueryMod{
+		entity.VerificationAttemptWhere.Type.EQ("video"),
+		qm.OrderBy(entity.VerificationAttemptColumns.CreatedAt + " DESC"),
+	}
+
+	if len(filter.Status) > 0 {
+		args := make([]interface{}, len(filter.Status))
+		for i, status := range filter.Status {
+			args[i] = status
+		}
+
+		mods = append(mods, qm.WhereIn(
+			"verification_attempts.status IN ?",
+			args...,
+		))
+	}
+
+	if filter.UserID != nil && *filter.UserID != "" {
+		mods = append(mods, entity.VerificationAttemptWhere.UserID.EQ(*filter.UserID))
+	}
+
+	if filter.Limit > 0 {
+		mods = append(mods, qm.Limit(filter.Limit))
+	} else {
+		mods = append(mods, qm.Limit(50)) // default limit
+	}
+
+	if filter.Offset > 0 {
+		mods = append(mods, qm.Offset(filter.Offset))
+	}
+
+	attempts, err := entity.VerificationAttempts(mods...).All(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("list video attempts: %w", err)
+	}
+
+	return attempts, nil
+}
+
+func (r *verificationRepository) GetVideoAttemptByID(ctx context.Context, attemptID string) (*entity.VerificationAttempt, error) {
+	attempt, err := entity.VerificationAttempts(
+		entity.VerificationAttemptWhere.ID.EQ(attemptID),
+		entity.VerificationAttemptWhere.Type.EQ("video"),
+	).One(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("get video attempt by id: %w", err)
+	}
+
+	return attempt, nil
+}
+
+func (r *verificationRepository) UpdateVideoAttemptStatus(ctx context.Context, attemptID string, status string, rejectionReason *string) error {
+	attempt, err := entity.FindVerificationAttempt(ctx, r.db, attemptID)
+	if err != nil {
+		return fmt.Errorf("get video attempt: %w", err)
+	}
+
+	attempt.Status = status
+	attempt.UpdatedAt = time.Now().UTC()
+
+	// Store rejection reason in reason_codes JSON field, or clear it if approving
+	if rejectionReason != nil {
+		reasonCodesJSON, marshalErr := json.Marshal([]string{*rejectionReason})
+		if marshalErr != nil {
+			return fmt.Errorf("marshal rejection reason: %w", marshalErr)
+		}
+
+		attempt.ReasonCodes = null.JSONFrom(reasonCodesJSON)
+	} else {
+		// Clear reason codes when approving
+		attempt.ReasonCodes = null.JSON{}
+	}
+
+	_, err = attempt.Update(ctx, r.db, boil.Whitelist(
+		entity.VerificationAttemptColumns.Status,
+		entity.VerificationAttemptColumns.ReasonCodes,
+		entity.VerificationAttemptColumns.UpdatedAt,
+	))
+	if err != nil {
+		return fmt.Errorf("update video attempt status: %w", err)
 	}
 
 	return nil
