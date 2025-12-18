@@ -1,6 +1,8 @@
 package dto
 
-import "time"
+import (
+	"time"
+)
 
 // Result is what handlers return to clients
 type StartResponse struct {
@@ -26,14 +28,21 @@ type SubmitVideoResponse struct {
 }
 
 type VideoAttemptResponse struct {
-	ID               string    `json:"id"`
-	UserID           string    `json:"user_id"`
-	VerificationCode string    `json:"verification_code"`
-	VideoS3Key       string    `json:"video_s3_key"`
-	Status           string    `json:"status"`
-	RejectionReason  *string   `json:"rejection_reason,omitempty"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ID               string          `json:"id"`
+	UserID           string          `json:"user_id"`
+	VerificationCode string          `json:"verification_code"`
+	VideoS3Key       string          `json:"video_s3_key"`
+	Status           string          `json:"status"`
+	RejectionReason  *string         `json:"rejection_reason,omitempty"`
+	Photos           []PhotoResponse `json:"photos"`
+	CreatedAt        time.Time       `json:"created_at"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+}
+
+type PhotoResponse struct {
+	URL       string `json:"url"`
+	IsPrimary bool   `json:"is_primary"`
+	Position  int16  `json:"position"`
 }
 
 type VideoDownloadURLResponse struct {

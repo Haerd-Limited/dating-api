@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
+)
 
 type StartVideoResult struct {
 	Code      string
@@ -25,7 +29,8 @@ type VideoAttempt struct {
 	VerificationCode string
 	VideoS3Key       string
 	Status           string
-	RejectionReason  *string // Extracted from ReasonCodes JSON field
+	RejectionReason  *string               // Extracted from ReasonCodes JSON field
+	Photos           []profiledomain.Photo // User's profile photos for comparison
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }

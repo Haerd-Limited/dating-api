@@ -35,6 +35,15 @@ func MapToSubmitVideoResponse(d domain.SubmitVideoResult) SubmitVideoResponse {
 }
 
 func DomainToVideoAttemptResponse(d domain.VideoAttempt) VideoAttemptResponse {
+	photos := make([]PhotoResponse, 0, len(d.Photos))
+	for _, photo := range d.Photos {
+		photos = append(photos, PhotoResponse{
+			URL:       photo.URL,
+			IsPrimary: photo.IsPrimary,
+			Position:  photo.Position,
+		})
+	}
+
 	return VideoAttemptResponse{
 		ID:               d.ID,
 		UserID:           d.UserID,
@@ -42,6 +51,7 @@ func DomainToVideoAttemptResponse(d domain.VideoAttempt) VideoAttemptResponse {
 		VideoS3Key:       d.VideoS3Key,
 		Status:           d.Status,
 		RejectionReason:  d.RejectionReason,
+		Photos:           photos,
 		CreatedAt:        d.CreatedAt,
 		UpdatedAt:        d.UpdatedAt,
 	}

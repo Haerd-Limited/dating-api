@@ -20,6 +20,7 @@ import (
 	internalaws "github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
+	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/verification/domain"
 	"github.com/Haerd-Limited/dating-api/internal/verification/storage"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
@@ -459,6 +460,20 @@ func (s *service) ListVideoAttempts(ctx context.Context, filter domain.VideoAtte
 
 	for _, attempt := range attempts {
 		videoAttempt := s.entityToVideoAttempt(attempt)
+
+		// Fetch user's profile photos for comparison
+		photos, err := s.profileService.GetUserPhotos(ctx, attempt.UserID)
+		if err != nil {
+			s.logger.Warn("failed to get user photos for video attempt",
+				zap.String("userID", attempt.UserID),
+				zap.String("attemptID", attempt.ID),
+				zap.Error(err))
+			// Don't fail the whole operation if photos can't be fetched
+			videoAttempt.Photos = []profiledomain.Photo{}
+		} else {
+			videoAttempt.Photos = photos
+		}
+
 		result = append(result, videoAttempt)
 	}
 
@@ -480,6 +495,19 @@ func (s *service) GetVideoAttempt(ctx context.Context, attemptID string) (*domai
 	}
 
 	videoAttempt := s.entityToVideoAttempt(attempt)
+
+	// Fetch user's profile photos for comparison
+	photos, err := s.profileService.GetUserPhotos(ctx, attempt.UserID)
+	if err != nil {
+		s.logger.Warn("failed to get user photos for video attempt",
+			zap.String("userID", attempt.UserID),
+			zap.String("attemptID", attemptID),
+			zap.Error(err))
+		// Don't fail the whole operation if photos can't be fetched
+		videoAttempt.Photos = []profiledomain.Photo{}
+	} else {
+		videoAttempt.Photos = photos
+	}
 
 	return &videoAttempt, nil
 }
