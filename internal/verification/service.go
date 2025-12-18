@@ -381,13 +381,6 @@ func (s *service) StartVideoVerification(ctx context.Context, userID string) (do
 		return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "create video attempt", err, zap.String("userID", userID))
 	}
 
-	// Update attempt with verification code
-	// After entity regeneration, this can be done via the entity model
-	updateErr := s.verificationRepo.UpdateVerificationCode(ctx, attempt.ID, code)
-	if updateErr != nil {
-		return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "update verification code", updateErr, zap.String("userID", userID))
-	}
-
 	s.logger.Info("start created video attempt",
 		zap.String("user_id", userID),
 		zap.String("code", code),

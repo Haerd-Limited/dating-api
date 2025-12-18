@@ -36,12 +36,8 @@ type VerificationAttempt struct {
 	CreatedAt        time.Time    `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt        time.Time    `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	ClientToken      null.String  `boil:"client_token" json:"client_token,omitempty" toml:"client_token" yaml:"client_token,omitempty"`
-	VideoS3Key       null.String  `boil:"video_s3_key" json:"video_s3_key,omitempty" toml:"video_s3_key" yaml:"video_s3_key,omitempty"`
-	ChallengeCode    null.String  `boil:"challenge_code" json:"challenge_code,omitempty" toml:"challenge_code" yaml:"challenge_code,omitempty"`
-	SubmittedAt      null.Time    `boil:"submitted_at" json:"submitted_at,omitempty" toml:"submitted_at" yaml:"submitted_at,omitempty"`
-	ReviewedAt       null.Time    `boil:"reviewed_at" json:"reviewed_at,omitempty" toml:"reviewed_at" yaml:"reviewed_at,omitempty"`
-	ReviewNotes      null.String  `boil:"review_notes" json:"review_notes,omitempty" toml:"review_notes" yaml:"review_notes,omitempty"`
 	VerificationCode null.String  `boil:"verification_code" json:"verification_code,omitempty" toml:"verification_code" yaml:"verification_code,omitempty"`
+	VideoS3Key       null.String  `boil:"video_s3_key" json:"video_s3_key,omitempty" toml:"video_s3_key" yaml:"video_s3_key,omitempty"`
 
 	R *verificationAttemptR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L verificationAttemptL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -60,12 +56,8 @@ var VerificationAttemptColumns = struct {
 	CreatedAt        string
 	UpdatedAt        string
 	ClientToken      string
-	VideoS3Key       string
-	ChallengeCode    string
-	SubmittedAt      string
-	ReviewedAt       string
-	ReviewNotes      string
 	VerificationCode string
+	VideoS3Key       string
 }{
 	ID:               "id",
 	UserID:           "user_id",
@@ -79,12 +71,8 @@ var VerificationAttemptColumns = struct {
 	CreatedAt:        "created_at",
 	UpdatedAt:        "updated_at",
 	ClientToken:      "client_token",
-	VideoS3Key:       "video_s3_key",
-	ChallengeCode:    "challenge_code",
-	SubmittedAt:      "submitted_at",
-	ReviewedAt:       "reviewed_at",
-	ReviewNotes:      "review_notes",
 	VerificationCode: "verification_code",
+	VideoS3Key:       "video_s3_key",
 }
 
 var VerificationAttemptTableColumns = struct {
@@ -100,12 +88,8 @@ var VerificationAttemptTableColumns = struct {
 	CreatedAt        string
 	UpdatedAt        string
 	ClientToken      string
-	VideoS3Key       string
-	ChallengeCode    string
-	SubmittedAt      string
-	ReviewedAt       string
-	ReviewNotes      string
 	VerificationCode string
+	VideoS3Key       string
 }{
 	ID:               "verification_attempts.id",
 	UserID:           "verification_attempts.user_id",
@@ -119,12 +103,8 @@ var VerificationAttemptTableColumns = struct {
 	CreatedAt:        "verification_attempts.created_at",
 	UpdatedAt:        "verification_attempts.updated_at",
 	ClientToken:      "verification_attempts.client_token",
-	VideoS3Key:       "verification_attempts.video_s3_key",
-	ChallengeCode:    "verification_attempts.challenge_code",
-	SubmittedAt:      "verification_attempts.submitted_at",
-	ReviewedAt:       "verification_attempts.reviewed_at",
-	ReviewNotes:      "verification_attempts.review_notes",
 	VerificationCode: "verification_attempts.verification_code",
+	VideoS3Key:       "verification_attempts.video_s3_key",
 }
 
 // Generated where
@@ -180,12 +160,8 @@ var VerificationAttemptWhere = struct {
 	CreatedAt        whereHelpertime_Time
 	UpdatedAt        whereHelpertime_Time
 	ClientToken      whereHelpernull_String
-	VideoS3Key       whereHelpernull_String
-	ChallengeCode    whereHelpernull_String
-	SubmittedAt      whereHelpernull_Time
-	ReviewedAt       whereHelpernull_Time
-	ReviewNotes      whereHelpernull_String
 	VerificationCode whereHelpernull_String
+	VideoS3Key       whereHelpernull_String
 }{
 	ID:               whereHelperstring{field: "\"verification_attempts\".\"id\""},
 	UserID:           whereHelperstring{field: "\"verification_attempts\".\"user_id\""},
@@ -199,12 +175,8 @@ var VerificationAttemptWhere = struct {
 	CreatedAt:        whereHelpertime_Time{field: "\"verification_attempts\".\"created_at\""},
 	UpdatedAt:        whereHelpertime_Time{field: "\"verification_attempts\".\"updated_at\""},
 	ClientToken:      whereHelpernull_String{field: "\"verification_attempts\".\"client_token\""},
-	VideoS3Key:       whereHelpernull_String{field: "\"verification_attempts\".\"video_s3_key\""},
-	ChallengeCode:    whereHelpernull_String{field: "\"verification_attempts\".\"challenge_code\""},
-	SubmittedAt:      whereHelpernull_Time{field: "\"verification_attempts\".\"submitted_at\""},
-	ReviewedAt:       whereHelpernull_Time{field: "\"verification_attempts\".\"reviewed_at\""},
-	ReviewNotes:      whereHelpernull_String{field: "\"verification_attempts\".\"review_notes\""},
 	VerificationCode: whereHelpernull_String{field: "\"verification_attempts\".\"verification_code\""},
+	VideoS3Key:       whereHelpernull_String{field: "\"verification_attempts\".\"video_s3_key\""},
 }
 
 // VerificationAttemptRels is where relationship names are stored.
@@ -263,9 +235,9 @@ func (r *verificationAttemptR) GetLastAttemptUserVerificationStatuses() UserVeri
 type verificationAttemptL struct{}
 
 var (
-	verificationAttemptAllColumns            = []string{"id", "user_id", "type", "status", "session_id", "liveness_score", "match_score", "reason_codes", "best_frame_s3_key", "created_at", "updated_at", "client_token", "video_s3_key", "challenge_code", "submitted_at", "reviewed_at", "review_notes", "verification_code"}
+	verificationAttemptAllColumns            = []string{"id", "user_id", "type", "status", "session_id", "liveness_score", "match_score", "reason_codes", "best_frame_s3_key", "created_at", "updated_at", "client_token", "verification_code", "video_s3_key"}
 	verificationAttemptColumnsWithoutDefault = []string{"user_id"}
-	verificationAttemptColumnsWithDefault    = []string{"id", "type", "status", "session_id", "liveness_score", "match_score", "reason_codes", "best_frame_s3_key", "created_at", "updated_at", "client_token", "video_s3_key", "challenge_code", "submitted_at", "reviewed_at", "review_notes", "verification_code"}
+	verificationAttemptColumnsWithDefault    = []string{"id", "type", "status", "session_id", "liveness_score", "match_score", "reason_codes", "best_frame_s3_key", "created_at", "updated_at", "client_token", "verification_code", "video_s3_key"}
 	verificationAttemptPrimaryKeyColumns     = []string{"id"}
 	verificationAttemptGeneratedColumns      = []string{}
 )
