@@ -79,6 +79,7 @@ func New(
 			"http://localhost:5173",
 			"https://admin-dashboard-sit.up.railway.app",
 			"https://admin-dashboard-prod.up.railway.app",
+			"https://haerd-admin-dashboard.up.railway.app",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Admin-Token"},
