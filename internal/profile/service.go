@@ -651,7 +651,46 @@ func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []
 		seen[p.Position] = struct{}{}
 	}
 
-	return s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID), nil)
+	// Begin transaction
+	tx, err := s.uow.Begin(ctx)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "begin tx", err, zap.String("userID", userID))
+	}
+
+	defer func() { _ = tx.Rollback() }()
+
+	// Upsert photos
+	err = s.profileRepo.UpsertUserPhotos(ctx, userID, mapper.MapUpdatedPhotosToEntity(photos, userID), tx.Raw())
+	if err != nil {
+		return commonlogger.LogError(s.logger, "upsert user photos", err, zap.String("userID", userID))
+	}
+
+	// Invalidate photo verification
+	err = s.verificationRepo.InvalidatePhotoVerification(ctx, userID, tx.Raw())
+	if err != nil {
+		return commonlogger.LogError(s.logger, "invalidate photo verification", err, zap.String("userID", userID))
+	}
+
+	// Load current profile and set verification status to unverified
+	prof, err := s.getUserProfile(ctx, userID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "get user profile", err, zap.String("userID", userID))
+	}
+
+	prof.VerifiedStatus = domain.VerificationStatusUnverified
+
+	err = s.updateUserProfile(ctx, prof, tx.Raw())
+	if err != nil {
+		return commonlogger.LogError(s.logger, "update user profile", err, zap.String("userID", userID))
+	}
+
+	// Commit transaction
+	err = tx.Commit()
+	if err != nil {
+		return commonlogger.LogError(s.logger, "commit tx", err, zap.String("userID", userID))
+	}
+
+	return nil
 }
 
 func (s *service) UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error {
