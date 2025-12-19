@@ -291,7 +291,7 @@ func (r *repository) GetRetentionCohort(ctx context.Context, signupDate time.Tim
 	err = r.db.GetContext(ctx, &returned,
 		`SELECT COUNT(DISTINCT e.user_id) 
 		 FROM events e
-		 INNER JOIN users u ON e.user_id = u.id::text
+		 INNER JOIN users u ON e.user_id = u.id
 		 WHERE e.name = $1 
 		   AND u.created_at >= $2 AND u.created_at < $3
 		   AND e.occurred_at >= $4 AND e.occurred_at < $5`,
@@ -310,7 +310,7 @@ func (r *repository) GetAverageTimeToFirstReturn(ctx context.Context, from, to t
 	err := r.db.GetContext(ctx, &avgSeconds,
 		`SELECT AVG(EXTRACT(EPOCH FROM (e.occurred_at - u.created_at))) as avg_seconds
 		 FROM events e
-		 INNER JOIN users u ON e.user_id = u.id::text
+		 INNER JOIN users u ON e.user_id = u.id
 		 WHERE e.name = $1
 		   AND u.created_at >= $2 AND u.created_at < $3
 		   AND e.occurred_at = (
