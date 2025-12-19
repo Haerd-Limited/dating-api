@@ -9,17 +9,17 @@ import (
 
 func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 	result := dto.Profile{
-		DisplayName: profile.DisplayName,
-		Birthdate:   profile.Birthdate.Format(time.DateOnly),
-		Age:         profile.Age,
-		HeightCM:    profile.HeightCM,
-		UserID:      profile.UserID,
-		Emoji:       profile.Emoji,
-		Latitude:    profile.Latitude,
-		Longitude:   profile.Longitude,
-		City:        profile.City,
-		Country:     profile.Country,
-		Verified:    profile.Verified,
+		DisplayName:    profile.DisplayName,
+		Birthdate:      profile.Birthdate.Format(time.DateOnly),
+		Age:            profile.Age,
+		HeightCM:       profile.HeightCM,
+		UserID:         profile.UserID,
+		Emoji:          profile.Emoji,
+		Latitude:       profile.Latitude,
+		Longitude:      profile.Longitude,
+		City:           profile.City,
+		Country:        profile.Country,
+		VerifiedStatus: profile.VerifiedStatus,
 		Theme: dto.UserTheme{
 			BaseHex: profile.Theme.BaseHex,
 			Palette: profile.Theme.Palette,

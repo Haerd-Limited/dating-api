@@ -33,8 +33,8 @@ type ProfileCard struct {
 	Theme           UserTheme     `json:"theme"`
 	CoverPhotoURL   string        `json:"cover_photo_url"`
 
-	Verified  bool   `json:"verified"`
-	LikeCount *int64 `json:"like_count"`
+	VerifiedStatus string `json:"verified_status"`
+	LikeCount      *int64 `json:"like_count"`
 
 	Work         *string       `json:"work"`
 	JobTitle     *string       `json:"job_title"`

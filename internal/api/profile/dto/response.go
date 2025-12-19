@@ -5,14 +5,14 @@ type GetProfileResponse struct {
 }
 
 type Profile struct {
-	DisplayName   string `json:"display_name"`
-	Birthdate     string `json:"birthdate"`
-	Age           int    `json:"age"`
-	HeightCM      int16  `json:"height_cm"`
-	UserID        string `json:"user_id"`
-	CoverPhotoURL string `json:"cover_photo_url"`
-	Emoji         string `json:"emoji"`
-	Verified      bool   `json:"verified"`
+	DisplayName    string `json:"display_name"`
+	Birthdate      string `json:"birthdate"`
+	Age            int    `json:"age"`
+	HeightCM       int16  `json:"height_cm"`
+	UserID         string `json:"user_id"`
+	CoverPhotoURL  string `json:"cover_photo_url"`
+	Emoji          string `json:"emoji"`
+	VerifiedStatus string `json:"verified_status"`
 
 	// Location
 	Latitude  float64 `json:"latitude"`

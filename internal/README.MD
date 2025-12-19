@@ -828,11 +828,11 @@ The profile domain manages user profiles and attributes.
 **Domain Model (internal/profile/domain/domain.go):**
 ```golang
 type Profile struct {
-	DisplayName string
-	Birthdate   time.Time
-	HeightCM    int16
-	UserID      string
-	Verified    bool
+	DisplayName    string
+	Birthdate      time.Time
+	HeightCM       int16
+	UserID         string
+	VerifiedStatus string // "VERIFIED", "UNVERIFIED", or "UNDER_REVIEW"
 
 	// Location
 	Latitude  float64

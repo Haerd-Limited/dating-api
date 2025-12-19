@@ -7,14 +7,14 @@ import (
 
 func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profilecard.ProfileCard {
 	fp := profilecard.ProfileCard{
-		DisplayName:   ep.DisplayName,
-		Birthdate:     ep.Birthdate,
-		Age:           ep.Age,
-		HeightCM:      ep.HeightCM,
-		UserID:        ep.UserID,
-		CoverPhotoUrl: ep.CoverPhotoURL,
-		Emoji:         ep.Emoji,
-		Verified:      ep.Verified,
+		DisplayName:    ep.DisplayName,
+		Birthdate:      ep.Birthdate,
+		Age:            ep.Age,
+		HeightCM:       ep.HeightCM,
+		UserID:         ep.UserID,
+		CoverPhotoUrl:  ep.CoverPhotoURL,
+		Emoji:          ep.Emoji,
+		VerifiedStatus: ep.VerifiedStatus,
 
 		Latitude:  ep.Latitude,
 		Longitude: ep.Longitude,

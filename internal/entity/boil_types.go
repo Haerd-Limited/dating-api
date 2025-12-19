@@ -124,6 +124,21 @@ func AllVisibilityLevel() []string {
 	}
 }
 
+// Enum values for UserVideoVerificationStatus
+const (
+	UserVideoVerificationStatusVERIFIED     string = "VERIFIED"
+	UserVideoVerificationStatusUNVERIFIED   string = "UNVERIFIED"
+	UserVideoVerificationStatusUNDER_REVIEW string = "UNDER_REVIEW"
+)
+
+func AllUserVideoVerificationStatus() []string {
+	return []string{
+		UserVideoVerificationStatusVERIFIED,
+		UserVideoVerificationStatusUNVERIFIED,
+		UserVideoVerificationStatusUNDER_REVIEW,
+	}
+}
+
 // Enum values for ReportStatus
 const (
 	ReportStatusPending   string = "pending"

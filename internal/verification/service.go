@@ -414,6 +414,16 @@ func (s *service) SubmitVideoVerification(ctx context.Context, userID, videoS3Ke
 		return domain.SubmitVideoResult{}, commonlogger.LogError(s.logger, "update video attempt", err, zap.String("userID", userID), zap.String("videoS3Key", videoS3Key))
 	}
 
+	// Set profile to UNDER_REVIEW status
+	err = s.profileService.SetProfileUnderReview(ctx, userID)
+	if err != nil {
+		s.logger.Warn("failed to set profile under review after video submission",
+			zap.String("userID", userID),
+			zap.String("videoS3Key", videoS3Key),
+			zap.Error(err))
+		// Don't fail the whole operation if this fails
+	}
+
 	s.logger.Info("video verification submitted",
 		zap.String("user_id", userID),
 		zap.String("video_s3_key", videoS3Key),

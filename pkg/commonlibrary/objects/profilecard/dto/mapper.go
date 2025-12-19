@@ -79,7 +79,7 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		SpokenLanguages: profile.SpokenLanguages,
 		VoicePrompts:    voicePrompts,
 		LikeCount:       profile.LikeCount,
-		Verified:        profile.Verified,
+		VerifiedStatus:  profile.VerifiedStatus,
 		Theme: UserTheme{
 			BaseHex: profile.Theme.BaseHex,
 			Palette: profile.Theme.Palette,

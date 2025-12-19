@@ -33,6 +33,7 @@ type ProfileRepository interface {
 	GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error)
 	GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error)
 	IsVerified(ctx context.Context, userID string) (bool, error)
+	GetVerificationStatus(ctx context.Context, userID string) (string, error)
 	UpdateVoicePromptTranscript(ctx context.Context, id int64, transcript string) error
 	// Stats helpers
 	CountUsersBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error)
@@ -50,9 +51,18 @@ func NewProfileRepository(db *sqlx.DB) ProfileRepository {
 }
 
 func (pr *profileRepository) IsVerified(ctx context.Context, userID string) (bool, error) {
-	profile, err := entity.UserProfiles(entity.UserProfileWhere.UserID.EQ(userID)).One(ctx, pr.db)
+	status, err := pr.GetVerificationStatus(ctx, userID)
 	if err != nil {
 		return false, err
+	}
+
+	return status == "VERIFIED", nil
+}
+
+func (pr *profileRepository) GetVerificationStatus(ctx context.Context, userID string) (string, error) {
+	profile, err := entity.UserProfiles(entity.UserProfileWhere.UserID.EQ(userID)).One(ctx, pr.db)
+	if err != nil {
+		return "", err
 	}
 
 	return profile.Verified, nil

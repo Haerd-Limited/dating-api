@@ -50,8 +50,8 @@ type UserProfile struct {
 	UpdatedAt         time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	CoverPhotoURL     null.String `boil:"cover_photo_url" json:"cover_photo_url,omitempty" toml:"cover_photo_url" yaml:"cover_photo_url,omitempty"`
 	Emoji             null.String `boil:"emoji" json:"emoji,omitempty" toml:"emoji" yaml:"emoji,omitempty"`
-	Verified          bool        `boil:"verified" json:"verified" toml:"verified" yaml:"verified"`
 	SexualityID       null.Int16  `boil:"sexuality_id" json:"sexuality_id,omitempty" toml:"sexuality_id" yaml:"sexuality_id,omitempty"`
+	Verified          string      `boil:"verified" json:"verified" toml:"verified" yaml:"verified"`
 
 	R *userProfileR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userProfileL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -84,8 +84,8 @@ var UserProfileColumns = struct {
 	UpdatedAt         string
 	CoverPhotoURL     string
 	Emoji             string
-	Verified          string
 	SexualityID       string
+	Verified          string
 }{
 	UserID:            "user_id",
 	DisplayName:       "display_name",
@@ -113,8 +113,8 @@ var UserProfileColumns = struct {
 	UpdatedAt:         "updated_at",
 	CoverPhotoURL:     "cover_photo_url",
 	Emoji:             "emoji",
-	Verified:          "verified",
 	SexualityID:       "sexuality_id",
+	Verified:          "verified",
 }
 
 var UserProfileTableColumns = struct {
@@ -144,8 +144,8 @@ var UserProfileTableColumns = struct {
 	UpdatedAt         string
 	CoverPhotoURL     string
 	Emoji             string
-	Verified          string
 	SexualityID       string
+	Verified          string
 }{
 	UserID:            "user_profiles.user_id",
 	DisplayName:       "user_profiles.display_name",
@@ -173,8 +173,8 @@ var UserProfileTableColumns = struct {
 	UpdatedAt:         "user_profiles.updated_at",
 	CoverPhotoURL:     "user_profiles.cover_photo_url",
 	Emoji:             "user_profiles.emoji",
-	Verified:          "user_profiles.verified",
 	SexualityID:       "user_profiles.sexuality_id",
+	Verified:          "user_profiles.verified",
 }
 
 // Generated where
@@ -206,8 +206,8 @@ var UserProfileWhere = struct {
 	UpdatedAt         whereHelpertime_Time
 	CoverPhotoURL     whereHelpernull_String
 	Emoji             whereHelpernull_String
-	Verified          whereHelperbool
 	SexualityID       whereHelpernull_Int16
+	Verified          whereHelperstring
 }{
 	UserID:            whereHelperstring{field: "\"user_profiles\".\"user_id\""},
 	DisplayName:       whereHelperstring{field: "\"user_profiles\".\"display_name\""},
@@ -235,8 +235,8 @@ var UserProfileWhere = struct {
 	UpdatedAt:         whereHelpertime_Time{field: "\"user_profiles\".\"updated_at\""},
 	CoverPhotoURL:     whereHelpernull_String{field: "\"user_profiles\".\"cover_photo_url\""},
 	Emoji:             whereHelpernull_String{field: "\"user_profiles\".\"emoji\""},
-	Verified:          whereHelperbool{field: "\"user_profiles\".\"verified\""},
 	SexualityID:       whereHelpernull_Int16{field: "\"user_profiles\".\"sexuality_id\""},
+	Verified:          whereHelperstring{field: "\"user_profiles\".\"verified\""},
 }
 
 // UserProfileRels is where relationship names are stored.
@@ -504,9 +504,9 @@ func (r *userProfileR) GetUser() *User {
 type userProfileL struct{}
 
 var (
-	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified", "sexuality_id"}
+	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "sexuality_id", "verified"}
 	userProfileColumnsWithoutDefault = []string{"user_id", "display_name"}
-	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "verified", "sexuality_id"}
+	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "sexuality_id", "verified"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )

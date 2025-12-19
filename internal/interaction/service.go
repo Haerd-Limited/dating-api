@@ -446,7 +446,7 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 			like.Message.MessageText, like.Message.MessageType = swipe.Message.Ptr(), swipe.MessageType.Ptr()
 		}
 
-		if p.Verified {
+		if p.VerifiedStatus == "VERIFIED" {
 			likes.Verified = append(likes.Verified, like)
 		} else {
 			likes.Unverified = append(likes.Unverified, like)

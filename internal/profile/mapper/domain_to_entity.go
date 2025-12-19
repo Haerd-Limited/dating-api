@@ -24,8 +24,9 @@ func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []stri
 		ent.UserID = p.UserID
 	}
 
-	if p.Verified {
-		ent.Verified = p.Verified
+	if p.VerifiedStatus != "" {
+		ent.Verified = p.VerifiedStatus
+
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Verified)
 	}
 

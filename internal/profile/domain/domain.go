@@ -2,12 +2,18 @@ package domain
 
 import "time"
 
+const (
+	VerificationStatusVerified    = "VERIFIED"
+	VerificationStatusUnverified  = "UNVERIFIED"
+	VerificationStatusUnderReview = "UNDER_REVIEW"
+)
+
 type Profile struct {
-	DisplayName string
-	Birthdate   time.Time
-	HeightCM    int16
-	UserID      string
-	Verified    bool
+	DisplayName    string
+	Birthdate      time.Time
+	HeightCM       int16
+	UserID         string
+	VerifiedStatus string
 
 	// Location
 	Latitude  float64
@@ -120,7 +126,7 @@ type EnrichedProfile struct {
 	Work            *string
 	JobTitle        *string
 	University      *string
-	Verified        bool
+	VerifiedStatus  string
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

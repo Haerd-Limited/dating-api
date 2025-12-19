@@ -41,6 +41,7 @@ type Service interface {
 	UpsertUserTheme(ctx context.Context, userID, baseColour string) error
 	VerifyProfile(ctx context.Context, userID string) error
 	IsVerified(ctx context.Context, userID string) (bool, error)
+	SetProfileUnderReview(ctx context.Context, userID string) error
 	// Stats
 	CountBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error)
 	CountBasicsCompleted(ctx context.Context) (int64, error)
@@ -96,7 +97,7 @@ func (s *service) VerifyProfile(ctx context.Context, userID string) error {
 		return commonlogger.LogError(s.logger, "get user profile", err, zap.String("userID", userID))
 	}
 
-	prof.Verified = true
+	prof.VerifiedStatus = domain.VerificationStatusVerified
 
 	err = s.updateUserProfile(ctx, prof, nil)
 	if err != nil {
@@ -107,7 +108,12 @@ func (s *service) VerifyProfile(ctx context.Context, userID string) error {
 }
 
 func (s *service) IsVerified(ctx context.Context, userID string) (bool, error) {
-	return s.profileRepo.IsVerified(ctx, userID)
+	status, err := s.profileRepo.GetVerificationStatus(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+
+	return status == domain.VerificationStatusVerified, nil
 }
 
 func (s *service) CountBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error) {
@@ -397,7 +403,7 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 			return commonlogger.LogError(s.logger, "invalidate photo verification", err, zap.String("userID", up.UserID))
 		}
 
-		prof.Verified = false
+		prof.VerifiedStatus = domain.VerificationStatusUnverified
 	}
 
 	// Persist
@@ -460,23 +466,23 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	}
 
 	result := domain.EnrichedProfile{
-		DisplayName:   userProfile.DisplayName,
-		Birthdate:     userProfile.Birthdate,
-		Age:           utils.CalculateAge(userProfile.Birthdate),
-		HeightCM:      userProfile.HeightCM,
-		UserID:        userID,
-		Latitude:      userProfile.Latitude,
-		Longitude:     userProfile.Longitude,
-		City:          userProfile.City,
-		Country:       userProfile.Country,
-		Work:          userProfile.Work,
-		JobTitle:      userProfile.JobTitle,
-		University:    userProfile.University,
-		CreatedAt:     userProfile.CreatedAt,
-		UpdatedAt:     userProfile.UpdatedAt,
-		CoverPhotoURL: userProfile.CoverPhotoURL,
-		Emoji:         userProfile.Emoji,
-		Verified:      userProfile.Verified,
+		DisplayName:    userProfile.DisplayName,
+		Birthdate:      userProfile.Birthdate,
+		Age:            utils.CalculateAge(userProfile.Birthdate),
+		HeightCM:       userProfile.HeightCM,
+		UserID:         userID,
+		Latitude:       userProfile.Latitude,
+		Longitude:      userProfile.Longitude,
+		City:           userProfile.City,
+		Country:        userProfile.Country,
+		Work:           userProfile.Work,
+		JobTitle:       userProfile.JobTitle,
+		University:     userProfile.University,
+		CreatedAt:      userProfile.CreatedAt,
+		UpdatedAt:      userProfile.UpdatedAt,
+		CoverPhotoURL:  userProfile.CoverPhotoURL,
+		Emoji:          userProfile.Emoji,
+		VerifiedStatus: userProfile.VerifiedStatus,
 	}
 
 	result.Theme, err = s.getUserTheme(ctx, userID)
@@ -650,4 +656,21 @@ func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []
 
 func (s *service) UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error {
 	return s.profileRepo.UpsertUserSpokenLanguages(ctx, userID, languages, nil)
+}
+
+func (s *service) SetProfileUnderReview(ctx context.Context, userID string) error {
+	// Load current profile
+	prof, err := s.getUserProfile(ctx, userID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "get user profile", err, zap.String("userID", userID))
+	}
+
+	prof.VerifiedStatus = domain.VerificationStatusUnderReview
+
+	err = s.updateUserProfile(ctx, prof, nil)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "update user profile", err, zap.String("userID", userID))
+	}
+
+	return nil
 }

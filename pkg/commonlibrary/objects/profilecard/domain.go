@@ -38,8 +38,8 @@ type ProfileCard struct {
 	JobTitle   *string
 	University *string
 
-	Verified   bool
-	DistanceKm int
+	VerifiedStatus string
+	DistanceKm     int
 
 	LikeCount *int64
 
