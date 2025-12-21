@@ -29,6 +29,7 @@ type VerificationRepository interface {
 	InvalidatePhotoVerification(ctx context.Context, userID string, tx *sql.Tx) error
 	// Video verification methods
 	CheckIfPendingVideoAttemptExists(ctx context.Context, userID string) (*entity.VerificationAttempt, error)
+	CheckIfOngoingVideoAttemptExists(ctx context.Context, userID string) (*entity.VerificationAttempt, error)
 	GetVideoAttemptByUserID(ctx context.Context, userID string) (*entity.VerificationAttempt, error)
 	UpdateVideoAttemptWithKey(ctx context.Context, userID string, videoS3Key string) error
 	GetVerificationCode(ctx context.Context, attemptID string) (string, error)
@@ -260,6 +261,26 @@ func (r *verificationRepository) CheckIfPendingVideoAttemptExists(ctx context.Co
 		entity.VerificationAttemptWhere.UserID.EQ(userID),
 		entity.VerificationAttemptWhere.Type.EQ("video"),
 		entity.VerificationAttemptWhere.Status.EQ(entity.VerificationStatusPending),
+		qm.OrderBy(entity.VerificationAttemptColumns.CreatedAt+" DESC"),
+		qm.Limit(1),
+	).One(ctx, r.db)
+	if err != nil {
+		return nil, err
+	}
+
+	return attempt, nil
+}
+
+func (r *verificationRepository) CheckIfOngoingVideoAttemptExists(ctx context.Context, userID string) (*entity.VerificationAttempt, error) {
+	statuses := []interface{}{
+		entity.VerificationStatusPending,
+		entity.VerificationStatusNeedsReview,
+	}
+
+	attempt, err := entity.VerificationAttempts(
+		entity.VerificationAttemptWhere.UserID.EQ(userID),
+		entity.VerificationAttemptWhere.Type.EQ("video"),
+		qm.WhereIn("verification_attempts.status IN ?", statuses...),
 		qm.OrderBy(entity.VerificationAttemptColumns.CreatedAt+" DESC"),
 		qm.Limit(1),
 	).One(ctx, r.db)

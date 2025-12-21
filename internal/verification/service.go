@@ -306,11 +306,22 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 }
 
 func (s *service) StartVideoVerification(ctx context.Context, userID string) (domain.StartVideoResult, error) {
-	// Check for existing pending video attempt
-	existing, err := s.verificationRepo.CheckIfPendingVideoAttemptExists(ctx, userID)
-	if err == nil && existing != nil {
-		// Reuse existing attempt - get the code from database
-		code, codeErr := s.verificationRepo.GetVerificationCode(ctx, existing.ID)
+	// Check for any ongoing video verification (pending or needs_review)
+	ongoing, err := s.verificationRepo.CheckIfOngoingVideoAttemptExists(ctx, userID)
+	if err == nil && ongoing != nil {
+		// If there's an ongoing verification, check if it's pending (can reuse) or needs_review (must block)
+		if ongoing.Status == entity.VerificationStatusNeedsReview {
+			s.logger.Info("blocked video verification start - already under review",
+				zap.String("user_id", userID),
+				zap.String("attempt_id", ongoing.ID),
+				zap.String("status", ongoing.Status),
+			)
+
+			return domain.StartVideoResult{}, ErrOngoingVideoVerification
+		}
+
+		// Status is pending - reuse existing attempt
+		code, codeErr := s.verificationRepo.GetVerificationCode(ctx, ongoing.ID)
 		if codeErr != nil || code == "" {
 			// If code is missing, generate new one and update
 			newCode, genErr := generateFourDigitCode()
@@ -320,7 +331,7 @@ func (s *service) StartVideoVerification(ctx context.Context, userID string) (do
 
 			code = newCode
 			// Update the attempt with the new code
-			updateErr := s.verificationRepo.UpdateVerificationCode(ctx, existing.ID, code)
+			updateErr := s.verificationRepo.UpdateVerificationCode(ctx, ongoing.ID, code)
 			if updateErr != nil {
 				return domain.StartVideoResult{}, commonlogger.LogError(s.logger, "update verification code", updateErr, zap.String("userID", userID))
 			}
@@ -328,7 +339,7 @@ func (s *service) StartVideoVerification(ctx context.Context, userID string) (do
 
 		s.logger.Info("start reused pending video attempt",
 			zap.String("user_id", userID),
-			zap.String("attempt_id", existing.ID),
+			zap.String("attempt_id", ongoing.ID),
 		)
 
 		// Generate presigned URL for video upload
@@ -458,6 +469,7 @@ var (
 	ErrVideoAttemptNotFound      = errors.New("video attempt not found")
 	ErrInvalidVideoAttemptStatus = errors.New("invalid video attempt status")
 	ErrRejectionReasonRequired   = errors.New("rejection reason is required")
+	ErrOngoingVideoVerification  = errors.New("you already have a video verification in progress or under review")
 )
 
 func (s *service) ListVideoAttempts(ctx context.Context, filter domain.VideoAttemptFilter) ([]domain.VideoAttempt, error) {

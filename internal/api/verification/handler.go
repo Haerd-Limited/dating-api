@@ -355,6 +355,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, commonErrors.ErrInvalidMediaUrl):
 		return http.StatusBadRequest, "Invalid media url"
+	case errors.Is(err, verification.ErrOngoingVideoVerification):
+		return http.StatusConflict, "You already have a video verification in progress or under review. Please wait for the current verification to be completed."
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}
