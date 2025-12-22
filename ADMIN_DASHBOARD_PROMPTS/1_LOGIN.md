@@ -242,3 +242,4 @@ After completing the login, you'll build:
 - Part 4: Reports Management
 
 Focus on making the login secure and user-friendly before moving to other features.
+

@@ -386,3 +386,4 @@ When clicking "View/Review" on a submission:
 ---
 
 **Note**: This feature is critical for platform safety. Ensure the UI makes it easy to compare user photos with video submissions accurately.
+
