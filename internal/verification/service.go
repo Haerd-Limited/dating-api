@@ -17,10 +17,12 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	realtimedto "github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	internalaws "github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
+	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/internal/verification/domain"
 	"github.com/Haerd-Limited/dating-api/internal/verification/storage"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
@@ -46,6 +48,7 @@ type service struct {
 	verificationRepo storage.VerificationRepository
 	awsService       internalaws.Service
 	profileService   profile.Service
+	hub              realtime.Broadcaster
 }
 
 func NewVerificationService(
@@ -55,6 +58,7 @@ func NewVerificationService(
 	awsService internalaws.Service,
 	profileService profile.Service,
 	logger *zap.Logger,
+	hub realtime.Broadcaster,
 ) Service {
 	return &service{
 		rek:              rek,
@@ -63,6 +67,7 @@ func NewVerificationService(
 		awsService:       awsService,
 		profileService:   profileService,
 		logger:           logger,
+		hub:              hub,
 	}
 }
 
@@ -180,6 +185,9 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 			return domain.CompleteResult{}, commonlogger.LogError(s.logger, "mark attempt", err, zap.String("userID", userID), zap.String("sessionID", sessionID), zap.String("attemptID", verificationAttempt.ID))
 		}
 
+		reason := "liveness_failed"
+		s.sendVerificationStatusEvent(userID, entity.VerificationStatusFailed, verificationAttempt.ID, &reason)
+
 		return domain.CompleteResult{Status: entity.VerificationStatusFailed, PhotoVerified: false, Reasons: []string{"liveness_failed"}}, nil
 	}
 
@@ -267,6 +275,8 @@ func (s *service) CompletePhotoVerification(ctx context.Context, userID, session
 			zap.Float32("liveness", *res.Confidence),
 			zap.Float64("best_similarity", bestSim),
 		)
+
+		s.sendVerificationStatusEvent(userID, entity.VerificationStatusPassed, verificationAttempt.ID, nil)
 
 		return domain.CompleteResult{Status: entity.VerificationStatusPassed, MatchScore: bestSim, PhotoVerified: true}, nil
 	}
@@ -604,6 +614,8 @@ func (s *service) ApproveVideoAttempt(ctx context.Context, attemptID string, not
 			return ""
 		}()))
 
+	s.sendVerificationStatusEvent(attempt.UserID, entity.VerificationStatusPassed, attemptID, nil)
+
 	return nil
 }
 
@@ -648,6 +660,8 @@ func (s *service) RejectVideoAttempt(ctx context.Context, attemptID string, reje
 			return ""
 		}()))
 
+	s.sendVerificationStatusEvent(attempt.UserID, entity.VerificationStatusFailed, attemptID, &rejectionReason)
+
 	return nil
 }
 
@@ -682,4 +696,33 @@ func (s *service) entityToVideoAttempt(attempt *entity.VerificationAttempt) doma
 		CreatedAt:        attempt.CreatedAt,
 		UpdatedAt:        attempt.UpdatedAt,
 	}
+}
+
+// sendVerificationStatusEvent sends a WebSocket event when verification status changes
+func (s *service) sendVerificationStatusEvent(userID string, status string, attemptID string, reason *string) {
+	eventData := map[string]interface{}{
+		"status":     status,
+		"attempt_id": attemptID,
+	}
+	if reason != nil {
+		eventData["reason"] = *reason
+	}
+
+	evt := realtimedto.Event{
+		ID:        realtime.NewEventID(),
+		Type:      "verification.status_changed",
+		ActorID:   userID,
+		Ts:        time.Now(),
+		ContextID: attemptID,
+		Data:      eventData,
+		Version:   1,
+	}
+
+	b, err := json.Marshal(evt)
+	if err != nil {
+		s.logger.Error("error marshalling verification status event", zap.Error(err))
+		return
+	}
+
+	s.hub.BroadcastToUser(userID, b)
 }
