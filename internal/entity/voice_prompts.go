@@ -24,100 +24,114 @@ import (
 
 // VoicePrompt is an object representing the database table.
 type VoicePrompt struct {
-	ID            int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID        null.String `boil:"user_id" json:"user_id,omitempty" toml:"user_id" yaml:"user_id,omitempty"`
-	PromptType    null.Int16  `boil:"prompt_type" json:"prompt_type,omitempty" toml:"prompt_type" yaml:"prompt_type,omitempty"`
-	AudioURL      string      `boil:"audio_url" json:"audio_url" toml:"audio_url" yaml:"audio_url"`
-	DurationMS    int         `boil:"duration_ms" json:"duration_ms" toml:"duration_ms" yaml:"duration_ms"`
-	Transcript    null.String `boil:"transcript" json:"transcript,omitempty" toml:"transcript" yaml:"transcript,omitempty"`
-	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	IsPrimary     bool        `boil:"is_primary" json:"is_primary" toml:"is_primary" yaml:"is_primary"`
-	Position      null.Int16  `boil:"position" json:"position,omitempty" toml:"position" yaml:"position,omitempty"`
-	CoverPhotoURL null.String `boil:"cover_photo_url" json:"cover_photo_url,omitempty" toml:"cover_photo_url" yaml:"cover_photo_url,omitempty"`
-	IsActive      bool        `boil:"is_active" json:"is_active" toml:"is_active" yaml:"is_active"`
+	ID                    int64        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID                null.String  `boil:"user_id" json:"user_id,omitempty" toml:"user_id" yaml:"user_id,omitempty"`
+	PromptType            null.Int16   `boil:"prompt_type" json:"prompt_type,omitempty" toml:"prompt_type" yaml:"prompt_type,omitempty"`
+	AudioURL              string       `boil:"audio_url" json:"audio_url" toml:"audio_url" yaml:"audio_url"`
+	DurationMS            int          `boil:"duration_ms" json:"duration_ms" toml:"duration_ms" yaml:"duration_ms"`
+	Transcript            null.String  `boil:"transcript" json:"transcript,omitempty" toml:"transcript" yaml:"transcript,omitempty"`
+	CreatedAt             time.Time    `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	IsPrimary             bool         `boil:"is_primary" json:"is_primary" toml:"is_primary" yaml:"is_primary"`
+	Position              null.Int16   `boil:"position" json:"position,omitempty" toml:"position" yaml:"position,omitempty"`
+	CoverMediaURL         null.String  `boil:"cover_media_url" json:"cover_media_url,omitempty" toml:"cover_media_url" yaml:"cover_media_url,omitempty"`
+	IsActive              bool         `boil:"is_active" json:"is_active" toml:"is_active" yaml:"is_active"`
+	CoverMediaType        null.String  `boil:"cover_media_type" json:"cover_media_type,omitempty" toml:"cover_media_type" yaml:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio null.Float32 `boil:"cover_media_aspect_ratio" json:"cover_media_aspect_ratio,omitempty" toml:"cover_media_aspect_ratio" yaml:"cover_media_aspect_ratio,omitempty"`
 
 	R *voicePromptR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L voicePromptL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var VoicePromptColumns = struct {
-	ID            string
-	UserID        string
-	PromptType    string
-	AudioURL      string
-	DurationMS    string
-	Transcript    string
-	CreatedAt     string
-	IsPrimary     string
-	Position      string
-	CoverPhotoURL string
-	IsActive      string
+	ID                    string
+	UserID                string
+	PromptType            string
+	AudioURL              string
+	DurationMS            string
+	Transcript            string
+	CreatedAt             string
+	IsPrimary             string
+	Position              string
+	CoverMediaURL         string
+	IsActive              string
+	CoverMediaType        string
+	CoverMediaAspectRatio string
 }{
-	ID:            "id",
-	UserID:        "user_id",
-	PromptType:    "prompt_type",
-	AudioURL:      "audio_url",
-	DurationMS:    "duration_ms",
-	Transcript:    "transcript",
-	CreatedAt:     "created_at",
-	IsPrimary:     "is_primary",
-	Position:      "position",
-	CoverPhotoURL: "cover_photo_url",
-	IsActive:      "is_active",
+	ID:                    "id",
+	UserID:                "user_id",
+	PromptType:            "prompt_type",
+	AudioURL:              "audio_url",
+	DurationMS:            "duration_ms",
+	Transcript:            "transcript",
+	CreatedAt:             "created_at",
+	IsPrimary:             "is_primary",
+	Position:              "position",
+	CoverMediaURL:         "cover_media_url",
+	IsActive:              "is_active",
+	CoverMediaType:        "cover_media_type",
+	CoverMediaAspectRatio: "cover_media_aspect_ratio",
 }
 
 var VoicePromptTableColumns = struct {
-	ID            string
-	UserID        string
-	PromptType    string
-	AudioURL      string
-	DurationMS    string
-	Transcript    string
-	CreatedAt     string
-	IsPrimary     string
-	Position      string
-	CoverPhotoURL string
-	IsActive      string
+	ID                    string
+	UserID                string
+	PromptType            string
+	AudioURL              string
+	DurationMS            string
+	Transcript            string
+	CreatedAt             string
+	IsPrimary             string
+	Position              string
+	CoverMediaURL         string
+	IsActive              string
+	CoverMediaType        string
+	CoverMediaAspectRatio string
 }{
-	ID:            "voice_prompts.id",
-	UserID:        "voice_prompts.user_id",
-	PromptType:    "voice_prompts.prompt_type",
-	AudioURL:      "voice_prompts.audio_url",
-	DurationMS:    "voice_prompts.duration_ms",
-	Transcript:    "voice_prompts.transcript",
-	CreatedAt:     "voice_prompts.created_at",
-	IsPrimary:     "voice_prompts.is_primary",
-	Position:      "voice_prompts.position",
-	CoverPhotoURL: "voice_prompts.cover_photo_url",
-	IsActive:      "voice_prompts.is_active",
+	ID:                    "voice_prompts.id",
+	UserID:                "voice_prompts.user_id",
+	PromptType:            "voice_prompts.prompt_type",
+	AudioURL:              "voice_prompts.audio_url",
+	DurationMS:            "voice_prompts.duration_ms",
+	Transcript:            "voice_prompts.transcript",
+	CreatedAt:             "voice_prompts.created_at",
+	IsPrimary:             "voice_prompts.is_primary",
+	Position:              "voice_prompts.position",
+	CoverMediaURL:         "voice_prompts.cover_media_url",
+	IsActive:              "voice_prompts.is_active",
+	CoverMediaType:        "voice_prompts.cover_media_type",
+	CoverMediaAspectRatio: "voice_prompts.cover_media_aspect_ratio",
 }
 
 // Generated where
 
 var VoicePromptWhere = struct {
-	ID            whereHelperint64
-	UserID        whereHelpernull_String
-	PromptType    whereHelpernull_Int16
-	AudioURL      whereHelperstring
-	DurationMS    whereHelperint
-	Transcript    whereHelpernull_String
-	CreatedAt     whereHelpertime_Time
-	IsPrimary     whereHelperbool
-	Position      whereHelpernull_Int16
-	CoverPhotoURL whereHelpernull_String
-	IsActive      whereHelperbool
+	ID                    whereHelperint64
+	UserID                whereHelpernull_String
+	PromptType            whereHelpernull_Int16
+	AudioURL              whereHelperstring
+	DurationMS            whereHelperint
+	Transcript            whereHelpernull_String
+	CreatedAt             whereHelpertime_Time
+	IsPrimary             whereHelperbool
+	Position              whereHelpernull_Int16
+	CoverMediaURL         whereHelpernull_String
+	IsActive              whereHelperbool
+	CoverMediaType        whereHelpernull_String
+	CoverMediaAspectRatio whereHelpernull_Float32
 }{
-	ID:            whereHelperint64{field: "\"voice_prompts\".\"id\""},
-	UserID:        whereHelpernull_String{field: "\"voice_prompts\".\"user_id\""},
-	PromptType:    whereHelpernull_Int16{field: "\"voice_prompts\".\"prompt_type\""},
-	AudioURL:      whereHelperstring{field: "\"voice_prompts\".\"audio_url\""},
-	DurationMS:    whereHelperint{field: "\"voice_prompts\".\"duration_ms\""},
-	Transcript:    whereHelpernull_String{field: "\"voice_prompts\".\"transcript\""},
-	CreatedAt:     whereHelpertime_Time{field: "\"voice_prompts\".\"created_at\""},
-	IsPrimary:     whereHelperbool{field: "\"voice_prompts\".\"is_primary\""},
-	Position:      whereHelpernull_Int16{field: "\"voice_prompts\".\"position\""},
-	CoverPhotoURL: whereHelpernull_String{field: "\"voice_prompts\".\"cover_photo_url\""},
-	IsActive:      whereHelperbool{field: "\"voice_prompts\".\"is_active\""},
+	ID:                    whereHelperint64{field: "\"voice_prompts\".\"id\""},
+	UserID:                whereHelpernull_String{field: "\"voice_prompts\".\"user_id\""},
+	PromptType:            whereHelpernull_Int16{field: "\"voice_prompts\".\"prompt_type\""},
+	AudioURL:              whereHelperstring{field: "\"voice_prompts\".\"audio_url\""},
+	DurationMS:            whereHelperint{field: "\"voice_prompts\".\"duration_ms\""},
+	Transcript:            whereHelpernull_String{field: "\"voice_prompts\".\"transcript\""},
+	CreatedAt:             whereHelpertime_Time{field: "\"voice_prompts\".\"created_at\""},
+	IsPrimary:             whereHelperbool{field: "\"voice_prompts\".\"is_primary\""},
+	Position:              whereHelpernull_Int16{field: "\"voice_prompts\".\"position\""},
+	CoverMediaURL:         whereHelpernull_String{field: "\"voice_prompts\".\"cover_media_url\""},
+	IsActive:              whereHelperbool{field: "\"voice_prompts\".\"is_active\""},
+	CoverMediaType:        whereHelpernull_String{field: "\"voice_prompts\".\"cover_media_type\""},
+	CoverMediaAspectRatio: whereHelpernull_Float32{field: "\"voice_prompts\".\"cover_media_aspect_ratio\""},
 }
 
 // VoicePromptRels is where relationship names are stored.
@@ -195,9 +209,9 @@ func (r *voicePromptR) GetPromptSwipes() SwipeSlice {
 type voicePromptL struct{}
 
 var (
-	voicePromptAllColumns            = []string{"id", "user_id", "prompt_type", "audio_url", "duration_ms", "transcript", "created_at", "is_primary", "position", "cover_photo_url", "is_active"}
+	voicePromptAllColumns            = []string{"id", "user_id", "prompt_type", "audio_url", "duration_ms", "transcript", "created_at", "is_primary", "position", "cover_media_url", "is_active", "cover_media_type", "cover_media_aspect_ratio"}
 	voicePromptColumnsWithoutDefault = []string{"audio_url", "duration_ms"}
-	voicePromptColumnsWithDefault    = []string{"id", "user_id", "prompt_type", "transcript", "created_at", "is_primary", "position", "cover_photo_url", "is_active"}
+	voicePromptColumnsWithDefault    = []string{"id", "user_id", "prompt_type", "transcript", "created_at", "is_primary", "position", "cover_media_url", "is_active", "cover_media_type", "cover_media_aspect_ratio"}
 	voicePromptPrimaryKeyColumns     = []string{"id"}
 	voicePromptGeneratedColumns      = []string{}
 )

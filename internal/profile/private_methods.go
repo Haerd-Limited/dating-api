@@ -71,13 +71,32 @@ func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
 		}
 	}
 
-	// URL
-	if up.CoverPhotoURL != nil {
-		if err := utils.ValidateHTTPURL(*up.CoverPhotoURL); err != nil {
-			return fmt.Errorf("%w: cover_photo_url invalid: %v", commonErrors.ErrInvalidMediaUrl, err)
+	// Cover Media URL
+	if up.CoverMediaURL != nil {
+		if err := utils.ValidateHTTPURL(*up.CoverMediaURL); err != nil {
+			return fmt.Errorf("%w: cover_media_url invalid: %v", commonErrors.ErrInvalidMediaUrl, err)
 		}
 		// Optional: enforce your CDN domain
 		// if !strings.HasSuffix(u.Host, "your-cdn.com") { ... }
+	}
+
+	// Cover Media Type validation
+	if up.CoverMediaType != nil {
+		if *up.CoverMediaType != "image" && *up.CoverMediaType != "gif" {
+			return fmt.Errorf("%w: cover_media_type must be 'image' or 'gif'", commonErrors.ErrInvalidMediaUrl)
+		}
+	}
+
+	// Cover Media Aspect Ratio validation
+	if up.CoverMediaAspectRatio != nil {
+		if *up.CoverMediaAspectRatio <= 0 {
+			return fmt.Errorf("%w: cover_media_aspect_ratio must be positive", commonErrors.ErrInvalidMediaUrl)
+		}
+	}
+
+	// If cover_media_url is provided, cover_media_type should also be provided
+	if up.CoverMediaURL != nil && up.CoverMediaType == nil {
+		return fmt.Errorf("%w: cover_media_type is required when cover_media_url is provided", commonErrors.ErrInvalidMediaUrl)
 	}
 
 	return nil
@@ -211,9 +230,21 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 			return nil, fmt.Errorf("failed to get prompt type by ID: %w", vpeErr)
 		}
 
-		var promptCoverURL string
-		if vpe.CoverPhotoURL.Valid {
-			promptCoverURL = vpe.CoverPhotoURL.String
+		var promptCoverMediaURL string
+		if vpe.CoverMediaURL.Valid {
+			promptCoverMediaURL = vpe.CoverMediaURL.String
+		}
+
+		var promptCoverMediaType *string
+		if vpe.CoverMediaType.Valid {
+			promptCoverMediaType = &vpe.CoverMediaType.String
+		}
+
+		var promptCoverMediaAspectRatio *float64
+
+		if vpe.CoverMediaAspectRatio.Valid {
+			aspectRatio64 := float64(vpe.CoverMediaAspectRatio.Float32)
+			promptCoverMediaAspectRatio = &aspectRatio64
 		}
 
 		voicePrompts = append(voicePrompts, domain.ProfileVoicePrompt{
@@ -225,10 +256,12 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 				Key:      promptType.Key,
 				Category: promptType.Category,
 			},
-			IsPrimary:      vpe.IsPrimary,
-			Position:       vpe.Position.Int16,
-			DurationMs:     vpe.DurationMS,
-			PromptCoverURL: promptCoverURL,
+			IsPrimary:                   vpe.IsPrimary,
+			Position:                    vpe.Position.Int16,
+			DurationMs:                  vpe.DurationMS,
+			PromptCoverMediaURL:         promptCoverMediaURL,
+			PromptCoverMediaType:        promptCoverMediaType,
+			PromptCoverMediaAspectRatio: promptCoverMediaAspectRatio,
 		})
 	}
 
@@ -244,12 +277,14 @@ func (s *service) getUserVoicePromptsForUpdate(ctx context.Context, userID strin
 	var result []domain.VoicePromptUpdate
 	for _, vp := range vps {
 		result = append(result, domain.VoicePromptUpdate{
-			URL:            vp.URL,
-			PromptTypeID:   vp.PromptType.ID,
-			IsPrimary:      vp.IsPrimary,
-			Position:       vp.Position,
-			DurationMs:     vp.DurationMs,
-			PromptCoverURL: vp.PromptCoverURL,
+			URL:                         vp.URL,
+			PromptTypeID:                vp.PromptType.ID,
+			IsPrimary:                   vp.IsPrimary,
+			Position:                    vp.Position,
+			DurationMs:                  vp.DurationMs,
+			PromptCoverMediaURL:         vp.PromptCoverMediaURL,
+			PromptCoverMediaType:        vp.PromptCoverMediaType,
+			PromptCoverMediaAspectRatio: vp.PromptCoverMediaAspectRatio,
 		})
 	}
 

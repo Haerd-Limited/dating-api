@@ -71,8 +71,16 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		UpdatedAt:  profile.UpdatedAt.Format(time.DateOnly),
 	}
 
-	if profile.CoverPhotoURL != nil {
-		result.CoverPhotoURL = *profile.CoverPhotoURL
+	if profile.CoverMediaURL != nil {
+		result.CoverMediaURL = *profile.CoverMediaURL
+	}
+
+	if profile.CoverMediaType != nil {
+		result.CoverMediaType = profile.CoverMediaType
+	}
+
+	if profile.CoverMediaAspectRatio != nil {
+		result.CoverMediaAspectRatio = profile.CoverMediaAspectRatio
 	}
 
 	if profile.Ethnicities != nil {
@@ -103,10 +111,12 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 					Key:      prompt.PromptType.Key,
 					Category: prompt.PromptType.Category,
 				},
-				IsPrimary:     prompt.IsPrimary,
-				Position:      prompt.Position,
-				DurationMs:    prompt.DurationMs,
-				CoverPhotoURL: prompt.PromptCoverURL,
+				IsPrimary:             prompt.IsPrimary,
+				Position:              prompt.Position,
+				DurationMs:            prompt.DurationMs,
+				CoverMediaURL:         prompt.PromptCoverMediaURL,
+				CoverMediaType:        prompt.PromptCoverMediaType,
+				CoverMediaAspectRatio: prompt.PromptCoverMediaAspectRatio,
 			})
 		}
 	}

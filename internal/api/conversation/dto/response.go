@@ -69,8 +69,10 @@ type ScoreSnapshot struct {
 }
 
 type VoicePrompt struct {
-	ID            int64  `json:"id"`
-	Prompt        string `json:"prompt"`
-	CoverPhotoURL string `json:"cover_photo_url"`
-	VoiceNoteURL  string `json:"voice_note_url"`
+	ID                    int64    `json:"id"`
+	Prompt                string   `json:"prompt"`
+	CoverMediaURL         string   `json:"cover_media_url"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
+	VoiceNoteURL          string   `json:"voice_note_url"`
 }

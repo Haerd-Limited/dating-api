@@ -5,14 +5,16 @@ type GetProfileResponse struct {
 }
 
 type Profile struct {
-	DisplayName    string `json:"display_name"`
-	Birthdate      string `json:"birthdate"`
-	Age            int    `json:"age"`
-	HeightCM       int16  `json:"height_cm"`
-	UserID         string `json:"user_id"`
-	CoverPhotoURL  string `json:"cover_photo_url"`
-	Emoji          string `json:"emoji"`
-	VerifiedStatus string `json:"verified_status"`
+	DisplayName           string   `json:"display_name"`
+	Birthdate             string   `json:"birthdate"`
+	Age                   int      `json:"age"`
+	HeightCM              int16    `json:"height_cm"`
+	UserID                string   `json:"user_id"`
+	CoverMediaURL         string   `json:"cover_media_url"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
+	Emoji                 string   `json:"emoji"`
+	VerifiedStatus        string   `json:"verified_status"`
 
 	// Location
 	Latitude  float64 `json:"latitude"`
@@ -58,12 +60,14 @@ type Photo struct {
 }
 
 type VoicePrompt struct {
-	URL           string `json:"url"`
-	PromptType    Prompt `json:"prompt_type"`
-	IsPrimary     bool   `json:"is_primary"`
-	Position      int16  `json:"position"`
-	DurationMs    int    `json:"duration_ms"`
-	CoverPhotoURL string `json:"cover_photo_url"`
+	URL                   string   `json:"url"`
+	PromptType            Prompt   `json:"prompt_type"`
+	IsPrimary             bool     `json:"is_primary"`
+	Position              int16    `json:"position"`
+	DurationMs            int      `json:"duration_ms"`
+	CoverMediaURL         string   `json:"cover_media_url"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
 }
 
 type Status struct {

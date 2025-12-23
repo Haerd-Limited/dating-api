@@ -40,10 +40,12 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 	var likedVoicePrompt *dto.VoicePrompt
 	if msg.LikedPrompt != nil {
 		likedVoicePrompt = &dto.VoicePrompt{
-			ID:            msg.LikedPrompt.ID,
-			Prompt:        msg.LikedPrompt.Prompt,
-			CoverPhotoURL: msg.LikedPrompt.CoverPhotoURL,
-			VoiceNoteURL:  msg.LikedPrompt.VoiceNoteURL,
+			ID:                    msg.LikedPrompt.ID,
+			Prompt:                msg.LikedPrompt.Prompt,
+			CoverMediaURL:         msg.LikedPrompt.CoverMediaURL,
+			CoverMediaType:        msg.LikedPrompt.CoverMediaType,
+			CoverMediaAspectRatio: msg.LikedPrompt.CoverMediaAspectRatio,
+			VoiceNoteURL:          msg.LikedPrompt.VoiceNoteURL,
 		}
 	}
 

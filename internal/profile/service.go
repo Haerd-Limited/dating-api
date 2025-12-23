@@ -145,16 +145,30 @@ func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.Voic
 		return domain.VoicePrompt{}, fmt.Errorf("get prompt type: %w", err)
 	}
 
-	var coverPhotoUrl string
-	if vp.CoverPhotoURL.Valid {
-		coverPhotoUrl = vp.CoverPhotoURL.String
+	var coverMediaURL string
+	if vp.CoverMediaURL.Valid {
+		coverMediaURL = vp.CoverMediaURL.String
+	}
+
+	var coverMediaType *string
+	if vp.CoverMediaType.Valid {
+		coverMediaType = &vp.CoverMediaType.String
+	}
+
+	var coverMediaAspectRatio *float64
+
+	if vp.CoverMediaAspectRatio.Valid {
+		aspectRatio64 := float64(vp.CoverMediaAspectRatio.Float32)
+		coverMediaAspectRatio = &aspectRatio64
 	}
 
 	return domain.VoicePrompt{
-		PromptID:      vp.ID,
-		VoiceNoteURL:  vp.AudioURL,
-		CoverPhotoUrl: coverPhotoUrl,
-		Prompt:        prompt.Label,
+		PromptID:              vp.ID,
+		VoiceNoteURL:          vp.AudioURL,
+		CoverMediaURL:         coverMediaURL,
+		CoverMediaType:        coverMediaType,
+		CoverMediaAspectRatio: coverMediaAspectRatio,
+		Prompt:                prompt.Label,
 	}, nil
 }
 
@@ -240,36 +254,38 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 	}
 
 	return domain.UpdateProfile{
-		DisplayName:       &userProfile.DisplayName,
-		Birthdate:         &userProfile.Birthdate,
-		HeightCM:          &userProfile.HeightCM,
-		UserID:            userProfile.UserID,
-		ProfileEmoji:      &userProfile.Emoji,
-		Latitude:          &userProfile.Latitude,
-		Longitude:         &userProfile.Longitude,
-		City:              &userProfile.City,
-		Country:           &userProfile.Country,
-		GenderID:          &userProfile.GenderID,
-		DatingIntentionID: &userProfile.DatingIntentionID,
-		ReligionID:        &userProfile.ReligionID,
-		EducationLevelID:  &userProfile.EducationLevelID,
-		PoliticalBeliefID: &userProfile.PoliticalBeliefID,
-		DrinkingID:        &userProfile.DrinkingID,
-		SmokingID:         &userProfile.SmokingID,
-		MarijuanaID:       &userProfile.MarijuanaID,
-		DrugsID:           &userProfile.DrugsID,
-		ChildrenStatusID:  userProfile.ChildrenStatusID,
-		FamilyPlanID:      userProfile.FamilyPlanID,
-		EthnicityIDs:      ethnicityIDs,
-		SpokenLanguages:   languageIds,
-		VoicePrompts:      VoicePrompts,
-		Photos:            Photos,
-		CoverPhotoURL:     userProfile.CoverPhotoURL,
-		Work:              userProfile.Work,
-		JobTitle:          userProfile.JobTitle,
-		University:        userProfile.University,
-		CreatedAt:         &userProfile.CreatedAt,
-		UpdatedAt:         userProfile.UpdatedAt,
+		DisplayName:           &userProfile.DisplayName,
+		Birthdate:             &userProfile.Birthdate,
+		HeightCM:              &userProfile.HeightCM,
+		UserID:                userProfile.UserID,
+		ProfileEmoji:          &userProfile.Emoji,
+		Latitude:              &userProfile.Latitude,
+		Longitude:             &userProfile.Longitude,
+		City:                  &userProfile.City,
+		Country:               &userProfile.Country,
+		GenderID:              &userProfile.GenderID,
+		DatingIntentionID:     &userProfile.DatingIntentionID,
+		ReligionID:            &userProfile.ReligionID,
+		EducationLevelID:      &userProfile.EducationLevelID,
+		PoliticalBeliefID:     &userProfile.PoliticalBeliefID,
+		DrinkingID:            &userProfile.DrinkingID,
+		SmokingID:             &userProfile.SmokingID,
+		MarijuanaID:           &userProfile.MarijuanaID,
+		DrugsID:               &userProfile.DrugsID,
+		ChildrenStatusID:      userProfile.ChildrenStatusID,
+		FamilyPlanID:          userProfile.FamilyPlanID,
+		EthnicityIDs:          ethnicityIDs,
+		SpokenLanguages:       languageIds,
+		VoicePrompts:          VoicePrompts,
+		Photos:                Photos,
+		CoverMediaURL:         userProfile.CoverMediaURL,
+		CoverMediaType:        userProfile.CoverMediaType,
+		CoverMediaAspectRatio: userProfile.CoverMediaAspectRatio,
+		Work:                  userProfile.Work,
+		JobTitle:              userProfile.JobTitle,
+		University:            userProfile.University,
+		CreatedAt:             &userProfile.CreatedAt,
+		UpdatedAt:             userProfile.UpdatedAt,
 	}, nil
 }
 
@@ -323,8 +339,16 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		prof.Emoji = *up.ProfileEmoji
 	}
 
-	if up.CoverPhotoURL != nil {
-		prof.CoverPhotoURL = up.CoverPhotoURL
+	if up.CoverMediaURL != nil {
+		prof.CoverMediaURL = up.CoverMediaURL
+	}
+
+	if up.CoverMediaType != nil {
+		prof.CoverMediaType = up.CoverMediaType
+	}
+
+	if up.CoverMediaAspectRatio != nil {
+		prof.CoverMediaAspectRatio = up.CoverMediaAspectRatio
 	}
 
 	// Location
@@ -466,23 +490,25 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	}
 
 	result := domain.EnrichedProfile{
-		DisplayName:    userProfile.DisplayName,
-		Birthdate:      userProfile.Birthdate,
-		Age:            utils.CalculateAge(userProfile.Birthdate),
-		HeightCM:       userProfile.HeightCM,
-		UserID:         userID,
-		Latitude:       userProfile.Latitude,
-		Longitude:      userProfile.Longitude,
-		City:           userProfile.City,
-		Country:        userProfile.Country,
-		Work:           userProfile.Work,
-		JobTitle:       userProfile.JobTitle,
-		University:     userProfile.University,
-		CreatedAt:      userProfile.CreatedAt,
-		UpdatedAt:      userProfile.UpdatedAt,
-		CoverPhotoURL:  userProfile.CoverPhotoURL,
-		Emoji:          userProfile.Emoji,
-		VerifiedStatus: userProfile.VerifiedStatus,
+		DisplayName:           userProfile.DisplayName,
+		Birthdate:             userProfile.Birthdate,
+		Age:                   utils.CalculateAge(userProfile.Birthdate),
+		HeightCM:              userProfile.HeightCM,
+		UserID:                userID,
+		Latitude:              userProfile.Latitude,
+		Longitude:             userProfile.Longitude,
+		City:                  userProfile.City,
+		Country:               userProfile.Country,
+		Work:                  userProfile.Work,
+		JobTitle:              userProfile.JobTitle,
+		University:            userProfile.University,
+		CreatedAt:             userProfile.CreatedAt,
+		UpdatedAt:             userProfile.UpdatedAt,
+		CoverMediaURL:         userProfile.CoverMediaURL,
+		CoverMediaType:        userProfile.CoverMediaType,
+		CoverMediaAspectRatio: userProfile.CoverMediaAspectRatio,
+		Emoji:                 userProfile.Emoji,
+		VerifiedStatus:        userProfile.VerifiedStatus,
 	}
 
 	result.Theme, err = s.getUserTheme(ctx, userID)

@@ -439,7 +439,9 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 			like.Prompt.PromptID = voicePrompt.PromptID
 			like.Prompt.Prompt = voicePrompt.Prompt
 			like.Prompt.VoiceNoteURL = voicePrompt.VoiceNoteURL
-			like.Prompt.CoverPhotoUrl = voicePrompt.CoverPhotoUrl
+			like.Prompt.CoverMediaURL = voicePrompt.CoverMediaURL
+			like.Prompt.CoverMediaType = voicePrompt.CoverMediaType
+			like.Prompt.CoverMediaAspectRatio = voicePrompt.CoverMediaAspectRatio
 		}
 
 		if swipe.Message.Valid && swipe.MessageType.Valid {

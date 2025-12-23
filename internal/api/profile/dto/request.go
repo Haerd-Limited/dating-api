@@ -19,12 +19,14 @@ func (sr SwipesRequest) Validate() error {
 
 type UpdateProfileRequest struct {
 	// Profile
-	DisplayName       *string `json:"display_name,omitempty"`
-	Birthdate         *string `json:"birthdate,omitempty"` // "YYYY-MM-DD"
-	HeightCM          *int16  `json:"height_cm,omitempty"`
-	ProfileEmoji      *string `json:"profile_emoji,omitempty"`
-	CoverPhotoUrl     *string `json:"cover_photo_url,omitempty"`
-	ProfileBaseColour *string `json:"profile_base_colour,omitempty"`
+	DisplayName           *string  `json:"display_name,omitempty"`
+	Birthdate             *string  `json:"birthdate,omitempty"` // "YYYY-MM-DD"
+	HeightCM              *int16   `json:"height_cm,omitempty"`
+	ProfileEmoji          *string  `json:"profile_emoji,omitempty"`
+	CoverMediaURL         *string  `json:"cover_media_url,omitempty"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
+	ProfileBaseColour     *string  `json:"profile_base_colour,omitempty"`
 
 	// Location
 	Latitude  *float64 `json:"latitude,omitempty"`
@@ -59,10 +61,12 @@ func (upr UpdateProfileRequest) Validate() error {
 }
 
 type VoicePromptRequest struct {
-	URL           string `json:"url"`
-	PromptType    int16  `json:"prompt_type"`
-	IsPrimary     bool   `json:"is_primary"`
-	Position      int16  `json:"position"`
-	DurationMs    int    `json:"duration_ms"`
-	CoverPhotoURL string `json:"cover_photo_url"`
+	URL                   string   `json:"url"`
+	PromptType            int16    `json:"prompt_type"`
+	IsPrimary             bool     `json:"is_primary"`
+	Position              int16    `json:"position"`
+	DurationMs            int      `json:"duration_ms"`
+	CoverMediaURL         string   `json:"cover_media_url"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
 }

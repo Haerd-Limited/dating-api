@@ -3,13 +3,15 @@ package profilecard
 import "time"
 
 type ProfileCard struct {
-	DisplayName   string
-	Birthdate     time.Time
-	Age           int
-	HeightCM      int16
-	UserID        string
-	CoverPhotoUrl *string
-	Emoji         string
+	DisplayName           string
+	Birthdate             time.Time
+	Age                   int
+	HeightCM              int16
+	UserID                string
+	CoverMediaURL         *string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
+	Emoji                 string
 
 	// Location
 	Latitude  float64
@@ -69,13 +71,15 @@ type UserTheme struct {
 }
 
 type VoicePrompt struct {
-	ID            int64
-	URL           string
-	PromptType    Prompt
-	IsPrimary     bool
-	Position      int16
-	DurationMs    int
-	CoverPhotoUrl string
+	ID                    int64
+	URL                   string
+	PromptType            Prompt
+	IsPrimary             bool
+	Position              int16
+	DurationMs            int
+	CoverMediaURL         string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
 }
 
 type Prompt struct {

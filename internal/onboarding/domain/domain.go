@@ -1,9 +1,11 @@
 package domain
 
 type Profile struct {
-	UserID               string
-	ProfileBaseColour    string
-	ProfileCoverPhotoURL string
+	UserID                       string
+	ProfileBaseColour            string
+	ProfileCoverMediaURL         string
+	ProfileCoverMediaType        *string
+	ProfileCoverMediaAspectRatio *float64
 }
 
 type VideoVerification struct {
@@ -24,12 +26,14 @@ type StepResult struct {
 }
 
 type VoicePrompt struct {
-	URL           string
-	PromptType    int16
-	IsPrimary     bool
-	Position      int16
-	DurationMs    int
-	CoverPhotoUrl *string
+	URL                   string
+	PromptType            int16
+	IsPrimary             bool
+	Position              int16
+	DurationMs            int
+	CoverMediaURL         *string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
 }
 type PhotosContent struct {
 	Prompts                []Prompt

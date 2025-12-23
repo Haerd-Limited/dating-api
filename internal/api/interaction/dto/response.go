@@ -27,10 +27,12 @@ type Like struct {
 }
 
 type Prompt struct {
-	PromptID      int64  `json:"prompt_id"`
-	Prompt        string `json:"prompt"`
-	VoiceNoteURL  string `json:"voice_note_url"`
-	CoverPhotoUrl string `json:"cover_photo_url"`
+	PromptID              int64    `json:"prompt_id"`
+	Prompt                string   `json:"prompt"`
+	VoiceNoteURL          string   `json:"voice_note_url"`
+	CoverMediaURL         string   `json:"cover_media_url"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
 }
 
 type Message struct {

@@ -5,8 +5,10 @@ import (
 )
 
 type ProfileRequest struct {
-	ProfileBaseColour    string `json:"profile_base_colour" validate:"required"`
-	ProfileCoverPhotoURL string `json:"profile_cover_photo_url" validate:"required"`
+	ProfileBaseColour            string   `json:"profile_base_colour" validate:"required"`
+	ProfileCoverMediaURL         string   `json:"profile_cover_media_url" validate:"required"`
+	ProfileCoverMediaType        *string  `json:"profile_cover_media_type,omitempty"`
+	ProfileCoverMediaAspectRatio *float64 `json:"profile_cover_media_aspect_ratio,omitempty"`
 }
 
 func (pr ProfileRequest) Validate() error {
@@ -26,11 +28,13 @@ type PromptsRequest struct {
 }
 
 type VoicePrompt struct {
-	URL           string  `json:"upload_url" validate:"required"`
-	PromptType    int16   `json:"prompt_type" validate:"required"`
-	IsPrimary     bool    `json:"is_primary"`
-	Position      int16   `json:"position" validate:"required"`
-	CoverPhotoUrl *string `json:"cover_photo_url"`
+	URL                   string   `json:"upload_url" validate:"required"`
+	PromptType            int16    `json:"prompt_type" validate:"required"`
+	IsPrimary             bool     `json:"is_primary"`
+	Position              int16    `json:"position" validate:"required"`
+	CoverMediaURL         *string  `json:"cover_media_url,omitempty"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
 }
 
 func (pr PromptsRequest) Validate() error {

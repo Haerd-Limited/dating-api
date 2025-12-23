@@ -151,10 +151,12 @@ func (s *service) getLikedVoicePromptByConvoID(ctx context.Context, convoID stri
 	}
 
 	return &domain.VoicePrompt{
-		ID:            vp.PromptID,
-		Prompt:        vp.Prompt,
-		CoverPhotoURL: vp.CoverPhotoUrl,
-		VoiceNoteURL:  vp.VoiceNoteURL,
+		ID:                    vp.PromptID,
+		Prompt:                vp.Prompt,
+		CoverMediaURL:         vp.CoverMediaURL,
+		CoverMediaType:        vp.CoverMediaType,
+		CoverMediaAspectRatio: vp.CoverMediaAspectRatio,
+		VoiceNoteURL:          vp.VoiceNoteURL,
 	}, nil
 }
 

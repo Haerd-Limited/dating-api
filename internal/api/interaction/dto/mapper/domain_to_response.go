@@ -31,10 +31,12 @@ func MapToGetLikesResponse(domainLikes *domain.Likes) dto.GetLikesResponse {
 
 		if domainLike.Prompt != nil {
 			like.Prompt = &dto.Prompt{
-				PromptID:      domainLike.Prompt.PromptID,
-				Prompt:        domainLike.Prompt.Prompt,
-				VoiceNoteURL:  domainLike.Prompt.VoiceNoteURL,
-				CoverPhotoUrl: domainLike.Prompt.CoverPhotoUrl,
+				PromptID:              domainLike.Prompt.PromptID,
+				Prompt:                domainLike.Prompt.Prompt,
+				VoiceNoteURL:          domainLike.Prompt.VoiceNoteURL,
+				CoverMediaURL:         domainLike.Prompt.CoverMediaURL,
+				CoverMediaType:        domainLike.Prompt.CoverMediaType,
+				CoverMediaAspectRatio: domainLike.Prompt.CoverMediaAspectRatio,
 			}
 		}
 
@@ -56,10 +58,12 @@ func MapToGetLikesResponse(domainLikes *domain.Likes) dto.GetLikesResponse {
 
 		if domainLike.Prompt != nil {
 			like.Prompt = &dto.Prompt{
-				PromptID:      domainLike.Prompt.PromptID,
-				Prompt:        domainLike.Prompt.Prompt,
-				VoiceNoteURL:  domainLike.Prompt.VoiceNoteURL,
-				CoverPhotoUrl: domainLike.Prompt.CoverPhotoUrl,
+				PromptID:              domainLike.Prompt.PromptID,
+				Prompt:                domainLike.Prompt.Prompt,
+				VoiceNoteURL:          domainLike.Prompt.VoiceNoteURL,
+				CoverMediaURL:         domainLike.Prompt.CoverMediaURL,
+				CoverMediaType:        domainLike.Prompt.CoverMediaType,
+				CoverMediaAspectRatio: domainLike.Prompt.CoverMediaAspectRatio,
 			}
 		}
 

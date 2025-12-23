@@ -22,21 +22,23 @@ type Profile struct {
 	Country   string
 
 	// Single-selects
-	GenderID          int16
-	DatingIntentionID int16
-	SexualityID       int16
-	ReligionID        int16
-	EducationLevelID  int16
-	PoliticalBeliefID int16
-	DrinkingID        int16
-	SmokingID         int16
-	MarijuanaID       int16
-	DrugsID           int16
-	ChildrenStatusID  *int16
-	FamilyPlanID      *int16
-	EthnicityIDs      []int16
-	CoverPhotoURL     *string
-	Emoji             string
+	GenderID              int16
+	DatingIntentionID     int16
+	SexualityID           int16
+	ReligionID            int16
+	EducationLevelID      int16
+	PoliticalBeliefID     int16
+	DrinkingID            int16
+	SmokingID             int16
+	MarijuanaID           int16
+	DrugsID               int16
+	ChildrenStatusID      *int16
+	FamilyPlanID          *int16
+	EthnicityIDs          []int16
+	CoverMediaURL         *string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
+	Emoji                 string
 
 	// Extra text fields in user_profiles
 
@@ -65,23 +67,25 @@ type UpdateProfile struct {
 	Country   *string
 
 	// Single-selects
-	GenderID          *int16
-	DatingIntentionID *int16
-	SexualityID       *int16
-	ReligionID        *int16
-	EducationLevelID  *int16
-	PoliticalBeliefID *int16
-	DrinkingID        *int16
-	SmokingID         *int16
-	MarijuanaID       *int16
-	DrugsID           *int16
-	ChildrenStatusID  *int16
-	FamilyPlanID      *int16
-	EthnicityIDs      []int16
-	SpokenLanguages   []int16
-	VoicePrompts      []VoicePromptUpdate
-	Photos            []Photo
-	CoverPhotoURL     *string
+	GenderID              *int16
+	DatingIntentionID     *int16
+	SexualityID           *int16
+	ReligionID            *int16
+	EducationLevelID      *int16
+	PoliticalBeliefID     *int16
+	DrinkingID            *int16
+	SmokingID             *int16
+	MarijuanaID           *int16
+	DrugsID               *int16
+	ChildrenStatusID      *int16
+	FamilyPlanID          *int16
+	EthnicityIDs          []int16
+	SpokenLanguages       []int16
+	VoicePrompts          []VoicePromptUpdate
+	Photos                []Photo
+	CoverMediaURL         *string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
 
 	Work       *string
 	JobTitle   *string
@@ -92,13 +96,15 @@ type UpdateProfile struct {
 }
 
 type EnrichedProfile struct {
-	DisplayName   string
-	Birthdate     time.Time
-	Age           int
-	HeightCM      int16
-	UserID        string
-	CoverPhotoURL *string
-	Emoji         string
+	DisplayName           string
+	Birthdate             time.Time
+	Age                   int
+	HeightCM              int16
+	UserID                string
+	CoverMediaURL         *string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
+	Emoji                 string
 
 	// Location
 	Latitude  float64
@@ -138,28 +144,34 @@ type UserTheme struct {
 }
 
 type VoicePrompt struct {
-	PromptID      int64
-	Prompt        string
-	VoiceNoteURL  string
-	CoverPhotoUrl string
+	PromptID              int64
+	Prompt                string
+	VoiceNoteURL          string
+	CoverMediaURL         string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
 }
 
 type ProfileVoicePrompt struct {
-	ID             int64
-	URL            string
-	PromptType     Prompt
-	IsPrimary      bool
-	Position       int16
-	DurationMs     int
-	PromptCoverURL string
+	ID                          int64
+	URL                         string
+	PromptType                  Prompt
+	IsPrimary                   bool
+	Position                    int16
+	DurationMs                  int
+	PromptCoverMediaURL         string
+	PromptCoverMediaType        *string
+	PromptCoverMediaAspectRatio *float64
 }
 type VoicePromptUpdate struct {
-	URL            string
-	PromptTypeID   int16
-	IsPrimary      bool
-	Position       int16
-	DurationMs     int
-	PromptCoverURL string
+	URL                         string
+	PromptTypeID                int16
+	IsPrimary                   bool
+	Position                    int16
+	DurationMs                  int
+	PromptCoverMediaURL         string
+	PromptCoverMediaType        *string
+	PromptCoverMediaAspectRatio *float64
 }
 
 type Photo struct {

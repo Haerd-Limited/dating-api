@@ -1236,7 +1236,7 @@ func testVoicePromptsSelect(t *testing.T) {
 }
 
 var (
-	voicePromptDBTypes = map[string]string{`ID`: `bigint`, `UserID`: `uuid`, `PromptType`: `smallint`, `AudioURL`: `text`, `DurationMS`: `integer`, `Transcript`: `text`, `CreatedAt`: `timestamp with time zone`, `IsPrimary`: `boolean`, `Position`: `smallint`, `CoverPhotoURL`: `text`, `IsActive`: `boolean`}
+	voicePromptDBTypes = map[string]string{`ID`: `bigint`, `UserID`: `uuid`, `PromptType`: `smallint`, `AudioURL`: `text`, `DurationMS`: `integer`, `Transcript`: `text`, `CreatedAt`: `timestamp with time zone`, `IsPrimary`: `boolean`, `Position`: `smallint`, `CoverMediaURL`: `text`, `IsActive`: `boolean`, `CoverMediaType`: `enum.cover_media_type('image','gif')`, `CoverMediaAspectRatio`: `real`}
 	_                  = bytes.MinRead
 )
 

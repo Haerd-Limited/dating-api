@@ -24,219 +24,271 @@ import (
 
 // UserProfile is an object representing the database table.
 type UserProfile struct {
-	UserID            string      `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	DisplayName       string      `boil:"display_name" json:"display_name" toml:"display_name" yaml:"display_name"`
-	Birthdate         null.Time   `boil:"birthdate" json:"birthdate,omitempty" toml:"birthdate" yaml:"birthdate,omitempty"`
-	HeightCM          null.Int16  `boil:"height_cm" json:"height_cm,omitempty" toml:"height_cm" yaml:"height_cm,omitempty"`
-	Geo               string      `boil:"geo" json:"geo" toml:"geo" yaml:"geo"`
-	City              null.String `boil:"city" json:"city,omitempty" toml:"city" yaml:"city,omitempty"`
-	Country           null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
-	GenderID          null.Int16  `boil:"gender_id" json:"gender_id,omitempty" toml:"gender_id" yaml:"gender_id,omitempty"`
-	DatingIntentionID null.Int16  `boil:"dating_intention_id" json:"dating_intention_id,omitempty" toml:"dating_intention_id" yaml:"dating_intention_id,omitempty"`
-	ReligionID        null.Int16  `boil:"religion_id" json:"religion_id,omitempty" toml:"religion_id" yaml:"religion_id,omitempty"`
-	EducationLevelID  null.Int16  `boil:"education_level_id" json:"education_level_id,omitempty" toml:"education_level_id" yaml:"education_level_id,omitempty"`
-	PoliticalBeliefID null.Int16  `boil:"political_belief_id" json:"political_belief_id,omitempty" toml:"political_belief_id" yaml:"political_belief_id,omitempty"`
-	DrinkingID        null.Int16  `boil:"drinking_id" json:"drinking_id,omitempty" toml:"drinking_id" yaml:"drinking_id,omitempty"`
-	SmokingID         null.Int16  `boil:"smoking_id" json:"smoking_id,omitempty" toml:"smoking_id" yaml:"smoking_id,omitempty"`
-	MarijuanaID       null.Int16  `boil:"marijuana_id" json:"marijuana_id,omitempty" toml:"marijuana_id" yaml:"marijuana_id,omitempty"`
-	DrugsID           null.Int16  `boil:"drugs_id" json:"drugs_id,omitempty" toml:"drugs_id" yaml:"drugs_id,omitempty"`
-	ChildrenStatusID  null.Int16  `boil:"children_status_id" json:"children_status_id,omitempty" toml:"children_status_id" yaml:"children_status_id,omitempty"`
-	FamilyPlanID      null.Int16  `boil:"family_plan_id" json:"family_plan_id,omitempty" toml:"family_plan_id" yaml:"family_plan_id,omitempty"`
-	Work              null.String `boil:"work" json:"work,omitempty" toml:"work" yaml:"work,omitempty"`
-	JobTitle          null.String `boil:"job_title" json:"job_title,omitempty" toml:"job_title" yaml:"job_title,omitempty"`
-	University        null.String `boil:"university" json:"university,omitempty" toml:"university" yaml:"university,omitempty"`
-	ProfileMeta       null.JSON   `boil:"profile_meta" json:"profile_meta,omitempty" toml:"profile_meta" yaml:"profile_meta,omitempty"`
-	CreatedAt         time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt         time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	CoverPhotoURL     null.String `boil:"cover_photo_url" json:"cover_photo_url,omitempty" toml:"cover_photo_url" yaml:"cover_photo_url,omitempty"`
-	Emoji             null.String `boil:"emoji" json:"emoji,omitempty" toml:"emoji" yaml:"emoji,omitempty"`
-	SexualityID       null.Int16  `boil:"sexuality_id" json:"sexuality_id,omitempty" toml:"sexuality_id" yaml:"sexuality_id,omitempty"`
-	Verified          string      `boil:"verified" json:"verified" toml:"verified" yaml:"verified"`
+	UserID                string       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	DisplayName           string       `boil:"display_name" json:"display_name" toml:"display_name" yaml:"display_name"`
+	Birthdate             null.Time    `boil:"birthdate" json:"birthdate,omitempty" toml:"birthdate" yaml:"birthdate,omitempty"`
+	HeightCM              null.Int16   `boil:"height_cm" json:"height_cm,omitempty" toml:"height_cm" yaml:"height_cm,omitempty"`
+	Geo                   string       `boil:"geo" json:"geo" toml:"geo" yaml:"geo"`
+	City                  null.String  `boil:"city" json:"city,omitempty" toml:"city" yaml:"city,omitempty"`
+	Country               null.String  `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
+	GenderID              null.Int16   `boil:"gender_id" json:"gender_id,omitempty" toml:"gender_id" yaml:"gender_id,omitempty"`
+	DatingIntentionID     null.Int16   `boil:"dating_intention_id" json:"dating_intention_id,omitempty" toml:"dating_intention_id" yaml:"dating_intention_id,omitempty"`
+	ReligionID            null.Int16   `boil:"religion_id" json:"religion_id,omitempty" toml:"religion_id" yaml:"religion_id,omitempty"`
+	EducationLevelID      null.Int16   `boil:"education_level_id" json:"education_level_id,omitempty" toml:"education_level_id" yaml:"education_level_id,omitempty"`
+	PoliticalBeliefID     null.Int16   `boil:"political_belief_id" json:"political_belief_id,omitempty" toml:"political_belief_id" yaml:"political_belief_id,omitempty"`
+	DrinkingID            null.Int16   `boil:"drinking_id" json:"drinking_id,omitempty" toml:"drinking_id" yaml:"drinking_id,omitempty"`
+	SmokingID             null.Int16   `boil:"smoking_id" json:"smoking_id,omitempty" toml:"smoking_id" yaml:"smoking_id,omitempty"`
+	MarijuanaID           null.Int16   `boil:"marijuana_id" json:"marijuana_id,omitempty" toml:"marijuana_id" yaml:"marijuana_id,omitempty"`
+	DrugsID               null.Int16   `boil:"drugs_id" json:"drugs_id,omitempty" toml:"drugs_id" yaml:"drugs_id,omitempty"`
+	ChildrenStatusID      null.Int16   `boil:"children_status_id" json:"children_status_id,omitempty" toml:"children_status_id" yaml:"children_status_id,omitempty"`
+	FamilyPlanID          null.Int16   `boil:"family_plan_id" json:"family_plan_id,omitempty" toml:"family_plan_id" yaml:"family_plan_id,omitempty"`
+	Work                  null.String  `boil:"work" json:"work,omitempty" toml:"work" yaml:"work,omitempty"`
+	JobTitle              null.String  `boil:"job_title" json:"job_title,omitempty" toml:"job_title" yaml:"job_title,omitempty"`
+	University            null.String  `boil:"university" json:"university,omitempty" toml:"university" yaml:"university,omitempty"`
+	ProfileMeta           null.JSON    `boil:"profile_meta" json:"profile_meta,omitempty" toml:"profile_meta" yaml:"profile_meta,omitempty"`
+	CreatedAt             time.Time    `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt             time.Time    `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	CoverMediaURL         null.String  `boil:"cover_media_url" json:"cover_media_url,omitempty" toml:"cover_media_url" yaml:"cover_media_url,omitempty"`
+	Emoji                 null.String  `boil:"emoji" json:"emoji,omitempty" toml:"emoji" yaml:"emoji,omitempty"`
+	SexualityID           null.Int16   `boil:"sexuality_id" json:"sexuality_id,omitempty" toml:"sexuality_id" yaml:"sexuality_id,omitempty"`
+	Verified              string       `boil:"verified" json:"verified" toml:"verified" yaml:"verified"`
+	CoverMediaType        null.String  `boil:"cover_media_type" json:"cover_media_type,omitempty" toml:"cover_media_type" yaml:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio null.Float32 `boil:"cover_media_aspect_ratio" json:"cover_media_aspect_ratio,omitempty" toml:"cover_media_aspect_ratio" yaml:"cover_media_aspect_ratio,omitempty"`
 
 	R *userProfileR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userProfileL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var UserProfileColumns = struct {
-	UserID            string
-	DisplayName       string
-	Birthdate         string
-	HeightCM          string
-	Geo               string
-	City              string
-	Country           string
-	GenderID          string
-	DatingIntentionID string
-	ReligionID        string
-	EducationLevelID  string
-	PoliticalBeliefID string
-	DrinkingID        string
-	SmokingID         string
-	MarijuanaID       string
-	DrugsID           string
-	ChildrenStatusID  string
-	FamilyPlanID      string
-	Work              string
-	JobTitle          string
-	University        string
-	ProfileMeta       string
-	CreatedAt         string
-	UpdatedAt         string
-	CoverPhotoURL     string
-	Emoji             string
-	SexualityID       string
-	Verified          string
+	UserID                string
+	DisplayName           string
+	Birthdate             string
+	HeightCM              string
+	Geo                   string
+	City                  string
+	Country               string
+	GenderID              string
+	DatingIntentionID     string
+	ReligionID            string
+	EducationLevelID      string
+	PoliticalBeliefID     string
+	DrinkingID            string
+	SmokingID             string
+	MarijuanaID           string
+	DrugsID               string
+	ChildrenStatusID      string
+	FamilyPlanID          string
+	Work                  string
+	JobTitle              string
+	University            string
+	ProfileMeta           string
+	CreatedAt             string
+	UpdatedAt             string
+	CoverMediaURL         string
+	Emoji                 string
+	SexualityID           string
+	Verified              string
+	CoverMediaType        string
+	CoverMediaAspectRatio string
 }{
-	UserID:            "user_id",
-	DisplayName:       "display_name",
-	Birthdate:         "birthdate",
-	HeightCM:          "height_cm",
-	Geo:               "geo",
-	City:              "city",
-	Country:           "country",
-	GenderID:          "gender_id",
-	DatingIntentionID: "dating_intention_id",
-	ReligionID:        "religion_id",
-	EducationLevelID:  "education_level_id",
-	PoliticalBeliefID: "political_belief_id",
-	DrinkingID:        "drinking_id",
-	SmokingID:         "smoking_id",
-	MarijuanaID:       "marijuana_id",
-	DrugsID:           "drugs_id",
-	ChildrenStatusID:  "children_status_id",
-	FamilyPlanID:      "family_plan_id",
-	Work:              "work",
-	JobTitle:          "job_title",
-	University:        "university",
-	ProfileMeta:       "profile_meta",
-	CreatedAt:         "created_at",
-	UpdatedAt:         "updated_at",
-	CoverPhotoURL:     "cover_photo_url",
-	Emoji:             "emoji",
-	SexualityID:       "sexuality_id",
-	Verified:          "verified",
+	UserID:                "user_id",
+	DisplayName:           "display_name",
+	Birthdate:             "birthdate",
+	HeightCM:              "height_cm",
+	Geo:                   "geo",
+	City:                  "city",
+	Country:               "country",
+	GenderID:              "gender_id",
+	DatingIntentionID:     "dating_intention_id",
+	ReligionID:            "religion_id",
+	EducationLevelID:      "education_level_id",
+	PoliticalBeliefID:     "political_belief_id",
+	DrinkingID:            "drinking_id",
+	SmokingID:             "smoking_id",
+	MarijuanaID:           "marijuana_id",
+	DrugsID:               "drugs_id",
+	ChildrenStatusID:      "children_status_id",
+	FamilyPlanID:          "family_plan_id",
+	Work:                  "work",
+	JobTitle:              "job_title",
+	University:            "university",
+	ProfileMeta:           "profile_meta",
+	CreatedAt:             "created_at",
+	UpdatedAt:             "updated_at",
+	CoverMediaURL:         "cover_media_url",
+	Emoji:                 "emoji",
+	SexualityID:           "sexuality_id",
+	Verified:              "verified",
+	CoverMediaType:        "cover_media_type",
+	CoverMediaAspectRatio: "cover_media_aspect_ratio",
 }
 
 var UserProfileTableColumns = struct {
-	UserID            string
-	DisplayName       string
-	Birthdate         string
-	HeightCM          string
-	Geo               string
-	City              string
-	Country           string
-	GenderID          string
-	DatingIntentionID string
-	ReligionID        string
-	EducationLevelID  string
-	PoliticalBeliefID string
-	DrinkingID        string
-	SmokingID         string
-	MarijuanaID       string
-	DrugsID           string
-	ChildrenStatusID  string
-	FamilyPlanID      string
-	Work              string
-	JobTitle          string
-	University        string
-	ProfileMeta       string
-	CreatedAt         string
-	UpdatedAt         string
-	CoverPhotoURL     string
-	Emoji             string
-	SexualityID       string
-	Verified          string
+	UserID                string
+	DisplayName           string
+	Birthdate             string
+	HeightCM              string
+	Geo                   string
+	City                  string
+	Country               string
+	GenderID              string
+	DatingIntentionID     string
+	ReligionID            string
+	EducationLevelID      string
+	PoliticalBeliefID     string
+	DrinkingID            string
+	SmokingID             string
+	MarijuanaID           string
+	DrugsID               string
+	ChildrenStatusID      string
+	FamilyPlanID          string
+	Work                  string
+	JobTitle              string
+	University            string
+	ProfileMeta           string
+	CreatedAt             string
+	UpdatedAt             string
+	CoverMediaURL         string
+	Emoji                 string
+	SexualityID           string
+	Verified              string
+	CoverMediaType        string
+	CoverMediaAspectRatio string
 }{
-	UserID:            "user_profiles.user_id",
-	DisplayName:       "user_profiles.display_name",
-	Birthdate:         "user_profiles.birthdate",
-	HeightCM:          "user_profiles.height_cm",
-	Geo:               "user_profiles.geo",
-	City:              "user_profiles.city",
-	Country:           "user_profiles.country",
-	GenderID:          "user_profiles.gender_id",
-	DatingIntentionID: "user_profiles.dating_intention_id",
-	ReligionID:        "user_profiles.religion_id",
-	EducationLevelID:  "user_profiles.education_level_id",
-	PoliticalBeliefID: "user_profiles.political_belief_id",
-	DrinkingID:        "user_profiles.drinking_id",
-	SmokingID:         "user_profiles.smoking_id",
-	MarijuanaID:       "user_profiles.marijuana_id",
-	DrugsID:           "user_profiles.drugs_id",
-	ChildrenStatusID:  "user_profiles.children_status_id",
-	FamilyPlanID:      "user_profiles.family_plan_id",
-	Work:              "user_profiles.work",
-	JobTitle:          "user_profiles.job_title",
-	University:        "user_profiles.university",
-	ProfileMeta:       "user_profiles.profile_meta",
-	CreatedAt:         "user_profiles.created_at",
-	UpdatedAt:         "user_profiles.updated_at",
-	CoverPhotoURL:     "user_profiles.cover_photo_url",
-	Emoji:             "user_profiles.emoji",
-	SexualityID:       "user_profiles.sexuality_id",
-	Verified:          "user_profiles.verified",
+	UserID:                "user_profiles.user_id",
+	DisplayName:           "user_profiles.display_name",
+	Birthdate:             "user_profiles.birthdate",
+	HeightCM:              "user_profiles.height_cm",
+	Geo:                   "user_profiles.geo",
+	City:                  "user_profiles.city",
+	Country:               "user_profiles.country",
+	GenderID:              "user_profiles.gender_id",
+	DatingIntentionID:     "user_profiles.dating_intention_id",
+	ReligionID:            "user_profiles.religion_id",
+	EducationLevelID:      "user_profiles.education_level_id",
+	PoliticalBeliefID:     "user_profiles.political_belief_id",
+	DrinkingID:            "user_profiles.drinking_id",
+	SmokingID:             "user_profiles.smoking_id",
+	MarijuanaID:           "user_profiles.marijuana_id",
+	DrugsID:               "user_profiles.drugs_id",
+	ChildrenStatusID:      "user_profiles.children_status_id",
+	FamilyPlanID:          "user_profiles.family_plan_id",
+	Work:                  "user_profiles.work",
+	JobTitle:              "user_profiles.job_title",
+	University:            "user_profiles.university",
+	ProfileMeta:           "user_profiles.profile_meta",
+	CreatedAt:             "user_profiles.created_at",
+	UpdatedAt:             "user_profiles.updated_at",
+	CoverMediaURL:         "user_profiles.cover_media_url",
+	Emoji:                 "user_profiles.emoji",
+	SexualityID:           "user_profiles.sexuality_id",
+	Verified:              "user_profiles.verified",
+	CoverMediaType:        "user_profiles.cover_media_type",
+	CoverMediaAspectRatio: "user_profiles.cover_media_aspect_ratio",
 }
 
 // Generated where
 
+type whereHelpernull_Float32 struct{ field string }
+
+func (w whereHelpernull_Float32) EQ(x null.Float32) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Float32) NEQ(x null.Float32) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Float32) LT(x null.Float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Float32) LTE(x null.Float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Float32) GT(x null.Float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Float32) GTE(x null.Float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Float32) IN(slice []float32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Float32) NIN(slice []float32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Float32) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Float32) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var UserProfileWhere = struct {
-	UserID            whereHelperstring
-	DisplayName       whereHelperstring
-	Birthdate         whereHelpernull_Time
-	HeightCM          whereHelpernull_Int16
-	Geo               whereHelperstring
-	City              whereHelpernull_String
-	Country           whereHelpernull_String
-	GenderID          whereHelpernull_Int16
-	DatingIntentionID whereHelpernull_Int16
-	ReligionID        whereHelpernull_Int16
-	EducationLevelID  whereHelpernull_Int16
-	PoliticalBeliefID whereHelpernull_Int16
-	DrinkingID        whereHelpernull_Int16
-	SmokingID         whereHelpernull_Int16
-	MarijuanaID       whereHelpernull_Int16
-	DrugsID           whereHelpernull_Int16
-	ChildrenStatusID  whereHelpernull_Int16
-	FamilyPlanID      whereHelpernull_Int16
-	Work              whereHelpernull_String
-	JobTitle          whereHelpernull_String
-	University        whereHelpernull_String
-	ProfileMeta       whereHelpernull_JSON
-	CreatedAt         whereHelpertime_Time
-	UpdatedAt         whereHelpertime_Time
-	CoverPhotoURL     whereHelpernull_String
-	Emoji             whereHelpernull_String
-	SexualityID       whereHelpernull_Int16
-	Verified          whereHelperstring
+	UserID                whereHelperstring
+	DisplayName           whereHelperstring
+	Birthdate             whereHelpernull_Time
+	HeightCM              whereHelpernull_Int16
+	Geo                   whereHelperstring
+	City                  whereHelpernull_String
+	Country               whereHelpernull_String
+	GenderID              whereHelpernull_Int16
+	DatingIntentionID     whereHelpernull_Int16
+	ReligionID            whereHelpernull_Int16
+	EducationLevelID      whereHelpernull_Int16
+	PoliticalBeliefID     whereHelpernull_Int16
+	DrinkingID            whereHelpernull_Int16
+	SmokingID             whereHelpernull_Int16
+	MarijuanaID           whereHelpernull_Int16
+	DrugsID               whereHelpernull_Int16
+	ChildrenStatusID      whereHelpernull_Int16
+	FamilyPlanID          whereHelpernull_Int16
+	Work                  whereHelpernull_String
+	JobTitle              whereHelpernull_String
+	University            whereHelpernull_String
+	ProfileMeta           whereHelpernull_JSON
+	CreatedAt             whereHelpertime_Time
+	UpdatedAt             whereHelpertime_Time
+	CoverMediaURL         whereHelpernull_String
+	Emoji                 whereHelpernull_String
+	SexualityID           whereHelpernull_Int16
+	Verified              whereHelperstring
+	CoverMediaType        whereHelpernull_String
+	CoverMediaAspectRatio whereHelpernull_Float32
 }{
-	UserID:            whereHelperstring{field: "\"user_profiles\".\"user_id\""},
-	DisplayName:       whereHelperstring{field: "\"user_profiles\".\"display_name\""},
-	Birthdate:         whereHelpernull_Time{field: "\"user_profiles\".\"birthdate\""},
-	HeightCM:          whereHelpernull_Int16{field: "\"user_profiles\".\"height_cm\""},
-	Geo:               whereHelperstring{field: "\"user_profiles\".\"geo\""},
-	City:              whereHelpernull_String{field: "\"user_profiles\".\"city\""},
-	Country:           whereHelpernull_String{field: "\"user_profiles\".\"country\""},
-	GenderID:          whereHelpernull_Int16{field: "\"user_profiles\".\"gender_id\""},
-	DatingIntentionID: whereHelpernull_Int16{field: "\"user_profiles\".\"dating_intention_id\""},
-	ReligionID:        whereHelpernull_Int16{field: "\"user_profiles\".\"religion_id\""},
-	EducationLevelID:  whereHelpernull_Int16{field: "\"user_profiles\".\"education_level_id\""},
-	PoliticalBeliefID: whereHelpernull_Int16{field: "\"user_profiles\".\"political_belief_id\""},
-	DrinkingID:        whereHelpernull_Int16{field: "\"user_profiles\".\"drinking_id\""},
-	SmokingID:         whereHelpernull_Int16{field: "\"user_profiles\".\"smoking_id\""},
-	MarijuanaID:       whereHelpernull_Int16{field: "\"user_profiles\".\"marijuana_id\""},
-	DrugsID:           whereHelpernull_Int16{field: "\"user_profiles\".\"drugs_id\""},
-	ChildrenStatusID:  whereHelpernull_Int16{field: "\"user_profiles\".\"children_status_id\""},
-	FamilyPlanID:      whereHelpernull_Int16{field: "\"user_profiles\".\"family_plan_id\""},
-	Work:              whereHelpernull_String{field: "\"user_profiles\".\"work\""},
-	JobTitle:          whereHelpernull_String{field: "\"user_profiles\".\"job_title\""},
-	University:        whereHelpernull_String{field: "\"user_profiles\".\"university\""},
-	ProfileMeta:       whereHelpernull_JSON{field: "\"user_profiles\".\"profile_meta\""},
-	CreatedAt:         whereHelpertime_Time{field: "\"user_profiles\".\"created_at\""},
-	UpdatedAt:         whereHelpertime_Time{field: "\"user_profiles\".\"updated_at\""},
-	CoverPhotoURL:     whereHelpernull_String{field: "\"user_profiles\".\"cover_photo_url\""},
-	Emoji:             whereHelpernull_String{field: "\"user_profiles\".\"emoji\""},
-	SexualityID:       whereHelpernull_Int16{field: "\"user_profiles\".\"sexuality_id\""},
-	Verified:          whereHelperstring{field: "\"user_profiles\".\"verified\""},
+	UserID:                whereHelperstring{field: "\"user_profiles\".\"user_id\""},
+	DisplayName:           whereHelperstring{field: "\"user_profiles\".\"display_name\""},
+	Birthdate:             whereHelpernull_Time{field: "\"user_profiles\".\"birthdate\""},
+	HeightCM:              whereHelpernull_Int16{field: "\"user_profiles\".\"height_cm\""},
+	Geo:                   whereHelperstring{field: "\"user_profiles\".\"geo\""},
+	City:                  whereHelpernull_String{field: "\"user_profiles\".\"city\""},
+	Country:               whereHelpernull_String{field: "\"user_profiles\".\"country\""},
+	GenderID:              whereHelpernull_Int16{field: "\"user_profiles\".\"gender_id\""},
+	DatingIntentionID:     whereHelpernull_Int16{field: "\"user_profiles\".\"dating_intention_id\""},
+	ReligionID:            whereHelpernull_Int16{field: "\"user_profiles\".\"religion_id\""},
+	EducationLevelID:      whereHelpernull_Int16{field: "\"user_profiles\".\"education_level_id\""},
+	PoliticalBeliefID:     whereHelpernull_Int16{field: "\"user_profiles\".\"political_belief_id\""},
+	DrinkingID:            whereHelpernull_Int16{field: "\"user_profiles\".\"drinking_id\""},
+	SmokingID:             whereHelpernull_Int16{field: "\"user_profiles\".\"smoking_id\""},
+	MarijuanaID:           whereHelpernull_Int16{field: "\"user_profiles\".\"marijuana_id\""},
+	DrugsID:               whereHelpernull_Int16{field: "\"user_profiles\".\"drugs_id\""},
+	ChildrenStatusID:      whereHelpernull_Int16{field: "\"user_profiles\".\"children_status_id\""},
+	FamilyPlanID:          whereHelpernull_Int16{field: "\"user_profiles\".\"family_plan_id\""},
+	Work:                  whereHelpernull_String{field: "\"user_profiles\".\"work\""},
+	JobTitle:              whereHelpernull_String{field: "\"user_profiles\".\"job_title\""},
+	University:            whereHelpernull_String{field: "\"user_profiles\".\"university\""},
+	ProfileMeta:           whereHelpernull_JSON{field: "\"user_profiles\".\"profile_meta\""},
+	CreatedAt:             whereHelpertime_Time{field: "\"user_profiles\".\"created_at\""},
+	UpdatedAt:             whereHelpertime_Time{field: "\"user_profiles\".\"updated_at\""},
+	CoverMediaURL:         whereHelpernull_String{field: "\"user_profiles\".\"cover_media_url\""},
+	Emoji:                 whereHelpernull_String{field: "\"user_profiles\".\"emoji\""},
+	SexualityID:           whereHelpernull_Int16{field: "\"user_profiles\".\"sexuality_id\""},
+	Verified:              whereHelperstring{field: "\"user_profiles\".\"verified\""},
+	CoverMediaType:        whereHelpernull_String{field: "\"user_profiles\".\"cover_media_type\""},
+	CoverMediaAspectRatio: whereHelpernull_Float32{field: "\"user_profiles\".\"cover_media_aspect_ratio\""},
 }
 
 // UserProfileRels is where relationship names are stored.
@@ -504,9 +556,9 @@ func (r *userProfileR) GetUser() *User {
 type userProfileL struct{}
 
 var (
-	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "sexuality_id", "verified"}
+	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_media_url", "emoji", "sexuality_id", "verified", "cover_media_type", "cover_media_aspect_ratio"}
 	userProfileColumnsWithoutDefault = []string{"user_id", "display_name"}
-	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_photo_url", "emoji", "sexuality_id", "verified"}
+	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_media_url", "emoji", "sexuality_id", "verified", "cover_media_type", "cover_media_aspect_ratio"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )

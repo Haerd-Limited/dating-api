@@ -785,7 +785,14 @@ func (os *onboardingService) Profile(ctx context.Context, profileDetails domain.
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", profileDetails.UserID))
 	}
 
-	userProfile.CoverPhotoURL = &profileDetails.ProfileCoverPhotoURL
+	userProfile.CoverMediaURL = &profileDetails.ProfileCoverMediaURL
+	if profileDetails.ProfileCoverMediaType != nil {
+		userProfile.CoverMediaType = profileDetails.ProfileCoverMediaType
+	}
+
+	if profileDetails.ProfileCoverMediaAspectRatio != nil {
+		userProfile.CoverMediaAspectRatio = profileDetails.ProfileCoverMediaAspectRatio
+	}
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {

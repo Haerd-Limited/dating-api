@@ -15,23 +15,25 @@ type ProfileCard struct {
 	Country    string  `json:"country"`
 	DistanceKm int     `json:"distance_km"`
 
-	Gender          string        `json:"gender"`
-	DatingIntention string        `json:"dating_intention"`
-	Sexuality       string        `json:"sexuality"`
-	Religion        string        `json:"religion"`
-	EducationLevel  string        `json:"education_level"`
-	PoliticalBelief string        `json:"political_belief"`
-	Drinking        string        `json:"drinking"`
-	Smoking         string        `json:"smoking"`
-	Marijuana       string        `json:"marijuana"`
-	Drugs           string        `json:"drugs"`
-	ChildrenStatus  *string       `json:"children_status"`
-	FamilyPlan      *string       `json:"family_plan"`
-	Ethnicities     []string      `json:"ethnicities"`
-	SpokenLanguages []string      `json:"spoken_languages"`
-	VoicePrompts    []VoicePrompt `json:"voice_prompts"`
-	Theme           UserTheme     `json:"theme"`
-	CoverPhotoURL   string        `json:"cover_photo_url"`
+	Gender                string        `json:"gender"`
+	DatingIntention       string        `json:"dating_intention"`
+	Sexuality             string        `json:"sexuality"`
+	Religion              string        `json:"religion"`
+	EducationLevel        string        `json:"education_level"`
+	PoliticalBelief       string        `json:"political_belief"`
+	Drinking              string        `json:"drinking"`
+	Smoking               string        `json:"smoking"`
+	Marijuana             string        `json:"marijuana"`
+	Drugs                 string        `json:"drugs"`
+	ChildrenStatus        *string       `json:"children_status"`
+	FamilyPlan            *string       `json:"family_plan"`
+	Ethnicities           []string      `json:"ethnicities"`
+	SpokenLanguages       []string      `json:"spoken_languages"`
+	VoicePrompts          []VoicePrompt `json:"voice_prompts"`
+	Theme                 UserTheme     `json:"theme"`
+	CoverMediaURL         string        `json:"cover_media_url"`
+	CoverMediaType        *string       `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64      `json:"cover_media_aspect_ratio,omitempty"`
 
 	VerifiedStatus string `json:"verified_status"`
 	LikeCount      *int64 `json:"like_count"`
@@ -64,13 +66,15 @@ type UserTheme struct {
 }
 
 type VoicePrompt struct {
-	ID            int64  `json:"id"`
-	URL           string `json:"url"`
-	PromptType    Prompt `json:"prompt_type"`
-	IsPrimary     bool   `json:"is_primary"`
-	Position      int16  `json:"position"`
-	DurationMs    int    `json:"duration_ms"`
-	CoverPhotoUrl string `json:"cover_photo_url"`
+	ID                    int64    `json:"id"`
+	URL                   string   `json:"url"`
+	PromptType            Prompt   `json:"prompt_type"`
+	IsPrimary             bool     `json:"is_primary"`
+	Position              int16    `json:"position"`
+	DurationMs            int      `json:"duration_ms"`
+	CoverMediaURL         string   `json:"cover_media_url"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
 }
 
 type Prompt struct {

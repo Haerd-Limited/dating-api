@@ -35,9 +35,21 @@ func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []stri
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Emoji)
 	}
 
-	if p.CoverPhotoURL != nil {
-		ent.CoverPhotoURL = null.StringFromPtr(p.CoverPhotoURL)
-		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverPhotoURL)
+	if p.CoverMediaURL != nil {
+		ent.CoverMediaURL = null.StringFromPtr(p.CoverMediaURL)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverMediaURL)
+	}
+
+	if p.CoverMediaType != nil {
+		ent.CoverMediaType = null.StringFromPtr(p.CoverMediaType)
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverMediaType)
+	}
+
+	if p.CoverMediaAspectRatio != nil {
+		aspectRatio32 := float32(*p.CoverMediaAspectRatio)
+		ent.CoverMediaAspectRatio = null.Float32FromPtr(&aspectRatio32)
+
+		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverMediaAspectRatio)
 	}
 
 	// Strings
@@ -181,16 +193,30 @@ func MapUpdatedPhotosToEntity(updatedPhotos []domain.Photo, userID string) []ent
 
 func MapVoicePromptsUpdateToEntity(uploadedPrompts []domain.VoicePromptUpdate, userID string) []entity.VoicePrompt {
 	var out []entity.VoicePrompt
+
 	for _, p := range uploadedPrompts {
-		out = append(out, entity.VoicePrompt{
-			UserID:        null.StringFrom(userID),
-			PromptType:    null.Int16From(p.PromptTypeID),
-			Position:      null.Int16From(p.Position),
-			IsPrimary:     p.IsPrimary,
-			AudioURL:      p.URL,
-			CoverPhotoURL: null.StringFrom(p.PromptCoverURL),
-			DurationMS:    p.DurationMs,
-		})
+		vp := entity.VoicePrompt{
+			UserID:     null.StringFrom(userID),
+			PromptType: null.Int16From(p.PromptTypeID),
+			Position:   null.Int16From(p.Position),
+			IsPrimary:  p.IsPrimary,
+			AudioURL:   p.URL,
+			DurationMS: p.DurationMs,
+		}
+		if p.PromptCoverMediaURL != "" {
+			vp.CoverMediaURL = null.StringFrom(p.PromptCoverMediaURL)
+		}
+
+		if p.PromptCoverMediaType != nil {
+			vp.CoverMediaType = null.StringFromPtr(p.PromptCoverMediaType)
+		}
+
+		if p.PromptCoverMediaAspectRatio != nil {
+			aspectRatio32 := float32(*p.PromptCoverMediaAspectRatio)
+			vp.CoverMediaAspectRatio = null.Float32FromPtr(&aspectRatio32)
+		}
+
+		out = append(out, vp)
 	}
 
 	return out

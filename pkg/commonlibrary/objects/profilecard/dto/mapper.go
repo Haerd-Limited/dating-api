@@ -37,16 +37,18 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 				Label:    vp.PromptType.Label,
 				Category: vp.PromptType.Category,
 			},
-			IsPrimary:     vp.IsPrimary,
-			Position:      vp.Position,
-			DurationMs:    vp.DurationMs,
-			CoverPhotoUrl: vp.CoverPhotoUrl,
+			IsPrimary:             vp.IsPrimary,
+			Position:              vp.Position,
+			DurationMs:            vp.DurationMs,
+			CoverMediaURL:         vp.CoverMediaURL,
+			CoverMediaType:        vp.CoverMediaType,
+			CoverMediaAspectRatio: vp.CoverMediaAspectRatio,
 		})
 	}
 
-	var coverPhotoUrl string
-	if profile.CoverPhotoUrl != nil {
-		coverPhotoUrl = *profile.CoverPhotoUrl
+	var coverMediaURL string
+	if profile.CoverMediaURL != nil {
+		coverMediaURL = *profile.CoverMediaURL
 	}
 
 	return ProfileCard{
@@ -56,13 +58,15 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		HeightCM:    profile.HeightCM,
 		UserID:      profile.UserID,
 
-		Latitude:      profile.Latitude,
-		Longitude:     profile.Longitude,
-		City:          profile.City,
-		Country:       profile.Country,
-		DistanceKm:    profile.DistanceKm,
-		Emoji:         profile.Emoji,
-		CoverPhotoURL: coverPhotoUrl,
+		Latitude:              profile.Latitude,
+		Longitude:             profile.Longitude,
+		City:                  profile.City,
+		Country:               profile.Country,
+		DistanceKm:            profile.DistanceKm,
+		Emoji:                 profile.Emoji,
+		CoverMediaURL:         coverMediaURL,
+		CoverMediaType:        profile.CoverMediaType,
+		CoverMediaAspectRatio: profile.CoverMediaAspectRatio,
 
 		Gender:          profile.Gender,
 		DatingIntention: profile.DatingIntention,

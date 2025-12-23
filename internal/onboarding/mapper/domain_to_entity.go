@@ -9,17 +9,19 @@ func MapPromptsToProfileVoicePrompts(uploadedPrompts domain.Prompts) []profiledo
 	var out []profiledomain.VoicePromptUpdate
 
 	for _, p := range uploadedPrompts.UploadedPrompts {
-		var coverPhotoUrl string
-		if p.CoverPhotoUrl != nil {
-			coverPhotoUrl = *p.CoverPhotoUrl
+		var coverMediaURL string
+		if p.CoverMediaURL != nil {
+			coverMediaURL = *p.CoverMediaURL
 		}
 
 		out = append(out, profiledomain.VoicePromptUpdate{
-			PromptTypeID:   p.PromptType,
-			Position:       p.Position,
-			IsPrimary:      p.IsPrimary,
-			URL:            p.URL,
-			PromptCoverURL: coverPhotoUrl,
+			PromptTypeID:                p.PromptType,
+			Position:                    p.Position,
+			IsPrimary:                   p.IsPrimary,
+			URL:                         p.URL,
+			PromptCoverMediaURL:         coverMediaURL,
+			PromptCoverMediaType:        p.CoverMediaType,
+			PromptCoverMediaAspectRatio: p.CoverMediaAspectRatio,
 			// todo: add duration somehow. ask frontend to send
 		})
 	}

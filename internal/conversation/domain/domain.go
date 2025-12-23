@@ -66,10 +66,12 @@ type ScoreSnapshot struct {
 }
 
 type VoicePrompt struct {
-	ID            int64
-	Prompt        string
-	CoverPhotoURL string
-	VoiceNoteURL  string
+	ID                    int64
+	Prompt                string
+	CoverMediaURL         string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
+	VoiceNoteURL          string
 }
 
 type Swipe struct {

@@ -97,9 +97,11 @@ func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) domain.Uploa
 
 func MapProfileToDomain(req dto.ProfileRequest, userID string) domain.Profile {
 	return domain.Profile{
-		UserID:               userID,
-		ProfileBaseColour:    req.ProfileBaseColour,
-		ProfileCoverPhotoURL: req.ProfileCoverPhotoURL,
+		UserID:                       userID,
+		ProfileBaseColour:            req.ProfileBaseColour,
+		ProfileCoverMediaURL:         req.ProfileCoverMediaURL,
+		ProfileCoverMediaType:        req.ProfileCoverMediaType,
+		ProfileCoverMediaAspectRatio: req.ProfileCoverMediaAspectRatio,
 	}
 }
 
@@ -108,11 +110,13 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) domain.Pro
 
 	for _, p := range req.UploadedPrompts {
 		voicePrompts = append(voicePrompts, domain.VoicePrompt{
-			URL:           p.URL,
-			Position:      p.Position,
-			IsPrimary:     p.IsPrimary,
-			PromptType:    p.PromptType,
-			CoverPhotoUrl: p.CoverPhotoUrl,
+			URL:                   p.URL,
+			Position:              p.Position,
+			IsPrimary:             p.IsPrimary,
+			PromptType:            p.PromptType,
+			CoverMediaURL:         p.CoverMediaURL,
+			CoverMediaType:        p.CoverMediaType,
+			CoverMediaAspectRatio: p.CoverMediaAspectRatio,
 		})
 	}
 

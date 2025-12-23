@@ -7,14 +7,16 @@ import (
 
 func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profilecard.ProfileCard {
 	fp := profilecard.ProfileCard{
-		DisplayName:    ep.DisplayName,
-		Birthdate:      ep.Birthdate,
-		Age:            ep.Age,
-		HeightCM:       ep.HeightCM,
-		UserID:         ep.UserID,
-		CoverPhotoUrl:  ep.CoverPhotoURL,
-		Emoji:          ep.Emoji,
-		VerifiedStatus: ep.VerifiedStatus,
+		DisplayName:           ep.DisplayName,
+		Birthdate:             ep.Birthdate,
+		Age:                   ep.Age,
+		HeightCM:              ep.HeightCM,
+		UserID:                ep.UserID,
+		CoverMediaURL:         ep.CoverMediaURL,
+		CoverMediaType:        ep.CoverMediaType,
+		CoverMediaAspectRatio: ep.CoverMediaAspectRatio,
+		Emoji:                 ep.Emoji,
+		VerifiedStatus:        ep.VerifiedStatus,
 
 		Latitude:  ep.Latitude,
 		Longitude: ep.Longitude,
@@ -84,10 +86,12 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 					Label:    vp.PromptType.Label,
 					Category: vp.PromptType.Category,
 				},
-				IsPrimary:     vp.IsPrimary,
-				Position:      vp.Position,
-				DurationMs:    vp.DurationMs,
-				CoverPhotoUrl: vp.PromptCoverURL,
+				IsPrimary:             vp.IsPrimary,
+				Position:              vp.Position,
+				DurationMs:            vp.DurationMs,
+				CoverMediaURL:         vp.PromptCoverMediaURL,
+				CoverMediaType:        vp.PromptCoverMediaType,
+				CoverMediaAspectRatio: vp.PromptCoverMediaAspectRatio,
 			})
 		}
 	}

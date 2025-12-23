@@ -139,6 +139,19 @@ func AllUserVideoVerificationStatus() []string {
 	}
 }
 
+// Enum values for CoverMediaType
+const (
+	CoverMediaTypeImage string = "image"
+	CoverMediaTypeGif   string = "gif"
+)
+
+func AllCoverMediaType() []string {
+	return []string{
+		CoverMediaTypeImage,
+		CoverMediaTypeGif,
+	}
+}
+
 // Enum values for ReportStatus
 const (
 	ReportStatusPending   string = "pending"

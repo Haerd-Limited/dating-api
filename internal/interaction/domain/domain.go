@@ -25,10 +25,12 @@ type Like struct {
 	Prompt  *Prompt
 }
 type Prompt struct {
-	PromptID      int64
-	Prompt        string
-	VoiceNoteURL  string
-	CoverPhotoUrl string
+	PromptID              int64
+	Prompt                string
+	VoiceNoteURL          string
+	CoverMediaURL         string
+	CoverMediaType        *string
+	CoverMediaAspectRatio *float64
 }
 
 type Message struct {
