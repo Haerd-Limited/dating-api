@@ -142,7 +142,6 @@ func main() {
 	openaiService := openai.NewOpenAIService(cfg.OpenAIAPIKey, logger)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo, openaiService, awsService, unitOfWork)
-	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger, hub)
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
 	discoverService := discover.NewDiscoverService(logger, profileService, matchingService, discoverRepo)
 	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
@@ -157,6 +156,7 @@ func main() {
 	}
 
 	notificationService.StartWeeklyRefreshScheduler(ctx)
+	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger, hub, notificationService)
 	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork, notificationService)
 	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub)
 	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService)

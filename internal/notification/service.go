@@ -32,6 +32,8 @@ type Service interface {
 	SendLikeNotification(ctx context.Context, likerID, likerName, recipientUserID string) error
 	SendMatchNotification(ctx context.Context, counterpartName, recipientUserID, conversationID string) error
 	SendNewMessageNotification(ctx context.Context, senderID, senderName, conversationID, recipientUserID, preview string) error
+	SendVerificationApprovedNotification(ctx context.Context, recipientUserID string) error
+	SendVerificationRejectedNotification(ctx context.Context, recipientUserID, rejectionReason string) error
 	SendWeeklyRefreshNotifications(ctx context.Context) error
 	StartWeeklyRefreshScheduler(ctx context.Context)
 }
@@ -153,6 +155,42 @@ func (s *service) SendNewMessageNotification(ctx context.Context, senderID, send
 			"recipient_id":    recipientUserID,
 			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
 			"notification_id": "message.new",
+		},
+	}
+
+	return s.sendToUsers(ctx, []string{recipientUserID}, msg)
+}
+
+func (s *service) SendVerificationApprovedNotification(ctx context.Context, recipientUserID string) error {
+	msg := domain.Message{
+		Title: "Verification approved",
+		Body:  "Your video verification has been approved! Your profile is now verified.",
+		Data: map[string]string{
+			"type":            "verification.approved",
+			"recipient_id":    recipientUserID,
+			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
+			"notification_id": "verification.approved",
+		},
+	}
+
+	return s.sendToUsers(ctx, []string{recipientUserID}, msg)
+}
+
+func (s *service) SendVerificationRejectedNotification(ctx context.Context, recipientUserID, rejectionReason string) error {
+	body := "Your video verification has been rejected."
+	if rejectionReason != "" {
+		body = fmt.Sprintf("Your video verification has been rejected: %s", rejectionReason)
+	}
+
+	msg := domain.Message{
+		Title: "Verification rejected",
+		Body:  body,
+		Data: map[string]string{
+			"type":             "verification.rejected",
+			"recipient_id":     recipientUserID,
+			"rejection_reason": rejectionReason,
+			"timestamp_utc":    time.Now().UTC().Format(time.RFC3339),
+			"notification_id":  "verification.rejected",
 		},
 	}
 

@@ -20,6 +20,7 @@ import (
 	realtimedto "github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	internalaws "github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
+	"github.com/Haerd-Limited/dating-api/internal/notification"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
@@ -42,13 +43,14 @@ type Service interface {
 }
 
 type service struct {
-	logger           *zap.Logger
-	rek              internalaws.RekClient
-	region           string
-	verificationRepo storage.VerificationRepository
-	awsService       internalaws.Service
-	profileService   profile.Service
-	hub              realtime.Broadcaster
+	logger              *zap.Logger
+	rek                 internalaws.RekClient
+	region              string
+	verificationRepo    storage.VerificationRepository
+	awsService          internalaws.Service
+	profileService      profile.Service
+	notificationService notification.Service
+	hub                 realtime.Broadcaster
 }
 
 func NewVerificationService(
@@ -59,15 +61,17 @@ func NewVerificationService(
 	profileService profile.Service,
 	logger *zap.Logger,
 	hub realtime.Broadcaster,
+	notificationService notification.Service,
 ) Service {
 	return &service{
-		rek:              rek,
-		region:           region,
-		verificationRepo: verificationRepo,
-		awsService:       awsService,
-		profileService:   profileService,
-		logger:           logger,
-		hub:              hub,
+		rek:                 rek,
+		region:              region,
+		verificationRepo:    verificationRepo,
+		awsService:          awsService,
+		profileService:      profileService,
+		logger:              logger,
+		hub:                 hub,
+		notificationService: notificationService,
 	}
 }
 
@@ -603,6 +607,17 @@ func (s *service) ApproveVideoAttempt(ctx context.Context, attemptID string, not
 		// Don't fail the whole operation if this fails
 	}
 
+	// Send notification to user
+	if s.notificationService != nil {
+		if err := s.notificationService.SendVerificationApprovedNotification(ctx, attempt.UserID); err != nil {
+			s.logger.Warn("failed to send verification approved notification",
+				zap.String("userID", attempt.UserID),
+				zap.String("attemptID", attemptID),
+				zap.Error(err))
+			// Don't fail the whole operation if this fails
+		}
+	}
+
 	s.logger.Info("video verification approved",
 		zap.String("attempt_id", attemptID),
 		zap.String("user_id", attempt.UserID),
@@ -646,6 +661,27 @@ func (s *service) RejectVideoAttempt(ctx context.Context, attemptID string, reje
 	err = s.verificationRepo.UpdateVideoAttemptStatus(ctx, attemptID, entity.VerificationStatusFailed, &rejectionReason)
 	if err != nil {
 		return commonlogger.LogError(s.logger, "update video attempt status", err, zap.String("attemptID", attemptID))
+	}
+
+	// Set profile status back to unverified
+	err = s.profileService.SetProfileUnverified(ctx, attempt.UserID)
+	if err != nil {
+		s.logger.Warn("failed to set profile unverified after video rejection",
+			zap.String("userID", attempt.UserID),
+			zap.String("attemptID", attemptID),
+			zap.Error(err))
+		// Don't fail the whole operation if this fails
+	}
+
+	// Send notification to user
+	if s.notificationService != nil {
+		if err := s.notificationService.SendVerificationRejectedNotification(ctx, attempt.UserID, rejectionReason); err != nil {
+			s.logger.Warn("failed to send verification rejected notification",
+				zap.String("userID", attempt.UserID),
+				zap.String("attemptID", attemptID),
+				zap.Error(err))
+			// Don't fail the whole operation if this fails
+		}
 	}
 
 	s.logger.Info("video verification rejected",

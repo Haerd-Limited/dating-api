@@ -524,3 +524,4 @@ When clicking "View Details" on a report:
 
 **Note**: Reports management is critical for platform safety. Ensure the UI makes it easy to review reports thoroughly and take appropriate actions quickly.
 
+

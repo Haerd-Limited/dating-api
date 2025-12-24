@@ -42,6 +42,7 @@ type Service interface {
 	VerifyProfile(ctx context.Context, userID string) error
 	IsVerified(ctx context.Context, userID string) (bool, error)
 	SetProfileUnderReview(ctx context.Context, userID string) error
+	SetProfileUnverified(ctx context.Context, userID string) error
 	// Stats
 	CountBasicsCompletedByGender(ctx context.Context, genderID int16) (int64, error)
 	CountBasicsCompleted(ctx context.Context) (int64, error)
@@ -731,6 +732,23 @@ func (s *service) SetProfileUnderReview(ctx context.Context, userID string) erro
 	}
 
 	prof.VerifiedStatus = domain.VerificationStatusUnderReview
+
+	err = s.updateUserProfile(ctx, prof, nil)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "update user profile", err, zap.String("userID", userID))
+	}
+
+	return nil
+}
+
+func (s *service) SetProfileUnverified(ctx context.Context, userID string) error {
+	// Load current profile
+	prof, err := s.getUserProfile(ctx, userID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "get user profile", err, zap.String("userID", userID))
+	}
+
+	prof.VerifiedStatus = domain.VerificationStatusUnverified
 
 	err = s.updateUserProfile(ctx, prof, nil)
 	if err != nil {
