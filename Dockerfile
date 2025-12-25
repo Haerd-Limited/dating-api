@@ -25,8 +25,12 @@
     # ---------- Stage 2: Runtime ----------
     FROM alpine:latest
     
-    # TLS certs + ffmpeg (ffprobe)
-    RUN apk add --no-cache ca-certificates ffmpeg curl tar
+    # TLS certs + ffmpeg (ffprobe) + yt-dlp dependencies (Python3 needed for yt-dlp script)
+    RUN apk add --no-cache ca-certificates ffmpeg curl tar python3
+    
+    # Install yt-dlp (Python script that requires Python3)
+    RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+        chmod a+rx /usr/local/bin/yt-dlp
     
     WORKDIR /app
     

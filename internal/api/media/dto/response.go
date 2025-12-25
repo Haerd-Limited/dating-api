@@ -6,3 +6,7 @@ type UploadUrl struct {
 	Headers   map[string]string `json:"headers"`
 	MaxBytes  int64             `json:"max_bytes"`
 }
+
+type TranscribeReelResponse struct {
+	Transcript string `json:"transcript"`
+}

@@ -19,8 +19,12 @@ RUN go build -o haerd-dating-api ./cmd
 # Stage 2 — Minimal runtime image
 FROM alpine:latest
 
-# Install ffmpeg (includes ffprobe)
-RUN apk add --no-cache ffmpeg
+# Install ffmpeg (includes ffprobe) + yt-dlp dependencies (Python3 needed for yt-dlp script)
+RUN apk add --no-cache ffmpeg curl python3
+
+# Install yt-dlp (Python script that requires Python3)
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod a+rx /usr/local/bin/yt-dlp
 
 # Create a non-root user for security
 RUN adduser -D appuser

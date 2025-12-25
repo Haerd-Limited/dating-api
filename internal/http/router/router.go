@@ -224,6 +224,8 @@ func New(
 					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
 
 					r.Get("/feedback/presign", mediaHandler.GenerateFeedbackAttachmentUploadUrl())
+
+					r.Post("/transcribe-reel", mediaHandler.TranscribeInstagramReel())
 				})
 
 				r.Route("/feedback", func(r chi.Router) {

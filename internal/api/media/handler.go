@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/api/media/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/media/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
@@ -13,12 +14,14 @@ import (
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
 
 type Handler interface {
 	GeneratePhotoUploadUrl() http.HandlerFunc
 	GenerateVoiceNoteUploadUrl() http.HandlerFunc
 	GenerateFeedbackAttachmentUploadUrl() http.HandlerFunc
+	TranscribeInstagramReel() http.HandlerFunc
 }
 
 type handler struct {
@@ -115,6 +118,35 @@ func (h *handler) GenerateFeedbackAttachmentUploadUrl() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapUploadURLToResponse(url))
+	}
+}
+
+func (h *handler) TranscribeInstagramReel() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		_, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		var req dto.TranscribeReelRequest
+		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
+			h.logger.Sugar().Warnw("failed to decode and validate transcribe reel request", "error", err.Error())
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid request payload: reel_url is required and must be a valid URL"))
+			return
+		}
+
+		transcript, err := h.mediaService.TranscribeInstagramReel(ctx, req.ReelURL)
+		if err != nil {
+			h.handleServiceErrorResponse(w, r, "TranscribeInstagramReel", err)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.TranscribeReelResponse{
+			Transcript: transcript,
+		})
 	}
 }
 
