@@ -636,6 +636,31 @@ func (r *repository) ArchiveConversationBetween(ctx context.Context, tx *sql.Tx,
 }
 
 func (r *repository) CreateRevealRequest(ctx context.Context, conversationID, userID string, expiresAt time.Time) error {
+	// Check if reveal request already exists
+	existingRequest, err := entity.RevealRequests(
+		entity.RevealRequestWhere.ConversationID.EQ(conversationID),
+	).One(ctx, r.db)
+
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("check existing reveal request failed: %w", err)
+	}
+
+	// If request exists, update it (for expired/confirmed cases)
+	if existingRequest != nil {
+		existingRequest.InitiatorID = userID
+		existingRequest.RequestedAt = time.Now().UTC()
+		existingRequest.ExpiresAt = expiresAt
+		existingRequest.Status = "pending"
+
+		_, err = existingRequest.Update(ctx, r.db, boil.Infer())
+		if err != nil {
+			return fmt.Errorf("update reveal request failed: %w", err)
+		}
+
+		return nil
+	}
+
+	// If no request exists, insert a new one
 	revealRequest := &entity.RevealRequest{
 		ConversationID: conversationID,
 		InitiatorID:    userID,
@@ -644,7 +669,7 @@ func (r *repository) CreateRevealRequest(ctx context.Context, conversationID, us
 		Status:         "pending",
 	}
 
-	err := revealRequest.Insert(ctx, r.db, boil.Infer())
+	err = revealRequest.Insert(ctx, r.db, boil.Infer())
 	if err != nil {
 		return fmt.Errorf("insert reveal request failed: %w", err)
 	}
