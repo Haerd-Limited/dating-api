@@ -125,12 +125,6 @@ func (h *handler) TranscribeInstagramReel() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		_, ok := commoncontext.UserIDFromContext(ctx)
-		if !ok {
-			render.UnauthorizedResponse(w, r, h.logger)
-			return
-		}
-
 		var req dto.TranscribeReelRequest
 		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
 			h.logger.Sugar().Warnw("failed to decode and validate transcribe reel request", "error", err.Error())
