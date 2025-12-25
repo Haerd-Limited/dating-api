@@ -125,6 +125,7 @@ func New(
 					r.Post("/logout", authHandler.Logout())
 				},
 			)
+			r.Post("media/transcribe-reel", mediaHandler.TranscribeInstagramReel())
 
 			r.Route("/lookup", func(r chi.Router) {
 				r.Get("/prompts", lookupHandler.GetPrompts())
@@ -225,7 +226,6 @@ func New(
 
 					r.Get("/feedback/presign", mediaHandler.GenerateFeedbackAttachmentUploadUrl())
 
-					r.Post("/transcribe-reel", mediaHandler.TranscribeInstagramReel())
 				})
 
 				r.Route("/feedback", func(r chi.Router) {
