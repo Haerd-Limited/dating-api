@@ -231,16 +231,36 @@ var (
 )
 
 func (s *service) downloadVideo(ctx context.Context, reelURL, outputPath string) error {
-	// Use yt-dlp to download the video
-	// Add user agent and other flags to improve Instagram compatibility
-	cmd := exec.CommandContext(ctx, "yt-dlp",
+	// Build yt-dlp command with flags to improve Instagram compatibility
+	cmdArgs := []string{
 		"-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
 		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+		"--referer", "https://www.instagram.com/",
 		"--extractor-args", "instagram:webpage_download_retries=3",
+		"--sleep-interval", "1", // Add delay to avoid rate limiting
+		"--sleep-subtitles", "1",
 		"-o", outputPath,
 		"--no-warnings",
-		reelURL,
-	)
+	}
+
+	// Add cookies if available (Solution 2: cookie support)
+	cookiesPath := os.Getenv("INSTAGRAM_COOKIES_PATH")
+	if cookiesPath != "" {
+		if _, err := os.Stat(cookiesPath); err == nil {
+			cmdArgs = append(cmdArgs, "--cookies", cookiesPath)
+			s.logger.Debug("using Instagram cookies file",
+				zap.String("cookiesPath", cookiesPath))
+		} else {
+			s.logger.Warn("Instagram cookies file not found, continuing without cookies",
+				zap.String("cookiesPath", cookiesPath),
+				zap.Error(err))
+		}
+	}
+
+	// Add the URL as the last argument
+	cmdArgs = append(cmdArgs, reelURL)
+
+	cmd := exec.CommandContext(ctx, "yt-dlp", cmdArgs...)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
