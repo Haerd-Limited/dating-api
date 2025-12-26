@@ -1,6 +1,7 @@
 package media
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -146,6 +147,18 @@ func (h *handler) TranscribeInstagramReel() http.HandlerFunc {
 
 func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Request, handlerName string, err error) {
 	if render.ErrorCausedByTimeoutOrClientCancellation(w, r, h.logger, err) {
+		return
+	}
+
+	// Handle specific Instagram errors
+	if errors.Is(err, media.ErrInstagramAuthRequired) {
+		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
+		render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("Unable to access Instagram reel: authentication required. The reel may be private or require login."))
+		return
+	}
+	if errors.Is(err, media.ErrInstagramRateLimited) {
+		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
+		render.Json(w, http.StatusTooManyRequests, commonMappers.ToSimpleErrorResponse("Instagram rate limit reached. Please try again later."))
 		return
 	}
 

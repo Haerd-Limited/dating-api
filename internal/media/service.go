@@ -2,11 +2,13 @@ package media
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -223,18 +225,36 @@ func isValidInstagramReelURL(url string) bool {
 	return matched
 }
 
+var (
+	ErrInstagramAuthRequired = errors.New("instagram authentication required: the reel may be private or require login")
+	ErrInstagramRateLimited  = errors.New("instagram rate limit reached: please try again later")
+)
+
 func (s *service) downloadVideo(ctx context.Context, reelURL, outputPath string) error {
 	// Use yt-dlp to download the video
-	// yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o <output_path> <url>
+	// Add user agent and other flags to improve Instagram compatibility
 	cmd := exec.CommandContext(ctx, "yt-dlp",
 		"-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+		"--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+		"--extractor-args", "instagram:webpage_download_retries=3",
 		"-o", outputPath,
+		"--no-warnings",
 		reelURL,
 	)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("yt-dlp failed: %w, output: %s", err, string(output))
+		outputStr := string(output)
+		// Check for Instagram-specific errors
+		if strings.Contains(outputStr, "login required") ||
+			strings.Contains(outputStr, "Requested content is not available") ||
+			strings.Contains(outputStr, "authentication") {
+			return fmt.Errorf("%w: %s", ErrInstagramAuthRequired, outputStr)
+		}
+		if strings.Contains(outputStr, "rate-limit") || strings.Contains(outputStr, "rate limit") {
+			return fmt.Errorf("%w: %s", ErrInstagramRateLimited, outputStr)
+		}
+		return fmt.Errorf("yt-dlp failed: %w, output: %s", err, outputStr)
 	}
 
 	// Verify the file was created
