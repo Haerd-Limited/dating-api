@@ -351,7 +351,7 @@ func (h *handler) Languages() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg),
+				commonMappers.ToSimpleErrorResponse(messages.AllFieldsRequiredMsg),
 			)
 
 			return
@@ -456,7 +456,7 @@ func (h *handler) Profile() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse(messages.InternalServerErrorMsg),
+				commonMappers.ToSimpleErrorResponse(messages.MissingSomeRequiredFieldsMsg),
 			)
 
 			return
