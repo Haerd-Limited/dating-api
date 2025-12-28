@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -24,6 +25,16 @@ const (
 	weeklyRefreshMinute = 5
 	weeklyRefreshSecond = 0
 	weeklyBatchSize     = 200
+	// minFCMTokenLength is the minimum expected length for a valid FCM token.
+	// FCM tokens are typically 152+ characters, but we use a conservative minimum.
+	minFCMTokenLength = 100
+	// apnsTokenLength is the typical length of an APNs device token (32 bytes = 64 hex chars).
+	apnsTokenLength = 64
+)
+
+var (
+	// hexOnlyPattern matches strings that contain only hexadecimal characters.
+	hexOnlyPattern = regexp.MustCompile(`^[0-9a-fA-F]+$`)
 )
 
 type Service interface {
@@ -86,6 +97,10 @@ func (s *service) RegisterDeviceToken(ctx context.Context, userID, token string)
 	token = strings.TrimSpace(token)
 	if token == "" {
 		return errors.New("device token must not be empty")
+	}
+
+	if err := validateFCMToken(token); err != nil {
+		return fmt.Errorf("invalid FCM token format: %w", err)
 	}
 
 	if err := s.deviceTokenRepo.UpsertToken(ctx, userID, token); err != nil {
@@ -380,7 +395,26 @@ func shouldRemoveToken(err error) bool {
 	return messaging.IsUnregistered(err) || messaging.IsInvalidArgument(err)
 }
 
-var errNoFirebaseCredentials = errors.New("firebase credentials not configured")
+// validateFCMToken checks if a token looks like a valid FCM registration token.
+// It rejects tokens that appear to be APNs tokens or other invalid formats.
+func validateFCMToken(token string) error {
+	if len(token) < minFCMTokenLength {
+		return fmt.Errorf("%w: token too short (expected at least %d characters, got %d); may be an APNs token", ErrInvalidFCMToken, minFCMTokenLength, len(token))
+	}
+
+	// APNs tokens are typically exactly 64 hex characters (32 bytes).
+	// Reject this pattern as it's almost certainly not an FCM token.
+	if len(token) == apnsTokenLength && hexOnlyPattern.MatchString(token) {
+		return fmt.Errorf("%w: token appears to be an APNs device token (64 hex characters); FCM tokens are required", ErrInvalidFCMToken)
+	}
+
+	return nil
+}
+
+var (
+	errNoFirebaseCredentials = errors.New("firebase credentials not configured")
+	ErrInvalidFCMToken       = errors.New("invalid FCM token format")
+)
 
 func newMessagingClient(ctx context.Context, cfg Config) (*messaging.Client, string, error) {
 	var opts []option.ClientOption
