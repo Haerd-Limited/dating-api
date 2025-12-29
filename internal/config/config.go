@@ -23,9 +23,7 @@ type Config struct {
 	AWSAccessKeyID               string `mapstructure:"AWS_ACCESS_KEY_ID" yaml:"aws_access_key_id" validate:"required"`
 	AWSSecretAccessKey           string `mapstructure:"AWS_SECRET_ACCESS_KEY" yaml:"aws_secret_access_key" validate:"required"`
 	S3BucketName                 string `mapstructure:"S3_BUCKET_NAME" yaml:"s3_bucket_name" validate:"required"`
-	FirebaseServiceAccountPath   string `mapstructure:"FIREBASE_SERVICE_ACCOUNT_PATH"`
-	GoogleCredentialsJson        string `mapstructure:"GOOGLE_CREDENTIALS_JSON"`
-	FirebaseProjectID            string `mapstructure:"FIREBASE_PROJECT_ID"`
+	ExpoAccessToken              string `mapstructure:"EXPO_ACCESS_TOKEN"`
 	TwilioAccountSID             string `mapstructure:"TWILIO_ACCOUNT_SID" yaml:"twilio_account_sid"`
 	TwilioAuthToken              string `mapstructure:"TWILIO_AUTH_TOKEN" yaml:"twilio_auth_token"`
 	TwilioNumber                 string `mapstructure:"TWILIO_NUMBER" yaml:"twilio_number"`
@@ -73,9 +71,7 @@ func LoadConfig() (*Config, error) {
 		AWSAccessKeyID:               viper.GetString("AWS_ACCESS_KEY_ID"),
 		AWSSecretAccessKey:           viper.GetString("AWS_SECRET_ACCESS_KEY"),
 		S3BucketName:                 viper.GetString("S3_BUCKET_NAME"),
-		FirebaseServiceAccountPath:   viper.GetString("FIREBASE_SERVICE_ACCOUNT_PATH"),
-		GoogleCredentialsJson:        viper.GetString("GOOGLE_CREDENTIALS_JSON"),
-		FirebaseProjectID:            viper.GetString("FIREBASE_PROJECT_ID"),
+		ExpoAccessToken:              viper.GetString("EXPO_ACCESS_TOKEN"),
 		TwilioAccountSID:             viper.GetString("TWILIO_ACCOUNT_SID"),
 		TwilioAuthToken:              viper.GetString("TWILIO_AUTH_TOKEN"),
 		TwilioNumber:                 viper.GetString("TWILIO_NUMBER"),

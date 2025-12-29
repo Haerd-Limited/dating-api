@@ -1,7 +1,6 @@
 package notification
 
 import (
-	"errors"
 	"net/http"
 
 	"go.uber.org/zap"
@@ -84,9 +83,5 @@ func (h *handler) RemoveDeviceToken() http.HandlerFunc {
 }
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
-	if errors.Is(err, notification.ErrInvalidFCMToken) {
-		return http.StatusBadRequest, "Invalid device token format. Please use an FCM registration token from the Firebase SDK, not an APNs device token."
-	}
-
 	return http.StatusInternalServerError, "Failed to register device token"
 }

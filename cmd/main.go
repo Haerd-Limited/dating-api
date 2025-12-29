@@ -147,9 +147,7 @@ func main() {
 	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
 
 	notificationService, err := notification.NewService(ctx, logger, deviceTokenRepo, notification.Config{
-		ServiceAccountPath: cfg.FirebaseServiceAccountPath,
-		CredentialsJSON:    cfg.GoogleCredentialsJson,
-		ProjectID:          cfg.FirebaseProjectID,
+		ExpoAccessToken: cfg.ExpoAccessToken,
 	})
 	if err != nil {
 		logger.Sugar().Fatalf("failed to initialise notification service: %v", err)

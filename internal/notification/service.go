@@ -1,20 +1,22 @@
 package notification
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
+	"io"
+	"net/http"
 	"strings"
 	"sync/atomic"
 	"time"
 
-	firebase "firebase.google.com/go/v4"
-	"firebase.google.com/go/v4/messaging"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-	"google.golang.org/api/option"
 
 	"github.com/Haerd-Limited/dating-api/internal/notification/domain"
 	"github.com/Haerd-Limited/dating-api/internal/notification/storage"
@@ -25,16 +27,7 @@ const (
 	weeklyRefreshMinute = 5
 	weeklyRefreshSecond = 0
 	weeklyBatchSize     = 200
-	// minFCMTokenLength is the minimum expected length for a valid FCM token.
-	// FCM tokens are typically 152+ characters, but we use a conservative minimum.
-	minFCMTokenLength = 100
-	// apnsTokenLength is the typical length of an APNs device token (32 bytes = 64 hex chars).
-	apnsTokenLength = 64
-)
-
-var (
-	// hexOnlyPattern matches strings that contain only hexadecimal characters.
-	hexOnlyPattern = regexp.MustCompile(`^[0-9a-fA-F]+$`)
+	expoAPIEndpoint     = "https://exp.host/--/api/v2/push/send"
 )
 
 type Service interface {
@@ -52,44 +45,67 @@ type Service interface {
 type service struct {
 	logger            *zap.Logger
 	deviceTokenRepo   storage.DeviceTokenRepository
-	messaging         *messaging.Client
+	httpClient        *http.Client
+	expoAccessToken   string
 	weeklyJobStarted  atomic.Bool
 	disableMessaging  bool
 	credentialsSource string
 }
 
 type Config struct {
-	ServiceAccountPath string
-	CredentialsJSON    string
-	ProjectID          string
+	ExpoAccessToken string
+}
+
+type expoRequest struct {
+	To    string            `json:"to"`
+	Sound string            `json:"sound"`
+	Title string            `json:"title"`
+	Body  string            `json:"body"`
+	Data  map[string]string `json:"data"`
+}
+
+type expoResponse struct {
+	Data struct {
+		Status string `json:"status"`
+		ID     string `json:"id"`
+	} `json:"data"`
+}
+
+type expoError struct {
+	code    string
+	message string
+}
+
+func (e *expoError) Error() string {
+	return fmt.Sprintf("expo error [%s]: %s", e.code, e.message)
 }
 
 func NewService(ctx context.Context, logger *zap.Logger, repo storage.DeviceTokenRepository, cfg Config) (Service, error) {
-	messagingClient, credentialsSource, err := newMessagingClient(ctx, cfg)
-	if err != nil {
-		// If credentials are not provided, degrade gracefully but keep storing tokens.
-		if errors.Is(err, errNoFirebaseCredentials) {
-			logger.Sugar().Warn("firebase credentials not provided; push notifications disabled but device token APIs will continue to work")
+	token := strings.TrimSpace(cfg.ExpoAccessToken)
 
-			return &service{
-				logger:            logger,
-				deviceTokenRepo:   repo,
-				messaging:         nil,
-				disableMessaging:  true,
-				credentialsSource: credentialsSource,
-			}, nil
-		}
-
-		return nil, fmt.Errorf("initialise firebase messaging client: %w", err)
+	if token == "" {
+		logger.Sugar().Warn("expo access token not provided; push notifications disabled but device token APIs will continue to work")
+		return &service{
+			logger:            logger,
+			deviceTokenRepo:   repo,
+			httpClient:        nil,
+			disableMessaging:  true,
+			credentialsSource: "",
+		}, nil
 	}
 
-	logger.Sugar().Infow("firebase messaging client initialised", "credentials_source", credentialsSource)
+	httpClient := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	logger.Sugar().Info("expo push notification client initialized")
 
 	return &service{
 		logger:            logger,
 		deviceTokenRepo:   repo,
-		messaging:         messagingClient,
-		credentialsSource: credentialsSource,
+		httpClient:        httpClient,
+		expoAccessToken:   token,
+		credentialsSource: "env",
 	}, nil
 }
 
@@ -97,10 +113,6 @@ func (s *service) RegisterDeviceToken(ctx context.Context, userID, token string)
 	token = strings.TrimSpace(token)
 	if token == "" {
 		return errors.New("device token must not be empty")
-	}
-
-	if err := validateFCMToken(token); err != nil {
-		return fmt.Errorf("invalid FCM token format: %w", err)
 	}
 
 	if err := s.deviceTokenRepo.UpsertToken(ctx, userID, token); err != nil {
@@ -313,48 +325,21 @@ func (s *service) sendToUsers(ctx context.Context, userIDs []string, msg domain.
 }
 
 func (s *service) sendToTokens(ctx context.Context, tokens []string, msg domain.Message) error {
-	if s.messaging == nil {
+	if s.httpClient == nil {
 		s.logger.Debug("push messaging disabled; skipping send")
 		return nil
 	}
 
-	messages := &messaging.MulticastMessage{
-		Tokens: tokens,
-		Notification: &messaging.Notification{
-			Title: msg.Title,
-			Body:  msg.Body,
-		},
-		Data: msg.Data,
-		Android: &messaging.AndroidConfig{
-			Priority: "high",
-		},
-		APNS: &messaging.APNSConfig{
-			Payload: &messaging.APNSPayload{
-				Aps: &messaging.Aps{
-					Sound: "default",
-				},
-			},
-		},
-	}
-
-	responses, err := s.messaging.SendEachForMulticast(ctx, messages)
-	if err != nil {
-		return fmt.Errorf("send multicast: %w", err)
-	}
-
 	var invalidTokens []string
+	var sendErr error
 
-	for idx, res := range responses.Responses {
-		if res == nil || res.Success {
-			continue
-		}
-
-		if res.Error != nil && idx < len(tokens) && shouldRemoveToken(res.Error) {
-			invalidTokens = append(invalidTokens, tokens[idx])
-		}
-
-		if res.Error != nil && idx < len(tokens) {
-			s.logger.Sugar().Warnw("failed to deliver push notification", "error", res.Error, "token", tokens[idx])
+	for _, token := range tokens {
+		if err := s.sendToExpo(ctx, token, msg); err != nil {
+			if isInvalidTokenError(err) {
+				invalidTokens = append(invalidTokens, token)
+			}
+			sendErr = multierr.Append(sendErr, fmt.Errorf("send to token %s: %w", hashToken(token), err))
+			s.logger.Sugar().Warnw("failed to deliver push notification", "error", err, "token_hash", hashToken(token))
 		}
 	}
 
@@ -364,7 +349,69 @@ func (s *service) sendToTokens(ctx context.Context, tokens []string, msg domain.
 		}
 	}
 
+	return sendErr
+}
+
+func (s *service) sendToExpo(ctx context.Context, token string, msg domain.Message) error {
+	reqBody := expoRequest{
+		To:    token,
+		Sound: "default",
+		Title: msg.Title,
+		Body:  msg.Body,
+		Data:  msg.Data,
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return fmt.Errorf("marshal request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", expoAPIEndpoint, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+s.expoAccessToken)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("expo api error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var expoResp expoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&expoResp); err != nil {
+		return fmt.Errorf("decode response: %w", err)
+	}
+
+	if expoResp.Data.Status == "error" {
+		return &expoError{code: "unknown", message: "expo returned error status"}
+	}
+
 	return nil
+}
+
+func isInvalidTokenError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "devicenotregistered") ||
+		strings.Contains(errStr, "invalidexpopushtoken") ||
+		strings.Contains(errStr, "status 400")
+}
+
+func hashToken(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:8])
 }
 
 func buildLikeBody(likerName string) string {
@@ -389,64 +436,6 @@ func buildMessageTitle(senderName string) string {
 	}
 
 	return fmt.Sprintf("New message from %s", senderName)
-}
-
-func shouldRemoveToken(err error) bool {
-	return messaging.IsUnregistered(err) || messaging.IsInvalidArgument(err)
-}
-
-// validateFCMToken checks if a token looks like a valid FCM registration token.
-// It rejects tokens that appear to be APNs tokens or other invalid formats.
-func validateFCMToken(token string) error {
-	if len(token) < minFCMTokenLength {
-		return fmt.Errorf("%w: token too short (expected at least %d characters, got %d); may be an APNs token", ErrInvalidFCMToken, minFCMTokenLength, len(token))
-	}
-
-	// APNs tokens are typically exactly 64 hex characters (32 bytes).
-	// Reject this pattern as it's almost certainly not an FCM token.
-	if len(token) == apnsTokenLength && hexOnlyPattern.MatchString(token) {
-		return fmt.Errorf("%w: token appears to be an APNs device token (64 hex characters); FCM tokens are required", ErrInvalidFCMToken)
-	}
-
-	return nil
-}
-
-var (
-	errNoFirebaseCredentials = errors.New("firebase credentials not configured")
-	ErrInvalidFCMToken       = errors.New("invalid FCM token format")
-)
-
-func newMessagingClient(ctx context.Context, cfg Config) (*messaging.Client, string, error) {
-	var opts []option.ClientOption
-
-	var source string
-
-	if trimmed := strings.TrimSpace(cfg.CredentialsJSON); trimmed != "" {
-		opts = append(opts, option.WithCredentialsJSON([]byte(trimmed)))
-		source = "json"
-	} else if cfg.ServiceAccountPath != "" {
-		opts = append(opts, option.WithCredentialsFile(cfg.ServiceAccountPath))
-		source = "file"
-	} else {
-		return nil, "", errNoFirebaseCredentials
-	}
-
-	fbCfg := &firebase.Config{}
-	if cfg.ProjectID != "" {
-		fbCfg.ProjectID = cfg.ProjectID
-	}
-
-	app, err := firebase.NewApp(ctx, fbCfg, opts...)
-	if err != nil {
-		return nil, source, fmt.Errorf("create firebase app: %w", err)
-	}
-
-	client, err := app.Messaging(ctx)
-	if err != nil {
-		return nil, source, fmt.Errorf("create messaging client: %w", err)
-	}
-
-	return client, source, nil
 }
 
 func durationUntilNextSunday() time.Duration {
