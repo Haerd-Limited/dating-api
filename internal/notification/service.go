@@ -141,12 +141,11 @@ func (s *service) SendLikeNotification(ctx context.Context, likerID, likerName, 
 		Title: "New like",
 		Body:  buildLikeBody(likerName),
 		Data: map[string]string{
-			"type":            "like.new",
-			"liker_id":        likerID,
-			"liker_name":      likerName,
-			"recipient_id":    recipientUserID,
-			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
-			"notification_id": "like.new",
+			"type":          "like.new",
+			"liker_id":      likerID,
+			"liker_name":    likerName,
+			"recipient_id":  recipientUserID,
+			"timestamp_utc": time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 
@@ -163,7 +162,6 @@ func (s *service) SendMatchNotification(ctx context.Context, counterpartName, re
 			"counterpart_name": counterpartName,
 			"recipient_id":     recipientUserID,
 			"timestamp_utc":    time.Now().UTC().Format(time.RFC3339),
-			"notification_id":  "match.new",
 		},
 	}
 
@@ -181,7 +179,6 @@ func (s *service) SendNewMessageNotification(ctx context.Context, senderID, send
 			"sender_name":     senderName,
 			"recipient_id":    recipientUserID,
 			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
-			"notification_id": "message.new",
 		},
 	}
 
@@ -193,10 +190,9 @@ func (s *service) SendVerificationApprovedNotification(ctx context.Context, reci
 		Title: "Verification approved",
 		Body:  "Your video verification has been approved! Your profile is now verified.",
 		Data: map[string]string{
-			"type":            "verification.approved",
-			"recipient_id":    recipientUserID,
-			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
-			"notification_id": "verification.approved",
+			"type":          "verification.approved",
+			"recipient_id":  recipientUserID,
+			"timestamp_utc": time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 
@@ -217,7 +213,6 @@ func (s *service) SendVerificationRejectedNotification(ctx context.Context, reci
 			"recipient_id":     recipientUserID,
 			"rejection_reason": rejectionReason,
 			"timestamp_utc":    time.Now().UTC().Format(time.RFC3339),
-			"notification_id":  "verification.rejected",
 		},
 	}
 
@@ -239,9 +234,8 @@ func (s *service) SendWeeklyRefreshNotifications(ctx context.Context) error {
 		Title: "Weekly refresh",
 		Body:  "Your superlike and Voices Worth Hearing picks just refreshed. Come meet someone new.",
 		Data: map[string]string{
-			"type":            "weekly.refresh",
-			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
-			"notification_id": "weekly.refresh",
+			"type":          "weekly.refresh",
+			"timestamp_utc": time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 
