@@ -304,7 +304,7 @@ func (h *handler) SendMessage() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.MapToSendMessageResponse(&msg))
+		render.Json(w, http.StatusOK, mapper.MapToSendMessageResponse(&msg, userID))
 	}
 }
 
@@ -336,7 +336,7 @@ func (h *handler) GetConversationMessages() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.MapToGetConversationMessagesResponse(messages))
+		render.Json(w, http.StatusOK, mapper.MapToGetConversationMessagesResponse(messages, userID))
 	}
 }
 

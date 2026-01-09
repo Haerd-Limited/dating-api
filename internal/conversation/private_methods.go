@@ -214,10 +214,12 @@ func (s *service) sendMessageToConversation(msg domain.Message) {
 		return
 	}
 	// Build server event (use your DTO for payload)
+	// Use empty string for userID in realtime events since it's broadcast to the conversation
+	// Frontend will handle per-user display logic based on SenderID
 	evt := dto.ServerMsg{
 		Type:           "message.new",
 		ConversationID: msg.ConversationID,
-		Payload:        dtomapper.MapMessageToDto(&msg),
+		Payload:        dtomapper.MapMessageToDto(&msg, ""),
 	}
 	b, _ := json.Marshal(evt)
 	s.hub.BroadcastToConversation(msg.ConversationID, b)

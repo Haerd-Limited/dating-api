@@ -5,7 +5,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 )
 
-func MapToGetConversationMessagesResponse(domainMessages []domain.Message) dto.GetConversationMessagesResponse {
+func MapToGetConversationMessagesResponse(domainMessages []domain.Message, userID string) dto.GetConversationMessagesResponse {
 	if domainMessages == nil {
 		return dto.GetConversationMessagesResponse{
 			Messages: []dto.Message{},
@@ -14,7 +14,7 @@ func MapToGetConversationMessagesResponse(domainMessages []domain.Message) dto.G
 
 	var messages []dto.Message
 	for _, msg := range domainMessages {
-		messages = append(messages, MapMessageToDto(&msg))
+		messages = append(messages, MapMessageToDto(&msg, userID))
 	}
 
 	return dto.GetConversationMessagesResponse{
@@ -22,17 +22,17 @@ func MapToGetConversationMessagesResponse(domainMessages []domain.Message) dto.G
 	}
 }
 
-func MapToSendMessageResponse(domainMessage *domain.Message) dto.SendMessageResponse {
+func MapToSendMessageResponse(domainMessage *domain.Message, userID string) dto.SendMessageResponse {
 	if domainMessage == nil {
 		return dto.SendMessageResponse{}
 	}
 
 	return dto.SendMessageResponse{
-		Messages: MapMessageToDto(domainMessage),
+		Messages: MapMessageToDto(domainMessage, userID),
 	}
 }
 
-func MapMessageToDto(msg *domain.Message) dto.Message {
+func MapMessageToDto(msg *domain.Message, userID string) dto.Message {
 	if msg == nil {
 		return dto.Message{}
 	}
@@ -61,12 +61,25 @@ func MapMessageToDto(msg *domain.Message) dto.Message {
 		}
 	}
 
+	textBody := msg.TextBody
+
+	// If the message is a voice note and TextBody is nil, populate it with a summary
+	if msg.Type == domain.MessageTypeVoice && textBody == nil {
+		var summaryText string
+		if msg.SenderID == userID {
+			summaryText = "You sent a voice note"
+		} else {
+			summaryText = "You received a voice note"
+		}
+		textBody = &summaryText
+	}
+
 	return dto.Message{
 		ID:                     msg.ID,
 		ConversationID:         msg.ConversationID,
 		SenderID:               msg.SenderID,
 		Type:                   string(msg.Type),
-		TextBody:               msg.TextBody,
+		TextBody:               textBody,
 		MediaKey:               msg.MediaUrl,
 		MediaSeconds:           msg.MediaSeconds,
 		CreatedAt:              msg.CreatedAt,
@@ -111,7 +124,7 @@ func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversa
 			if convo.LastMessage.SenderID == userID {
 				summaryText = "You sent a voice note"
 			} else {
-				summaryText = "You received a voice note"
+				summaryText = "Voice note"
 			}
 			textBody = &summaryText
 		}
