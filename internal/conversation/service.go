@@ -409,7 +409,7 @@ func (s *service) sendNewMessagePush(ctx context.Context, msg domain.Message) {
 		return
 	}
 
-	preview := buildMessagePreview(msg)
+	preview := buildMessagePreview(msg, senderProfile.DisplayName)
 	if preview == "" {
 		preview = "You have a new message waiting for you."
 	}
@@ -419,7 +419,13 @@ func (s *service) sendNewMessagePush(ctx context.Context, msg domain.Message) {
 	}
 }
 
-func buildMessagePreview(msg domain.Message) string {
+func buildMessagePreview(msg domain.Message, senderName string) string {
+	// Extract first name from sender name (split by space and take first part)
+	firstName := senderName
+	if spaceIdx := strings.Index(senderName, " "); spaceIdx > 0 {
+		firstName = senderName[:spaceIdx]
+	}
+
 	switch msg.Type {
 	case domain.MessageTypeText:
 		if msg.TextBody == nil {
@@ -438,9 +444,9 @@ func buildMessagePreview(msg domain.Message) string {
 
 		return trimmed
 	case domain.MessageTypeVoice:
-		return "sent you a voice note."
+		return fmt.Sprintf("%s sent you a voice note.", firstName)
 	case domain.MessageTypeGif:
-		return "sent you a GIF."
+		return fmt.Sprintf("%s sent you a GIF.", firstName)
 	default:
 		return ""
 	}
