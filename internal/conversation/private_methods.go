@@ -322,3 +322,53 @@ func (s *service) updateConversationRealtime(ctx context.Context, userID string,
 
 	s.hub.BroadcastToUser(matchID, byts)
 }
+
+func (s *service) sendRevealRequestNotification(ctx context.Context, conversationID, initiatorID string) {
+	if s.notificationSvc == nil {
+		return
+	}
+
+	participants, err := s.conversationRepo.GetConversationParticipants(ctx, conversationID)
+	if err != nil {
+		s.logger.Sugar().Warnw("send reveal request notification: get participants", "error", err, "conversationID", conversationID)
+		return
+	}
+
+	var recipientID string
+	for _, participant := range participants {
+		if participant.UserID != initiatorID {
+			recipientID = participant.UserID
+			break
+		}
+	}
+
+	if recipientID == "" {
+		return
+	}
+
+	initiatorProfile, err := s.profileService.GetProfileCard(ctx, initiatorID)
+	if err != nil {
+		s.logger.Sugar().Warnw("send reveal request notification: get initiator profile", "error", err, "initiatorID", initiatorID)
+		return
+	}
+
+	if err := s.notificationSvc.SendRevealRequestNotification(ctx, initiatorID, initiatorProfile.DisplayName, recipientID, conversationID); err != nil {
+		s.logger.Sugar().Warnw("failed to send reveal request notification", "error", err, "conversationID", conversationID, "recipientID", recipientID)
+	}
+}
+
+func (s *service) sendRevealAcceptedNotification(ctx context.Context, conversationID, acceptorID, recipientID string) {
+	if s.notificationSvc == nil {
+		return
+	}
+
+	acceptorProfile, err := s.profileService.GetProfileCard(ctx, acceptorID)
+	if err != nil {
+		s.logger.Sugar().Warnw("send reveal accepted notification: get acceptor profile", "error", err, "acceptorID", acceptorID)
+		return
+	}
+
+	if err := s.notificationSvc.SendRevealAcceptedNotification(ctx, acceptorID, acceptorProfile.DisplayName, recipientID, conversationID); err != nil {
+		s.logger.Sugar().Warnw("failed to send reveal accepted notification", "error", err, "conversationID", conversationID, "recipientID", recipientID)
+	}
+}

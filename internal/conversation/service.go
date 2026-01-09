@@ -560,6 +560,9 @@ func (s *service) InitiateReveal(ctx context.Context, userID, conversationID str
 	// Send WebSocket event to other user
 	s.broadcastRevealInitiated(ctx, conversationID, userID)
 
+	// Send push notification to the other participant
+	s.sendRevealRequestNotification(ctx, conversationID, userID)
+
 	// TODO: Implement background job to cleanup expired reveals
 	// This should run periodically to mark expired reveal requests and notify users
 
@@ -633,6 +636,9 @@ func (s *service) ConfirmReveal(ctx context.Context, userID, conversationID stri
 
 	// Broadcast to both users
 	s.broadcastRevealConfirmed(ctx, conversationID)
+
+	// Send push notification to the initiator
+	s.sendRevealAcceptedNotification(ctx, conversationID, userID, revealRequest.InitiatorID)
 
 	return nil
 }
