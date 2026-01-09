@@ -83,7 +83,7 @@ func MapToGetChemistryScoreResponse(score int) dto.GetChemistryScoreResponse {
 	}
 }
 
-func MapToGetConversationsResponse(conversations []domain.Conversation) dto.GetConversationsResponse {
+func MapToGetConversationsResponse(conversations []domain.Conversation, userID string) dto.GetConversationsResponse {
 	if conversations == nil {
 		return dto.GetConversationsResponse{
 			Conversations: []dto.Conversation{},
@@ -92,7 +92,7 @@ func MapToGetConversationsResponse(conversations []domain.Conversation) dto.GetC
 
 	var dtos []dto.Conversation
 	for _, convo := range conversations {
-		dtos = append(dtos, MapConversationToDto(convo))
+		dtos = append(dtos, MapConversationToDto(convo, userID))
 	}
 
 	return dto.GetConversationsResponse{
@@ -100,15 +100,28 @@ func MapToGetConversationsResponse(conversations []domain.Conversation) dto.GetC
 	}
 }
 
-func MapConversationToDto(convo domain.Conversation) dto.Conversation {
+func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversation {
 	var message *dto.Message
 	if convo.LastMessage != nil {
+		textBody := convo.LastMessage.TextBody
+
+		// If the last message is a voice note and TextBody is nil, populate it with a summary
+		if convo.LastMessage.Type == domain.MessageTypeVoice && textBody == nil {
+			var summaryText string
+			if convo.LastMessage.SenderID == userID {
+				summaryText = "You sent a voice note"
+			} else {
+				summaryText = "You received a voice note"
+			}
+			textBody = &summaryText
+		}
+
 		message = &dto.Message{
 			ID:             convo.LastMessage.ID,
 			ConversationID: convo.LastMessage.ConversationID,
 			SenderID:       convo.LastMessage.SenderID,
 			Type:           string(convo.LastMessage.Type),
-			TextBody:       convo.LastMessage.TextBody,
+			TextBody:       textBody,
 			MediaKey:       convo.LastMessage.MediaUrl,
 			MediaSeconds:   convo.LastMessage.MediaSeconds,
 			CreatedAt:      convo.LastMessage.CreatedAt,

@@ -258,7 +258,7 @@ func (h *handler) GetConversations() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.MapToGetConversationsResponse(conversations))
+		render.Json(w, http.StatusOK, mapper.MapToGetConversationsResponse(conversations, userID))
 	}
 }
 

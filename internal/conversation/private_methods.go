@@ -275,7 +275,7 @@ func (s *service) updateConversationRealtime(ctx context.Context, userID string,
 		ActorID:   convo.LastMessage.SenderID,
 		Ts:        time.Now(),
 		ContextID: convo.ID,
-		Data:      dtomapper.MapConversationToDto(*convo),
+		Data:      dtomapper.MapConversationToDto(*convo, userID),
 		Version:   1,
 	}
 
@@ -310,7 +310,7 @@ func (s *service) updateConversationRealtime(ctx context.Context, userID string,
 		ActorID:   convo.LastMessage.SenderID,
 		Ts:        time.Now(),
 		ContextID: convo.ID,
-		Data:      dtomapper.MapConversationToDto(*convo),
+		Data:      dtomapper.MapConversationToDto(*convo, matchID),
 		Version:   1,
 	}
 
