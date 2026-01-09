@@ -64,7 +64,7 @@ func MapMessageToDto(msg *domain.Message, userID string) dto.Message {
 	textBody := msg.TextBody
 
 	// If the message is a voice note and TextBody is nil, populate it with a summary
-	if msg.Type == domain.MessageTypeVoice && textBody == nil {
+	if msg.Type == domain.MessageTypeVoice {
 		var summaryText string
 		if msg.SenderID == userID {
 			summaryText = "You sent a voice note"
@@ -119,12 +119,12 @@ func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversa
 		textBody := convo.LastMessage.TextBody
 
 		// If the last message is a voice note and TextBody is nil, populate it with a summary
-		if convo.LastMessage.Type == domain.MessageTypeVoice && textBody == nil {
+		if convo.LastMessage.Type == domain.MessageTypeVoice {
 			var summaryText string
 			if convo.LastMessage.SenderID == userID {
 				summaryText = "You sent a voice note"
 			} else {
-				summaryText = "Voice note"
+				summaryText = "You received a voice note"
 			}
 			textBody = &summaryText
 		}
