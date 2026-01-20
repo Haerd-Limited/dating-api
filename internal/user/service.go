@@ -66,9 +66,11 @@ func NewUserService(
 }
 
 var (
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrNameContainsSpaces = errors.New("name must not contain spaces")
-	ErrInvalidNameLength  = errors.New("name must be between 3 and 20 characters")
+	ErrInvalidCredentials      = errors.New("invalid credentials")
+	ErrFirstNameContainsSpaces = errors.New("first name must not contain spaces")
+	ErrLastNameContainsSpaces  = errors.New("last name must not contain spaces")
+	ErrInvalidFirstNameLength  = errors.New("first name must be between 3 and 20 characters")
+	ErrInvalidLastNameLength   = errors.New("last name must be between 3 and 20 characters")
 )
 
 const (
@@ -174,11 +176,11 @@ func (us *userService) UserExistsByIdentifier(ctx context.Context, channel, iden
 func (us *userService) validateAndSanitiseUserDetails(userDetails *domain.User) error {
 	userDetails.FirstName = strings.TrimSpace(userDetails.FirstName)
 	if hasAnySpace(userDetails.FirstName) {
-		return fmt.Errorf("first%w", ErrNameContainsSpaces)
+		return fmt.Errorf("first%w", ErrFirstNameContainsSpaces)
 	}
 	// first name length check
 	if l := len(userDetails.FirstName); l < minNameLen || l > maxNameLen {
-		return ErrInvalidNameLength
+		return ErrInvalidFirstNameLength
 	}
 
 	if userDetails.LastName != nil {
@@ -186,12 +188,12 @@ func (us *userService) validateAndSanitiseUserDetails(userDetails *domain.User) 
 		userDetails.LastName = &temp
 
 		if hasAnySpace(*userDetails.LastName) {
-			return fmt.Errorf("last%w", ErrNameContainsSpaces)
+			return fmt.Errorf("last%w", ErrLastNameContainsSpaces)
 		}
 
 		// last name length check
 		if l := len(*userDetails.LastName); l < minNameLen || l > maxNameLen {
-			return ErrInvalidNameLength
+			return ErrInvalidLastNameLength
 		}
 	}
 

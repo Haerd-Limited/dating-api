@@ -538,10 +538,14 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, commonErrors.ErrInvalidGender):
 		return http.StatusBadRequest, messages.InvalidGenderMsg
-	case errors.Is(err, user.ErrInvalidNameLength):
-		return http.StatusBadRequest, "Username must be between 3 and 20 characters long"
-	case errors.Is(err, user.ErrNameContainsSpaces):
-		return http.StatusBadRequest, "Username cannot contain spaces"
+	case errors.Is(err, user.ErrInvalidFirstNameLength):
+		return http.StatusBadRequest, "First name must be between 3 and 20 characters long"
+	case errors.Is(err, user.ErrInvalidLastNameLength):
+		return http.StatusBadRequest, "Last name must be between 3 and 20 characters long"
+	case errors.Is(err, user.ErrFirstNameContainsSpaces):
+		return http.StatusBadRequest, "First name cannot contain spaces"
+	case errors.Is(err, user.ErrLastNameContainsSpaces):
+		return http.StatusBadRequest, "Last name cannot contain spaces"
 	case errors.Is(err, onboarding.ErrPreregistrationCapped):
 		return http.StatusConflict, "Registration for this cohort is full. Please check back later."
 
