@@ -117,7 +117,9 @@ var UserRels = struct {
 	UserBConversations           string
 	DataExportRequests           string
 	DeviceTokens                 string
+	Events                       string
 	Feedbacks                    string
+	InsightSnapshots             string
 	UserAMatches                 string
 	UserBMatches                 string
 	MessageReceipts              string
@@ -141,6 +143,7 @@ var UserRels = struct {
 	VerificationVideoSubmissions string
 	VoicePrompts                 string
 	VoiceWorthHearingWeeklies    string
+	WrappedAnnuals               string
 }{
 	UserPreference:               "UserPreference",
 	UserProfile:                  "UserProfile",
@@ -151,7 +154,9 @@ var UserRels = struct {
 	UserBConversations:           "UserBConversations",
 	DataExportRequests:           "DataExportRequests",
 	DeviceTokens:                 "DeviceTokens",
+	Events:                       "Events",
 	Feedbacks:                    "Feedbacks",
+	InsightSnapshots:             "InsightSnapshots",
 	UserAMatches:                 "UserAMatches",
 	UserBMatches:                 "UserBMatches",
 	MessageReceipts:              "MessageReceipts",
@@ -175,6 +180,7 @@ var UserRels = struct {
 	VerificationVideoSubmissions: "VerificationVideoSubmissions",
 	VoicePrompts:                 "VoicePrompts",
 	VoiceWorthHearingWeeklies:    "VoiceWorthHearingWeeklies",
+	WrappedAnnuals:               "WrappedAnnuals",
 }
 
 // userR is where relationships are stored.
@@ -188,7 +194,9 @@ type userR struct {
 	UserBConversations           ConversationSlice                `boil:"UserBConversations" json:"UserBConversations" toml:"UserBConversations" yaml:"UserBConversations"`
 	DataExportRequests           DataExportRequestSlice           `boil:"DataExportRequests" json:"DataExportRequests" toml:"DataExportRequests" yaml:"DataExportRequests"`
 	DeviceTokens                 DeviceTokenSlice                 `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
+	Events                       EventSlice                       `boil:"Events" json:"Events" toml:"Events" yaml:"Events"`
 	Feedbacks                    FeedbackSlice                    `boil:"Feedbacks" json:"Feedbacks" toml:"Feedbacks" yaml:"Feedbacks"`
+	InsightSnapshots             InsightSnapshotSlice             `boil:"InsightSnapshots" json:"InsightSnapshots" toml:"InsightSnapshots" yaml:"InsightSnapshots"`
 	UserAMatches                 MatchSlice                       `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
 	UserBMatches                 MatchSlice                       `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
 	MessageReceipts              MessageReceiptSlice              `boil:"MessageReceipts" json:"MessageReceipts" toml:"MessageReceipts" yaml:"MessageReceipts"`
@@ -212,6 +220,7 @@ type userR struct {
 	VerificationVideoSubmissions VerificationVideoSubmissionSlice `boil:"VerificationVideoSubmissions" json:"VerificationVideoSubmissions" toml:"VerificationVideoSubmissions" yaml:"VerificationVideoSubmissions"`
 	VoicePrompts                 VoicePromptSlice                 `boil:"VoicePrompts" json:"VoicePrompts" toml:"VoicePrompts" yaml:"VoicePrompts"`
 	VoiceWorthHearingWeeklies    VoiceWorthHearingWeeklySlice     `boil:"VoiceWorthHearingWeeklies" json:"VoiceWorthHearingWeeklies" toml:"VoiceWorthHearingWeeklies" yaml:"VoiceWorthHearingWeeklies"`
+	WrappedAnnuals               WrappedAnnualSlice               `boil:"WrappedAnnuals" json:"WrappedAnnuals" toml:"WrappedAnnuals" yaml:"WrappedAnnuals"`
 }
 
 // NewStruct creates a new relationship struct
@@ -363,6 +372,22 @@ func (r *userR) GetDeviceTokens() DeviceTokenSlice {
 	return r.DeviceTokens
 }
 
+func (o *User) GetEvents() EventSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetEvents()
+}
+
+func (r *userR) GetEvents() EventSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.Events
+}
+
 func (o *User) GetFeedbacks() FeedbackSlice {
 	if o == nil {
 		return nil
@@ -377,6 +402,22 @@ func (r *userR) GetFeedbacks() FeedbackSlice {
 	}
 
 	return r.Feedbacks
+}
+
+func (o *User) GetInsightSnapshots() InsightSnapshotSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetInsightSnapshots()
+}
+
+func (r *userR) GetInsightSnapshots() InsightSnapshotSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.InsightSnapshots
 }
 
 func (o *User) GetUserAMatches() MatchSlice {
@@ -745,6 +786,22 @@ func (r *userR) GetVoiceWorthHearingWeeklies() VoiceWorthHearingWeeklySlice {
 	}
 
 	return r.VoiceWorthHearingWeeklies
+}
+
+func (o *User) GetWrappedAnnuals() WrappedAnnualSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetWrappedAnnuals()
+}
+
+func (r *userR) GetWrappedAnnuals() WrappedAnnualSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.WrappedAnnuals
 }
 
 // userL is where Load methods for each relationship are stored.
@@ -1177,6 +1234,20 @@ func (o *User) DeviceTokens(mods ...qm.QueryMod) deviceTokenQuery {
 	return DeviceTokens(queryMods...)
 }
 
+// Events retrieves all the event's Events with an executor.
+func (o *User) Events(mods ...qm.QueryMod) eventQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"events\".\"user_id\"=?", o.ID),
+	)
+
+	return Events(queryMods...)
+}
+
 // Feedbacks retrieves all the feedback's Feedbacks with an executor.
 func (o *User) Feedbacks(mods ...qm.QueryMod) feedbackQuery {
 	var queryMods []qm.QueryMod
@@ -1189,6 +1260,20 @@ func (o *User) Feedbacks(mods ...qm.QueryMod) feedbackQuery {
 	)
 
 	return Feedbacks(queryMods...)
+}
+
+// InsightSnapshots retrieves all the insight_snapshot's InsightSnapshots with an executor.
+func (o *User) InsightSnapshots(mods ...qm.QueryMod) insightSnapshotQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"insight_snapshots\".\"user_id\"=?", o.ID),
+	)
+
+	return InsightSnapshots(queryMods...)
 }
 
 // UserAMatches retrieves all the match's Matches with an executor via user_a column.
@@ -1514,6 +1599,20 @@ func (o *User) VoiceWorthHearingWeeklies(mods ...qm.QueryMod) voiceWorthHearingW
 	)
 
 	return VoiceWorthHearingWeeklies(queryMods...)
+}
+
+// WrappedAnnuals retrieves all the wrapped_annual's WrappedAnnuals with an executor.
+func (o *User) WrappedAnnuals(mods ...qm.QueryMod) wrappedAnnualQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"wrapped_annual\".\"user_id\"=?", o.ID),
+	)
+
+	return WrappedAnnuals(queryMods...)
 }
 
 // LoadUserPreference allows an eager lookup of values, cached into the
@@ -2549,6 +2648,119 @@ func (userL) LoadDeviceTokens(ctx context.Context, e boil.ContextExecutor, singu
 	return nil
 }
 
+// LoadEvents allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadEvents(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`events`),
+		qm.WhereIn(`events.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load events")
+	}
+
+	var resultSlice []*Event
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice events")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on events")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for events")
+	}
+
+	if len(eventAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Events = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &eventR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.UserID) {
+				local.R.Events = append(local.R.Events, foreign)
+				if foreign.R == nil {
+					foreign.R = &eventR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadFeedbacks allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (userL) LoadFeedbacks(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
@@ -2652,6 +2864,119 @@ func (userL) LoadFeedbacks(ctx context.Context, e boil.ContextExecutor, singular
 				local.R.Feedbacks = append(local.R.Feedbacks, foreign)
 				if foreign.R == nil {
 					foreign.R = &feedbackR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadInsightSnapshots allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadInsightSnapshots(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`insight_snapshots`),
+		qm.WhereIn(`insight_snapshots.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load insight_snapshots")
+	}
+
+	var resultSlice []*InsightSnapshot
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice insight_snapshots")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on insight_snapshots")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for insight_snapshots")
+	}
+
+	if len(insightSnapshotAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.InsightSnapshots = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &insightSnapshotR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.UserID) {
+				local.R.InsightSnapshots = append(local.R.InsightSnapshots, foreign)
+				if foreign.R == nil {
+					foreign.R = &insightSnapshotR{}
 				}
 				foreign.R.User = local
 				break
@@ -5312,6 +5637,119 @@ func (userL) LoadVoiceWorthHearingWeeklies(ctx context.Context, e boil.ContextEx
 	return nil
 }
 
+// LoadWrappedAnnuals allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadWrappedAnnuals(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`wrapped_annual`),
+		qm.WhereIn(`wrapped_annual.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load wrapped_annual")
+	}
+
+	var resultSlice []*WrappedAnnual
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice wrapped_annual")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on wrapped_annual")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for wrapped_annual")
+	}
+
+	if len(wrappedAnnualAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.WrappedAnnuals = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &wrappedAnnualR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.WrappedAnnuals = append(local.R.WrappedAnnuals, foreign)
+				if foreign.R == nil {
+					foreign.R = &wrappedAnnualR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetUserPreference of the user to the related item.
 // Sets o.R.UserPreference to related.
 // Adds o to related.R.User.
@@ -5777,6 +6215,133 @@ func (o *User) AddDeviceTokens(ctx context.Context, exec boil.ContextExecutor, i
 	return nil
 }
 
+// AddEvents adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.Events.
+// Sets related.R.User appropriately.
+func (o *User) AddEvents(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Event) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.UserID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"events\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, eventPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.UserID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			Events: related,
+		}
+	} else {
+		o.R.Events = append(o.R.Events, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &eventR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// SetEvents removes all previously related items of the
+// user replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.User's Events accordingly.
+// Replaces o.R.Events with related.
+// Sets related.R.User's Events accordingly.
+func (o *User) SetEvents(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Event) error {
+	query := "update \"events\" set \"user_id\" = null where \"user_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.Events {
+			queries.SetScanner(&rel.UserID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.User = nil
+		}
+		o.R.Events = nil
+	}
+
+	return o.AddEvents(ctx, exec, insert, related...)
+}
+
+// RemoveEvents relationships from objects passed in.
+// Removes related items from R.Events (uses pointer comparison, removal does not keep order)
+// Sets related.R.User.
+func (o *User) RemoveEvents(ctx context.Context, exec boil.ContextExecutor, related ...*Event) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.UserID, nil)
+		if rel.R != nil {
+			rel.R.User = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("user_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.Events {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.Events)
+			if ln > 1 && i < ln-1 {
+				o.R.Events[i] = o.R.Events[ln-1]
+			}
+			o.R.Events = o.R.Events[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
 // AddFeedbacks adds the given related objects to the existing relationships
 // of the user, optionally inserting them as new records.
 // Appends related to o.R.Feedbacks.
@@ -5827,6 +6392,133 @@ func (o *User) AddFeedbacks(ctx context.Context, exec boil.ContextExecutor, inse
 			rel.R.User = o
 		}
 	}
+	return nil
+}
+
+// AddInsightSnapshots adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.InsightSnapshots.
+// Sets related.R.User appropriately.
+func (o *User) AddInsightSnapshots(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*InsightSnapshot) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.UserID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"insight_snapshots\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, insightSnapshotPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.UserID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			InsightSnapshots: related,
+		}
+	} else {
+		o.R.InsightSnapshots = append(o.R.InsightSnapshots, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &insightSnapshotR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// SetInsightSnapshots removes all previously related items of the
+// user replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.User's InsightSnapshots accordingly.
+// Replaces o.R.InsightSnapshots with related.
+// Sets related.R.User's InsightSnapshots accordingly.
+func (o *User) SetInsightSnapshots(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*InsightSnapshot) error {
+	query := "update \"insight_snapshots\" set \"user_id\" = null where \"user_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.InsightSnapshots {
+			queries.SetScanner(&rel.UserID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.User = nil
+		}
+		o.R.InsightSnapshots = nil
+	}
+
+	return o.AddInsightSnapshots(ctx, exec, insert, related...)
+}
+
+// RemoveInsightSnapshots relationships from objects passed in.
+// Removes related items from R.InsightSnapshots (uses pointer comparison, removal does not keep order)
+// Sets related.R.User.
+func (o *User) RemoveInsightSnapshots(ctx context.Context, exec boil.ContextExecutor, related ...*InsightSnapshot) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.UserID, nil)
+		if rel.R != nil {
+			rel.R.User = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("user_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.InsightSnapshots {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.InsightSnapshots)
+			if ln > 1 && i < ln-1 {
+				o.R.InsightSnapshots[i] = o.R.InsightSnapshots[ln-1]
+			}
+			o.R.InsightSnapshots = o.R.InsightSnapshots[:ln-1]
+			break
+		}
+	}
+
 	return nil
 }
 
@@ -7538,6 +8230,59 @@ func (o *User) AddVoiceWorthHearingWeeklies(ctx context.Context, exec boil.Conte
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &voiceWorthHearingWeeklyR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
+}
+
+// AddWrappedAnnuals adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.WrappedAnnuals.
+// Sets related.R.User appropriately.
+func (o *User) AddWrappedAnnuals(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*WrappedAnnual) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"wrapped_annual\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, wrappedAnnualPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.UserID, rel.Year}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			WrappedAnnuals: related,
+		}
+	} else {
+		o.R.WrappedAnnuals = append(o.R.WrappedAnnuals, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &wrappedAnnualR{
 				User: o,
 			}
 		} else {

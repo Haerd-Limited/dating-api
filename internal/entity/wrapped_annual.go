@@ -73,15 +73,35 @@ var WrappedAnnualWhere = struct {
 
 // WrappedAnnualRels is where relationship names are stored.
 var WrappedAnnualRels = struct {
-}{}
+	User string
+}{
+	User: "User",
+}
 
 // wrappedAnnualR is where relationships are stored.
 type wrappedAnnualR struct {
+	User *User `boil:"User" json:"User" toml:"User" yaml:"User"`
 }
 
 // NewStruct creates a new relationship struct
 func (*wrappedAnnualR) NewStruct() *wrappedAnnualR {
 	return &wrappedAnnualR{}
+}
+
+func (o *WrappedAnnual) GetUser() *User {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetUser()
+}
+
+func (r *wrappedAnnualR) GetUser() *User {
+	if r == nil {
+		return nil
+	}
+
+	return r.User
 }
 
 // wrappedAnnualL is where Load methods for each relationship are stored.
@@ -398,6 +418,184 @@ func (q wrappedAnnualQuery) Exists(ctx context.Context, exec boil.ContextExecuto
 	}
 
 	return count > 0, nil
+}
+
+// User pointed to by the foreign key.
+func (o *WrappedAnnual) User(mods ...qm.QueryMod) userQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"id\" = ?", o.UserID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Users(queryMods...)
+}
+
+// LoadUser allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (wrappedAnnualL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybeWrappedAnnual interface{}, mods queries.Applicator) error {
+	var slice []*WrappedAnnual
+	var object *WrappedAnnual
+
+	if singular {
+		var ok bool
+		object, ok = maybeWrappedAnnual.(*WrappedAnnual)
+		if !ok {
+			object = new(WrappedAnnual)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeWrappedAnnual)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeWrappedAnnual))
+			}
+		}
+	} else {
+		s, ok := maybeWrappedAnnual.(*[]*WrappedAnnual)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeWrappedAnnual)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeWrappedAnnual))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &wrappedAnnualR{}
+		}
+		args[object.UserID] = struct{}{}
+
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &wrappedAnnualR{}
+			}
+
+			args[obj.UserID] = struct{}{}
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`users`),
+		qm.WhereIn(`users.id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load User")
+	}
+
+	var resultSlice []*User
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice User")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for users")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for users")
+	}
+
+	if len(userAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.User = foreign
+		if foreign.R == nil {
+			foreign.R = &userR{}
+		}
+		foreign.R.WrappedAnnuals = append(foreign.R.WrappedAnnuals, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.UserID == foreign.ID {
+				local.R.User = foreign
+				if foreign.R == nil {
+					foreign.R = &userR{}
+				}
+				foreign.R.WrappedAnnuals = append(foreign.R.WrappedAnnuals, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetUser of the wrappedAnnual to the related item.
+// Sets o.R.User to related.
+// Adds o to related.R.WrappedAnnuals.
+func (o *WrappedAnnual) SetUser(ctx context.Context, exec boil.ContextExecutor, insert bool, related *User) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE \"wrapped_annual\" SET %s WHERE %s",
+		strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+		strmangle.WhereClause("\"", "\"", 2, wrappedAnnualPrimaryKeyColumns),
+	)
+	values := []interface{}{related.ID, o.UserID, o.Year}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.UserID = related.ID
+	if o.R == nil {
+		o.R = &wrappedAnnualR{
+			User: related,
+		}
+	} else {
+		o.R.User = related
+	}
+
+	if related.R == nil {
+		related.R = &userR{
+			WrappedAnnuals: WrappedAnnualSlice{o},
+		}
+	} else {
+		related.R.WrappedAnnuals = append(related.R.WrappedAnnuals, o)
+	}
+
+	return nil
 }
 
 // WrappedAnnuals retrieves all the records using an executor.

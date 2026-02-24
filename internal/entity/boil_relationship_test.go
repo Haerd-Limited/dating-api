@@ -15,8 +15,10 @@ func TestToOne(t *testing.T) {
 	t.Run("ConversationToUserUsingUserBUser", testConversationToOneUserUsingUserBUser)
 	t.Run("DataExportRequestToUserUsingUser", testDataExportRequestToOneUserUsingUser)
 	t.Run("DeviceTokenToUserUsingUser", testDeviceTokenToOneUserUsingUser)
+	t.Run("EventToUserUsingUser", testEventToOneUserUsingUser)
 	t.Run("FeedbackToUserUsingUser", testFeedbackToOneUserUsingUser)
 	t.Run("FeedbackAttachmentToFeedbackUsingFeedback", testFeedbackAttachmentToOneFeedbackUsingFeedback)
+	t.Run("InsightSnapshotToUserUsingUser", testInsightSnapshotToOneUserUsingUser)
 	t.Run("MatchToUserUsingUserAUser", testMatchToOneUserUsingUserAUser)
 	t.Run("MatchToUserUsingUserBUser", testMatchToOneUserUsingUserBUser)
 	t.Run("MessageReceiptToMessageUsingMessage", testMessageReceiptToOneMessageUsingMessage)
@@ -65,6 +67,7 @@ func TestToOne(t *testing.T) {
 	t.Run("VoicePromptToPromptTypeUsingVoicePromptPromptType", testVoicePromptToOnePromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingUser", testVoicePromptToOneUserUsingUser)
 	t.Run("VoiceWorthHearingWeeklyToUserUsingUser", testVoiceWorthHearingWeeklyToOneUserUsingUser)
+	t.Run("WrappedAnnualToUserUsingUser", testWrappedAnnualToOneUserUsingUser)
 }
 
 // TestOneToOne tests cannot be run in parallel
@@ -112,7 +115,9 @@ func TestToMany(t *testing.T) {
 	t.Run("UserToUserBConversations", testUserToManyUserBConversations)
 	t.Run("UserToDataExportRequests", testUserToManyDataExportRequests)
 	t.Run("UserToDeviceTokens", testUserToManyDeviceTokens)
+	t.Run("UserToEvents", testUserToManyEvents)
 	t.Run("UserToFeedbacks", testUserToManyFeedbacks)
+	t.Run("UserToInsightSnapshots", testUserToManyInsightSnapshots)
 	t.Run("UserToUserAMatches", testUserToManyUserAMatches)
 	t.Run("UserToUserBMatches", testUserToManyUserBMatches)
 	t.Run("UserToMessageReceipts", testUserToManyMessageReceipts)
@@ -136,6 +141,7 @@ func TestToMany(t *testing.T) {
 	t.Run("UserToVerificationVideoSubmissions", testUserToManyVerificationVideoSubmissions)
 	t.Run("UserToVoicePrompts", testUserToManyVoicePrompts)
 	t.Run("UserToVoiceWorthHearingWeeklies", testUserToManyVoiceWorthHearingWeeklies)
+	t.Run("UserToWrappedAnnuals", testUserToManyWrappedAnnuals)
 	t.Run("VerificationAttemptToLastAttemptUserVerificationStatuses", testVerificationAttemptToManyLastAttemptUserVerificationStatuses)
 	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyPromptSwipes)
 }
@@ -150,8 +156,10 @@ func TestToOneSet(t *testing.T) {
 	t.Run("ConversationToUserUsingUserBConversations", testConversationToOneSetOpUserUsingUserBUser)
 	t.Run("DataExportRequestToUserUsingDataExportRequests", testDataExportRequestToOneSetOpUserUsingUser)
 	t.Run("DeviceTokenToUserUsingDeviceTokens", testDeviceTokenToOneSetOpUserUsingUser)
+	t.Run("EventToUserUsingEvents", testEventToOneSetOpUserUsingUser)
 	t.Run("FeedbackToUserUsingFeedbacks", testFeedbackToOneSetOpUserUsingUser)
 	t.Run("FeedbackAttachmentToFeedbackUsingFeedbackAttachments", testFeedbackAttachmentToOneSetOpFeedbackUsingFeedback)
+	t.Run("InsightSnapshotToUserUsingInsightSnapshots", testInsightSnapshotToOneSetOpUserUsingUser)
 	t.Run("MatchToUserUsingUserAMatches", testMatchToOneSetOpUserUsingUserAUser)
 	t.Run("MatchToUserUsingUserBMatches", testMatchToOneSetOpUserUsingUserBUser)
 	t.Run("MessageReceiptToMessageUsingMessageReceipts", testMessageReceiptToOneSetOpMessageUsingMessage)
@@ -200,12 +208,15 @@ func TestToOneSet(t *testing.T) {
 	t.Run("VoicePromptToPromptTypeUsingVoicePrompts", testVoicePromptToOneSetOpPromptTypeUsingVoicePromptPromptType)
 	t.Run("VoicePromptToUserUsingVoicePrompts", testVoicePromptToOneSetOpUserUsingUser)
 	t.Run("VoiceWorthHearingWeeklyToUserUsingVoiceWorthHearingWeeklies", testVoiceWorthHearingWeeklyToOneSetOpUserUsingUser)
+	t.Run("WrappedAnnualToUserUsingWrappedAnnuals", testWrappedAnnualToOneSetOpUserUsingUser)
 }
 
 // TestToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOneRemove(t *testing.T) {
 	t.Run("ConversationToMessageUsingLastMessageConversations", testConversationToOneRemoveOpMessageUsingLastMessage)
+	t.Run("EventToUserUsingEvents", testEventToOneRemoveOpUserUsingUser)
+	t.Run("InsightSnapshotToUserUsingInsightSnapshots", testInsightSnapshotToOneRemoveOpUserUsingUser)
 	t.Run("PhotoToUserUsingPhotos", testPhotoToOneRemoveOpUserUsingUser)
 	t.Run("ReportActionToUserUsingReviewerReportActions", testReportActionToOneRemoveOpUserUsingReviewer)
 	t.Run("SwipeToVoicePromptUsingPromptSwipes", testSwipeToOneRemoveOpVoicePromptUsingPrompt)
@@ -275,7 +286,9 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("UserToUserBConversations", testUserToManyAddOpUserBConversations)
 	t.Run("UserToDataExportRequests", testUserToManyAddOpDataExportRequests)
 	t.Run("UserToDeviceTokens", testUserToManyAddOpDeviceTokens)
+	t.Run("UserToEvents", testUserToManyAddOpEvents)
 	t.Run("UserToFeedbacks", testUserToManyAddOpFeedbacks)
+	t.Run("UserToInsightSnapshots", testUserToManyAddOpInsightSnapshots)
 	t.Run("UserToUserAMatches", testUserToManyAddOpUserAMatches)
 	t.Run("UserToUserBMatches", testUserToManyAddOpUserBMatches)
 	t.Run("UserToMessageReceipts", testUserToManyAddOpMessageReceipts)
@@ -299,6 +312,7 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("UserToVerificationVideoSubmissions", testUserToManyAddOpVerificationVideoSubmissions)
 	t.Run("UserToVoicePrompts", testUserToManyAddOpVoicePrompts)
 	t.Run("UserToVoiceWorthHearingWeeklies", testUserToManyAddOpVoiceWorthHearingWeeklies)
+	t.Run("UserToWrappedAnnuals", testUserToManyAddOpWrappedAnnuals)
 	t.Run("VerificationAttemptToLastAttemptUserVerificationStatuses", testVerificationAttemptToManyAddOpLastAttemptUserVerificationStatuses)
 	t.Run("VoicePromptToPromptSwipes", testVoicePromptToManyAddOpPromptSwipes)
 }
@@ -323,6 +337,8 @@ func TestToManySet(t *testing.T) {
 	t.Run("PromptTypeToVoicePrompts", testPromptTypeToManySetOpVoicePrompts)
 	t.Run("ReligionToUserProfiles", testReligionToManySetOpUserProfiles)
 	t.Run("SexualityToUserProfiles", testSexualityToManySetOpUserProfiles)
+	t.Run("UserToEvents", testUserToManySetOpEvents)
+	t.Run("UserToInsightSnapshots", testUserToManySetOpInsightSnapshots)
 	t.Run("UserToPhotos", testUserToManySetOpPhotos)
 	t.Run("UserToReviewerReportActions", testUserToManySetOpReviewerReportActions)
 	t.Run("UserToEthnicities", testUserToManySetOpEthnicities)
@@ -353,6 +369,8 @@ func TestToManyRemove(t *testing.T) {
 	t.Run("PromptTypeToVoicePrompts", testPromptTypeToManyRemoveOpVoicePrompts)
 	t.Run("ReligionToUserProfiles", testReligionToManyRemoveOpUserProfiles)
 	t.Run("SexualityToUserProfiles", testSexualityToManyRemoveOpUserProfiles)
+	t.Run("UserToEvents", testUserToManyRemoveOpEvents)
+	t.Run("UserToInsightSnapshots", testUserToManyRemoveOpInsightSnapshots)
 	t.Run("UserToPhotos", testUserToManyRemoveOpPhotos)
 	t.Run("UserToReviewerReportActions", testUserToManyRemoveOpReviewerReportActions)
 	t.Run("UserToEthnicities", testUserToManyRemoveOpEthnicities)
