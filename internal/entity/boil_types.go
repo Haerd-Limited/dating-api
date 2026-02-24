@@ -94,15 +94,15 @@ func AllMatchStatus() []string {
 
 // Enum values for MessageType
 const (
-	MessageTypeText   string = "text"
-	MessageTypeVoice  string = "voice"
-	MessageTypeSystem string = "system"
+	MessageTypeText      string = "text"
+	MessageTypeVoicenote string = "voicenote"
+	MessageTypeSystem    string = "system"
 )
 
 func AllMessageType() []string {
 	return []string{
 		MessageTypeText,
-		MessageTypeVoice,
+		MessageTypeVoicenote,
 		MessageTypeSystem,
 	}
 }

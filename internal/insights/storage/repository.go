@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/aarondl/sqlboiler/v4/types"
@@ -31,6 +32,8 @@ type Repository interface {
 	GetSessionFrequency(ctx context.Context, userID string, from, to time.Time) (int64, error)
 	GetUserSignupDate(ctx context.Context, userID string) (time.Time, error)
 	GetTotalUsers(ctx context.Context) (int64, error)
+	ListEventsByUserID(ctx context.Context, userID string) ([]*entity.Event, error)
+	ListInsightSnapshotsByUserID(ctx context.Context, userID string) ([]*entity.InsightSnapshot, error)
 }
 
 type repository struct {
@@ -51,7 +54,7 @@ func (r *repository) CountMessages(ctx context.Context, from, to time.Time) (int
 
 	voice, err := entity.Messages(
 		qm.Where(entity.MessageTableColumns.CreatedAt+" >= ? AND "+entity.MessageTableColumns.CreatedAt+" < ?", from, to),
-		qm.Where(entity.MessageTableColumns.Type+" = ?", entity.MessageTypeVoice),
+		qm.Where(entity.MessageTableColumns.Type+" = ?", entity.MessageTypeVoicenote),
 	).Count(ctx, r.db)
 	if err != nil {
 		return 0, 0, err
@@ -135,7 +138,7 @@ func (r *repository) UserCounts(ctx context.Context, userID string, from, to tim
 	voice, err := entity.Messages(
 		qm.Where(entity.MessageTableColumns.SenderID+" = ?", userID),
 		qm.Where(entity.MessageTableColumns.CreatedAt+" >= ? AND "+entity.MessageTableColumns.CreatedAt+" < ?", from, to),
-		qm.Where(entity.MessageTableColumns.Type+" = ?", entity.MessageTypeVoice),
+		qm.Where(entity.MessageTableColumns.Type+" = ?", entity.MessageTypeVoicenote),
 	).Count(ctx, r.db)
 	if err != nil {
 		return 0, 0, 0, 0, 0, err
@@ -396,4 +399,18 @@ func (r *repository) GetTotalUsers(ctx context.Context) (int64, error) {
 	}
 
 	return count, nil
+}
+
+func (r *repository) ListEventsByUserID(ctx context.Context, userID string) ([]*entity.Event, error) {
+	return entity.Events(
+		entity.EventWhere.UserID.EQ(null.StringFrom(userID)),
+		qm.OrderBy(entity.EventColumns.OccurredAt+" DESC"),
+	).All(ctx, r.db)
+}
+
+func (r *repository) ListInsightSnapshotsByUserID(ctx context.Context, userID string) ([]*entity.InsightSnapshot, error) {
+	return entity.InsightSnapshots(
+		entity.InsightSnapshotWhere.UserID.EQ(null.StringFrom(userID)),
+		qm.OrderBy(entity.InsightSnapshotColumns.CreatedAt+" DESC"),
+	).All(ctx, r.db)
 }

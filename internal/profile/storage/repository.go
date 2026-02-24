@@ -30,6 +30,7 @@ type ProfileRepository interface {
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
 	GetUserEthnicities(ctx context.Context, userID string) ([]int16, error)
 	GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error)
+	GetAllVoicePromptsByUserID(ctx context.Context, userID string) ([]*entity.VoicePrompt, error)
 	GetUserPhotos(ctx context.Context, userID string) ([]*entity.Photo, error)
 	GetVoicePromptByID(ctx context.Context, id int64) (*entity.VoicePrompt, error)
 	IsVerified(ctx context.Context, userID string) (bool, error)
@@ -647,6 +648,13 @@ func (pr *profileRepository) GetUserVoicePrompts(ctx context.Context, userID str
 	}
 
 	return vp, nil
+}
+
+func (pr *profileRepository) GetAllVoicePromptsByUserID(ctx context.Context, userID string) ([]*entity.VoicePrompt, error) {
+	return entity.VoicePrompts(
+		entity.VoicePromptWhere.UserID.EQ(null.StringFrom(userID)),
+		qm.OrderBy(entity.VoicePromptColumns.CreatedAt+" ASC"),
+	).All(ctx, pr.db)
 }
 
 func (pr *profileRepository) executor(tx *sql.Tx) boil.ContextExecutor {

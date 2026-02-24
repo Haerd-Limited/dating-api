@@ -1,12 +1,14 @@
 deps:
 	@echo "Installing dependencies..."
 	go install github.com/daixiang0/gci@latest
+	go install github.com/pressly/goose/v3/cmd/goose@latest
 	go mod tidy
 	go mod download
 .PHONY: deps
 
 DSN="postgres://haerdappuser:H@erd_2025@localhost:5432/haerd-dating-db?sslmode=disable"
 
+# run `export PATH=$PATH:$(go env GOPATH)/bin` to make goose available in your terminal
 migrate-up:
 	@goose -dir ./migrations postgres ${DSN} up
 .PHONY: migrate-up

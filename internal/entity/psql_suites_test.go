@@ -10,6 +10,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Conversations", testConversationsUpsert)
 
+	t.Run("DataExportRequests", testDataExportRequestsUpsert)
+
 	t.Run("DatingIntentions", testDatingIntentionsUpsert)
 
 	t.Run("DeviceTokens", testDeviceTokensUpsert)

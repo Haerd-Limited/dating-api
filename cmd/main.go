@@ -24,6 +24,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"github.com/Haerd-Limited/dating-api/internal/config"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
+	"github.com/Haerd-Limited/dating-api/internal/dataexport"
+	dataexportstorage "github.com/Haerd-Limited/dating-api/internal/dataexport/storage"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
@@ -195,6 +197,23 @@ func main() {
 	insRepo := insightstorage.NewRepository(db)
 	insSvc := insightsvc.NewService(logger, insRepo)
 
+	// Data export (GDPR)
+	dataExportRepo := dataexportstorage.NewRepository(db)
+	dataExportService := dataexport.NewService(
+		logger,
+		dataExportRepo,
+		userRepo,
+		profileRepo,
+		discoverService,
+		conversationRepo,
+		interactionRepo,
+		feedbackRepo,
+		insRepo,
+		verificationRepo,
+		safetyRepo,
+		matchingRepo,
+	)
+
 	// Start background weekly scheduler for insights (runs inside API process).
 	runInsightsWeekly(ctx, logger, insSvc, insRepo)
 
@@ -217,6 +236,7 @@ func main() {
 		insSvc,
 		userService,
 		feedbackService,
+		dataExportService,
 		cfg.AdminAPIKey,
 	)
 

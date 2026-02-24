@@ -38,6 +38,8 @@ type VerificationRepository interface {
 	ListVideoAttempts(ctx context.Context, filter domain.VideoAttemptFilter) ([]*entity.VerificationAttempt, error)
 	GetVideoAttemptByID(ctx context.Context, attemptID string) (*entity.VerificationAttempt, error)
 	UpdateVideoAttemptStatus(ctx context.Context, attemptID string, status string, rejectionReason *string) error
+	// Data export
+	ListVerificationAttemptsByUserID(ctx context.Context, userID string) ([]*entity.VerificationAttempt, error)
 }
 
 type verificationRepository struct {
@@ -108,6 +110,13 @@ func (r *verificationRepository) GetVerificationAttemptByUserIDAndSessionID(ctx 
 	}
 
 	return va, nil
+}
+
+func (r *verificationRepository) ListVerificationAttemptsByUserID(ctx context.Context, userID string) ([]*entity.VerificationAttempt, error) {
+	return entity.VerificationAttempts(
+		entity.VerificationAttemptWhere.UserID.EQ(userID),
+		qm.OrderBy(entity.VerificationAttemptColumns.CreatedAt+" DESC"),
+	).All(ctx, r.db)
 }
 
 func (r *verificationRepository) CreateAttempt(ctx context.Context, a entity.VerificationAttempt) error {

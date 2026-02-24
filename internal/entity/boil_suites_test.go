@@ -14,6 +14,7 @@ import "testing"
 func TestParent(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipants)
 	t.Run("Conversations", testConversations)
+	t.Run("DataExportRequests", testDataExportRequests)
 	t.Run("DatingIntentions", testDatingIntentions)
 	t.Run("DeviceTokens", testDeviceTokens)
 	t.Run("EducationLevels", testEducationLevels)
@@ -74,6 +75,7 @@ func TestParent(t *testing.T) {
 func TestDelete(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsDelete)
 	t.Run("Conversations", testConversationsDelete)
+	t.Run("DataExportRequests", testDataExportRequestsDelete)
 	t.Run("DatingIntentions", testDatingIntentionsDelete)
 	t.Run("DeviceTokens", testDeviceTokensDelete)
 	t.Run("EducationLevels", testEducationLevelsDelete)
@@ -134,6 +136,7 @@ func TestDelete(t *testing.T) {
 func TestQueryDeleteAll(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsQueryDeleteAll)
 	t.Run("Conversations", testConversationsQueryDeleteAll)
+	t.Run("DataExportRequests", testDataExportRequestsQueryDeleteAll)
 	t.Run("DatingIntentions", testDatingIntentionsQueryDeleteAll)
 	t.Run("DeviceTokens", testDeviceTokensQueryDeleteAll)
 	t.Run("EducationLevels", testEducationLevelsQueryDeleteAll)
@@ -194,6 +197,7 @@ func TestQueryDeleteAll(t *testing.T) {
 func TestSliceDeleteAll(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsSliceDeleteAll)
 	t.Run("Conversations", testConversationsSliceDeleteAll)
+	t.Run("DataExportRequests", testDataExportRequestsSliceDeleteAll)
 	t.Run("DatingIntentions", testDatingIntentionsSliceDeleteAll)
 	t.Run("DeviceTokens", testDeviceTokensSliceDeleteAll)
 	t.Run("EducationLevels", testEducationLevelsSliceDeleteAll)
@@ -254,6 +258,7 @@ func TestSliceDeleteAll(t *testing.T) {
 func TestExists(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsExists)
 	t.Run("Conversations", testConversationsExists)
+	t.Run("DataExportRequests", testDataExportRequestsExists)
 	t.Run("DatingIntentions", testDatingIntentionsExists)
 	t.Run("DeviceTokens", testDeviceTokensExists)
 	t.Run("EducationLevels", testEducationLevelsExists)
@@ -314,6 +319,7 @@ func TestExists(t *testing.T) {
 func TestFind(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsFind)
 	t.Run("Conversations", testConversationsFind)
+	t.Run("DataExportRequests", testDataExportRequestsFind)
 	t.Run("DatingIntentions", testDatingIntentionsFind)
 	t.Run("DeviceTokens", testDeviceTokensFind)
 	t.Run("EducationLevels", testEducationLevelsFind)
@@ -374,6 +380,7 @@ func TestFind(t *testing.T) {
 func TestBind(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsBind)
 	t.Run("Conversations", testConversationsBind)
+	t.Run("DataExportRequests", testDataExportRequestsBind)
 	t.Run("DatingIntentions", testDatingIntentionsBind)
 	t.Run("DeviceTokens", testDeviceTokensBind)
 	t.Run("EducationLevels", testEducationLevelsBind)
@@ -434,6 +441,7 @@ func TestBind(t *testing.T) {
 func TestOne(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsOne)
 	t.Run("Conversations", testConversationsOne)
+	t.Run("DataExportRequests", testDataExportRequestsOne)
 	t.Run("DatingIntentions", testDatingIntentionsOne)
 	t.Run("DeviceTokens", testDeviceTokensOne)
 	t.Run("EducationLevels", testEducationLevelsOne)
@@ -494,6 +502,7 @@ func TestOne(t *testing.T) {
 func TestAll(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsAll)
 	t.Run("Conversations", testConversationsAll)
+	t.Run("DataExportRequests", testDataExportRequestsAll)
 	t.Run("DatingIntentions", testDatingIntentionsAll)
 	t.Run("DeviceTokens", testDeviceTokensAll)
 	t.Run("EducationLevels", testEducationLevelsAll)
@@ -554,6 +563,7 @@ func TestAll(t *testing.T) {
 func TestCount(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsCount)
 	t.Run("Conversations", testConversationsCount)
+	t.Run("DataExportRequests", testDataExportRequestsCount)
 	t.Run("DatingIntentions", testDatingIntentionsCount)
 	t.Run("DeviceTokens", testDeviceTokensCount)
 	t.Run("EducationLevels", testEducationLevelsCount)
@@ -614,6 +624,7 @@ func TestCount(t *testing.T) {
 func TestHooks(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsHooks)
 	t.Run("Conversations", testConversationsHooks)
+	t.Run("DataExportRequests", testDataExportRequestsHooks)
 	t.Run("DatingIntentions", testDatingIntentionsHooks)
 	t.Run("DeviceTokens", testDeviceTokensHooks)
 	t.Run("EducationLevels", testEducationLevelsHooks)
@@ -676,6 +687,8 @@ func TestInsert(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsInsertWhitelist)
 	t.Run("Conversations", testConversationsInsert)
 	t.Run("Conversations", testConversationsInsertWhitelist)
+	t.Run("DataExportRequests", testDataExportRequestsInsert)
+	t.Run("DataExportRequests", testDataExportRequestsInsertWhitelist)
 	t.Run("DatingIntentions", testDatingIntentionsInsert)
 	t.Run("DatingIntentions", testDatingIntentionsInsertWhitelist)
 	t.Run("DeviceTokens", testDeviceTokensInsert)
@@ -791,6 +804,7 @@ func TestInsert(t *testing.T) {
 func TestReload(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsReload)
 	t.Run("Conversations", testConversationsReload)
+	t.Run("DataExportRequests", testDataExportRequestsReload)
 	t.Run("DatingIntentions", testDatingIntentionsReload)
 	t.Run("DeviceTokens", testDeviceTokensReload)
 	t.Run("EducationLevels", testEducationLevelsReload)
@@ -851,6 +865,7 @@ func TestReload(t *testing.T) {
 func TestReloadAll(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsReloadAll)
 	t.Run("Conversations", testConversationsReloadAll)
+	t.Run("DataExportRequests", testDataExportRequestsReloadAll)
 	t.Run("DatingIntentions", testDatingIntentionsReloadAll)
 	t.Run("DeviceTokens", testDeviceTokensReloadAll)
 	t.Run("EducationLevels", testEducationLevelsReloadAll)
@@ -911,6 +926,7 @@ func TestReloadAll(t *testing.T) {
 func TestSelect(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsSelect)
 	t.Run("Conversations", testConversationsSelect)
+	t.Run("DataExportRequests", testDataExportRequestsSelect)
 	t.Run("DatingIntentions", testDatingIntentionsSelect)
 	t.Run("DeviceTokens", testDeviceTokensSelect)
 	t.Run("EducationLevels", testEducationLevelsSelect)
@@ -971,6 +987,7 @@ func TestSelect(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsUpdate)
 	t.Run("Conversations", testConversationsUpdate)
+	t.Run("DataExportRequests", testDataExportRequestsUpdate)
 	t.Run("DatingIntentions", testDatingIntentionsUpdate)
 	t.Run("DeviceTokens", testDeviceTokensUpdate)
 	t.Run("EducationLevels", testEducationLevelsUpdate)
@@ -1031,6 +1048,7 @@ func TestUpdate(t *testing.T) {
 func TestSliceUpdateAll(t *testing.T) {
 	t.Run("ConversationParticipants", testConversationParticipantsSliceUpdateAll)
 	t.Run("Conversations", testConversationsSliceUpdateAll)
+	t.Run("DataExportRequests", testDataExportRequestsSliceUpdateAll)
 	t.Run("DatingIntentions", testDatingIntentionsSliceUpdateAll)
 	t.Run("DeviceTokens", testDeviceTokensSliceUpdateAll)
 	t.Run("EducationLevels", testEducationLevelsSliceUpdateAll)

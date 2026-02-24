@@ -12,6 +12,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/dataexport"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -31,23 +32,27 @@ type Handler interface {
 	Verify() http.HandlerFunc
 	GetVoicePromptTranscript() http.HandlerFunc
 	DeleteAccount() http.HandlerFunc
+	GetDataExport() http.HandlerFunc
 }
 
 type handler struct {
-	logger         *zap.Logger
-	profileService profile.Service
-	userService    user.Service
+	logger            *zap.Logger
+	profileService    profile.Service
+	userService       user.Service
+	dataExportService dataexport.Service
 }
 
 func NewProfileHandler(
 	logger *zap.Logger,
 	profileService profile.Service,
 	userService user.Service,
+	dataExportService dataexport.Service,
 ) Handler {
 	return &handler{
-		logger:         logger,
-		profileService: profileService,
-		userService:    userService,
+		logger:            logger,
+		profileService:    profileService,
+		userService:       userService,
+		dataExportService: dataExportService,
 	}
 }
 
@@ -209,6 +214,27 @@ func (h *handler) DeleteAccount() http.HandlerFunc {
 	}
 }
 
+func (h *handler) GetDataExport() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		payload, err := h.dataExportService.ExportUserData(ctx, userID)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetDataExport", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		w.Header().Set("Content-Disposition", `attachment; filename="haerd-data-export.json"`)
+		render.Json(w, http.StatusOK, payload)
+	}
+}
+
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, sql.ErrNoRows):
@@ -229,6 +255,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.SocialsNotAllowedMsg
 	case errors.Is(err, storage.ErrUserDoesNotExists):
 		return http.StatusNotFound, "User does not exist"
+	case errors.Is(err, dataexport.ErrExportRateLimited):
+		return http.StatusTooManyRequests, "You can request a data export once every 24 hours"
 	case errors.Is(err, commonErrors.ErrInvalidDOBFormat):
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	default:

@@ -25,6 +25,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/verification"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
+	internaldataexport "github.com/Haerd-Limited/dating-api/internal/dataexport"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
 	internalfeedback "github.com/Haerd-Limited/dating-api/internal/feedback"
 	internalinsights "github.com/Haerd-Limited/dating-api/internal/insights"
@@ -62,6 +63,7 @@ func New(
 	insightsService internalinsights.Service,
 	userService internaluser.Service,
 	feedbackService internalfeedback.Service,
+	dataExportService internaldataexport.Service,
 	adminAPIKey string,
 ) http.Handler {
 	// Create a new Chi router.
@@ -93,7 +95,7 @@ func New(
 	router.Use(middleware.Recoverer) // recovers from panics
 
 	authHandler := auth.NewAuthHandler(logger, authService)
-	profileHandler := profile.NewProfileHandler(logger, profileService, userService)
+	profileHandler := profile.NewProfileHandler(logger, profileService, userService, dataExportService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	notificationHandler := apinotification.NewNotificationHandler(logger, notificationService)
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
@@ -241,6 +243,7 @@ func New(
 				// Current user
 				r.Route("/users/me", func(r chi.Router) {
 					r.Get("/", profileHandler.GetMyProfile())
+					r.Get("/data-export", profileHandler.GetDataExport())
 					r.Patch("/", profileHandler.UpdateMyProfile())
 					r.Patch("/verify", profileHandler.Verify())   // Simple version that doesnt use AWS. call when not in uat/prod.
 					r.Delete("/", profileHandler.DeleteAccount()) // Delete account and all user data

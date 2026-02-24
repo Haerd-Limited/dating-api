@@ -13,6 +13,7 @@ import (
 type Repository interface {
 	CreateFeedback(ctx context.Context, feedback *entity.Feedback, tx *sql.Tx) error
 	CreateFeedbackAttachments(ctx context.Context, attachments []*entity.FeedbackAttachment, tx *sql.Tx) error
+	ListByUserID(ctx context.Context, userID string) ([]*entity.Feedback, error)
 }
 
 type repository struct {
@@ -46,4 +47,8 @@ func (r *repository) executor(tx *sql.Tx) boil.ContextExecutor {
 	}
 
 	return r.db
+}
+
+func (r *repository) ListByUserID(ctx context.Context, userID string) ([]*entity.Feedback, error) {
+	return entity.Feedbacks(entity.FeedbackWhere.UserID.EQ(userID)).All(ctx, r.db)
 }

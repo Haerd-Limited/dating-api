@@ -26,6 +26,7 @@ type InteractionRepository interface {
 	GetSwipeByActorIDAndTargetID(ctx context.Context, actorID, targetID string) (*entity.Swipe, error)
 	GetFirstLikeSwipeByBetweenUsers(ctx context.Context, userA, userB string) (*entity.Swipe, error)
 	CountSuperlikesSince(ctx context.Context, userID string, since time.Time, exec boil.ContextExecutor) (int64, error)
+	ListSwipesByUserID(ctx context.Context, userID string) ([]*entity.Swipe, error)
 }
 
 type repository struct {
@@ -95,6 +96,13 @@ func (is *repository) GetIncomingLikes(ctx context.Context, userID string, limit
 	}
 
 	return userIDs, nil
+}
+
+func (is *repository) ListSwipesByUserID(ctx context.Context, userID string) ([]*entity.Swipe, error) {
+	return entity.Swipes(
+		qm.Where("(actor_id = ? OR target_id = ?)", userID, userID),
+		qm.OrderBy(entity.SwipeColumns.CreatedAt+" ASC"),
+	).All(ctx, is.db)
 }
 
 func (is *repository) InsertSwipe(ctx context.Context, swipe entity.Swipe, tx *sql.Tx) error {

@@ -115,6 +115,7 @@ var UserRels = struct {
 	ConversationParticipants     string
 	UserAConversations           string
 	UserBConversations           string
+	DataExportRequests           string
 	DeviceTokens                 string
 	Feedbacks                    string
 	UserAMatches                 string
@@ -148,6 +149,7 @@ var UserRels = struct {
 	ConversationParticipants:     "ConversationParticipants",
 	UserAConversations:           "UserAConversations",
 	UserBConversations:           "UserBConversations",
+	DataExportRequests:           "DataExportRequests",
 	DeviceTokens:                 "DeviceTokens",
 	Feedbacks:                    "Feedbacks",
 	UserAMatches:                 "UserAMatches",
@@ -184,6 +186,7 @@ type userR struct {
 	ConversationParticipants     ConversationParticipantSlice     `boil:"ConversationParticipants" json:"ConversationParticipants" toml:"ConversationParticipants" yaml:"ConversationParticipants"`
 	UserAConversations           ConversationSlice                `boil:"UserAConversations" json:"UserAConversations" toml:"UserAConversations" yaml:"UserAConversations"`
 	UserBConversations           ConversationSlice                `boil:"UserBConversations" json:"UserBConversations" toml:"UserBConversations" yaml:"UserBConversations"`
+	DataExportRequests           DataExportRequestSlice           `boil:"DataExportRequests" json:"DataExportRequests" toml:"DataExportRequests" yaml:"DataExportRequests"`
 	DeviceTokens                 DeviceTokenSlice                 `boil:"DeviceTokens" json:"DeviceTokens" toml:"DeviceTokens" yaml:"DeviceTokens"`
 	Feedbacks                    FeedbackSlice                    `boil:"Feedbacks" json:"Feedbacks" toml:"Feedbacks" yaml:"Feedbacks"`
 	UserAMatches                 MatchSlice                       `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
@@ -326,6 +329,22 @@ func (r *userR) GetUserBConversations() ConversationSlice {
 	}
 
 	return r.UserBConversations
+}
+
+func (o *User) GetDataExportRequests() DataExportRequestSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetDataExportRequests()
+}
+
+func (r *userR) GetDataExportRequests() DataExportRequestSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.DataExportRequests
 }
 
 func (o *User) GetDeviceTokens() DeviceTokenSlice {
@@ -1128,6 +1147,20 @@ func (o *User) UserBConversations(mods ...qm.QueryMod) conversationQuery {
 	)
 
 	return Conversations(queryMods...)
+}
+
+// DataExportRequests retrieves all the data_export_request's DataExportRequests with an executor.
+func (o *User) DataExportRequests(mods ...qm.QueryMod) dataExportRequestQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"data_export_requests\".\"user_id\"=?", o.ID),
+	)
+
+	return DataExportRequests(queryMods...)
 }
 
 // DeviceTokens retrieves all the device_token's DeviceTokens with an executor.
@@ -2282,6 +2315,119 @@ func (userL) LoadUserBConversations(ctx context.Context, e boil.ContextExecutor,
 					foreign.R = &conversationR{}
 				}
 				foreign.R.UserBUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadDataExportRequests allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadDataExportRequests(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`data_export_requests`),
+		qm.WhereIn(`data_export_requests.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load data_export_requests")
+	}
+
+	var resultSlice []*DataExportRequest
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice data_export_requests")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on data_export_requests")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for data_export_requests")
+	}
+
+	if len(dataExportRequestAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.DataExportRequests = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &dataExportRequestR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.DataExportRequests = append(local.R.DataExportRequests, foreign)
+				if foreign.R == nil {
+					foreign.R = &dataExportRequestR{}
+				}
+				foreign.R.User = local
 				break
 			}
 		}
@@ -5520,6 +5666,59 @@ func (o *User) AddUserBConversations(ctx context.Context, exec boil.ContextExecu
 			}
 		} else {
 			rel.R.UserBUser = o
+		}
+	}
+	return nil
+}
+
+// AddDataExportRequests adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.DataExportRequests.
+// Sets related.R.User appropriately.
+func (o *User) AddDataExportRequests(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*DataExportRequest) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"data_export_requests\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, dataExportRequestPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			DataExportRequests: related,
+		}
+	} else {
+		o.R.DataExportRequests = append(o.R.DataExportRequests, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &dataExportRequestR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
 		}
 	}
 	return nil
