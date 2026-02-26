@@ -26,6 +26,7 @@ type Service interface {
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
 	GetUserPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error)
+	ComputeMatchSummary(ctx context.Context, viewerID, targetID string) (*profilecard.MatchSummary, error)
 }
 
 type service struct {
@@ -471,6 +472,10 @@ func (s *service) computeMatch(ctx context.Context, userID string, candidateID s
 	}
 
 	return result, nil
+}
+
+func (s *service) ComputeMatchSummary(ctx context.Context, viewerID, targetID string) (*profilecard.MatchSummary, error) {
+	return s.computeMatch(ctx, viewerID, targetID, minOverlap)
 }
 
 // passesPostQueryFilters applies filters that can't be efficiently done in SQL

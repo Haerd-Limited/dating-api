@@ -418,6 +418,13 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 			return domain.Likes{}, commonlogger.LogError(is.logger, "get profile card", likesErr, zap.String("userID", userID), zap.String("profileUserID", id))
 		}
 
+		matchSummary, matchErr := is.discoverService.ComputeMatchSummary(ctx, userID, id)
+		if matchErr != nil {
+			commonlogger.LogError(is.logger, "compute match summary for like", matchErr, zap.String("userID", userID), zap.String("targetUserID", id))
+		} else {
+			p.MatchSummary = matchSummary
+		}
+
 		swipe, likesErr := is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, id, userID)
 		if likesErr != nil {
 			return domain.Likes{}, commonlogger.LogError(is.logger, "get swipe by actorID and targetID", likesErr, zap.String("userID", userID), zap.String("targetUserID", id))

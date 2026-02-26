@@ -1,5 +1,7 @@
 package dto
 
+import profilecarddto "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
+
 type GetProfileResponse struct {
 	Profile Profile `json:"profile"`
 }
@@ -43,6 +45,8 @@ type Profile struct {
 	JobTitle   *string   `json:"job_title"`
 	University *string   `json:"university"`
 	Theme      UserTheme `json:"theme"`
+
+	MatchSummary *profilecarddto.MatchSummary `json:"match_summary,omitempty"`
 
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`

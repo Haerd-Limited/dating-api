@@ -13,6 +13,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/dataexport"
+	"github.com/Haerd-Limited/dating-api/internal/discover"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -21,6 +22,7 @@ import (
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
+	profilecarddto "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
@@ -40,6 +42,7 @@ type handler struct {
 	profileService    profile.Service
 	userService       user.Service
 	dataExportService dataexport.Service
+	discoverService   discover.Service
 }
 
 func NewProfileHandler(
@@ -47,12 +50,14 @@ func NewProfileHandler(
 	profileService profile.Service,
 	userService user.Service,
 	dataExportService dataexport.Service,
+	discoverService discover.Service,
 ) Handler {
 	return &handler{
 		logger:            logger,
 		profileService:    profileService,
 		userService:       userService,
 		dataExportService: dataExportService,
+		discoverService:   discoverService,
 	}
 }
 
@@ -115,7 +120,16 @@ func (h *handler) GetUserProfile() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile))
+		response := mapper.ProfileToDto(userProfile)
+		if viewerID, ok := commoncontext.UserIDFromContext(ctx); ok && viewerID != "" {
+			matchSummary, matchErr := h.discoverService.ComputeMatchSummary(ctx, viewerID, userID)
+			if matchErr != nil {
+				h.logger.Sugar().Warnw("failed to compute match summary for user profile", "error", matchErr, "viewerID", viewerID, "userID", userID)
+			} else {
+				response.MatchSummary = profilecarddto.MapMatchSummary(matchSummary)
+			}
+		}
+		render.Json(w, http.StatusOK, response)
 	}
 }
 
