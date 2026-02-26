@@ -95,7 +95,7 @@ func New(
 	router.Use(middleware.Recoverer) // recovers from panics
 
 	authHandler := auth.NewAuthHandler(logger, authService)
-	profileHandler := profile.NewProfileHandler(logger, profileService, userService, dataExportService)
+	profileHandler := profile.NewProfileHandler(logger, profileService, matchingService, userService, dataExportService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	notificationHandler := apinotification.NewNotificationHandler(logger, notificationService)
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
@@ -227,7 +227,6 @@ func New(
 					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
 
 					r.Get("/feedback/presign", mediaHandler.GenerateFeedbackAttachmentUploadUrl())
-
 				})
 
 				r.Route("/feedback", func(r chi.Router) {

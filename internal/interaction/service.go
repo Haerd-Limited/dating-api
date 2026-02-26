@@ -17,6 +17,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/internal/matching"
+	matchingdomain "github.com/Haerd-Limited/dating-api/internal/matching/domain"
 	"github.com/Haerd-Limited/dating-api/internal/notification"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
@@ -27,6 +29,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
 )
 
 type Service interface {
@@ -40,6 +43,7 @@ type service struct {
 	conversationService conversation.Service
 	interactionRepo     storage.InteractionRepository
 	discoverService     discover.Service
+	matchingService     matching.Service
 	safetyService       safety.Service
 	uow                 uow.UoW
 	hub                 realtime.Broadcaster
@@ -52,6 +56,7 @@ func NewInteractionService(
 	conversationService conversation.Service,
 	interactionRepo storage.InteractionRepository,
 	discoverService discover.Service,
+	matchingService matching.Service,
 	safetyService safety.Service,
 	uow uow.UoW,
 	hub realtime.Broadcaster,
@@ -63,6 +68,7 @@ func NewInteractionService(
 		profileService:      profileService,
 		conversationService: conversationService,
 		discoverService:     discoverService,
+		matchingService:     matchingService,
 		safetyService:       safetyService,
 		uow:                 uow,
 		hub:                 hub,
@@ -418,6 +424,11 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 			return domain.Likes{}, commonlogger.LogError(is.logger, "get profile card", likesErr, zap.String("userID", userID), zap.String("profileUserID", id))
 		}
 
+		p.MatchSummary, likesErr = is.computeMatchSummary(ctx, userID, id)
+		if likesErr != nil {
+			return domain.Likes{}, commonlogger.LogError(is.logger, "compute match summary", likesErr, zap.String("userID", userID), zap.String("targetUserID", id), zap.Int("minOverlap", constants.MatchSummaryMinOverlap))
+		}
+
 		swipe, likesErr := is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, id, userID)
 		if likesErr != nil {
 			return domain.Likes{}, commonlogger.LogError(is.logger, "get swipe by actorID and targetID", likesErr, zap.String("userID", userID), zap.String("targetUserID", id))
@@ -456,6 +467,40 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 	}
 
 	return likes, nil
+}
+
+func (is *service) computeMatchSummary(ctx context.Context, viewerID, targetID string) (*profilecard.MatchSummary, error) {
+	matchSummary, err := is.matchingService.ComputeMatch(ctx, viewerID, targetID, constants.MatchSummaryMinOverlap)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &profilecard.MatchSummary{
+		MatchPercent: matchSummary.MatchPercent,
+		OverlapCount: matchSummary.OverlapCount,
+		HiddenReason: matchSummary.HiddenReason,
+	}
+	result.Badges = mapBadges(matchSummary.Badges)
+
+	return result, nil
+}
+
+func mapBadges(badges []matchingdomain.MatchBadge) []profilecard.MatchBadge {
+	if len(badges) == 0 {
+		return nil
+	}
+
+	result := make([]profilecard.MatchBadge, 0, len(badges))
+	for _, badge := range badges {
+		result = append(result, profilecard.MatchBadge{
+			QuestionID:    badge.QuestionID,
+			QuestionText:  badge.QuestionText,
+			PartnerAnswer: badge.PartnerAnswer,
+			Weight:        badge.Weight,
+		})
+	}
+
+	return result
 }
 
 func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatchable bool) error {

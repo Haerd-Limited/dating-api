@@ -24,10 +24,10 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"github.com/Haerd-Limited/dating-api/internal/config"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
-	"github.com/Haerd-Limited/dating-api/internal/dataexport"
-	dataexportstorage "github.com/Haerd-Limited/dating-api/internal/dataexport/storage"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
+	"github.com/Haerd-Limited/dating-api/internal/dataexport"
+	dataexportstorage "github.com/Haerd-Limited/dating-api/internal/dataexport/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	discoverstorage "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/feedback"
@@ -159,7 +159,7 @@ func main() {
 	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger, hub, notificationService)
 	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork, notificationService)
 	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub)
-	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService)
+	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, matchingService, safetyService, unitOfWork, hub, notificationService)
 	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)

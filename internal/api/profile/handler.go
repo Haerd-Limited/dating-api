@@ -13,6 +13,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/dataexport"
+	"github.com/Haerd-Limited/dating-api/internal/matching"
+	matchingdomain "github.com/Haerd-Limited/dating-api/internal/matching/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -21,6 +23,7 @@ import (
 	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
+	commonprofiledto "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/render"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
@@ -38,6 +41,7 @@ type Handler interface {
 type handler struct {
 	logger            *zap.Logger
 	profileService    profile.Service
+	matchingService   matching.Service
 	userService       user.Service
 	dataExportService dataexport.Service
 }
@@ -45,12 +49,14 @@ type handler struct {
 func NewProfileHandler(
 	logger *zap.Logger,
 	profileService profile.Service,
+	matchingService matching.Service,
 	userService user.Service,
 	dataExportService dataexport.Service,
 ) Handler {
 	return &handler{
 		logger:            logger,
 		profileService:    profileService,
+		matchingService:   matchingService,
 		userService:       userService,
 		dataExportService: dataExportService,
 	}
@@ -93,13 +99,19 @@ func (h *handler) GetMyProfile() http.HandlerFunc {
 		}
 
 		//todo:update to use a toresponse mapper
-		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile))
+		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile, nil))
 	}
 }
 
 func (h *handler) GetUserProfile() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		requesterID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
 
 		// Extract userID from URL parameter
 		userID := chi.URLParam(r, "userID")
@@ -115,8 +127,40 @@ func (h *handler) GetUserProfile() http.HandlerFunc {
 			return
 		}
 
-		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile))
+		matchSummary, err := h.matchingService.ComputeMatch(ctx, requesterID, userID, constants.MatchSummaryMinOverlap)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetUserProfile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile, mapMatchSummary(matchSummary)))
 	}
+}
+
+func mapMatchSummary(matchSummary *matchingdomain.MatchSummary) *commonprofiledto.MatchSummary {
+	if matchSummary == nil {
+		return nil
+	}
+
+	result := &commonprofiledto.MatchSummary{
+		MatchPercent: matchSummary.MatchPercent,
+		OverlapCount: matchSummary.OverlapCount,
+		HiddenReason: matchSummary.HiddenReason,
+	}
+
+	if len(matchSummary.Badges) > 0 {
+		result.Badges = make([]commonprofiledto.MatchBadge, 0, len(matchSummary.Badges))
+		for _, badge := range matchSummary.Badges {
+			result.Badges = append(result.Badges, commonprofiledto.MatchBadge{
+				QuestionID:    badge.QuestionID,
+				QuestionText:  badge.QuestionText,
+				PartnerAnswer: badge.PartnerAnswer,
+				Weight:        badge.Weight,
+			})
+		}
+	}
+
+	return result
 }
 
 func (h *handler) UpdateMyProfile() http.HandlerFunc {

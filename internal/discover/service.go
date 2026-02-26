@@ -52,7 +52,6 @@ func NewDiscoverService(
 }
 
 const (
-	minOverlap                          = 5
 	voiceWorthHearingPreferencePoolSize = 30
 )
 
@@ -130,9 +129,9 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 			continue
 		}
 
-		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
+		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, constants.MatchSummaryMinOverlap)
 		if profileErr != nil {
-			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to compute match", profileErr, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
+			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to compute match", profileErr, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", constants.MatchSummaryMinOverlap))
 		}
 
 		profiles = append(profiles, p)
@@ -352,14 +351,14 @@ func (s *service) evaluateCandidate(
 
 	likeCount, err := s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
 	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "get like and superlike count", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
+		return nil, commonlogger.LogError(s.logger, "get like and superlike count", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", constants.MatchSummaryMinOverlap))
 	}
 
 	card.LikeCount = &likeCount
 
-	card.MatchSummary, err = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
+	card.MatchSummary, err = s.computeMatch(ctx, userID, candidate.UserID, constants.MatchSummaryMinOverlap)
 	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "failed to compute match", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
+		return nil, commonlogger.LogError(s.logger, "failed to compute match", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", constants.MatchSummaryMinOverlap))
 	}
 
 	var datingIntentionID *int16

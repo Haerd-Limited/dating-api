@@ -5,9 +5,10 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
+	commonprofiledto "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
 )
 
-func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
+func ProfileToDto(profile domain.EnrichedProfile, matchSummary *commonprofiledto.MatchSummary) dto.Profile {
 	result := dto.Profile{
 		DisplayName:    profile.DisplayName,
 		Birthdate:      profile.Birthdate.Format(time.DateOnly),
@@ -64,11 +65,12 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 			ID:    profile.Drugs.ID,
 			Label: profile.Drugs.Label,
 		},
-		Work:       profile.Work,
-		JobTitle:   profile.JobTitle,
-		University: profile.University,
-		CreatedAt:  profile.CreatedAt.Format(time.DateOnly),
-		UpdatedAt:  profile.UpdatedAt.Format(time.DateOnly),
+		Work:         profile.Work,
+		JobTitle:     profile.JobTitle,
+		University:   profile.University,
+		MatchSummary: matchSummary,
+		CreatedAt:    profile.CreatedAt.Format(time.DateOnly),
+		UpdatedAt:    profile.UpdatedAt.Format(time.DateOnly),
 	}
 
 	if profile.CoverMediaURL != nil {
