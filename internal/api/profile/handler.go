@@ -127,13 +127,22 @@ func (h *handler) GetUserProfile() http.HandlerFunc {
 			return
 		}
 
+		var responseMatchSummary *commonprofiledto.MatchSummary
+
 		matchSummary, err := h.matchingService.ComputeMatch(ctx, requesterID, userID, constants.MatchSummaryMinOverlap)
 		if err != nil {
-			render.HandleServiceErrorResponse(h.logger, w, r, "GetUserProfile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
-			return
+			h.logger.Warn(
+				"compute match summary for profile",
+				zap.Error(err),
+				zap.String("requesterUserID", requesterID),
+				zap.String("targetUserID", userID),
+				zap.Int("minOverlap", constants.MatchSummaryMinOverlap),
+			)
+		} else {
+			responseMatchSummary = mapMatchSummary(matchSummary)
 		}
 
-		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile, mapMatchSummary(matchSummary)))
+		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile, responseMatchSummary))
 	}
 }
 

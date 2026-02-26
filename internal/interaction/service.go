@@ -426,7 +426,14 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 
 		p.MatchSummary, likesErr = is.computeMatchSummary(ctx, userID, id)
 		if likesErr != nil {
-			return domain.Likes{}, commonlogger.LogError(is.logger, "compute match summary", likesErr, zap.String("userID", userID), zap.String("targetUserID", id), zap.Int("minOverlap", constants.MatchSummaryMinOverlap))
+			is.logger.Warn(
+				"compute match summary for like",
+				zap.Error(likesErr),
+				zap.String("userID", userID),
+				zap.String("targetUserID", id),
+				zap.Int("minOverlap", constants.MatchSummaryMinOverlap),
+			)
+			p.MatchSummary = nil
 		}
 
 		swipe, likesErr := is.interactionRepo.GetSwipeByActorIDAndTargetID(ctx, id, userID)
