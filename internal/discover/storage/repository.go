@@ -432,16 +432,19 @@ func (r *discoverRepository) buildAgeFilterMods(ageFilter *domain.AgeRangeFilter
 }
 
 func (r *discoverRepository) calculateMaxBirthdateForAge(minAge int) string {
-	// Calculate the latest birthdate that would result in the minimum age
-	// This is a simplified calculation - in production you might want to use time.Time
-	year := 2024 - minAge // Assuming current year is 2024
-	return fmt.Sprintf("%d-12-31", year)
+	// Latest birthdate that still means "at least minAge today" (inclusive).
+	// Someone born on this date is exactly minAge today.
+	now := time.Now().UTC()
+	cutoff := now.AddDate(-minAge, 0, 0)
+	return cutoff.Format("2006-01-02")
 }
 
 func (r *discoverRepository) calculateMinBirthdateForAge(maxAge int) string {
-	// Calculate the earliest birthdate that would result in the maximum age
-	year := 2024 - maxAge // Assuming current year is 2024
-	return fmt.Sprintf("%d-01-01", year)
+	// Earliest birthdate that still means "at most maxAge today" (inclusive).
+	// Someone born on this date is exactly maxAge today.
+	now := time.Now().UTC()
+	cutoff := now.AddDate(-maxAge, 0, 0)
+	return cutoff.Format("2006-01-02")
 }
 
 func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, userID string, preferences *domain.DiscoverPreferenceUpdate) error {
