@@ -50,13 +50,13 @@ func TestNewPreferenceUpdateFromFilters(t *testing.T) {
 
 func TestNewPreferenceUpdateFromFiltersReturnsNilWhenEmpty(t *testing.T) {
 	assert.Nil(t, NewPreferenceUpdateFromFilters(nil))
-	assert.Nil(t, NewPreferenceUpdateFromFilters(&DiscoverFilters{}))
+}
 
-	filters := &DiscoverFilters{
-		AgeRange: &AgeRangeFilter{},
-	}
-
-	assert.Nil(t, NewPreferenceUpdateFromFilters(filters))
+func TestNewPreferenceUpdateFromFiltersReturnsClearAllWhenFiltersEmpty(t *testing.T) {
+	// Explicitly empty filters (e.g. user cleared all) should persist as clear-all so restart doesn't revert
+	update := NewPreferenceUpdateFromFilters(&DiscoverFilters{})
+	require.NotNil(t, update)
+	assert.True(t, update.ClearAll)
 }
 
 func TestStoredDiscoverPreferencesHasAnyPreference(t *testing.T) {

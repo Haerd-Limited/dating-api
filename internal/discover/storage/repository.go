@@ -456,6 +456,34 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 		UserID: userID,
 	}
 
+	// ClearAll: persist cleared state by setting all discover preference columns to null/empty
+	if preferences.ClearAll {
+		up.DistanceKM = null.Int16{}
+		up.AgeMin = null.Int16{}
+		up.AgeMax = null.Int16{}
+		up.SeekIntentionIds = nil
+		up.SeekReligionIds = nil
+		up.SeekSexualityIds = nil
+		up.SeekEthnicityIds = nil
+		clearCols := []string{
+			entity.UserPreferenceColumns.UpdatedAt,
+			entity.UserPreferenceColumns.DistanceKM,
+			entity.UserPreferenceColumns.AgeMin,
+			entity.UserPreferenceColumns.AgeMax,
+			entity.UserPreferenceColumns.SeekIntentionIds,
+			entity.UserPreferenceColumns.SeekReligionIds,
+			entity.UserPreferenceColumns.SeekSexualityIds,
+			entity.UserPreferenceColumns.SeekEthnicityIds,
+		}
+		updateColumns := boil.Whitelist(clearCols...)
+		insertColumns := boil.Whitelist(append([]string{entity.UserPreferenceColumns.UserID}, clearCols[1:]...)...)
+		err := up.Upsert(ctx, r.db, true, []string{entity.UserPreferenceColumns.UserID}, updateColumns, insertColumns)
+		if err != nil {
+			return fmt.Errorf("save user discover preferences (clear all): %w", err)
+		}
+		return nil
+	}
+
 	// Set nullable int16 fields
 	if preferences.DistanceKM != nil {
 		up.DistanceKM = null.Int16From(int16(*preferences.DistanceKM))

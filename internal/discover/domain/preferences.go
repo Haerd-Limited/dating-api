@@ -2,13 +2,16 @@ package domain
 
 // DiscoverPreferenceUpdate represents preference values to persist for a user.
 type DiscoverPreferenceUpdate struct {
-	DistanceKM         *int
-	MinAge             *int
-	MaxAge             *int
-	DatingIntentionIDs []int16
-	ReligionIDs        []int16
-	SexualityIDs       []int16
-	EthnicityIDs       []int16
+	// ClearAll when true instructs the repository to clear all discover preferences (set to null/empty).
+	// Used when the user explicitly clears all filters so the cleared state is persisted.
+	ClearAll            bool
+	DistanceKM          *int
+	MinAge              *int
+	MaxAge              *int
+	DatingIntentionIDs  []int16
+	ReligionIDs         []int16
+	SexualityIDs        []int16
+	EthnicityIDs        []int16
 }
 
 // StoredDiscoverPreferences encapsulates persisted preference values.
@@ -38,9 +41,13 @@ func (p *StoredDiscoverPreferences) HasAnyPreference() bool {
 }
 
 // NewPreferenceUpdateFromFilters creates an update payload from discover filters.
+// When filters are explicitly empty (user cleared all), returns an update with ClearAll true so the cleared state is persisted.
 func NewPreferenceUpdateFromFilters(filters *DiscoverFilters) *DiscoverPreferenceUpdate {
-	if filters == nil || filters.IsEmpty() {
+	if filters == nil {
 		return nil
+	}
+	if filters.IsEmpty() {
+		return &DiscoverPreferenceUpdate{ClearAll: true}
 	}
 
 	update := &DiscoverPreferenceUpdate{}
