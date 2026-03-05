@@ -1,8 +1,8 @@
 package mapper
 
 import (
+	"github.com/Haerd-Limited/dating-api/internal/compatibility/domain"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
-	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
 )
 
 func MapQuestionEntitiesToDomain(qe entity.QuestionSlice) []domain.Question {

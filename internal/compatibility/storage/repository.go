@@ -11,8 +11,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/compatibility/domain"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
-	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
 )
 
 type MatchingRepository interface {
@@ -27,7 +27,7 @@ type MatchingRepository interface {
 
 	HasMandatoryMismatch(ctx context.Context, aID, bID string) (bool, error)
 	PerspectiveSums(ctx context.Context, aID, bID string) (earned int, total int, overlap int, err error)
-	TopBadges(ctx context.Context, aID, bID string, limit int) ([]domain.MatchBadge, error)
+	TopBadges(ctx context.Context, aID, bID string, limit int) ([]domain.CompatibilityBadge, error)
 
 	// Sequential question methods
 	GetNextUnansweredQuestion(ctx context.Context, userID, categoryKey string) (*entity.Question, error)
@@ -131,7 +131,7 @@ func (r *repository) PerspectiveSums(ctx context.Context, aID, bID string) (earn
 }
 
 // TopBadges returns A-perspective satisfied, highest-weight overlaps vs B.
-func (r *repository) TopBadges(ctx context.Context, aID, bID string, limit int) ([]domain.MatchBadge, error) {
+func (r *repository) TopBadges(ctx context.Context, aID, bID string, limit int) ([]domain.CompatibilityBadge, error) {
 	if limit <= 0 {
 		limit = 3
 	}
@@ -172,7 +172,7 @@ func (r *repository) TopBadges(ctx context.Context, aID, bID string, limit int) 
 		}
 	}(rows)
 
-	var out []domain.MatchBadge
+	var out []domain.CompatibilityBadge
 
 	for rows.Next() {
 		var rrow row
@@ -180,7 +180,7 @@ func (r *repository) TopBadges(ctx context.Context, aID, bID string, limit int) 
 			return nil, fmt.Errorf("TopBadges scan: %w", err)
 		}
 
-		out = append(out, domain.MatchBadge{
+		out = append(out, domain.CompatibilityBadge{
 			QuestionID:    rrow.ID,
 			QuestionText:  rrow.Text,
 			PartnerAnswer: rrow.Label,

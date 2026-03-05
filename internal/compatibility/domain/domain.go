@@ -13,18 +13,18 @@ type Pack struct {
 	TotalQuestions             int
 	ProgressPercent            float64
 }
-type MatchBadge struct {
+type CompatibilityBadge struct {
 	QuestionID    int64
 	QuestionText  string
 	PartnerAnswer string
 	Weight        int // derived from importance
 }
 
-type MatchSummary struct {
-	MatchPercent int          // 0–100
-	OverlapCount int          // # shared questions answered
-	Badges       []MatchBadge // top 2–3 satisfied items
-	HiddenReason string       // e.g., "Not enough overlap"
+type CompatibilitySummary struct {
+	CompatibilityPercent int                  // 0–100
+	OverlapCount         int                  // # shared questions answered
+	Badges               []CompatibilityBadge // top 2–3 satisfied items
+	HiddenReason         string               // e.g., "Not enough overlap"
 }
 
 type SaveAnswerCommand struct {

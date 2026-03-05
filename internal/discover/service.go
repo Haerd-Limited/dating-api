@@ -8,10 +8,10 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/compatibility"
 	"github.com/Haerd-Limited/dating-api/internal/discover/domain"
 	"github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
-	"github.com/Haerd-Limited/dating-api/internal/matching"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
@@ -26,14 +26,14 @@ type Service interface {
 	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
 	GetUserPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error)
-	ComputeMatchSummary(ctx context.Context, viewerID, targetID string) (*profilecard.MatchSummary, error)
+	ComputeCompatibility(ctx context.Context, viewerID, targetID string) (*profilecard.CompatibilitySummary, error)
 }
 
 type service struct {
-	logger          *zap.Logger
-	profileService  profile.Service
-	matchingService matching.Service
-	discoverRepo    storage.DiscoverRepository
+	logger               *zap.Logger
+	profileService       profile.Service
+	compatibilityService compatibility.Service
+	discoverRepo         storage.DiscoverRepository
 }
 
 var ErrVoiceWorthHearingSearching = errors.New("voices worth hearing still searching")
@@ -41,14 +41,14 @@ var ErrVoiceWorthHearingSearching = errors.New("voices worth hearing still searc
 func NewDiscoverService(
 	logger *zap.Logger,
 	profileService profile.Service,
-	matchingService matching.Service,
+	compatibilityService compatibility.Service,
 	discoverRepo storage.DiscoverRepository,
 ) Service {
 	return &service{
-		logger:          logger,
-		profileService:  profileService,
-		matchingService: matchingService,
-		discoverRepo:    discoverRepo,
+		logger:               logger,
+		profileService:       profileService,
+		compatibilityService: compatibilityService,
+		discoverRepo:         discoverRepo,
 	}
 }
 
@@ -131,7 +131,7 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 			continue
 		}
 
-		p.MatchSummary, profileErr = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
+		p.CompatibilitySummary, profileErr = s.computeCompatibility(ctx, userID, candidate.UserID, minOverlap)
 		if profileErr != nil {
 			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to compute match", profileErr, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
 		}
@@ -250,220 +250,34 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 	return profiles, nil
 }
 
-type candidateEvaluation struct {
-	card              profilecard.ProfileCard
-	matchesAll        bool
-	matchesAny        bool
-	alreadyInteracted bool
-}
-
-func (s *service) selectVoiceWorthHearingProfiles(
-	ctx context.Context,
-	matcher *preferenceMatcher,
-	candidates []*entity.UserProfile,
-	userID string,
-	currentUserProfile *profiledomain.EnrichedProfile,
-	ethnicityByUser map[string][]int16,
-) ([]profilecard.ProfileCard, []string, error) {
-	evaluationCache := make(map[string]*candidateEvaluation, len(candidates))
-
-	selectionPasses := s.buildSelectionPasses(matcher)
-
-	selectedProfiles := make([]profilecard.ProfileCard, 0, constants.MaxNumberOfVWHUsersToSelect)
-	selectedIDs := make([]string, 0, constants.MaxNumberOfVWHUsersToSelect)
-
-	for _, pass := range selectionPasses {
-		if len(selectedProfiles) == constants.MaxNumberOfVWHUsersToSelect {
-			break
-		}
-
-		for _, candidate := range candidates {
-			if len(selectedProfiles) == constants.MaxNumberOfVWHUsersToSelect {
-				break
-			}
-
-			if containsID(selectedIDs, candidate.UserID) {
-				continue
-			}
-
-			evaluation, err := s.evaluateCandidate(ctx, matcher, candidate, currentUserProfile, ethnicityByUser, userID, evaluationCache)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			if evaluation.alreadyInteracted {
-				continue
-			}
-
-			if !pass(evaluation) {
-				continue
-			}
-
-			selectedProfiles = append(selectedProfiles, evaluation.card)
-			selectedIDs = append(selectedIDs, candidate.UserID)
-		}
-	}
-
-	return selectedProfiles, selectedIDs, nil
-}
-
-func (s *service) buildSelectionPasses(matcher *preferenceMatcher) []func(*candidateEvaluation) bool {
-	passes := make([]func(*candidateEvaluation) bool, 0, 3)
-
-	if matcher != nil {
-		passes = append(passes, func(eval *candidateEvaluation) bool { return eval.matchesAll })
-		passes = append(passes, func(eval *candidateEvaluation) bool { return eval.matchesAny })
-	}
-
-	passes = append(passes, func(eval *candidateEvaluation) bool { return true })
-
-	return passes
-}
-
-func (s *service) evaluateCandidate(
-	ctx context.Context,
-	matcher *preferenceMatcher,
-	candidate *entity.UserProfile,
-	currentUserProfile *profiledomain.EnrichedProfile,
-	ethnicityByUser map[string][]int16,
-	userID string,
-	cache map[string]*candidateEvaluation,
-) (*candidateEvaluation, error) {
-	if evaluation, exists := cache[candidate.UserID]; exists {
-		return evaluation, nil
-	}
-
-	evaluation := &candidateEvaluation{}
-
-	alreadyInteracted, err := s.discoverRepo.AlreadyInteracted(ctx, userID, candidate.UserID)
+func (s *service) GetUserPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error) {
+	preferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
 	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "already interacted", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID))
+		return nil, commonlogger.LogError(s.logger, "get user discover preferences", err, zap.String("userID", userID))
 	}
 
-	evaluation.alreadyInteracted = alreadyInteracted
-	if alreadyInteracted {
-		cache[candidate.UserID] = evaluation
-		return evaluation, nil
+	// Return empty preferences if none exist
+	if preferences == nil {
+		return &domain.StoredDiscoverPreferences{}, nil
 	}
 
-	card, err := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
-	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "get profile card", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Float64("latitude", currentUserProfile.Latitude), zap.Float64("longitude", currentUserProfile.Longitude))
-	}
-
-	likeCount, err := s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
-	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "get like and superlike count", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
-	}
-
-	card.LikeCount = &likeCount
-
-	card.MatchSummary, err = s.computeMatch(ctx, userID, candidate.UserID, minOverlap)
-	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "failed to compute match", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
-	}
-
-	var datingIntentionID *int16
-
-	if candidate.DatingIntentionID.Valid {
-		value := candidate.DatingIntentionID.Int16
-		datingIntentionID = &value
-	}
-
-	var religionID *int16
-
-	if candidate.ReligionID.Valid {
-		value := candidate.ReligionID.Int16
-		religionID = &value
-	}
-
-	var sexualityID *int16
-
-	if candidate.SexualityID.Valid {
-		value := candidate.SexualityID.Int16
-		sexualityID = &value
-	}
-
-	var candidateEthnicities []int16
-	if matcher != nil && matcher.requiresEthnicity() {
-		candidateEthnicities = ethnicityByUser[candidate.UserID]
-	}
-
-	if matcher == nil {
-		evaluation.matchesAll = true
-		evaluation.matchesAny = true
-	} else {
-		evaluation.matchesAll = matcher.matchesAll(card.Age, card.DistanceKm, datingIntentionID, religionID, sexualityID, candidateEthnicities)
-		evaluation.matchesAny = matcher.matchesAny(card.Age, card.DistanceKm, datingIntentionID, religionID, sexualityID, candidateEthnicities)
-	}
-
-	evaluation.card = card
-	cache[candidate.UserID] = evaluation
-
-	return evaluation, nil
+	return preferences, nil
 }
 
-func containsID(ids []string, target string) bool {
-	for _, id := range ids {
-		if id == target {
-			return true
-		}
-	}
-
-	return false
-}
-
-func orderCandidatesByIDs(candidates []*entity.UserProfile, ordering []string) []*entity.UserProfile {
-	if len(ordering) == 0 || len(candidates) <= 1 {
-		return candidates
-	}
-
-	index := make(map[string]int, len(ordering))
-	for pos, id := range ordering {
-		index[id] = pos
-	}
-
-	sort.SliceStable(candidates, func(i, j int) bool {
-		a, aOK := index[candidates[i].UserID]
-		b, bOK := index[candidates[j].UserID]
-
-		switch {
-		case aOK && bOK:
-			return a < b
-		case aOK:
-			return true
-		case bOK:
-			return false
-		default:
-			return candidates[i].UserID < candidates[j].UserID
-		}
-	})
-
-	return candidates
-}
-
-func startOfWeek(t time.Time, weekStart time.Weekday) time.Time {
-	t = t.UTC()
-	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
-	offset := (int(midnight.Weekday()) - int(weekStart) + 7) % 7
-
-	return midnight.AddDate(0, 0, -offset)
-}
-
-func (s *service) computeMatch(ctx context.Context, userID string, candidateID string, minOverlap int) (*profilecard.MatchSummary, error) {
-	matchSummary, err := s.matchingService.ComputeMatch(ctx, userID, candidateID, minOverlap)
+func (s *service) computeCompatibility(ctx context.Context, userID string, candidateID string, minOverlap int) (*profilecard.CompatibilitySummary, error) {
+	compatibilitySummary, err := s.compatibilityService.ComputeCompatibility(ctx, userID, candidateID, minOverlap)
 	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "compute match", err, zap.String("userID", userID), zap.String("candidateID", candidateID), zap.Int("minOverlap", minOverlap))
+		return nil, commonlogger.LogError(s.logger, "compute compatibility", err, zap.String("userID", userID), zap.String("candidateID", candidateID), zap.Int("minOverlap", minOverlap))
 	}
 
-	result := &profilecard.MatchSummary{
-		MatchPercent: matchSummary.MatchPercent,
-		OverlapCount: matchSummary.OverlapCount,
-		Badges:       nil,
-		HiddenReason: matchSummary.HiddenReason,
+	result := &profilecard.CompatibilitySummary{
+		CompatibilityPercent: compatibilitySummary.CompatibilityPercent,
+		OverlapCount:         compatibilitySummary.OverlapCount,
+		Badges:               nil,
+		HiddenReason:         compatibilitySummary.HiddenReason,
 	}
-	for _, badge := range matchSummary.Badges {
-		result.Badges = append(result.Badges, profilecard.MatchBadge{
+	for _, badge := range compatibilitySummary.Badges {
+		result.Badges = append(result.Badges, profilecard.CompatibilityBadge{
 			QuestionID:    badge.QuestionID,
 			QuestionText:  badge.QuestionText,
 			PartnerAnswer: badge.PartnerAnswer,
@@ -474,8 +288,16 @@ func (s *service) computeMatch(ctx context.Context, userID string, candidateID s
 	return result, nil
 }
 
-func (s *service) ComputeMatchSummary(ctx context.Context, viewerID, targetID string) (*profilecard.MatchSummary, error) {
-	return s.computeMatch(ctx, viewerID, targetID, minOverlap)
+func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID string) (*profilecard.CompatibilitySummary, error) {
+	return s.computeCompatibility(ctx, viewerID, targetID, minOverlap)
+}
+
+type preferenceMatcher struct {
+	prefs           *domain.StoredDiscoverPreferences
+	datingIntentSet map[int16]struct{}
+	religionSet     map[int16]struct{}
+	sexualitySet    map[int16]struct{}
+	ethnicitySet    map[int16]struct{}
 }
 
 // passesPostQueryFilters applies filters that can't be efficiently done in SQL
@@ -504,14 +326,6 @@ func (s *service) passesPostQueryFilters(profile profilecard.ProfileCard, filter
 	}
 
 	return true
-}
-
-type preferenceMatcher struct {
-	prefs           *domain.StoredDiscoverPreferences
-	datingIntentSet map[int16]struct{}
-	religionSet     map[int16]struct{}
-	sexualitySet    map[int16]struct{}
-	ethnicitySet    map[int16]struct{}
 }
 
 func newPreferenceMatcher(prefs *domain.StoredDiscoverPreferences) *preferenceMatcher {
@@ -678,16 +492,202 @@ func (m *preferenceMatcher) ageWithinRange(age int) bool {
 	return true
 }
 
-func (s *service) GetUserPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error) {
-	preferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
+type candidateEvaluation struct {
+	card              profilecard.ProfileCard
+	matchesAll        bool
+	matchesAny        bool
+	alreadyInteracted bool
+}
+
+func (s *service) selectVoiceWorthHearingProfiles(
+	ctx context.Context,
+	matcher *preferenceMatcher,
+	candidates []*entity.UserProfile,
+	userID string,
+	currentUserProfile *profiledomain.EnrichedProfile,
+	ethnicityByUser map[string][]int16,
+) ([]profilecard.ProfileCard, []string, error) {
+	evaluationCache := make(map[string]*candidateEvaluation, len(candidates))
+
+	selectionPasses := s.buildSelectionPasses(matcher)
+
+	selectedProfiles := make([]profilecard.ProfileCard, 0, constants.MaxNumberOfVWHUsersToSelect)
+	selectedIDs := make([]string, 0, constants.MaxNumberOfVWHUsersToSelect)
+
+	for _, pass := range selectionPasses {
+		if len(selectedProfiles) == constants.MaxNumberOfVWHUsersToSelect {
+			break
+		}
+
+		for _, candidate := range candidates {
+			if len(selectedProfiles) == constants.MaxNumberOfVWHUsersToSelect {
+				break
+			}
+
+			if containsID(selectedIDs, candidate.UserID) {
+				continue
+			}
+
+			evaluation, err := s.evaluateCandidate(ctx, matcher, candidate, currentUserProfile, ethnicityByUser, userID, evaluationCache)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			if evaluation.alreadyInteracted {
+				continue
+			}
+
+			if !pass(evaluation) {
+				continue
+			}
+
+			selectedProfiles = append(selectedProfiles, evaluation.card)
+			selectedIDs = append(selectedIDs, candidate.UserID)
+		}
+	}
+
+	return selectedProfiles, selectedIDs, nil
+}
+
+func (s *service) buildSelectionPasses(matcher *preferenceMatcher) []func(*candidateEvaluation) bool {
+	passes := make([]func(*candidateEvaluation) bool, 0, 3)
+
+	if matcher != nil {
+		passes = append(passes, func(eval *candidateEvaluation) bool { return eval.matchesAll })
+		passes = append(passes, func(eval *candidateEvaluation) bool { return eval.matchesAny })
+	}
+
+	passes = append(passes, func(eval *candidateEvaluation) bool { return true })
+
+	return passes
+}
+
+func (s *service) evaluateCandidate(
+	ctx context.Context,
+	matcher *preferenceMatcher,
+	candidate *entity.UserProfile,
+	currentUserProfile *profiledomain.EnrichedProfile,
+	ethnicityByUser map[string][]int16,
+	userID string,
+	cache map[string]*candidateEvaluation,
+) (*candidateEvaluation, error) {
+	if evaluation, exists := cache[candidate.UserID]; exists {
+		return evaluation, nil
+	}
+
+	evaluation := &candidateEvaluation{}
+
+	alreadyInteracted, err := s.discoverRepo.AlreadyInteracted(ctx, userID, candidate.UserID)
 	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "get user discover preferences", err, zap.String("userID", userID))
+		return nil, commonlogger.LogError(s.logger, "already interacted", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID))
 	}
 
-	// Return empty preferences if none exist
-	if preferences == nil {
-		return &domain.StoredDiscoverPreferences{}, nil
+	evaluation.alreadyInteracted = alreadyInteracted
+	if alreadyInteracted {
+		cache[candidate.UserID] = evaluation
+		return evaluation, nil
 	}
 
-	return preferences, nil
+	card, err := s.profileService.GetProfileCardWithDistance(ctx, candidate.UserID, currentUserProfile.Latitude, currentUserProfile.Longitude)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "get profile card", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Float64("latitude", currentUserProfile.Latitude), zap.Float64("longitude", currentUserProfile.Longitude))
+	}
+
+	likeCount, err := s.discoverRepo.GetLikeAndSuperlikeCount(ctx, candidate.UserID)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "get like and superlike count", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
+	}
+
+	card.LikeCount = &likeCount
+
+	card.CompatibilitySummary, err = s.computeCompatibility(ctx, userID, candidate.UserID, minOverlap)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "failed to compute compatibility", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
+	}
+
+	var datingIntentionID *int16
+
+	if candidate.DatingIntentionID.Valid {
+		value := candidate.DatingIntentionID.Int16
+		datingIntentionID = &value
+	}
+
+	var religionID *int16
+
+	if candidate.ReligionID.Valid {
+		value := candidate.ReligionID.Int16
+		religionID = &value
+	}
+
+	var sexualityID *int16
+
+	if candidate.SexualityID.Valid {
+		value := candidate.SexualityID.Int16
+		sexualityID = &value
+	}
+
+	var candidateEthnicities []int16
+	if matcher != nil && matcher.requiresEthnicity() {
+		candidateEthnicities = ethnicityByUser[candidate.UserID]
+	}
+
+	if matcher == nil {
+		evaluation.matchesAll = true
+		evaluation.matchesAny = true
+	} else {
+		evaluation.matchesAll = matcher.matchesAll(card.Age, card.DistanceKm, datingIntentionID, religionID, sexualityID, candidateEthnicities)
+		evaluation.matchesAny = matcher.matchesAny(card.Age, card.DistanceKm, datingIntentionID, religionID, sexualityID, candidateEthnicities)
+	}
+
+	evaluation.card = card
+	cache[candidate.UserID] = evaluation
+
+	return evaluation, nil
+}
+
+func containsID(ids []string, target string) bool {
+	for _, id := range ids {
+		if id == target {
+			return true
+		}
+	}
+
+	return false
+}
+
+func orderCandidatesByIDs(candidates []*entity.UserProfile, ordering []string) []*entity.UserProfile {
+	if len(ordering) == 0 || len(candidates) <= 1 {
+		return candidates
+	}
+
+	index := make(map[string]int, len(ordering))
+	for pos, id := range ordering {
+		index[id] = pos
+	}
+
+	sort.SliceStable(candidates, func(i, j int) bool {
+		a, aOK := index[candidates[i].UserID]
+		b, bOK := index[candidates[j].UserID]
+
+		switch {
+		case aOK && bOK:
+			return a < b
+		case aOK:
+			return true
+		case bOK:
+			return false
+		default:
+			return candidates[i].UserID < candidates[j].UserID
+		}
+	})
+
+	return candidates
+}
+
+func startOfWeek(t time.Time, weekStart time.Weekday) time.Time {
+	t = t.UTC()
+	midnight := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	offset := (int(midnight.Weekday()) - int(weekStart) + 7) % 7
+
+	return midnight.AddDate(0, 0, -offset)
 }

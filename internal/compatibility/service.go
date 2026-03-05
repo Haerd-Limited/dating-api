@@ -1,4 +1,4 @@
-package matching
+package compatibility
 
 import (
 	"context"
@@ -8,30 +8,30 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
-	"github.com/Haerd-Limited/dating-api/internal/matching/mapper"
-	"github.com/Haerd-Limited/dating-api/internal/matching/storage"
+	"github.com/Haerd-Limited/dating-api/internal/compatibility/domain"
+	"github.com/Haerd-Limited/dating-api/internal/compatibility/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/compatibility/storage"
 )
 
 type Service interface {
 	GetOverview(ctx context.Context, userID string) (domain.Overview, error)
 	GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool) (domain.QuestionsAndAnswers, error)
 	SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error
-	ComputeMatch(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.MatchSummary, error)
+	ComputeCompatibility(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.CompatibilitySummary, error)
 }
 
 type service struct {
-	logger       *zap.Logger
-	matchingRepo storage.MatchingRepository
+	logger            *zap.Logger
+	compatibilityRepo storage.CompatibilityRepository
 }
 
-func NewMatchingService(
+func NewCompatibilityService(
 	logger *zap.Logger,
-	matchingRepository storage.MatchingRepository,
+	compatibilityRepository storage.CompatibilityRepository,
 ) Service {
 	return &service{
-		logger:       logger,
-		matchingRepo: matchingRepository,
+		logger:            logger,
+		compatibilityRepo: compatibilityRepository,
 	}
 }
 
@@ -56,12 +56,12 @@ func (s *service) GetOverview(ctx context.Context, userID string) (domain.Overvi
 	questionPacks := make([]domain.Pack, 0, len(categories))
 
 	for _, c := range categories {
-		totalCategoryQuestionCount, cErr := s.matchingRepo.CountQuestions(ctx, &c.Key)
+		totalCategoryQuestionCount, cErr := s.compatibilityRepo.CountQuestions(ctx, &c.Key)
 		if cErr != nil {
 			return domain.Overview{}, fmt.Errorf("failed to get count questions category=%v : %w", c.Key, cErr)
 		}
 
-		answeredQuestionsCount, cErr := s.matchingRepo.CountAnsweredByCategory(ctx, userID, c.Key)
+		answeredQuestionsCount, cErr := s.compatibilityRepo.CountAnsweredByCategory(ctx, userID, c.Key)
 		if cErr != nil {
 			return domain.Overview{}, fmt.Errorf("failed to get count answered questions category=%v : %w", c.Key, cErr)
 		}
@@ -89,34 +89,34 @@ func (s *service) GetOverview(ctx context.Context, userID string) (domain.Overvi
 	}, nil
 }
 
-// ComputeMatch calculates the viewer↔target match summary.
+// ComputeCompatibility calculates the viewer↔target compatibility summary.
 // - Uses only overlapping questions (both answered).
 // - OkCupid-style: geometric mean of asymmetric satisfactions.
 // - Honors mandatory gates in either direction.
 // - Hides score when overlap < minOverlap but still returns overlap count.
-func (s *service) ComputeMatch(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.MatchSummary, error) {
-	out := &domain.MatchSummary{}
+func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.CompatibilitySummary, error) {
+	out := &domain.CompatibilitySummary{}
 
 	// trivial self-view: 100% (skip DB, but still try to return overlap count via one call)
 	if viewerID == targetID {
-		_, _, overlap, err := s.matchingRepo.PerspectiveSums(ctx, viewerID, targetID)
+		_, _, overlap, err := s.compatibilityRepo.PerspectiveSums(ctx, viewerID, targetID)
 		if err != nil {
 			return out, fmt.Errorf("failed to compute perspective sums: %w", err)
 		}
 
-		out.MatchPercent = 100
+		out.CompatibilityPercent = 100
 		out.OverlapCount = overlap
 
 		return out, nil
 	}
 
 	// 1) Mandatory gate (either side fails → near-zero or hidden)
-	mismatchAB, err := s.matchingRepo.HasMandatoryMismatch(ctx, viewerID, targetID)
+	mismatchAB, err := s.compatibilityRepo.HasMandatoryMismatch(ctx, viewerID, targetID)
 	if err != nil {
 		return out, fmt.Errorf("failed to check mandatory mismatch(AB): %w", err)
 	}
 
-	mismatchBA, err := s.matchingRepo.HasMandatoryMismatch(ctx, targetID, viewerID)
+	mismatchBA, err := s.compatibilityRepo.HasMandatoryMismatch(ctx, targetID, viewerID)
 	if err != nil {
 		return out, fmt.Errorf("failed to check mandatory mismatch(BA): %w", err)
 	}
@@ -125,26 +125,26 @@ func (s *service) ComputeMatch(ctx context.Context, viewerID, targetID string, m
 	So the relationship is chalked from the get go and no point in calculating match percentage with other overlapping questions*/
 	if mismatchAB || mismatchBA {
 		// Still compute overlap (for UX messaging), but short-circuit score.
-		_, _, overlap, psErr := s.matchingRepo.PerspectiveSums(ctx, viewerID, targetID)
+		_, _, overlap, psErr := s.compatibilityRepo.PerspectiveSums(ctx, viewerID, targetID)
 		if psErr != nil {
 			return out, fmt.Errorf("failed to compute perspective sums: %w", psErr)
 		}
 
 		out.OverlapCount = overlap
-		out.MatchPercent = 1
+		out.CompatibilityPercent = 1
 		out.HiddenReason = "Mandatory mismatch"
-		out.Badges = []domain.MatchBadge{}
+		out.Badges = []domain.CompatibilityBadge{}
 
 		return out, nil
 	}
 
 	// 2) Perspective sums (A→B and B→A)
-	earnedAB, totalAB, overlapAB, err := s.matchingRepo.PerspectiveSums(ctx, viewerID, targetID)
+	earnedAB, totalAB, overlapAB, err := s.compatibilityRepo.PerspectiveSums(ctx, viewerID, targetID)
 	if err != nil {
 		return out, fmt.Errorf("failed to compute perspective sums: %w", err)
 	}
 
-	earnedBA, totalBA, _, err := s.matchingRepo.PerspectiveSums(ctx, targetID, viewerID)
+	earnedBA, totalBA, _, err := s.compatibilityRepo.PerspectiveSums(ctx, targetID, viewerID)
 	if err != nil {
 		return out, fmt.Errorf("failed to compute perspective sums: %w", err)
 	}
@@ -154,8 +154,8 @@ func (s *service) ComputeMatch(ctx context.Context, viewerID, targetID string, m
 	// 3) Enforce minimum overlap (hide score if not enough)
 	if minOverlap > 0 && out.OverlapCount < minOverlap {
 		out.HiddenReason = fmt.Sprintf("Not enough overlap (need %d+ shared answers)", minOverlap)
-		out.MatchPercent = 0
-		out.Badges = []domain.MatchBadge{}
+		out.CompatibilityPercent = 0
+		out.Badges = []domain.CompatibilityBadge{}
 
 		return out, nil
 	}
@@ -186,10 +186,10 @@ func (s *service) ComputeMatch(ctx context.Context, viewerID, targetID string, m
 		percent = 100
 	}
 
-	out.MatchPercent = percent
+	out.CompatibilityPercent = percent
 
 	// 5) Badges (viewer-perspective satisfied, highest-weight)
-	badges, err := s.matchingRepo.TopBadges(ctx, viewerID, targetID, defaultBadgeLimit)
+	badges, err := s.compatibilityRepo.TopBadges(ctx, viewerID, targetID, defaultBadgeLimit)
 	if err != nil {
 		return out, fmt.Errorf("failed to get top badges: %w", err)
 	}
@@ -206,7 +206,7 @@ func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) 
 	}
 
 	// 2) load all valid answers for this question
-	valid, err := s.matchingRepo.GetAnswerIDsForQuestion(ctx, cmd.QuestionID)
+	valid, err := s.compatibilityRepo.GetAnswerIDsForQuestion(ctx, cmd.QuestionID)
 	if err != nil {
 		return fmt.Errorf("failed to get answer IDs for question_id=%d: %w", cmd.QuestionID, err)
 	}
@@ -251,7 +251,7 @@ func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) 
 	}
 
 	// 6) Validate sequential answering (unless updating an existing answer)
-	existingAnswer, err := s.matchingRepo.GetUserAnswerForQuestion(ctx, cmd.UserID, cmd.QuestionID)
+	existingAnswer, err := s.compatibilityRepo.GetUserAnswerForQuestion(ctx, cmd.UserID, cmd.QuestionID)
 	if err != nil {
 		return fmt.Errorf("failed to check existing answer: %w", err)
 	}
@@ -264,20 +264,20 @@ func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) 
 	}
 
 	// 7) persist
-	return s.matchingRepo.UpsertUserAnswer(ctx, mapper.MapSaveAnswerCommandToUserAnswerEntity(cmd))
+	return s.compatibilityRepo.UpsertUserAnswer(ctx, mapper.MapSaveAnswerCommandToUserAnswerEntity(cmd))
 }
 
 func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool) (domain.QuestionsAndAnswers, error) {
 	// If userID is provided and viewAll is false, return only the next unanswered question
 	if userID != nil && category != "" && !viewAll {
-		nextQuestion, err := s.matchingRepo.GetNextUnansweredQuestion(ctx, *userID, category)
+		nextQuestion, err := s.compatibilityRepo.GetNextUnansweredQuestion(ctx, *userID, category)
 		if err != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get next unanswered question: %w", err)
 		}
 
 		// If no unanswered questions, return empty result
 		if nextQuestion == nil {
-			total, err := s.matchingRepo.CountQuestions(ctx, &category)
+			total, err := s.compatibilityRepo.CountQuestions(ctx, &category)
 			if err != nil {
 				return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions: %w", err)
 			}
@@ -291,7 +291,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 		}
 
 		// Get question answers
-		answerEntities, err := s.matchingRepo.GetQuestionAnswers(ctx, nextQuestion.ID)
+		answerEntities, err := s.compatibilityRepo.GetQuestionAnswers(ctx, nextQuestion.ID)
 		if err != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question answers: %w", err)
 		}
@@ -299,7 +299,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 		// Check if user has an existing answer (for update flow)
 		var userAnswer *domain.UserAnswer
 
-		existingAnswer, err := s.matchingRepo.GetUserAnswerForQuestion(ctx, *userID, nextQuestion.ID)
+		existingAnswer, err := s.compatibilityRepo.GetUserAnswerForQuestion(ctx, *userID, nextQuestion.ID)
 		if err != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get existing answer: %w", err)
 		}
@@ -317,7 +317,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 			},
 		}
 
-		total, err := s.matchingRepo.CountQuestions(ctx, &category)
+		total, err := s.compatibilityRepo.CountQuestions(ctx, &category)
 		if err != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions: %w", err)
 		}
@@ -333,7 +333,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 	// If viewAll is true and userID is provided, return all questions in the category with their answered status
 	if viewAll && userID != nil && category != "" {
 		// Get all questions in order for this category
-		allQuestionEntities, err := s.matchingRepo.GetQuestionsInOrder(ctx, category)
+		allQuestionEntities, err := s.compatibilityRepo.GetQuestionsInOrder(ctx, category)
 		if err != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get questions in order: %w", err)
 		}
@@ -360,7 +360,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 
 		for _, qe := range allQuestionEntities {
 			// Get question answers
-			answerEntities, err := s.matchingRepo.GetQuestionAnswers(ctx, qe.ID)
+			answerEntities, err := s.compatibilityRepo.GetQuestionAnswers(ctx, qe.ID)
 			if err != nil {
 				return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question answers: %w", err)
 			}
@@ -368,7 +368,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 			// Check for existing answer
 			var userAnswer *domain.UserAnswer
 
-			existingAnswer, err := s.matchingRepo.GetUserAnswerForQuestion(ctx, *userID, qe.ID)
+			existingAnswer, err := s.compatibilityRepo.GetUserAnswerForQuestion(ctx, *userID, qe.ID)
 			if err != nil {
 				return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get existing answer: %w", err)
 			}
@@ -389,7 +389,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 			})
 		}
 
-		total, err := s.matchingRepo.CountQuestions(ctx, &category)
+		total, err := s.compatibilityRepo.CountQuestions(ctx, &category)
 		if err != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions: %w", err)
 		}
@@ -426,7 +426,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 	items := make([]domain.QuestionAndAnswers, 0, len(domainQuestions))
 
 	for _, q := range domainQuestions {
-		answerEntities, aErr := s.matchingRepo.GetQuestionAnswers(ctx, q.ID)
+		answerEntities, aErr := s.compatibilityRepo.GetQuestionAnswers(ctx, q.ID)
 		if aErr != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question answers questionID=%v : %w", q.ID, aErr)
 		}
@@ -435,7 +435,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 		var userAnswer *domain.UserAnswer
 
 		if userID != nil {
-			existingAnswer, err := s.matchingRepo.GetUserAnswerForQuestion(ctx, *userID, q.ID)
+			existingAnswer, err := s.compatibilityRepo.GetUserAnswerForQuestion(ctx, *userID, q.ID)
 			if err != nil {
 				return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get existing answer: %w", err)
 			}
@@ -452,7 +452,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 		})
 	}
 
-	total, err := s.matchingRepo.CountQuestions(ctx, &category)
+	total, err := s.compatibilityRepo.CountQuestions(ctx, &category)
 	if err != nil {
 		return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions category=%v : %w", category, err)
 	}
@@ -471,7 +471,7 @@ func (s *service) listQuestions(ctx context.Context, category string, offset, li
 		catPtr = &category
 	}
 
-	questionEntities, err := s.matchingRepo.ListQuestions(ctx, catPtr, limit, offset)
+	questionEntities, err := s.compatibilityRepo.ListQuestions(ctx, catPtr, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -480,7 +480,7 @@ func (s *service) listQuestions(ctx context.Context, category string, offset, li
 }
 
 func (s *service) getQuestionCategories(ctx context.Context) ([]domain.QuestionCategory, error) {
-	categoryEntities, err := s.matchingRepo.GetQuestionCategories(ctx)
+	categoryEntities, err := s.compatibilityRepo.GetQuestionCategories(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -502,13 +502,13 @@ func (s *service) getQuestionCategories(ctx context.Context) ([]domain.QuestionC
 // before allowing the user to answer the current question.
 func (s *service) validateSequentialAnswering(ctx context.Context, userID string, questionID int64) error {
 	// Get the question's sort_order and category
-	_, categoryKey, err := s.matchingRepo.GetQuestionSortOrderAndCategory(ctx, questionID)
+	_, categoryKey, err := s.compatibilityRepo.GetQuestionSortOrderAndCategory(ctx, questionID)
 	if err != nil {
 		return fmt.Errorf("failed to get question info: %w", err)
 	}
 
 	// Get all questions in order for this category
-	allQuestions, err := s.matchingRepo.GetQuestionsInOrder(ctx, categoryKey)
+	allQuestions, err := s.compatibilityRepo.GetQuestionsInOrder(ctx, categoryKey)
 	if err != nil {
 		return fmt.Errorf("failed to get questions in order: %w", err)
 	}
@@ -528,7 +528,7 @@ func (s *service) validateSequentialAnswering(ctx context.Context, userID string
 	}
 
 	// Get all answered question IDs for this user in this category
-	answeredIDs, err := s.matchingRepo.GetUserAnsweredQuestionIDs(ctx, userID, categoryKey)
+	answeredIDs, err := s.compatibilityRepo.GetUserAnsweredQuestionIDs(ctx, userID, categoryKey)
 	if err != nil {
 		return fmt.Errorf("failed to get answered questions: %w", err)
 	}

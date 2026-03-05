@@ -122,11 +122,11 @@ func (h *handler) GetUserProfile() http.HandlerFunc {
 
 		response := mapper.ProfileToDto(userProfile)
 		if viewerID, ok := commoncontext.UserIDFromContext(ctx); ok && viewerID != "" {
-			matchSummary, matchErr := h.discoverService.ComputeMatchSummary(ctx, viewerID, userID)
+			compatibilitySummary, matchErr := h.discoverService.ComputeCompatibility(ctx, viewerID, userID)
 			if matchErr != nil {
-				h.logger.Sugar().Warnw("failed to compute match summary for user profile", "error", matchErr, "viewerID", viewerID, "userID", userID)
+				h.logger.Sugar().Warnw("failed to compute compatibility summary for user profile", "error", matchErr, "viewerID", viewerID, "userID", userID)
 			} else {
-				response.MatchSummary = profilecarddto.MapMatchSummary(matchSummary)
+				response.MatchSummary = profilecarddto.MapCompatibilitySummary(compatibilitySummary)
 			}
 		}
 		render.Json(w, http.StatusOK, response)

@@ -9,13 +9,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
+	"github.com/Haerd-Limited/dating-api/internal/api/compatibility"
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
 	apifeedback "github.com/Haerd-Limited/dating-api/internal/api/feedback"
 	apiinsights "github.com/Haerd-Limited/dating-api/internal/api/insights"
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction"
 	"github.com/Haerd-Limited/dating-api/internal/api/lookup"
-	"github.com/Haerd-Limited/dating-api/internal/api/matching"
 	"github.com/Haerd-Limited/dating-api/internal/api/media"
 	apinotification "github.com/Haerd-Limited/dating-api/internal/api/notification"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding"
@@ -24,6 +24,7 @@ import (
 	apisafety "github.com/Haerd-Limited/dating-api/internal/api/safety"
 	"github.com/Haerd-Limited/dating-api/internal/api/verification"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
+	internalcompatibility "github.com/Haerd-Limited/dating-api/internal/compatibility"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldataexport "github.com/Haerd-Limited/dating-api/internal/dataexport"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
@@ -31,7 +32,6 @@ import (
 	internalinsights "github.com/Haerd-Limited/dating-api/internal/insights"
 	internalinteraction "github.com/Haerd-Limited/dating-api/internal/interaction"
 	internallookup "github.com/Haerd-Limited/dating-api/internal/lookup"
-	internalmatching "github.com/Haerd-Limited/dating-api/internal/matching"
 	internalmedia "github.com/Haerd-Limited/dating-api/internal/media"
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalnotification "github.com/Haerd-Limited/dating-api/internal/notification"
@@ -57,7 +57,7 @@ func New(
 	lookupService internallookup.Service,
 	hub *internalrealtime.Hub,
 	verificationService internalverification.Service,
-	matchingService internalmatching.Service,
+	compatibilityService internalcompatibility.Service,
 	notificationService internalnotification.Service,
 	safetyService internalsafety.Service,
 	insightsService internalinsights.Service,
@@ -105,7 +105,7 @@ func New(
 	lookupHandler := lookup.NewLookupHandler(logger, lookupService)
 	wsHandler := realtime.NewWsHandler(logger, hub, conversationService)
 	verificationHandler := verification.NewVerificationHandler(logger, verificationService)
-	matchingHandler := matching.NewMatchingHandler(logger, matchingService)
+	compatibilityHandler := compatibility.NewCompatibilityHandler(logger, compatibilityService)
 	safetyHandler := apisafety.NewHandler(logger, safetyService)
 	insightsHandler := apiinsights.NewHandler(logger, insightsService)
 	feedbackHandler := apifeedback.NewFeedbackHandler(logger, feedbackService)
@@ -234,10 +234,10 @@ func New(
 					r.Post("/", feedbackHandler.CreateFeedback())
 				})
 
-				r.Route("/matching", func(r chi.Router) {
-					r.Get("/overview", matchingHandler.GetOverview())
-					r.Get("/questions", matchingHandler.GetQuestions())
-					r.Post("/answers", matchingHandler.SaveAnswer())
+				r.Route("/matching", func(r chi.Router) { //TODO: change to compatibility
+					r.Get("/overview", compatibilityHandler.GetOverview())
+					r.Get("/questions", compatibilityHandler.GetQuestions())
+					r.Post("/answers", compatibilityHandler.SaveAnswer())
 				})
 
 				// Current user

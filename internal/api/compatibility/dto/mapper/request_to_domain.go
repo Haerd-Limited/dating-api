@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	"github.com/Haerd-Limited/dating-api/internal/api/matching/dto"
-	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
+	"github.com/Haerd-Limited/dating-api/internal/api/compatibility/dto"
+	"github.com/Haerd-Limited/dating-api/internal/compatibility/domain"
 )
 
 func MapSaveAnswerRequestToDomain(req dto.SaveAnswerRequest, userID string) domain.SaveAnswerCommand {

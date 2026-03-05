@@ -3,8 +3,8 @@ package mapper
 import (
 	"time"
 
+	"github.com/Haerd-Limited/dating-api/internal/compatibility/domain"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
-	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
 )
 
 func MapSaveAnswerCommandToUserAnswerEntity(d domain.SaveAnswerCommand) entity.UserAnswer {

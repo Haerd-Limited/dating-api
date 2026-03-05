@@ -3,8 +3,8 @@ package mapper
 import (
 	"time"
 
-	"github.com/Haerd-Limited/dating-api/internal/api/matching/dto"
-	"github.com/Haerd-Limited/dating-api/internal/matching/domain"
+	"github.com/Haerd-Limited/dating-api/internal/api/compatibility/dto"
+	"github.com/Haerd-Limited/dating-api/internal/compatibility/domain"
 )
 
 func MapDomainToGetOverviewResponse(d domain.Overview) dto.GetOverviewResponse {

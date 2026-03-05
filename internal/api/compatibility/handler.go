@@ -1,4 +1,4 @@
-package matching
+package compatibility
 
 import (
 	"net/http"
@@ -6,9 +6,9 @@ import (
 	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
 
-	"github.com/Haerd-Limited/dating-api/internal/api/matching/dto"
-	"github.com/Haerd-Limited/dating-api/internal/api/matching/dto/mapper"
-	"github.com/Haerd-Limited/dating-api/internal/matching"
+	"github.com/Haerd-Limited/dating-api/internal/api/compatibility/dto"
+	"github.com/Haerd-Limited/dating-api/internal/api/compatibility/dto/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/compatibility"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	commonMessages "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
@@ -23,17 +23,17 @@ type Handler interface {
 }
 
 type handler struct {
-	logger          *zap.Logger
-	matchingService matching.Service
+	logger               *zap.Logger
+	compatibilityService compatibility.Service
 }
 
-func NewMatchingHandler(
+func NewCompatibilityHandler(
 	logger *zap.Logger,
-	matchingService matching.Service,
+	compatibilityService compatibility.Service,
 ) Handler {
 	return &handler{
-		logger:          logger,
-		matchingService: matchingService,
+		logger:               logger,
+		compatibilityService: compatibilityService,
 	}
 }
 
@@ -47,7 +47,7 @@ func (h *handler) GetOverview() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.matchingService.GetOverview(ctx, userID)
+		result, err := h.compatibilityService.GetOverview(ctx, userID)
 		if err != nil {
 			render.HandleServiceErrorResponse(h.logger, w, r, "GetOverview", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
@@ -81,7 +81,7 @@ func (h *handler) SaveAnswer() http.HandlerFunc {
 			return
 		}
 
-		err = h.matchingService.SaveAnswer(ctx, mapper.MapSaveAnswerRequestToDomain(req, userID))
+		err = h.compatibilityService.SaveAnswer(ctx, mapper.MapSaveAnswerRequestToDomain(req, userID))
 		if err != nil {
 			render.HandleServiceErrorResponse(h.logger, w, r, "SaveAnswer", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
@@ -111,7 +111,7 @@ func (h *handler) GetQuestions() http.HandlerFunc {
 			userIDPtr = &userID
 		}
 
-		result, err := h.matchingService.GetQuestionsAndAnswers(ctx, category, offset, limit, userIDPtr, viewAll)
+		result, err := h.compatibilityService.GetQuestionsAndAnswers(ctx, category, offset, limit, userIDPtr, viewAll)
 		if err != nil {
 			render.HandleServiceErrorResponse(h.logger, w, r, "GetQuestions", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
@@ -123,13 +123,13 @@ func (h *handler) GetQuestions() http.HandlerFunc {
 
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
-	case errors.Is(err, matching.ErrAcceptableAnswerIDsRequired):
+	case errors.Is(err, compatibility.ErrAcceptableAnswerIDsRequired):
 		return http.StatusBadRequest, "Acceptable answer ids required when importance is 'very'"
-	case errors.Is(err, matching.ErrInvalidAnswerID):
+	case errors.Is(err, compatibility.ErrInvalidAnswerID):
 		return http.StatusBadRequest, "Invalid answer id"
-	case errors.Is(err, matching.ErrInvalidImportance):
+	case errors.Is(err, compatibility.ErrInvalidImportance):
 		return http.StatusBadRequest, "Invalid importance"
-	case errors.Is(err, matching.ErrSequentialAnsweringRequired):
+	case errors.Is(err, compatibility.ErrSequentialAnsweringRequired):
 		return http.StatusBadRequest, "Questions must be answered sequentially"
 	default:
 		return http.StatusInternalServerError, commonMessages.InternalServerErrorMsg

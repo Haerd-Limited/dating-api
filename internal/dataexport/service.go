@@ -9,15 +9,15 @@ import (
 
 	"go.uber.org/zap"
 
+	compatibilitystorage "github.com/Haerd-Limited/dating-api/internal/compatibility/storage"
+	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/dataexport/domain"
 	"github.com/Haerd-Limited/dating-api/internal/dataexport/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
-	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	feedbackstorage "github.com/Haerd-Limited/dating-api/internal/feedback/storage"
 	insightstorage "github.com/Haerd-Limited/dating-api/internal/insights/storage"
 	interactionstorage "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
-	matchingstorage "github.com/Haerd-Limited/dating-api/internal/matching/storage"
 	profilestorage "github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	userstorage "github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -45,7 +45,7 @@ type service struct {
 	insightsRepo      insightstorage.Repository
 	verificationRepo  verificationstorage.VerificationRepository
 	safetyRepo        safetystorage.Repository
-	matchingRepo      matchingstorage.MatchingRepository
+	compatibilityRepo compatibilitystorage.CompatibilityRepository
 }
 
 // NewService returns a new data export service.
@@ -61,7 +61,7 @@ func NewService(
 	insightsRepo insightstorage.Repository,
 	verificationRepo verificationstorage.VerificationRepository,
 	safetyRepo safetystorage.Repository,
-	matchingRepo matchingstorage.MatchingRepository,
+	compatibilityRepo compatibilitystorage.CompatibilityRepository,
 ) Service {
 	return &service{
 		logger:            logger,
@@ -75,7 +75,7 @@ func NewService(
 		insightsRepo:      insightsRepo,
 		verificationRepo:  verificationRepo,
 		safetyRepo:        safetyRepo,
-		matchingRepo:      matchingRepo,
+		compatibilityRepo: compatibilityRepo,
 	}
 }
 
@@ -104,22 +104,22 @@ func (s *service) ExportUserData(ctx context.Context, userID string) (*domain.Ex
 
 func (s *service) assembleExport(ctx context.Context, userID string) (*domain.ExportPayload, error) {
 	payload := &domain.ExportPayload{
-		ExportedAt:       time.Now().UTC(),
-		Account:          domain.AccountExport{},
-		Profile:         domain.ProfileExport{},
-		Preferences:      nil,
-		Photos:           nil,
-		VoicePrompts:     nil,
-		Swipes:           nil,
-		Matches:          nil,
-		Conversations:   nil,
-		Feedback:         nil,
-		Events:           nil,
-		InsightSnapshots: nil,
+		ExportedAt:           time.Now().UTC(),
+		Account:              domain.AccountExport{},
+		Profile:              domain.ProfileExport{},
+		Preferences:          nil,
+		Photos:               nil,
+		VoicePrompts:         nil,
+		Swipes:               nil,
+		Matches:              nil,
+		Conversations:        nil,
+		Feedback:             nil,
+		Events:               nil,
+		InsightSnapshots:     nil,
 		VerificationAttempts: nil,
-		Blocks:          nil,
-		Reports:         nil,
-		MatchingAnswers: nil,
+		Blocks:               nil,
+		Reports:              nil,
+		MatchingAnswers:      nil,
 	}
 
 	// Account
@@ -208,7 +208,7 @@ func (s *service) assembleExport(ctx context.Context, userID string) (*domain.Ex
 	}
 
 	// Matching answers
-	answers, err := s.matchingRepo.GetUserAnswers(ctx, userID)
+	answers, err := s.compatibilityRepo.GetUserAnswers(ctx, userID)
 	if err == nil {
 		payload.MatchingAnswers = userAnswersToExport(answers)
 	}
@@ -415,14 +415,14 @@ func swipesToExport(swipes []*entity.Swipe) []domain.SwipeExport {
 			promptID = &s.PromptID.Int64
 		}
 		out = append(out, domain.SwipeExport{
-			ID:        s.ID,
-			ActorID:   s.ActorID,
-			TargetID:  s.TargetID,
-			Action:    s.Action,
+			ID:          s.ID,
+			ActorID:     s.ActorID,
+			TargetID:    s.TargetID,
+			Action:      s.Action,
 			MessageType: msgType,
-			Message:    msg,
-			PromptID:   promptID,
-			CreatedAt:  s.CreatedAt,
+			Message:     msg,
+			PromptID:    promptID,
+			CreatedAt:   s.CreatedAt,
 		})
 	}
 	return out
@@ -466,11 +466,11 @@ func messagesToExport(msgs []*entity.Message) []domain.MessageExport {
 			deletedAt = &m.DeletedAt.Time
 		}
 		out = append(out, domain.MessageExport{
-			ID:       m.ID,
-			SenderID: m.SenderID,
-			Type:     m.Type,
-			TextBody: textBody,
-			MediaKey: mediaKey,
+			ID:        m.ID,
+			SenderID:  m.SenderID,
+			Type:      m.Type,
+			TextBody:  textBody,
+			MediaKey:  mediaKey,
 			CreatedAt: m.CreatedAt,
 			EditedAt:  editedAt,
 			DeletedAt: deletedAt,
@@ -566,7 +566,7 @@ func blocksToExport(blocks entity.UserBlockSlice) []domain.BlockExport {
 			BlockerUserID: b.BlockerUserID,
 			BlockedUserID: b.BlockedUserID,
 			Reason:        reason,
-			CreatedAt:    b.CreatedAt,
+			CreatedAt:     b.CreatedAt,
 		})
 	}
 	return out
@@ -600,4 +600,3 @@ func userAnswersToExport(answers entity.UserAnswerSlice) []domain.UserAnswerExpo
 	}
 	return out
 }
-

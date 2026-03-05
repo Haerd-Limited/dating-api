@@ -22,12 +22,14 @@ import (
 	authstorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/communication"
+	"github.com/Haerd-Limited/dating-api/internal/compatibility"
+	compatibilitystorage "github.com/Haerd-Limited/dating-api/internal/compatibility/storage"
 	"github.com/Haerd-Limited/dating-api/internal/config"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
-	"github.com/Haerd-Limited/dating-api/internal/dataexport"
-	dataexportstorage "github.com/Haerd-Limited/dating-api/internal/dataexport/storage"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
+	"github.com/Haerd-Limited/dating-api/internal/dataexport"
+	dataexportstorage "github.com/Haerd-Limited/dating-api/internal/dataexport/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	discoverstorage "github.com/Haerd-Limited/dating-api/internal/discover/storage"
 	"github.com/Haerd-Limited/dating-api/internal/feedback"
@@ -39,8 +41,6 @@ import (
 	interactionstorage "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/lookup"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
-	"github.com/Haerd-Limited/dating-api/internal/matching"
-	matchingstorage "github.com/Haerd-Limited/dating-api/internal/matching/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/notification"
 	notificationstorage "github.com/Haerd-Limited/dating-api/internal/notification/storage"
@@ -127,7 +127,7 @@ func main() {
 	feedbackRepo := feedbackstorage.NewRepository(db)
 	userRepo := storage.NewUserRepository(db)
 	authRepo := authstorage.NewAuthRepository(db)
-	matchingRepo := matchingstorage.NewMatchingRepository(db, logger)
+	compatibilityRepo := compatibilitystorage.NewCompatibilityRepository(db, logger)
 	deviceTokenRepo := notificationstorage.NewDeviceTokenRepository(db)
 	unitOfWork := uow.New(db.DB)
 
@@ -139,13 +139,13 @@ func main() {
 		logger.Sugar().Fatalf("failed to create rek: %v", err)
 	}
 
-	matchingService := matching.NewMatchingService(logger, matchingRepo)
+	compatibilityService := compatibility.NewCompatibilityService(logger, compatibilityRepo)
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner, s3Reader, cfg.Env)
 	openaiService := openai.NewOpenAIService(cfg.OpenAIAPIKey, logger)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo, openaiService, awsService, unitOfWork)
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
-	discoverService := discover.NewDiscoverService(logger, profileService, matchingService, discoverRepo)
+	discoverService := discover.NewDiscoverService(logger, profileService, compatibilityService, discoverRepo)
 	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
 
 	notificationService, err := notification.NewService(ctx, logger, deviceTokenRepo, notification.Config{
@@ -211,7 +211,7 @@ func main() {
 		insRepo,
 		verificationRepo,
 		safetyRepo,
-		matchingRepo,
+		compatibilityRepo,
 	)
 
 	// Start background weekly scheduler for insights (runs inside API process).
@@ -230,7 +230,7 @@ func main() {
 		lookupService,
 		hub,
 		verificationService,
-		matchingService,
+		compatibilityService,
 		notificationService,
 		safetyService,
 		insSvc,

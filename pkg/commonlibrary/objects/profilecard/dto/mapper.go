@@ -92,20 +92,20 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		Work:         profile.Work,
 		JobTitle:     profile.JobTitle,
 		University:   profile.University,
-		MatchSummary: MapMatchSummary(profile.MatchSummary),
+		MatchSummary: MapCompatibilitySummary(profile.CompatibilitySummary),
 
 		CreatedAt: createdAtStr,
 		UpdatedAt: updatedAtStr,
 	}
 }
 
-func MapMatchSummary(ms *profilecard.MatchSummary) *MatchSummary {
+func MapCompatibilitySummary(ms *profilecard.CompatibilitySummary) *MatchSummary {
 	if ms == nil {
 		return nil
 	}
 
 	out := &MatchSummary{
-		MatchPercent: ms.MatchPercent,
+		MatchPercent: ms.CompatibilityPercent,
 		OverlapCount: ms.OverlapCount,
 		HiddenReason: ms.HiddenReason,
 	}
