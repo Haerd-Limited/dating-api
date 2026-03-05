@@ -117,6 +117,8 @@ func MapCompatibilitySummary(ms *profilecard.CompatibilitySummary) *MatchSummary
 				QuestionText:  b.QuestionText,
 				PartnerAnswer: b.PartnerAnswer,
 				Weight:        b.Weight,
+				IsMismatch:    b.IsMismatch,
+				RequirementBy:  b.RequirementBy,
 			})
 		}
 	}

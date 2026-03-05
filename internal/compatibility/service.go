@@ -133,7 +133,12 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 		out.OverlapCount = overlap
 		out.CompatibilityPercent = 1
 		out.HiddenReason = "Mandatory mismatch"
-		out.Badges = []domain.CompatibilityBadge{}
+
+		badges, badgeErr := s.compatibilityRepo.MandatoryMismatchBadges(ctx, viewerID, targetID, defaultBadgeLimit)
+		if badgeErr != nil {
+			return out, fmt.Errorf("failed to get mandatory mismatch badges: %w", badgeErr)
+		}
+		out.Badges = badges
 
 		return out, nil
 	}

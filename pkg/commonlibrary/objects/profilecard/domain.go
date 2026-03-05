@@ -55,7 +55,9 @@ type CompatibilityBadge struct {
 	QuestionID    int64
 	QuestionText  string
 	PartnerAnswer string
-	Weight        int // derived from importance
+	Weight        int    // derived from importance
+	IsMismatch    bool   // true when this badge describes a mandatory requirement that was not met
+	RequirementBy string // when IsMismatch: "viewer" = viewer's mandatory that other failed; "target" = target's mandatory that viewer failed
 }
 
 type CompatibilitySummary struct {

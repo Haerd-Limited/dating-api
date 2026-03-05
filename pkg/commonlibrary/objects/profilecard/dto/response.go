@@ -51,7 +51,9 @@ type MatchBadge struct {
 	QuestionID    int64  `json:"question_id"`
 	QuestionText  string `json:"question_text"`
 	PartnerAnswer string `json:"partner_answer"`
-	Weight        int    `json:"weight"` // derived from importance
+	Weight        int    `json:"weight"`                   // derived from importance
+	IsMismatch    bool   `json:"is_mismatch"`              // true when this badge describes a mandatory requirement that was not met
+	RequirementBy string `json:"requirement_by,omitempty"` // when is_mismatch: "viewer" or "target"
 }
 
 type MatchSummary struct {

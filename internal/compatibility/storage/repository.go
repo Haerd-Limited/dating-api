@@ -28,6 +28,7 @@ type CompatibilityRepository interface {
 	HasMandatoryMismatch(ctx context.Context, aID, bID string) (bool, error)
 	PerspectiveSums(ctx context.Context, aID, bID string) (earned int, total int, overlap int, err error)
 	TopBadges(ctx context.Context, aID, bID string, limit int) ([]domain.CompatibilityBadge, error)
+	MandatoryMismatchBadges(ctx context.Context, viewerID, targetID string, limit int) ([]domain.CompatibilityBadge, error)
 
 	// Sequential question methods
 	GetNextUnansweredQuestion(ctx context.Context, userID, categoryKey string) (*entity.Question, error)
@@ -192,6 +193,74 @@ func (r *repository) TopBadges(ctx context.Context, aID, bID string, limit int) 
 		return nil, fmt.Errorf("TopBadges rows: %w", err)
 	}
 
+	return out, nil
+}
+
+// MandatoryMismatchBadges returns badges for mandatory requirements that were not met (viewer's or target's), for UX to explain incompatibility.
+func (r *repository) MandatoryMismatchBadges(ctx context.Context, viewerID, targetID string, limit int) ([]domain.CompatibilityBadge, error) {
+	if limit <= 0 {
+		limit = 3
+	}
+
+	const q = `
+		SELECT id, text, label, requirement_by FROM (
+			SELECT q.id, q.text, qa.label, 'viewer'::text AS requirement_by
+			FROM user_answers uaV
+			JOIN user_answers uaT ON uaT.user_id = $2 AND uaT.question_id = uaV.question_id
+			JOIN questions q ON q.id = uaV.question_id
+			JOIN question_answers qa ON qa.id = uaT.answer_id
+			WHERE uaV.user_id = $1
+			  AND uaV.importance = 'mandatory'
+			  AND NOT (uaT.answer_id = ANY(uaV.acceptable_answer_ids))
+			UNION ALL
+			SELECT q.id, q.text, qa.label, 'target'::text AS requirement_by
+			FROM user_answers uaT
+			JOIN user_answers uaV ON uaV.user_id = $1 AND uaV.question_id = uaT.question_id
+			JOIN questions q ON q.id = uaT.question_id
+			JOIN question_answers qa ON qa.id = uaV.answer_id
+			WHERE uaT.user_id = $2
+			  AND uaT.importance = 'mandatory'
+			  AND NOT (uaV.answer_id = ANY(uaT.acceptable_answer_ids))
+		) AS u
+		ORDER BY requirement_by, id
+		LIMIT $3;
+	`
+
+	type row struct {
+		ID             int64
+		Text           string
+		Label          string
+		RequirementBy  string
+	}
+
+	rows, err := queries.Raw(q, viewerID, targetID, limit).QueryContext(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("MandatoryMismatchBadges query: %w", err)
+	}
+	defer func(rows *sql.Rows) {
+		_ = rows.Close()
+	}(rows)
+
+	const mandatoryWeight = 30 // from importance_weights.mandatory
+
+	var out []domain.CompatibilityBadge
+	for rows.Next() {
+		var rrow row
+		if err = rows.Scan(&rrow.ID, &rrow.Text, &rrow.Label, &rrow.RequirementBy); err != nil {
+			return nil, fmt.Errorf("MandatoryMismatchBadges scan: %w", err)
+		}
+		out = append(out, domain.CompatibilityBadge{
+			QuestionID:    rrow.ID,
+			QuestionText:  rrow.Text,
+			PartnerAnswer: rrow.Label,
+			Weight:        mandatoryWeight,
+			IsMismatch:    true,
+			RequirementBy: rrow.RequirementBy,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("MandatoryMismatchBadges rows: %w", err)
+	}
 	return out, nil
 }
 

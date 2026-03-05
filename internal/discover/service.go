@@ -282,6 +282,8 @@ func (s *service) computeCompatibility(ctx context.Context, userID string, candi
 			QuestionText:  badge.QuestionText,
 			PartnerAnswer: badge.PartnerAnswer,
 			Weight:        badge.Weight,
+			IsMismatch:    badge.IsMismatch,
+			RequirementBy: badge.RequirementBy,
 		})
 	}
 
