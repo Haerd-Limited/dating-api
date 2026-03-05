@@ -15,7 +15,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 )
 
-type MatchingRepository interface {
+type CompatibilityRepository interface {
 	ListQuestions(ctx context.Context, categoryKey *string, limit, offset int) (entity.QuestionSlice, error)
 	GetQuestionAnswers(ctx context.Context, questionID int64) (entity.QuestionAnswerSlice, error)
 	CountQuestions(ctx context.Context, categoryKey *string) (int, error)
@@ -42,10 +42,10 @@ type repository struct {
 	logger *zap.Logger
 }
 
-func NewMatchingRepository(
+func NewCompatibilityRepository(
 	db *sqlx.DB,
 	logger *zap.Logger,
-) MatchingRepository {
+) CompatibilityRepository {
 	return &repository{
 		db:     db,
 		logger: logger,
