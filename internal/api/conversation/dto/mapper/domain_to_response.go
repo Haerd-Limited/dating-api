@@ -90,12 +90,6 @@ func MapMessageToDto(msg *domain.Message, userID string) dto.Message {
 	}
 }
 
-func MapToGetChemistryScoreResponse(score int) dto.GetChemistryScoreResponse {
-	return dto.GetChemistryScoreResponse{
-		Score: score,
-	}
-}
-
 func MapToGetConversationsResponse(conversations []domain.Conversation, userID string) dto.GetConversationsResponse {
 	if conversations == nil {
 		return dto.GetConversationsResponse{
@@ -143,7 +137,7 @@ func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversa
 	}
 
 	return dto.Conversation{
-		ID: convo.ID,
+		ID:              convo.ID,
 		Match: dto.Match{
 			ID:          convo.MatchedUser.ID,
 			DisplayName: convo.MatchedUser.DisplayName,
@@ -153,35 +147,12 @@ func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversa
 				Palette: convo.MatchedUser.Theme.Palette,
 			},
 		},
-		CreatedAt:      convo.CreatedAt,
-		LastActivityAt: convo.LastActivityAt,
-		LastMessage:    message,
-		UnreadCount:    convo.UnreadCount,
-		Score: dto.ScoreSnapshot{
-			Threshold: convo.Score.Threshold,
-			Me:        convo.Score.Me,
-			Them:      convo.Score.Them,
-			Revealed:  convo.Score.Revealed,
-			CanReveal: convo.Score.CanReveal,
-			Shared:    convo.Score.Shared,
-		},
-		RevealRequest: MapRevealRequestToDTO(convo.RevealRequest),
-		DateMode:      convo.DateMode,
-		Photos:        MapPhotosToDTO(convo.Photos),
-	}
-}
-
-func MapRevealRequestToDTO(revealRequest *domain.RevealRequest) *dto.RevealRequest {
-	if revealRequest == nil {
-		return nil
-	}
-
-	return &dto.RevealRequest{
-		ConversationID: revealRequest.ConversationID,
-		InitiatorID:    revealRequest.InitiatorID,
-		RequestedAt:    revealRequest.RequestedAt,
-		ExpiresAt:      revealRequest.ExpiresAt,
-		Status:         string(revealRequest.Status),
+		CreatedAt:       convo.CreatedAt,
+		LastActivityAt:  convo.LastActivityAt,
+		LastMessage:     message,
+		UnreadCount:     convo.UnreadCount,
+		DateMode:        convo.DateMode,
+		Photos:          MapPhotosToDTO(convo.Photos),
 	}
 }
 

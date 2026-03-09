@@ -72,10 +72,13 @@ Photos show your face; Voice and GIFs show your soul. By mandating voice prompts
 
 ## 6. Comparison Table: Old vs. New
 
-| Feature | Old Haerd (Experiment) | New Haerd (Utility) |
-|--------|------------------------|----------------------|
-| Primary Hook | "Is love blind?" | "Stop swiping, start dating." |
-| Photos | Hidden/Locked | Visible from start |
-| Focus | Mystery & Discovery | Efficiency & Intentionality |
-| Match Limit | Unlimited | Hard cap of 2 |
-| Logistics | Manual chatting | Integrated Date Builder |
+
+| Feature      | Old Haerd (Experiment) | New Haerd (Utility)           |
+| ------------ | ---------------------- | ----------------------------- |
+| Primary Hook | "Is love blind?"       | "Stop swiping, start dating." |
+| Photos       | Hidden/Locked          | Visible from start            |
+| Focus        | Mystery & Discovery    | Efficiency & Intentionality   |
+| Match Limit  | Unlimited              | Hard cap of 2                 |
+| Logistics    | Manual chatting        | Integrated Date Builder       |
+
+

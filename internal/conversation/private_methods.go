@@ -12,7 +12,6 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/mapper"
-	scoredomain "github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
@@ -52,32 +51,6 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 		}
 	}
 
-	var snapShot scoredomain.ScoreSnapshot
-
-	snapShot, err = s.scoreService.GetSnapshot(ctx, conversationEntity.ID, userID)
-	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "get score snapshot", err, zap.String("userID", userID), zap.String("matchID", matchID), zap.String("conversationID", conversationEntity.ID))
-	}
-
-	scoreSnapShot := mapper.MapScoreDomainSnapShotToConversationDomain(snapShot)
-
-	// Get reveal request if exists
-	revealRequestEntity, err := s.conversationRepo.GetRevealRequest(ctx, conversationEntity.ID)
-	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "get reveal request", err, zap.String("userID", userID), zap.String("matchID", matchID), zap.String("conversationID", conversationEntity.ID))
-	}
-
-	var revealRequest *domain.RevealRequest
-	if revealRequestEntity != nil {
-		revealRequest = &domain.RevealRequest{
-			ConversationID: revealRequestEntity.ConversationID,
-			InitiatorID:    revealRequestEntity.InitiatorID,
-			RequestedAt:    revealRequestEntity.RequestedAt,
-			ExpiresAt:      revealRequestEntity.ExpiresAt,
-			Status:         domain.RevealStatus(revealRequestEntity.Status),
-		}
-	}
-
 	// Get date mode from match
 	matches, err := s.conversationRepo.GetMatches(ctx, userID)
 	if err != nil {
@@ -93,22 +66,18 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 		}
 	}
 
-	// Get photos if conversation is revealed
+	// Always load match photos (photos visible from start)
 	var photos []domain.Photo
-
-	if scoreSnapShot.Revealed {
-		matchPhotos, err := s.profileService.GetUserPhotos(ctx, matchID)
-		if err != nil {
-			return nil, commonlogger.LogError(s.logger, "get match photos", err, zap.String("userID", userID), zap.String("matchID", matchID))
-		}
-		// Convert profile photos to conversation photos
-		for _, photo := range matchPhotos {
-			photos = append(photos, domain.Photo{
-				URL:       photo.URL,
-				IsPrimary: photo.IsPrimary,
-				Position:  photo.Position,
-			})
-		}
+	matchPhotos, err := s.profileService.GetUserPhotos(ctx, matchID)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "get match photos", err, zap.String("userID", userID), zap.String("matchID", matchID))
+	}
+	for _, photo := range matchPhotos {
+		photos = append(photos, domain.Photo{
+			URL:       photo.URL,
+			IsPrimary: photo.IsPrimary,
+			Position:  photo.Position,
+		})
 	}
 
 	// Get unread count for this conversation
@@ -132,8 +101,6 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 		LastActivityAt: conversationEntity.LastActivityAt,
 		LastMessage:    lastMessage,
 		UnreadCount:    unreadCount,
-		Score:          *scoreSnapShot,
-		RevealRequest:  revealRequest,
 		DateMode:       dateMode,
 		Photos:         photos,
 	}, nil
@@ -323,54 +290,4 @@ func (s *service) updateConversationRealtime(ctx context.Context, userID string,
 	}
 
 	s.hub.BroadcastToUser(matchID, byts)
-}
-
-func (s *service) sendRevealRequestNotification(ctx context.Context, conversationID, initiatorID string) {
-	if s.notificationSvc == nil {
-		return
-	}
-
-	participants, err := s.conversationRepo.GetConversationParticipants(ctx, conversationID)
-	if err != nil {
-		s.logger.Sugar().Warnw("send reveal request notification: get participants", "error", err, "conversationID", conversationID)
-		return
-	}
-
-	var recipientID string
-	for _, participant := range participants {
-		if participant.UserID != initiatorID {
-			recipientID = participant.UserID
-			break
-		}
-	}
-
-	if recipientID == "" {
-		return
-	}
-
-	initiatorProfile, err := s.profileService.GetProfileCard(ctx, initiatorID)
-	if err != nil {
-		s.logger.Sugar().Warnw("send reveal request notification: get initiator profile", "error", err, "initiatorID", initiatorID)
-		return
-	}
-
-	if err := s.notificationSvc.SendRevealRequestNotification(ctx, initiatorID, initiatorProfile.DisplayName, recipientID, conversationID); err != nil {
-		s.logger.Sugar().Warnw("failed to send reveal request notification", "error", err, "conversationID", conversationID, "recipientID", recipientID)
-	}
-}
-
-func (s *service) sendRevealAcceptedNotification(ctx context.Context, conversationID, acceptorID, recipientID string) {
-	if s.notificationSvc == nil {
-		return
-	}
-
-	acceptorProfile, err := s.profileService.GetProfileCard(ctx, acceptorID)
-	if err != nil {
-		s.logger.Sugar().Warnw("send reveal accepted notification: get acceptor profile", "error", err, "acceptorID", acceptorID)
-		return
-	}
-
-	if err := s.notificationSvc.SendRevealAcceptedNotification(ctx, acceptorID, acceptorProfile.DisplayName, recipientID, conversationID); err != nil {
-		s.logger.Sugar().Warnw("failed to send reveal accepted notification", "error", err, "conversationID", conversationID, "recipientID", recipientID)
-	}
 }

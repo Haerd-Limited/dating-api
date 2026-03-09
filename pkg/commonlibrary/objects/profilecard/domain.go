@@ -34,6 +34,7 @@ type ProfileCard struct {
 	Ethnicities     []string
 	SpokenLanguages []string
 	VoicePrompts    []VoicePrompt
+	Photos          []Photo
 	Theme           UserTheme
 
 	Work       *string
@@ -89,4 +90,10 @@ type Prompt struct {
 	Key      string
 	Label    string
 	Category string
+}
+
+type Photo struct {
+	URL       string
+	IsPrimary bool
+	Position  int16
 }

@@ -38,8 +38,6 @@ type Service interface {
 	SendNewMessageNotification(ctx context.Context, senderID, senderName, conversationID, recipientUserID, preview string) error
 	SendVerificationApprovedNotification(ctx context.Context, recipientUserID string) error
 	SendVerificationRejectedNotification(ctx context.Context, recipientUserID, rejectionReason string) error
-	SendRevealRequestNotification(ctx context.Context, initiatorID, initiatorName, recipientUserID, conversationID string) error
-	SendRevealAcceptedNotification(ctx context.Context, acceptorID, acceptorName, recipientUserID, conversationID string) error
 	SendWeeklyRefreshNotifications(ctx context.Context) error
 	StartWeeklyRefreshScheduler(ctx context.Context)
 }
@@ -215,42 +213,6 @@ func (s *service) SendVerificationRejectedNotification(ctx context.Context, reci
 			"recipient_id":     recipientUserID,
 			"rejection_reason": rejectionReason,
 			"timestamp_utc":    time.Now().UTC().Format(time.RFC3339),
-		},
-	}
-
-	return s.sendToUsers(ctx, []string{recipientUserID}, msg)
-}
-
-func (s *service) SendRevealRequestNotification(ctx context.Context, initiatorID, initiatorName, recipientUserID, conversationID string) error {
-	body := buildRevealRequestBody(initiatorName)
-	msg := domain.Message{
-		Title: "Reveal request",
-		Body:  body,
-		Data: map[string]string{
-			"type":            "reveal.request",
-			"conversation_id": conversationID,
-			"initiator_id":    initiatorID,
-			"initiator_name":  initiatorName,
-			"recipient_id":    recipientUserID,
-			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
-		},
-	}
-
-	return s.sendToUsers(ctx, []string{recipientUserID}, msg)
-}
-
-func (s *service) SendRevealAcceptedNotification(ctx context.Context, acceptorID, acceptorName, recipientUserID, conversationID string) error {
-	body := buildRevealAcceptedBody(acceptorName)
-	msg := domain.Message{
-		Title: "Reveal accepted",
-		Body:  body,
-		Data: map[string]string{
-			"type":            "reveal.accepted",
-			"conversation_id": conversationID,
-			"acceptor_id":     acceptorID,
-			"acceptor_name":   acceptorName,
-			"recipient_id":    recipientUserID,
-			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 
@@ -468,22 +430,6 @@ func buildMessageTitle(senderName string) string {
 	}
 
 	return fmt.Sprintf("New message from %s", senderName)
-}
-
-func buildRevealRequestBody(initiatorName string) string {
-	if initiatorName == "" {
-		return "You have a reveal request waiting for you."
-	}
-
-	return fmt.Sprintf("%s wants to reveal photos. Open Haerd to respond.", initiatorName)
-}
-
-func buildRevealAcceptedBody(acceptorName string) string {
-	if acceptorName == "" {
-		return "Your reveal request was accepted! See who it is."
-	}
-
-	return fmt.Sprintf("%s accepted your reveal request. See their photos now.", acceptorName)
 }
 
 func durationUntilNextSunday() time.Duration {
