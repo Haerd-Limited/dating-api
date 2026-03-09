@@ -15,7 +15,7 @@ import (
 
 type Service interface {
 	GetOverview(ctx context.Context, userID string) (domain.Overview, error)
-	GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool) (domain.QuestionsAndAnswers, error)
+	GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool, questionID *int64) (domain.QuestionsAndAnswers, error)
 	SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error
 	ComputeCompatibility(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.CompatibilitySummary, error)
 }
@@ -43,6 +43,7 @@ var (
 	ErrInvalidAnswerID             = fmt.Errorf("invalid answer_id")
 	ErrAcceptableAnswerIDsRequired = fmt.Errorf("acceptable_answer_ids required")
 	ErrSequentialAnsweringRequired = fmt.Errorf("questions must be answered sequentially")
+	ErrQuestionNotFound            = fmt.Errorf("question not found")
 )
 
 const defaultBadgeLimit = 3
@@ -272,7 +273,50 @@ func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) 
 	return s.compatibilityRepo.UpsertUserAnswer(ctx, mapper.MapSaveAnswerCommandToUserAnswerEntity(cmd))
 }
 
-func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool) (domain.QuestionsAndAnswers, error) {
+func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool, questionID *int64) (domain.QuestionsAndAnswers, error) {
+	// If userID, category, and questionID are provided (go-back flow), return that specific question
+	if userID != nil && category != "" && !viewAll && questionID != nil {
+		question, err := s.compatibilityRepo.GetQuestionByIDAndCategory(ctx, *questionID, category)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question by ID: %w", err)
+		}
+		if question == nil {
+			return domain.QuestionsAndAnswers{}, ErrQuestionNotFound
+		}
+
+		answerEntities, err := s.compatibilityRepo.GetQuestionAnswers(ctx, question.ID)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question answers: %w", err)
+		}
+
+		var userAnswer *domain.UserAnswer
+		existingAnswer, err := s.compatibilityRepo.GetUserAnswerForQuestion(ctx, *userID, question.ID)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get existing answer: %w", err)
+		}
+		if existingAnswer != nil {
+			userAnswer = mapper.MapUserAnswerEntityToDomain(existingAnswer)
+		}
+
+		total, err := s.compatibilityRepo.CountQuestions(ctx, &category)
+		if err != nil {
+			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get total questions: %w", err)
+		}
+
+		return domain.QuestionsAndAnswers{
+			Items: []domain.QuestionAndAnswers{
+				{
+					Question:   mapper.MapQuestionEntityToDomain(question),
+					Answers:    mapper.MapAnswerEntitiesToDomain(answerEntities),
+					UserAnswer: userAnswer,
+				},
+			},
+			Total:  total,
+			Limit:  1,
+			Offset: 0,
+		}, nil
+	}
+
 	// If userID is provided and viewAll is false, return only the next unanswered question
 	if userID != nil && category != "" && !viewAll {
 		nextQuestion, err := s.compatibilityRepo.GetNextUnansweredQuestion(ctx, *userID, category)

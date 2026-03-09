@@ -2,6 +2,7 @@ package compatibility
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
@@ -106,12 +107,23 @@ func (h *handler) GetQuestions() http.HandlerFunc {
 		category := r.URL.Query().Get("category")
 		viewAll := r.URL.Query().Get("view") == "all"
 
+		var questionID *int64
+		if qIDStr := r.URL.Query().Get("question_id"); qIDStr != "" {
+			qID, err := strconv.ParseInt(qIDStr, 10, 64)
+			if err != nil || qID < 1 {
+				h.logger.Sugar().Warnw("invalid question_id query param", "question_id", qIDStr)
+				render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid question_id"))
+				return
+			}
+			questionID = &qID
+		}
+
 		var userIDPtr *string
 		if userID != "" {
 			userIDPtr = &userID
 		}
 
-		result, err := h.compatibilityService.GetQuestionsAndAnswers(ctx, category, offset, limit, userIDPtr, viewAll)
+		result, err := h.compatibilityService.GetQuestionsAndAnswers(ctx, category, offset, limit, userIDPtr, viewAll, questionID)
 		if err != nil {
 			render.HandleServiceErrorResponse(h.logger, w, r, "GetQuestions", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
@@ -131,6 +143,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Invalid importance"
 	case errors.Is(err, compatibility.ErrSequentialAnsweringRequired):
 		return http.StatusBadRequest, "Questions must be answered sequentially"
+	case errors.Is(err, compatibility.ErrQuestionNotFound):
+		return http.StatusNotFound, "Question not found"
 	default:
 		return http.StatusInternalServerError, commonMessages.InternalServerErrorMsg
 	}

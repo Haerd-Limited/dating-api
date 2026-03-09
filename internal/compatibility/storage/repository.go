@@ -36,6 +36,7 @@ type CompatibilityRepository interface {
 	GetQuestionsInOrder(ctx context.Context, categoryKey string) (entity.QuestionSlice, error)
 	GetUserAnswerForQuestion(ctx context.Context, userID string, questionID int64) (*entity.UserAnswer, error)
 	GetQuestionSortOrderAndCategory(ctx context.Context, questionID int64) (sortOrder int, categoryKey string, err error)
+	GetQuestionByIDAndCategory(ctx context.Context, questionID int64, categoryKey string) (*entity.Question, error)
 }
 
 type repository struct {
@@ -515,4 +516,27 @@ func (r *repository) GetQuestionSortOrderAndCategory(ctx context.Context, questi
 	}
 
 	return sortOrder, categoryKey, nil
+}
+
+// GetQuestionByIDAndCategory returns a question by ID if it exists, is active, and belongs to the given category.
+// Returns (nil, nil) when the question is not found or does not belong to the category.
+func (r *repository) GetQuestionByIDAndCategory(ctx context.Context, questionID int64, categoryKey string) (*entity.Question, error) {
+	qmods := []qm.QueryMod{
+		entity.QuestionWhere.ID.EQ(questionID),
+		entity.QuestionWhere.IsActive.EQ(true),
+		qm.InnerJoin("question_categories qc ON qc.id = questions.category_id"),
+		qm.Load(entity.QuestionRels.Category),
+		qm.Select("questions.*"),
+		qm.Where("qc.key = ?", categoryKey),
+	}
+
+	question, err := entity.Questions(qmods...).One(ctx, r.db)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("GetQuestionByIDAndCategory: %w", err)
+	}
+
+	return question, nil
 }
