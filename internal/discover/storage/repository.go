@@ -21,17 +21,20 @@ import (
 )
 
 type DiscoverRepository interface {
-	GetDiscoverFeedCandidates(ctx context.Context, userID string, limit int, offset int) (entity.UserProfileSlice, error)
-	GetDiscoverFeedCandidatesWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters) (entity.UserProfileSlice, error)
-	GetVoiceWorthHearing(ctx context.Context, userID string, limit int) ([]*entity.UserProfile, error)
-	GetVoiceWorthHearingByIDs(ctx context.Context, userID string, candidateIDs []string) ([]*entity.UserProfile, error)
+	GetDiscoverFeedCandidates(ctx context.Context, userID string, limit int, offset int, seekGenderIDs []int16) (entity.UserProfileSlice, error)
+	GetDiscoverFeedCandidatesWithFilters(ctx context.Context, userID string, limit int, offset int, filters *domain.DiscoverFilters, seekGenderIDs []int16) (entity.UserProfileSlice, error)
+	GetVoiceWorthHearing(ctx context.Context, userID string, limit int, seekGenderIDs []int16) ([]*entity.UserProfile, error)
+	GetVoiceWorthHearingByIDs(ctx context.Context, userID string, candidateIDs []string, seekGenderIDs []int16) ([]*entity.UserProfile, error)
 	GetLikeAndSuperlikeCount(ctx context.Context, userID string) (int64, error)
 	AlreadyInteracted(ctx context.Context, userID string, targetUserID string) (bool, error)
-	GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error)
+	GetVoiceWorthHearingIDs(ctx context.Context, userID string, seekGenderIDs []int16) ([]string, error)
 	GetNumberOfCompleteProfilesOfOppositeGender(ctx context.Context, userID string) (int64, error)
+	GetNumberOfCompleteProfilesBySeekGenders(ctx context.Context, userID string, seekGenderIDs []int16) (int64, error)
 	GetSwipeUsageStats(ctx context.Context, userID string, window time.Duration, limit int, now time.Time) (int, *time.Time, error)
 	SaveUserDiscoverPreferences(ctx context.Context, userID string, preferences *domain.DiscoverPreferenceUpdate) error
 	GetUserDiscoverPreferences(ctx context.Context, userID string) (*domain.StoredDiscoverPreferences, error)
+	GetSeekGenderIDs(ctx context.Context, userID string, seekGender *string, storedSeekGenderIDs []int16) ([]int16, error)
+	GetSeekGenderLabelFromIDs(ctx context.Context, seekGenderIDs []int16) (string, error)
 	GetUsersEthnicityIDs(ctx context.Context, userIDs []string) (map[string][]int16, error)
 	GetWeeklyVoiceWorthHearingIDs(ctx context.Context, userID string, weekStart time.Time) ([]string, error)
 	SaveWeeklyVoiceWorthHearingIDs(ctx context.Context, userID string, weekStart time.Time, candidateIDs []string) error
@@ -77,31 +80,30 @@ func (r *discoverRepository) AlreadyInteracted(ctx context.Context, userID strin
 	return exists, nil
 }
 
-func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID string, limit int) ([]*entity.UserProfile, error) {
-	numberOfOppositeGenderProfiles, err := r.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID string, limit int, seekGenderIDs []int16) ([]*entity.UserProfile, error) {
+	count, err := r.GetNumberOfCompleteProfilesBySeekGenders(ctx, userID, seekGenderIDs)
 	if err != nil {
-		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
+		return nil, fmt.Errorf("get number of complete profiles by seek genders: %w", err)
 	}
 
-	if numberOfOppositeGenderProfiles <= constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
+	if count <= constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
 		return nil, nil
-	}
-
-	oppositeGender, err := r.getOppositeGender(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("get opposite gender: %w", err)
 	}
 
 	if limit <= 0 {
 		limit = 3
 	}
 
+	if len(seekGenderIDs) == 0 {
+		return nil, nil
+	}
+
 	users, err := entity.UserProfiles(
 		// not me
 		entity.UserProfileWhere.UserID.NEQ(userID),
 
-		// opposite gender
-		entity.UserProfileWhere.GenderID.EQ(null.Int16From(oppositeGender.ID)),
+		// seek genders
+		entity.UserProfileWhere.GenderID.IN(seekGenderIDs),
 
 		// only fully onboarded users
 		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
@@ -125,14 +127,9 @@ func (r *discoverRepository) GetVoiceWorthHearing(ctx context.Context, userID st
 	return users, nil
 }
 
-func (r *discoverRepository) GetVoiceWorthHearingByIDs(ctx context.Context, userID string, candidateIDs []string) ([]*entity.UserProfile, error) {
-	if len(candidateIDs) == 0 {
+func (r *discoverRepository) GetVoiceWorthHearingByIDs(ctx context.Context, userID string, candidateIDs []string, seekGenderIDs []int16) ([]*entity.UserProfile, error) {
+	if len(candidateIDs) == 0 || len(seekGenderIDs) == 0 {
 		return nil, nil
-	}
-
-	oppositeGender, err := r.getOppositeGender(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("get opposite gender: %w", err)
 	}
 
 	placeholders := make([]string, len(candidateIDs))
@@ -146,7 +143,7 @@ func (r *discoverRepository) GetVoiceWorthHearingByIDs(ctx context.Context, user
 	users, err := entity.UserProfiles(
 		qm.Where("user_profiles.user_id IN ("+strings.Join(placeholders, ",")+")", args...),
 		entity.UserProfileWhere.UserID.NEQ(userID),
-		entity.UserProfileWhere.GenderID.EQ(null.Int16From(oppositeGender.ID)),
+		entity.UserProfileWhere.GenderID.IN(seekGenderIDs),
 		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
 		qm.Where("u.onboarding_step = ?", stepComplete),
 	).All(ctx, r.db)
@@ -171,6 +168,24 @@ func (r *discoverRepository) GetNumberOfCompleteProfilesOfOppositeGender(ctx con
 	).Count(ctx, r.db)
 	if err != nil {
 		return 0, fmt.Errorf("get user profiles: %w", err)
+	}
+
+	return count, nil
+}
+
+func (r *discoverRepository) GetNumberOfCompleteProfilesBySeekGenders(ctx context.Context, userID string, seekGenderIDs []int16) (int64, error) {
+	if len(seekGenderIDs) == 0 {
+		return 0, nil
+	}
+
+	count, err := entity.UserProfiles(
+		entity.UserProfileWhere.UserID.NEQ(userID),
+		entity.UserProfileWhere.GenderID.IN(seekGenderIDs),
+		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
+		qm.Where("u.onboarding_step = ?", stepComplete),
+	).Count(ctx, r.db)
+	if err != nil {
+		return 0, fmt.Errorf("get user profiles by seek genders: %w", err)
 	}
 
 	return count, nil
@@ -217,15 +232,27 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
 	ctx context.Context,
 	userID string,
 	limit, offset int,
+	seekGenderIDs []int16,
 ) (entity.UserProfileSlice, error) {
-	oppositeGender, err := r.getOppositeGender(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("get opposite gender: %w", err)
+	return r.getDiscoverFeedCandidatesWithMods(ctx, userID, limit, offset, nil, seekGenderIDs)
+}
+
+func (r *discoverRepository) getDiscoverFeedCandidatesWithMods(
+	ctx context.Context,
+	userID string,
+	limit, offset int,
+	filters *domain.DiscoverFilters,
+	seekGenderIDs []int16,
+) (entity.UserProfileSlice, error) {
+	if len(seekGenderIDs) == 0 {
+		return nil, nil
 	}
+
+	genderMod := entity.UserProfileWhere.GenderID.IN(seekGenderIDs)
 
 	mods := []qm.QueryMod{
 		entity.UserProfileWhere.UserID.NEQ(userID),
-		entity.UserProfileWhere.GenderID.EQ(null.Int16From(oppositeGender.ID)),
+		genderMod,
 		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
 		qm.Where("u.onboarding_step = ?", stepComplete),
 
@@ -258,7 +285,7 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
             )`, userID, userID),
 	}
 
-	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
+	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID, seekGenderIDs)
 	if err != nil {
 		return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
 	}
@@ -277,6 +304,15 @@ func (r *discoverRepository) GetDiscoverFeedCandidates(
 			"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
 			args...,
 		))
+	}
+
+	// Apply filters if provided
+	if filters != nil && !filters.IsEmpty() {
+		filterMods, err := r.buildFilterMods(filters)
+		if err != nil {
+			return nil, fmt.Errorf("build filter mods: %w", err)
+		}
+		mods = append(mods, filterMods...)
 	}
 
 	mods = append(mods, qm.Limit(limit), qm.Offset(offset))
@@ -294,86 +330,9 @@ func (r *discoverRepository) GetDiscoverFeedCandidatesWithFilters(
 	userID string,
 	limit, offset int,
 	filters *domain.DiscoverFilters,
+	seekGenderIDs []int16,
 ) (entity.UserProfileSlice, error) {
-	oppositeGender, err := r.getOppositeGender(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("get opposite gender: %w", err)
-	}
-
-	mods := []qm.QueryMod{
-		entity.UserProfileWhere.UserID.NEQ(userID),
-		entity.UserProfileWhere.GenderID.EQ(null.Int16From(oppositeGender.ID)),
-		qm.InnerJoin("users u ON u.id = user_profiles.user_id"),
-		qm.Where("u.onboarding_step = ?", stepComplete),
-
-		// exclude anyone I've already swiped on (any action)
-		qm.Where(`
-            NOT EXISTS (
-                SELECT 1
-                  FROM swipes s
-                 WHERE s.actor_id  = ?
-                   AND s.target_id = user_profiles.user_id
-            )`, userID),
-
-		// exclude users who already liked/superliked me
-		qm.Where(`
-            NOT EXISTS (
-                SELECT 1
-                  FROM swipes s
-                 WHERE s.actor_id = user_profiles.user_id
-                   AND s.target_id = ?
-                   AND s.action IN (?, ?)
-            )`, userID, constants.ActionLike, constants.ActionSuperlike),
-
-		// exclude blocked relationships (either direction)
-		qm.Where(`
-            NOT EXISTS (
-                SELECT 1
-                  FROM user_blocks b
-                 WHERE (b.blocker_user_id = ? AND b.blocked_user_id = user_profiles.user_id)
-                    OR (b.blocker_user_id = user_profiles.user_id AND b.blocked_user_id = ?)
-            )`, userID, userID),
-	}
-
-	// Apply filters if provided
-	if filters != nil && !filters.IsEmpty() {
-		filterMods, err := r.buildFilterMods(filters)
-		if err != nil {
-			return nil, fmt.Errorf("build filter mods: %w", err)
-		}
-
-		mods = append(mods, filterMods...)
-	}
-
-	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("get VWH ids userID=%s: %w", userID, err)
-	}
-
-	// exclude Voice Worth Hearing candidates
-	if len(excludeIDs) > 0 {
-		ph := make([]string, len(excludeIDs))
-		args := make([]interface{}, len(excludeIDs))
-
-		for i, id := range excludeIDs {
-			ph[i] = "?"
-			args[i] = id
-		}
-
-		mods = append(mods, qm.Where(
-			"user_profiles.user_id NOT IN ("+strings.Join(ph, ",")+")",
-			args...,
-		))
-	}
-
-	mods = append(mods, qm.Limit(limit), qm.Offset(offset))
-
-	users, err := entity.UserProfiles(mods...).All(ctx, r.db)
-	if err != nil {
-		return nil, fmt.Errorf("get user profiles: %w", err)
-	}
-
-	return users, nil
+	return r.getDiscoverFeedCandidatesWithMods(ctx, userID, limit, offset, filters, seekGenderIDs)
 }
 
 func (r *discoverRepository) buildFilterMods(filters *domain.DiscoverFilters) ([]qm.QueryMod, error) {
@@ -465,6 +424,7 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 		up.SeekReligionIds = nil
 		up.SeekSexualityIds = nil
 		up.SeekEthnicityIds = nil
+		up.SeekGenderIds = nil
 		clearCols := []string{
 			entity.UserPreferenceColumns.UpdatedAt,
 			entity.UserPreferenceColumns.DistanceKM,
@@ -474,6 +434,7 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 			entity.UserPreferenceColumns.SeekReligionIds,
 			entity.UserPreferenceColumns.SeekSexualityIds,
 			entity.UserPreferenceColumns.SeekEthnicityIds,
+			entity.UserPreferenceColumns.SeekGenderIds,
 		}
 		updateColumns := boil.Whitelist(clearCols...)
 		insertColumns := boil.Whitelist(append([]string{entity.UserPreferenceColumns.UserID}, clearCols[1:]...)...)
@@ -512,6 +473,10 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 
 	if len(preferences.EthnicityIDs) > 0 {
 		up.SeekEthnicityIds = convertInt16SliceToInt64Array(preferences.EthnicityIDs)
+	}
+
+	if len(preferences.SeekGenderIDs) > 0 {
+		up.SeekGenderIds = convertInt16SliceToInt64Array(preferences.SeekGenderIDs)
 	}
 
 	// Build column whitelist for upsert - only include fields that are set
@@ -553,6 +518,11 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekEthnicityIds)
 	}
 
+	if len(preferences.SeekGenderIDs) > 0 {
+		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekGenderIds)
+		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekGenderIds)
+	}
+
 	updateColumns := boil.Whitelist(updateCols...)
 	insertColumns := boil.Whitelist(insertCols...)
 
@@ -582,6 +552,7 @@ func (r *discoverRepository) GetUserDiscoverPreferences(ctx context.Context, use
 		ReligionIDs:        convertInt64ArrayToInt16Slice(up.SeekReligionIds),
 		SexualityIDs:       convertInt64ArrayToInt16Slice(up.SeekSexualityIds),
 		EthnicityIDs:       convertInt64ArrayToInt16Slice(up.SeekEthnicityIds),
+		SeekGenderIDs:      convertInt64ArrayToInt16Slice(up.SeekGenderIds),
 	}, nil
 }
 
@@ -673,6 +644,81 @@ func fromNullInt16(value null.Int16) *int {
 	return &v
 }
 
+// GetSeekGenderIDs returns the list of gender IDs to show in discover. If seekGender is set (Male/Female/Both), resolves it; else uses storedSeekGenderIDs if non-empty; else default to opposite of user's gender.
+func (r *discoverRepository) GetSeekGenderIDs(ctx context.Context, userID string, seekGender *string, storedSeekGenderIDs []int16) ([]int16, error) {
+	if seekGender != nil && *seekGender != "" {
+		ids, err := r.getGenderIDsBySeekLabel(ctx, *seekGender)
+		if err != nil {
+			return nil, err
+		}
+		if len(ids) > 0 {
+			return ids, nil
+		}
+	}
+	if len(storedSeekGenderIDs) > 0 {
+		return storedSeekGenderIDs, nil
+	}
+	opposite, err := r.getOppositeGender(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return []int16{opposite.ID}, nil
+}
+
+// getGenderIDsBySeekLabel returns one or two gender IDs for "Male", "Female", or "Both".
+func (r *discoverRepository) getGenderIDsBySeekLabel(ctx context.Context, seekLabel string) ([]int16, error) {
+	switch seekLabel {
+	case domain.SeekGenderMale:
+		g, err := entity.Genders(entity.GenderWhere.Label.ILIKE("male"), qm.Limit(1)).One(ctx, r.db)
+		if err != nil {
+			return nil, fmt.Errorf("get male gender: %w", err)
+		}
+		return []int16{g.ID}, nil
+	case domain.SeekGenderFemale:
+		g, err := entity.Genders(entity.GenderWhere.Label.ILIKE("female"), qm.Limit(1)).One(ctx, r.db)
+		if err != nil {
+			return nil, fmt.Errorf("get female gender: %w", err)
+		}
+		return []int16{g.ID}, nil
+	case domain.SeekGenderBoth:
+		genders, err := entity.Genders(
+			qm.Where("label ILIKE ? OR label ILIKE ?", "male", "female"),
+		).All(ctx, r.db)
+		if err != nil {
+			return nil, fmt.Errorf("get male and female genders: %w", err)
+		}
+		ids := make([]int16, 0, len(genders))
+		for _, g := range genders {
+			ids = append(ids, g.ID)
+		}
+		return ids, nil
+	default:
+		return nil, fmt.Errorf("unsupported seek_gender: %q", seekLabel)
+	}
+}
+
+// GetSeekGenderLabelFromIDs returns "Male", "Female", or "Both" from a slice of gender IDs (for API response).
+func (r *discoverRepository) GetSeekGenderLabelFromIDs(ctx context.Context, seekGenderIDs []int16) (string, error) {
+	if len(seekGenderIDs) == 0 {
+		return "", nil
+	}
+	if len(seekGenderIDs) >= 2 {
+		return domain.SeekGenderBoth, nil
+	}
+	g, err := entity.Genders(entity.GenderWhere.ID.EQ(seekGenderIDs[0])).One(ctx, r.db)
+	if err != nil {
+		return "", fmt.Errorf("get gender by id: %w", err)
+	}
+	switch g.Label {
+	case "Male", "male":
+		return domain.SeekGenderMale, nil
+	case "Female", "female":
+		return domain.SeekGenderFemale, nil
+	default:
+		return g.Label, nil
+	}
+}
+
 func (r *discoverRepository) getOppositeGender(ctx context.Context, userID string) (*entity.Gender, error) {
 	// Step 1: Load the user profile with gender
 	userProfile, err := entity.UserProfiles(
@@ -718,10 +764,10 @@ func (r *discoverRepository) getOppositeGender(ctx context.Context, userID strin
 	return opposite, nil
 }
 
-func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([]string, error) {
-	count, err := r.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID string, seekGenderIDs []int16) ([]string, error) {
+	count, err := r.GetNumberOfCompleteProfilesBySeekGenders(ctx, userID, seekGenderIDs)
 	if err != nil {
-		return nil, fmt.Errorf("get number of complete profiles of opposite gender: %w", err)
+		return nil, fmt.Errorf("get number of complete profiles by seek genders: %w", err)
 	}
 
 	if count <= constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
@@ -739,7 +785,7 @@ func (r *discoverRepository) GetVoiceWorthHearingIDs(ctx context.Context, userID
 		return cached, nil
 	}
 
-	profiles, err := r.GetVoiceWorthHearing(ctx, userID, constants.MaxNumberOfVWHUsersToSelect)
+	profiles, err := r.GetVoiceWorthHearing(ctx, userID, constants.MaxNumberOfVWHUsersToSelect, seekGenderIDs)
 	if err != nil {
 		return nil, err
 	}

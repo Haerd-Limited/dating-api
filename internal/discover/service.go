@@ -94,15 +94,38 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 		limit = remaining - offset
 	}
 
-	if filters != nil {
-		if preferenceUpdate := domain.NewPreferenceUpdateFromFilters(filters); preferenceUpdate != nil {
-			if err := s.discoverRepo.SaveUserDiscoverPreferences(ctx, userID, preferenceUpdate); err != nil {
-				return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to persist discover preferences", err, zap.String("userID", userID), zap.Any("preferenceUpdate", preferenceUpdate))
-			}
+	storedPrefs, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
+	if err != nil {
+		return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "get user discover preferences", err, zap.String("userID", userID))
+	}
+
+	var seekGender *string
+	if filters != nil && filters.HasSeekGenderFilter() {
+		seekGender = filters.SeekGender
+	}
+	var storedSeekGenderIDs []int16
+	if storedPrefs != nil {
+		storedSeekGenderIDs = storedPrefs.SeekGenderIDs
+	}
+	seekGenderIDs, err := s.discoverRepo.GetSeekGenderIDs(ctx, userID, seekGender, storedSeekGenderIDs)
+	if err != nil {
+		return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "get seek gender IDs", err, zap.String("userID", userID))
+	}
+
+	preferenceUpdate := domain.NewPreferenceUpdateFromFilters(filters)
+	if filters != nil && filters.HasSeekGenderFilter() {
+		if preferenceUpdate == nil {
+			preferenceUpdate = &domain.DiscoverPreferenceUpdate{}
+		}
+		preferenceUpdate.SeekGenderIDs = seekGenderIDs
+	}
+	if preferenceUpdate != nil {
+		if err := s.discoverRepo.SaveUserDiscoverPreferences(ctx, userID, preferenceUpdate); err != nil {
+			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to persist discover preferences", err, zap.String("userID", userID), zap.Any("preferenceUpdate", preferenceUpdate))
 		}
 	}
 
-	candidates, err := s.discoverRepo.GetDiscoverFeedCandidatesWithFilters(ctx, userID, limit, offset, filters)
+	candidates, err := s.discoverRepo.GetDiscoverFeedCandidatesWithFilters(ctx, userID, limit, offset, filters, seekGenderIDs)
 	if err != nil {
 		return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to get candidate IDs", err, zap.String("userID", userID), zap.Int("limit", limit), zap.Int("offset", offset))
 	}
@@ -166,18 +189,27 @@ func (s *service) GetVoiceWorthHearingIDs(ctx context.Context, userID string) ([
 func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]profilecard.ProfileCard, error) {
 	weekStart := startOfWeek(time.Now().UTC(), time.Sunday)
 
-	count, err := s.discoverRepo.GetNumberOfCompleteProfilesOfOppositeGender(ctx, userID)
+	storedPreferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
 	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "get number of complete profiles of opposite gender", err, zap.String("userID", userID))
+		return nil, commonlogger.LogError(s.logger, "get stored preferences", err, zap.String("userID", userID))
+	}
+
+	var storedSeekGenderIDs []int16
+	if storedPreferences != nil {
+		storedSeekGenderIDs = storedPreferences.SeekGenderIDs
+	}
+	seekGenderIDs, err := s.discoverRepo.GetSeekGenderIDs(ctx, userID, nil, storedSeekGenderIDs)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "get seek gender IDs for VWH", err, zap.String("userID", userID))
+	}
+
+	count, err := s.discoverRepo.GetNumberOfCompleteProfilesBySeekGenders(ctx, userID, seekGenderIDs)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "get number of complete profiles by seek genders", err, zap.String("userID", userID))
 	}
 
 	if count <= constants.MinimumNumberOfUsersRequiredToBuildVwhUsers {
 		return nil, ErrVoiceWorthHearingSearching
-	}
-
-	storedPreferences, err := s.discoverRepo.GetUserDiscoverPreferences(ctx, userID)
-	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "get stored preferences", err, zap.String("userID", userID))
 	}
 
 	matcher := newPreferenceMatcher(storedPreferences)
@@ -187,7 +219,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 		candidateLimit = voiceWorthHearingPreferencePoolSize
 	}
 
-	cachedIDs, err := s.discoverRepo.GetWeeklyVoiceWorthHearingIDs(ctx, userID, weekStart)
+	cachedIDs, err := s.discoverRepo.GetVoiceWorthHearingIDs(ctx, userID, seekGenderIDs)
 	if err != nil {
 		return nil, commonlogger.LogError(s.logger, "get cached voice worth hearing ids", err, zap.String("userID", userID), zap.Time("weekStart", weekStart))
 	}
@@ -196,14 +228,14 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 	switch {
 	case len(cachedIDs) > 0:
-		candidates, err = s.discoverRepo.GetVoiceWorthHearingByIDs(ctx, userID, cachedIDs)
+		candidates, err = s.discoverRepo.GetVoiceWorthHearingByIDs(ctx, userID, cachedIDs, seekGenderIDs)
 		if err != nil {
 			return nil, commonlogger.LogError(s.logger, "hydrate cached candidates", err, zap.String("userID", userID), zap.Strings("cachedIDs", cachedIDs))
 		}
 
 		candidates = orderCandidatesByIDs(candidates, cachedIDs)
 	default:
-		candidates, err = s.discoverRepo.GetVoiceWorthHearing(ctx, userID, candidateLimit)
+		candidates, err = s.discoverRepo.GetVoiceWorthHearing(ctx, userID, candidateLimit, seekGenderIDs)
 		if err != nil {
 			return nil, commonlogger.LogError(s.logger, "get candidates", err, zap.String("userID", userID), zap.Int("candidateLimit", candidateLimit))
 		}
@@ -259,6 +291,15 @@ func (s *service) GetUserPreferences(ctx context.Context, userID string) (*domai
 	// Return empty preferences if none exist
 	if preferences == nil {
 		return &domain.StoredDiscoverPreferences{}, nil
+	}
+
+	if len(preferences.SeekGenderIDs) > 0 {
+		label, err := s.discoverRepo.GetSeekGenderLabelFromIDs(ctx, preferences.SeekGenderIDs)
+		if err != nil {
+			commonlogger.LogError(s.logger, "get seek gender label from ids", err, zap.String("userID", userID))
+		} else {
+			preferences.SeekGender = label
+		}
 	}
 
 	return preferences, nil

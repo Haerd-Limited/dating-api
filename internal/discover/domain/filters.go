@@ -8,6 +8,13 @@ const (
 	FilterOperatorOR  FilterOperator = "OR"
 )
 
+// SeekGenderFilter values for discover feed: show only Male, only Female, or Both.
+const (
+	SeekGenderMale   = "Male"
+	SeekGenderFemale = "Female"
+	SeekGenderBoth   = "Both"
+)
+
 // DiscoverFilters represents all available filters for the discover feed
 type DiscoverFilters struct {
 	AgeRange         *AgeRangeFilter         `json:"age_range,omitempty"`
@@ -16,7 +23,8 @@ type DiscoverFilters struct {
 	Religions        *ReligionsFilter        `json:"religions,omitempty"`
 	Sexualities      *SexualitiesFilter      `json:"sexualities,omitempty"`
 	Ethnicities      *EthnicitiesFilter      `json:"ethnicities,omitempty"`
-	Operator         FilterOperator          `json:"operator"` // How to combine filters (AND/OR)
+	SeekGender       *string                 `json:"seek_gender,omitempty"` // "Male", "Female", or "Both"
+	Operator         FilterOperator          `json:"operator"`                 // How to combine filters (AND/OR)
 }
 
 // AgeRangeFilter filters profiles by age range
@@ -57,7 +65,17 @@ func (f *DiscoverFilters) IsEmpty() bool {
 		f.DatingIntentions == nil &&
 		f.Religions == nil &&
 		f.Sexualities == nil &&
-		f.Ethnicities == nil
+		f.Ethnicities == nil &&
+		!f.HasSeekGenderFilter()
+}
+
+// HasSeekGenderFilter returns true if seek_gender filter is set (Male, Female, or Both).
+func (f *DiscoverFilters) HasSeekGenderFilter() bool {
+	if f == nil || f.SeekGender == nil {
+		return false
+	}
+	s := *f.SeekGender
+	return s == SeekGenderMale || s == SeekGenderFemale || s == SeekGenderBoth
 }
 
 // HasAgeFilter returns true if age range filter is set

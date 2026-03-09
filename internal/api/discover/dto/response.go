@@ -32,4 +32,6 @@ type GetUserPreferencesResponse struct {
 	ReligionIDs        []int16 `json:"religion_ids,omitempty"`
 	SexualityIDs       []int16 `json:"sexuality_ids,omitempty"`
 	EthnicityIDs       []int16 `json:"ethnicity_ids,omitempty"`
+	SeekGenderIDs      []int16 `json:"seek_gender_ids,omitempty"`
+	SeekGender         string  `json:"seek_gender,omitempty"` // "Male", "Female", or "Both"
 }

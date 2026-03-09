@@ -4,14 +4,15 @@ package domain
 type DiscoverPreferenceUpdate struct {
 	// ClearAll when true instructs the repository to clear all discover preferences (set to null/empty).
 	// Used when the user explicitly clears all filters so the cleared state is persisted.
-	ClearAll            bool
-	DistanceKM          *int
-	MinAge              *int
-	MaxAge              *int
-	DatingIntentionIDs  []int16
-	ReligionIDs         []int16
-	SexualityIDs        []int16
-	EthnicityIDs        []int16
+	ClearAll           bool
+	DistanceKM         *int
+	MinAge             *int
+	MaxAge             *int
+	DatingIntentionIDs []int16
+	ReligionIDs        []int16
+	SexualityIDs       []int16
+	EthnicityIDs       []int16
+	SeekGenderIDs      []int16 // one or two gender IDs (Male, Female, or both)
 }
 
 // StoredDiscoverPreferences encapsulates persisted preference values.
@@ -23,6 +24,8 @@ type StoredDiscoverPreferences struct {
 	ReligionIDs        []int16
 	SexualityIDs       []int16
 	EthnicityIDs       []int16
+	SeekGenderIDs      []int16
+	SeekGender         string // Human-readable "Male", "Female", or "Both" derived from SeekGenderIDs (set by service when loading)
 }
 
 // HasAnyPreference returns true if the preferences contain at least one value.
@@ -37,7 +40,8 @@ func (p *StoredDiscoverPreferences) HasAnyPreference() bool {
 		len(p.DatingIntentionIDs) > 0 ||
 		len(p.ReligionIDs) > 0 ||
 		len(p.SexualityIDs) > 0 ||
-		len(p.EthnicityIDs) > 0
+		len(p.EthnicityIDs) > 0 ||
+		len(p.SeekGenderIDs) > 0
 }
 
 // NewPreferenceUpdateFromFilters creates an update payload from discover filters.
@@ -103,5 +107,6 @@ func (u *DiscoverPreferenceUpdate) hasValues() bool {
 		len(u.DatingIntentionIDs) > 0 ||
 		len(u.ReligionIDs) > 0 ||
 		len(u.SexualityIDs) > 0 ||
-		len(u.EthnicityIDs) > 0
+		len(u.EthnicityIDs) > 0 ||
+		len(u.SeekGenderIDs) > 0
 }

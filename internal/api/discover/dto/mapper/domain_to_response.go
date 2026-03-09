@@ -56,5 +56,7 @@ func MapToGetUserPreferencesResponse(preferences *domain.StoredDiscoverPreferenc
 		ReligionIDs:        preferences.ReligionIDs,
 		SexualityIDs:       preferences.SexualityIDs,
 		EthnicityIDs:       preferences.EthnicityIDs,
+		SeekGenderIDs:      preferences.SeekGenderIDs,
+		SeekGender:         preferences.SeekGender,
 	}
 }
