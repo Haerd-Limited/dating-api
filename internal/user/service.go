@@ -31,6 +31,7 @@ type Service interface {
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
 	UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error)
+	CountUsers(ctx context.Context) (int64, error)
 	// DeleteAccount deletes all user data including their account, profile, preferences, and all associated S3 files
 	DeleteAccount(ctx context.Context, userID string) error
 }
@@ -156,6 +157,10 @@ func (us *userService) UpdateUser(ctx context.Context, user *domain.User) error 
 	updatedEntity, cols := mapper.ToUpdatedUserEntity(*user)
 
 	return us.userRepo.UpdateUser(ctx, updatedEntity, cols)
+}
+
+func (us *userService) CountUsers(ctx context.Context) (int64, error) {
+	return us.userRepo.CountUsers(ctx)
 }
 
 func (us *userService) UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error) {

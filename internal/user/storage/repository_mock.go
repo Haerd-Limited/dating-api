@@ -43,6 +43,21 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CountUsers mocks base method.
+func (m *MockUserRepository) CountUsers(ctx context.Context) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountUsers", ctx)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountUsers indicates an expected call of CountUsers.
+func (mr *MockUserRepositoryMockRecorder) CountUsers(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsers", reflect.TypeOf((*MockUserRepository)(nil).CountUsers), ctx)
+}
+
 // CheckUserExistenceByPhoneNumber mocks base method.
 func (m *MockUserRepository) CheckUserExistenceByPhoneNumber(ctx context.Context, number string) (bool, error) {
 	m.ctrl.T.Helper()

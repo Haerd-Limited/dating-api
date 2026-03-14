@@ -9,7 +9,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"
-	"github.com/Haerd-Limited/dating-api/internal/communication"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
@@ -56,12 +55,10 @@ type onboardingService struct {
 	logger                   *zap.Logger
 	userService              user.Service
 	authService              auth.Service
-	lookupRepo               lookupstorage.LookupRepository
-	mediaService             media.Service
-	profileService           profile.Service
-	communicationService     communication.Service
-	verificationService      verification.Service
-	notificationPhoneNumbers []string
+	lookupRepo           lookupstorage.LookupRepository
+	mediaService         media.Service
+	profileService       profile.Service
+	verificationService  verification.Service
 	// prereg caps
 	enablePreregCap       bool
 	maxTotalParticipants  int
@@ -76,25 +73,21 @@ func NewOnboardingService(
 	mediaService media.Service,
 	profileService profile.Service,
 	lookupRepo lookupstorage.LookupRepository,
-	communicationService communication.Service,
 	verificationService verification.Service,
-	notificationPhoneNumbers []string,
 	enablePreregCap bool,
 	maxTotal int,
 	maxMale int,
 	maxFemale int,
 ) Service {
 	return &onboardingService{
-		logger:                   logger,
-		userService:              userService,
-		authService:              authService,
-		lookupRepo:               lookupRepo,
-		mediaService:             mediaService,
-		profileService:           profileService,
-		communicationService:     communicationService,
-		verificationService:      verificationService,
-		notificationPhoneNumbers: notificationPhoneNumbers,
-		enablePreregCap:          enablePreregCap,
+		logger:               logger,
+		userService:          userService,
+		authService:          authService,
+		lookupRepo:           lookupRepo,
+		mediaService:         mediaService,
+		profileService:       profileService,
+		verificationService:  verificationService,
+		enablePreregCap:      enablePreregCap,
 		maxTotalParticipants:     maxTotal,
 		maxMaleParticipants:      maxMale,
 		maxFemaleParticipants:    maxFemale,
@@ -437,11 +430,6 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, basicDetails.UserID, StepForBasics)
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", basicDetails.UserID), zap.String("step", string(StepForBasics)))
-	}
-
-	// Send notification SMS when pre-registration is completed
-	if len(os.notificationPhoneNumbers) > 0 {
-		os.sendPreregistrationNotification(ctx, basicDetails.UserID, basicDetails.GenderID, basicDetails.SexualityID)
 	}
 
 	return domain.StepResult{

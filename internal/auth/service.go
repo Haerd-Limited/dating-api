@@ -47,8 +47,9 @@ type authService struct {
 	communicationService communication.Service
 	codeTTL              time.Duration
 	perIDPerHour         int // e.g., 3
-	perIPPerHour         int // e.g., 20
-	env                  string
+	perIPPerHour             int // e.g., 20
+	env                      string
+	notificationPhoneNumbers []string
 }
 
 func NewAuthService(
@@ -59,18 +60,20 @@ func NewAuthService(
 	awsService aws.Service,
 	communicationService communication.Service,
 	env string,
+	notificationPhoneNumbers []string,
 ) Service {
 	return &authService{
-		logger:               logger,
-		jwtSecret:            jwtSecret,
-		UserService:          UserService,
-		AuthRepo:             AuthRepository,
-		awsService:           awsService,
-		communicationService: communicationService,
-		codeTTL:              10 * time.Minute,
-		perIDPerHour:         3,
-		perIPPerHour:         20,
-		env:                  env,
+		logger:                   logger,
+		jwtSecret:                jwtSecret,
+		UserService:              UserService,
+		AuthRepo:                 AuthRepository,
+		awsService:               awsService,
+		communicationService:     communicationService,
+		codeTTL:                  10 * time.Minute,
+		perIDPerHour:             3,
+		perIPPerHour:             20,
+		env:                      env,
+		notificationPhoneNumbers: notificationPhoneNumbers,
 	}
 }
 
@@ -210,6 +213,23 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 		})
 		if regErr != nil {
 			return nil, commonlogger.LogError(as.logger, "failed to create user", regErr, zap.String("step", string(onboardingdomain.OnboardingStepsIntro)))
+		}
+
+		if strings.ToLower(as.env) == constants.ProductionEnvironment && len(as.notificationPhoneNumbers) > 0 {
+			total, countErr := as.UserService.CountUsers(ctx)
+			if countErr != nil {
+				_ = commonlogger.LogError(as.logger, "count users for signup SMS", countErr)
+			} else {
+				msg := fmt.Sprintf("New Haerd signup. Total users: %d", total)
+				for _, phone := range as.notificationPhoneNumbers {
+					if phone == "" {
+						continue
+					}
+					if smsErr := as.communicationService.SendSMS(phone, msg); smsErr != nil {
+						_ = commonlogger.LogError(as.logger, "signup notification SMS", smsErr, zap.String("userID", userID))
+					}
+				}
+			}
 		}
 
 		tokens, tokenErr := as.GenerateAccessAndRefreshToken(ctx, userID)

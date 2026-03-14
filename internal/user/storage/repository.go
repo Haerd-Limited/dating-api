@@ -19,6 +19,7 @@ type UserRepository interface {
 	InsertUser(ctx context.Context, user *entity.User, tx *sql.Tx) (string, error)
 	GetByPhoneNumber(ctx context.Context, number string) (*entity.User, error)
 	CheckUserExistenceByPhoneNumber(ctx context.Context, number string) (bool, error)
+	CountUsers(ctx context.Context) (int64, error)
 	GetUserByID(ctx context.Context, id string) (*entity.User, error)
 	UpdateUser(ctx context.Context, e *entity.User, cols []string) error
 	DeleteUser(ctx context.Context, userID string) error
@@ -113,6 +114,15 @@ func (r *userRepository) GetUserByID(ctx context.Context, id string) (*entity.Us
 	}
 
 	return user, nil
+}
+
+func (r *userRepository) CountUsers(ctx context.Context) (int64, error) {
+	n, err := entity.Users().Count(ctx, r.db)
+	if err != nil {
+		return 0, fmt.Errorf("count users: %w", err)
+	}
+
+	return n, nil
 }
 
 func (r *userRepository) CheckUserExistenceByPhoneNumber(ctx context.Context, number string) (bool, error) {

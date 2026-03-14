@@ -162,9 +162,9 @@ func main() {
 	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService)
 	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
-	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env)
-	mediaService := media.NewMediaService(logger, awsService, openaiService)
 	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)
+	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env, notificationPhoneNumbers)
+	mediaService := media.NewMediaService(logger, awsService, openaiService)
 	backendEngineerPhoneNumbers := parsePhoneNumbers(cfg.BackendEngineerPhoneNumbers)
 	frontendEngineerPhoneNumbers := parsePhoneNumbers(cfg.FrontendEngineerPhoneNumbers)
 	feedbackService := feedback.NewService(logger, feedbackRepo, unitOfWork, communicationService, notificationPhoneNumbers)
@@ -184,9 +184,7 @@ func main() {
 		mediaService,
 		profileService,
 		lookupRepo,
-		communicationService,
 		verificationService,
-		notificationPhoneNumbers,
 		cfg.EnablePreregCap,
 		cfg.MaxParticipants,
 		cfg.MaxMaleParticipants,
