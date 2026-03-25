@@ -124,6 +124,7 @@ func (s *service) getLikedVoicePromptByConvoID(ctx context.Context, convoID stri
 		CoverMediaType:        vp.CoverMediaType,
 		CoverMediaAspectRatio: vp.CoverMediaAspectRatio,
 		VoiceNoteURL:          vp.VoiceNoteURL,
+		WaveformData:          vp.WaveformData,
 	}, nil
 }
 

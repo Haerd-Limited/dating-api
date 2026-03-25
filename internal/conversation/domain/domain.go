@@ -70,6 +70,7 @@ type VoicePrompt struct {
 	CoverMediaType        *string
 	CoverMediaAspectRatio *float64
 	VoiceNoteURL          string
+	WaveformData          []float32
 }
 
 type Swipe struct {

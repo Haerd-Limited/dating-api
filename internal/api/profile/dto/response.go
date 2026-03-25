@@ -64,14 +64,15 @@ type Photo struct {
 }
 
 type VoicePrompt struct {
-	URL                   string   `json:"url"`
-	PromptType            Prompt   `json:"prompt_type"`
-	IsPrimary             bool     `json:"is_primary"`
-	Position              int16    `json:"position"`
-	DurationMs            int      `json:"duration_ms"`
-	CoverMediaURL         string   `json:"cover_media_url"`
-	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
-	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
+	URL                   string    `json:"url"`
+	PromptType            Prompt    `json:"prompt_type"`
+	IsPrimary             bool      `json:"is_primary"`
+	Position              int16     `json:"position"`
+	DurationMs            int       `json:"duration_ms"`
+	WaveformData          []float32 `json:"waveform_data"`
+	CoverMediaURL         string    `json:"cover_media_url"`
+	CoverMediaType        *string   `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64  `json:"cover_media_aspect_ratio,omitempty"`
 }
 
 type Status struct {

@@ -89,6 +89,7 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 				IsPrimary:             vp.IsPrimary,
 				Position:              vp.Position,
 				DurationMs:            vp.DurationMs,
+				WaveformData:          vp.WaveformData,
 				CoverMediaURL:         vp.PromptCoverMediaURL,
 				CoverMediaType:        vp.PromptCoverMediaType,
 				CoverMediaAspectRatio: vp.PromptCoverMediaAspectRatio,

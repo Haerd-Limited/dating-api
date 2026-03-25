@@ -69,15 +69,16 @@ type UserTheme struct {
 }
 
 type VoicePrompt struct {
-	ID                    int64    `json:"id"`
-	URL                   string   `json:"url"`
-	PromptType            Prompt   `json:"prompt_type"`
-	IsPrimary             bool     `json:"is_primary"`
-	Position              int16    `json:"position"`
-	DurationMs            int      `json:"duration_ms"`
-	CoverMediaURL         string   `json:"cover_media_url"`
-	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
-	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
+	ID                    int64     `json:"id"`
+	URL                   string    `json:"url"`
+	PromptType            Prompt    `json:"prompt_type"`
+	IsPrimary             bool      `json:"is_primary"`
+	Position              int16     `json:"position"`
+	DurationMs            int       `json:"duration_ms"`
+	WaveformData          []float32 `json:"waveform_data"`
+	CoverMediaURL         string    `json:"cover_media_url"`
+	CoverMediaType        *string   `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64  `json:"cover_media_aspect_ratio,omitempty"`
 }
 
 type Prompt struct {
