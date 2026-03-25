@@ -28,13 +28,14 @@ type PromptsRequest struct {
 }
 
 type VoicePrompt struct {
-	URL                   string   `json:"upload_url" validate:"required"`
-	PromptType            int16    `json:"prompt_type" validate:"required"`
-	IsPrimary             bool     `json:"is_primary"`
-	Position              int16    `json:"position" validate:"required"`
-	CoverMediaURL         *string  `json:"cover_media_url,omitempty"`
-	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
-	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
+	URL                   string    `json:"upload_url" validate:"required"`
+	PromptType            int16     `json:"prompt_type" validate:"required"`
+	IsPrimary             bool      `json:"is_primary"`
+	Position              int16     `json:"position" validate:"required"`
+	WaveformData          []float32 `json:"waveform_data" validate:"required,min=1,dive,gte=0,lte=1"`
+	CoverMediaURL         *string   `json:"cover_media_url,omitempty"`
+	CoverMediaType        *string   `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64  `json:"cover_media_aspect_ratio,omitempty"`
 }
 
 func (pr PromptsRequest) Validate() error {

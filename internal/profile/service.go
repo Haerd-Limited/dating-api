@@ -141,6 +141,11 @@ func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.Voic
 		return domain.VoicePrompt{}, fmt.Errorf("get voice prompt: %w", err)
 	}
 
+	waveformData, err := mapper.UnmarshalWaveformData(vp.WaveformData)
+	if err != nil {
+		return domain.VoicePrompt{}, fmt.Errorf("unmarshal waveform data: %w", err)
+	}
+
 	prompt, err := s.lookupRepo.GetPromptTypeByID(ctx, vp.PromptType.Int16)
 	if err != nil {
 		return domain.VoicePrompt{}, fmt.Errorf("get prompt type: %w", err)
@@ -166,6 +171,7 @@ func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.Voic
 	return domain.VoicePrompt{
 		PromptID:              vp.ID,
 		VoiceNoteURL:          vp.AudioURL,
+		WaveformData:          waveformData,
 		CoverMediaURL:         coverMediaURL,
 		CoverMediaType:        coverMediaType,
 		CoverMediaAspectRatio: coverMediaAspectRatio,
@@ -469,7 +475,12 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	if len(up.VoicePrompts) > 0 {
-		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, up.UserID), tx.Raw())
+		voicePrompts, mapErr := mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, up.UserID)
+		if mapErr != nil {
+			return commonlogger.LogError(s.logger, "map user voice prompts", mapErr, zap.String("userID", up.UserID))
+		}
+
+		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, voicePrompts, tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "insert user voice prompts", err, zap.String("userID", up.UserID))
 		}
@@ -660,7 +671,12 @@ func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts 
 		return fmt.Errorf("validate user prompts: %w", err)
 	}
 
-	return s.profileRepo.UpsertUserPrompts(ctx, userID, mapper.MapVoicePromptsUpdateToEntity(prompts, userID), nil)
+	voicePrompts, err := mapper.MapVoicePromptsUpdateToEntity(prompts, userID)
+	if err != nil {
+		return fmt.Errorf("map voice prompts to entity: %w", err)
+	}
+
+	return s.profileRepo.UpsertUserPrompts(ctx, userID, voicePrompts, nil)
 }
 
 func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {

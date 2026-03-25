@@ -147,6 +147,7 @@ type VoicePrompt struct {
 	PromptID              int64
 	Prompt                string
 	VoiceNoteURL          string
+	WaveformData          []float32
 	CoverMediaURL         string
 	CoverMediaType        *string
 	CoverMediaAspectRatio *float64
@@ -159,6 +160,7 @@ type ProfileVoicePrompt struct {
 	IsPrimary                   bool
 	Position                    int16
 	DurationMs                  int
+	WaveformData                []float32
 	PromptCoverMediaURL         string
 	PromptCoverMediaType        *string
 	PromptCoverMediaAspectRatio *float64
@@ -169,6 +171,7 @@ type VoicePromptUpdate struct {
 	IsPrimary                   bool
 	Position                    int16
 	DurationMs                  int
+	WaveformData                []float32
 	PromptCoverMediaURL         string
 	PromptCoverMediaType        *string
 	PromptCoverMediaAspectRatio *float64

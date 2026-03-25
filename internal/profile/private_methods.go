@@ -223,6 +223,11 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 			return nil, fmt.Errorf("invalid prompt type: promptType=%v", vpe.PromptType.Int16)
 		}
 
+		waveformData, waveformErr := mapper.UnmarshalWaveformData(vpe.WaveformData)
+		if waveformErr != nil {
+			return nil, fmt.Errorf("failed to unmarshal waveform data for voice prompt %d: %w", vpe.ID, waveformErr)
+		}
+
 		var vpeErr error
 
 		promptType, vpeErr := s.lookupRepo.GetPromptTypeByID(ctx, vpe.PromptType.Int16)
@@ -259,6 +264,7 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 			IsPrimary:                   vpe.IsPrimary,
 			Position:                    vpe.Position.Int16,
 			DurationMs:                  vpe.DurationMS,
+			WaveformData:                waveformData,
 			PromptCoverMediaURL:         promptCoverMediaURL,
 			PromptCoverMediaType:        promptCoverMediaType,
 			PromptCoverMediaAspectRatio: promptCoverMediaAspectRatio,
@@ -282,6 +288,7 @@ func (s *service) getUserVoicePromptsForUpdate(ctx context.Context, userID strin
 			IsPrimary:                   vp.IsPrimary,
 			Position:                    vp.Position,
 			DurationMs:                  vp.DurationMs,
+			WaveformData:                vp.WaveformData,
 			PromptCoverMediaURL:         vp.PromptCoverMediaURL,
 			PromptCoverMediaType:        vp.PromptCoverMediaType,
 			PromptCoverMediaAspectRatio: vp.PromptCoverMediaAspectRatio,

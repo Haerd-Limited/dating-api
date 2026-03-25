@@ -31,6 +31,7 @@ func UpdateProfileRequestToDomain(req dto.UpdateProfileRequest, userID string) (
 				IsPrimary:                   vp.IsPrimary,
 				Position:                    vp.Position,
 				DurationMs:                  vp.DurationMs,
+				WaveformData:                vp.WaveformData,
 				PromptCoverMediaURL:         vp.CoverMediaURL,
 				PromptCoverMediaType:        vp.CoverMediaType,
 				PromptCoverMediaAspectRatio: vp.CoverMediaAspectRatio,
