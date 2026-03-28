@@ -23,10 +23,8 @@ type Conversation struct {
 	LastActivityAt time.Time
 	LastMessage    *Message
 	UnreadCount    int
-	Score          ScoreSnapshot
-	RevealRequest  *RevealRequest
 	DateMode       bool
-	Photos         []Photo // Only populated when revealed
+	Photos         []Photo
 }
 
 type MatchedUser struct {

@@ -207,13 +207,8 @@ func New(
 
 				r.Route("/conversations", func(r chi.Router) {
 					r.Get("/", conversationHandler.GetConversations())
-					r.Get("/{id}/score", conversationHandler.GetChemistryScore())
 					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
 					r.Post("/{id}/messages", conversationHandler.SendMessage())
-					r.Post("/{id}/reveal/initiate", conversationHandler.InitiateReveal())
-					r.Post("/{id}/reveal/confirm", conversationHandler.ConfirmReveal())
-					r.Post("/{id}/reveal/decision", conversationHandler.MakeRevealDecision())
-					r.Get("/{id}/photos", conversationHandler.GetMatchPhotos())
 					r.Post("/{id}/unmatch", conversationHandler.Unmatch())
 				})
 

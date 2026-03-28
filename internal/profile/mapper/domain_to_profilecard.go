@@ -96,5 +96,17 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 		}
 	}
 
+	// Photos
+	if len(ep.Photos) > 0 {
+		fp.Photos = make([]profilecard.Photo, 0, len(ep.Photos))
+		for _, p := range ep.Photos {
+			fp.Photos = append(fp.Photos, profilecard.Photo{
+				URL:       p.URL,
+				IsPrimary: p.IsPrimary,
+				Position:  p.Position,
+			})
+		}
+	}
+
 	return fp
 }

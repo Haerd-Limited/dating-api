@@ -30,6 +30,7 @@ type ProfileCard struct {
 	Ethnicities           []string      `json:"ethnicities"`
 	SpokenLanguages       []string      `json:"spoken_languages"`
 	VoicePrompts          []VoicePrompt `json:"voice_prompts"`
+	Photos                []Photo       `json:"photos"`
 	Theme                 UserTheme     `json:"theme"`
 	CoverMediaURL         string        `json:"cover_media_url"`
 	CoverMediaType        *string       `json:"cover_media_type,omitempty"`
@@ -84,4 +85,10 @@ type Prompt struct {
 	Key      string `json:"key"`
 	Label    string `json:"label"`
 	Category string `json:"category"`
+}
+
+type Photo struct {
+	URL       string `json:"url"`
+	IsPrimary bool   `json:"is_primary"`
+	Position  int16  `json:"position"`
 }

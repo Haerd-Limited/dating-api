@@ -16,7 +16,3 @@ func MapSendMessageRequestToDomain(req dto.SendMessageRequest, convoID string, u
 		SenderID:       userID,
 	}
 }
-
-func MapMakeRevealDecisionRequestToDomain(req dto.MakeRevealDecisionRequest) domain.RevealDecision {
-	return domain.RevealDecision(req.Decision)
-}

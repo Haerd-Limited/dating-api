@@ -46,6 +46,16 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		})
 	}
 
+	// Map photos
+	var photos []Photo
+	for _, p := range profile.Photos {
+		photos = append(photos, Photo{
+			URL:       p.URL,
+			IsPrimary: p.IsPrimary,
+			Position:  p.Position,
+		})
+	}
+
 	var coverMediaURL string
 	if profile.CoverMediaURL != nil {
 		coverMediaURL = *profile.CoverMediaURL
@@ -82,6 +92,7 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		Ethnicities:     profile.Ethnicities,
 		SpokenLanguages: profile.SpokenLanguages,
 		VoicePrompts:    voicePrompts,
+		Photos:          photos,
 		LikeCount:       profile.LikeCount,
 		VerifiedStatus:  profile.VerifiedStatus,
 		Theme: UserTheme{
