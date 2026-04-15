@@ -475,12 +475,11 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	if len(up.VoicePrompts) > 0 {
-		voicePrompts, mapErr := mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, up.UserID)
-		if mapErr != nil {
-			return commonlogger.LogError(s.logger, "map user voice prompts", mapErr, zap.String("userID", up.UserID))
+		marshalledWaveformData, err := marshalVoicePromptsForEntity(up.VoicePrompts)
+		if err != nil {
+			return commonlogger.LogError(s.logger, "marshal user voice prompts", err, zap.String("userID", up.UserID))
 		}
-
-		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, voicePrompts, tx.Raw())
+		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, marshalledWaveformData, up.UserID), tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "insert user voice prompts", err, zap.String("userID", up.UserID))
 		}
@@ -671,12 +670,12 @@ func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts 
 		return fmt.Errorf("validate user prompts: %w", err)
 	}
 
-	voicePrompts, err := mapper.MapVoicePromptsUpdateToEntity(prompts, userID)
+	marshalledWaveformData, err := marshalVoicePromptsForEntity(prompts)
 	if err != nil {
-		return fmt.Errorf("map voice prompts to entity: %w", err)
+		return fmt.Errorf("marshal voice prompts: %w", err)
 	}
 
-	return s.profileRepo.UpsertUserPrompts(ctx, userID, voicePrompts, nil)
+	return s.profileRepo.UpsertUserPrompts(ctx, userID, mapper.MapVoicePromptsUpdateToEntity(prompts, marshalledWaveformData, userID), nil)
 }
 
 func (s *service) UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error {

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/profile/constant"
@@ -128,6 +129,20 @@ func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate) error {
 	}
 
 	return nil
+}
+
+func marshalVoicePromptsForEntity(prompts []domain.VoicePromptUpdate) ([]null.JSON, error) {
+	marshalledWaveformData := make([]null.JSON, 0, len(prompts))
+	for _, prompt := range prompts {
+		waveformData, err := mapper.MarshalWaveformData(prompt.WaveformData)
+		if err != nil {
+			return nil, fmt.Errorf("marshal waveform data: %w", err)
+		}
+
+		marshalledWaveformData = append(marshalledWaveformData, waveformData)
+	}
+
+	return marshalledWaveformData, nil
 }
 
 func (s *service) containsSocialMediaPromotion(input string) bool {

@@ -191,15 +191,10 @@ func MapUpdatedPhotosToEntity(updatedPhotos []domain.Photo, userID string) []ent
 	return out
 }
 
-func MapVoicePromptsUpdateToEntity(uploadedPrompts []domain.VoicePromptUpdate, userID string) ([]entity.VoicePrompt, error) {
+func MapVoicePromptsUpdateToEntity(uploadedPrompts []domain.VoicePromptUpdate, marshalledWaveformData []null.JSON, userID string) []entity.VoicePrompt {
 	var out []entity.VoicePrompt
 
-	for _, p := range uploadedPrompts {
-		waveformData, err := MarshalWaveformData(p.WaveformData)
-		if err != nil {
-			return nil, err
-		}
-
+	for i, p := range uploadedPrompts {
 		vp := entity.VoicePrompt{
 			UserID:       null.StringFrom(userID),
 			PromptType:   null.Int16From(p.PromptTypeID),
@@ -207,7 +202,7 @@ func MapVoicePromptsUpdateToEntity(uploadedPrompts []domain.VoicePromptUpdate, u
 			IsPrimary:    p.IsPrimary,
 			AudioURL:     p.URL,
 			DurationMS:   p.DurationMs,
-			WaveformData: waveformData,
+			WaveformData: marshalledWaveformData[i],
 		}
 		if p.PromptCoverMediaURL != "" {
 			vp.CoverMediaURL = null.StringFrom(p.PromptCoverMediaURL)
@@ -225,5 +220,5 @@ func MapVoicePromptsUpdateToEntity(uploadedPrompts []domain.VoicePromptUpdate, u
 		out = append(out, vp)
 	}
 
-	return out, nil
+	return out
 }
