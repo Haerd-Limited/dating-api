@@ -37,6 +37,7 @@ type VoicePrompt struct {
 	IsActive              bool         `boil:"is_active" json:"is_active" toml:"is_active" yaml:"is_active"`
 	CoverMediaType        null.String  `boil:"cover_media_type" json:"cover_media_type,omitempty" toml:"cover_media_type" yaml:"cover_media_type,omitempty"`
 	CoverMediaAspectRatio null.Float32 `boil:"cover_media_aspect_ratio" json:"cover_media_aspect_ratio,omitempty" toml:"cover_media_aspect_ratio" yaml:"cover_media_aspect_ratio,omitempty"`
+	WaveformData          null.JSON    `boil:"waveform_data" json:"waveform_data,omitempty" toml:"waveform_data" yaml:"waveform_data,omitempty"`
 
 	R *voicePromptR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L voicePromptL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -56,6 +57,7 @@ var VoicePromptColumns = struct {
 	IsActive              string
 	CoverMediaType        string
 	CoverMediaAspectRatio string
+	WaveformData          string
 }{
 	ID:                    "id",
 	UserID:                "user_id",
@@ -70,6 +72,7 @@ var VoicePromptColumns = struct {
 	IsActive:              "is_active",
 	CoverMediaType:        "cover_media_type",
 	CoverMediaAspectRatio: "cover_media_aspect_ratio",
+	WaveformData:          "waveform_data",
 }
 
 var VoicePromptTableColumns = struct {
@@ -86,6 +89,7 @@ var VoicePromptTableColumns = struct {
 	IsActive              string
 	CoverMediaType        string
 	CoverMediaAspectRatio string
+	WaveformData          string
 }{
 	ID:                    "voice_prompts.id",
 	UserID:                "voice_prompts.user_id",
@@ -100,6 +104,7 @@ var VoicePromptTableColumns = struct {
 	IsActive:              "voice_prompts.is_active",
 	CoverMediaType:        "voice_prompts.cover_media_type",
 	CoverMediaAspectRatio: "voice_prompts.cover_media_aspect_ratio",
+	WaveformData:          "voice_prompts.waveform_data",
 }
 
 // Generated where
@@ -118,6 +123,7 @@ var VoicePromptWhere = struct {
 	IsActive              whereHelperbool
 	CoverMediaType        whereHelpernull_String
 	CoverMediaAspectRatio whereHelpernull_Float32
+	WaveformData          whereHelpernull_JSON
 }{
 	ID:                    whereHelperint64{field: "\"voice_prompts\".\"id\""},
 	UserID:                whereHelpernull_String{field: "\"voice_prompts\".\"user_id\""},
@@ -132,6 +138,7 @@ var VoicePromptWhere = struct {
 	IsActive:              whereHelperbool{field: "\"voice_prompts\".\"is_active\""},
 	CoverMediaType:        whereHelpernull_String{field: "\"voice_prompts\".\"cover_media_type\""},
 	CoverMediaAspectRatio: whereHelpernull_Float32{field: "\"voice_prompts\".\"cover_media_aspect_ratio\""},
+	WaveformData:          whereHelpernull_JSON{field: "\"voice_prompts\".\"waveform_data\""},
 }
 
 // VoicePromptRels is where relationship names are stored.
@@ -209,9 +216,9 @@ func (r *voicePromptR) GetPromptSwipes() SwipeSlice {
 type voicePromptL struct{}
 
 var (
-	voicePromptAllColumns            = []string{"id", "user_id", "prompt_type", "audio_url", "duration_ms", "transcript", "created_at", "is_primary", "position", "cover_media_url", "is_active", "cover_media_type", "cover_media_aspect_ratio"}
+	voicePromptAllColumns            = []string{"id", "user_id", "prompt_type", "audio_url", "duration_ms", "transcript", "created_at", "is_primary", "position", "cover_media_url", "is_active", "cover_media_type", "cover_media_aspect_ratio", "waveform_data"}
 	voicePromptColumnsWithoutDefault = []string{"audio_url", "duration_ms"}
-	voicePromptColumnsWithDefault    = []string{"id", "user_id", "prompt_type", "transcript", "created_at", "is_primary", "position", "cover_media_url", "is_active", "cover_media_type", "cover_media_aspect_ratio"}
+	voicePromptColumnsWithDefault    = []string{"id", "user_id", "prompt_type", "transcript", "created_at", "is_primary", "position", "cover_media_url", "is_active", "cover_media_type", "cover_media_aspect_ratio", "waveform_data"}
 	voicePromptPrimaryKeyColumns     = []string{"id"}
 	voicePromptGeneratedColumns      = []string{}
 )

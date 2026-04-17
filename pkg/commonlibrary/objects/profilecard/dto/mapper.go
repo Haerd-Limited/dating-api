@@ -40,6 +40,7 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 			IsPrimary:             vp.IsPrimary,
 			Position:              vp.Position,
 			DurationMs:            vp.DurationMs,
+			WaveformData:          vp.WaveformData,
 			CoverMediaURL:         vp.CoverMediaURL,
 			CoverMediaType:        vp.CoverMediaType,
 			CoverMediaAspectRatio: vp.CoverMediaAspectRatio,
@@ -129,7 +130,7 @@ func MapCompatibilitySummary(ms *profilecard.CompatibilitySummary) *MatchSummary
 				PartnerAnswer: b.PartnerAnswer,
 				Weight:        b.Weight,
 				IsMismatch:    b.IsMismatch,
-				RequirementBy:  b.RequirementBy,
+				RequirementBy: b.RequirementBy,
 			})
 		}
 	}

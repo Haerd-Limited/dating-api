@@ -114,6 +114,7 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 				IsPrimary:             prompt.IsPrimary,
 				Position:              prompt.Position,
 				DurationMs:            prompt.DurationMs,
+				WaveformData:          prompt.WaveformData,
 				CoverMediaURL:         prompt.PromptCoverMediaURL,
 				CoverMediaType:        prompt.PromptCoverMediaType,
 				CoverMediaAspectRatio: prompt.PromptCoverMediaAspectRatio,

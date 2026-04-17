@@ -31,6 +31,7 @@ type VoicePrompt struct {
 	IsPrimary             bool
 	Position              int16
 	DurationMs            int
+	WaveformData          []float32
 	CoverMediaURL         *string
 	CoverMediaType        *string
 	CoverMediaAspectRatio *float64

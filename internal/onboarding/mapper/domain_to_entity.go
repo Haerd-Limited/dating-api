@@ -19,6 +19,7 @@ func MapPromptsToProfileVoicePrompts(uploadedPrompts domain.Prompts) []profiledo
 			Position:                    p.Position,
 			IsPrimary:                   p.IsPrimary,
 			URL:                         p.URL,
+			WaveformData:                p.WaveformData,
 			PromptCoverMediaURL:         coverMediaURL,
 			PromptCoverMediaType:        p.CoverMediaType,
 			PromptCoverMediaAspectRatio: p.CoverMediaAspectRatio,

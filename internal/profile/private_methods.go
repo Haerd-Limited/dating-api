@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/profile/constant"
@@ -130,6 +131,20 @@ func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate) error {
 	return nil
 }
 
+func marshalVoicePromptsForEntity(prompts []domain.VoicePromptUpdate) ([]null.JSON, error) {
+	marshalledWaveformData := make([]null.JSON, 0, len(prompts))
+	for _, prompt := range prompts {
+		waveformData, err := mapper.MarshalWaveformData(prompt.WaveformData)
+		if err != nil {
+			return nil, fmt.Errorf("marshal waveform data: %w", err)
+		}
+
+		marshalledWaveformData = append(marshalledWaveformData, waveformData)
+	}
+
+	return marshalledWaveformData, nil
+}
+
 func (s *service) containsSocialMediaPromotion(input string) bool {
 	for _, token := range constant.BlockedTokens {
 		if strings.Contains(strings.ToLower(input), token) {
@@ -223,6 +238,11 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 			return nil, fmt.Errorf("invalid prompt type: promptType=%v", vpe.PromptType.Int16)
 		}
 
+		waveformData, waveformErr := mapper.UnmarshalWaveformData(vpe.WaveformData)
+		if waveformErr != nil {
+			return nil, fmt.Errorf("failed to unmarshal waveform data for voice prompt %d: %w", vpe.ID, waveformErr)
+		}
+
 		var vpeErr error
 
 		promptType, vpeErr := s.lookupRepo.GetPromptTypeByID(ctx, vpe.PromptType.Int16)
@@ -259,6 +279,7 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 			IsPrimary:                   vpe.IsPrimary,
 			Position:                    vpe.Position.Int16,
 			DurationMs:                  vpe.DurationMS,
+			WaveformData:                waveformData,
 			PromptCoverMediaURL:         promptCoverMediaURL,
 			PromptCoverMediaType:        promptCoverMediaType,
 			PromptCoverMediaAspectRatio: promptCoverMediaAspectRatio,
@@ -282,6 +303,7 @@ func (s *service) getUserVoicePromptsForUpdate(ctx context.Context, userID strin
 			IsPrimary:                   vp.IsPrimary,
 			Position:                    vp.Position,
 			DurationMs:                  vp.DurationMs,
+			WaveformData:                vp.WaveformData,
 			PromptCoverMediaURL:         vp.PromptCoverMediaURL,
 			PromptCoverMediaType:        vp.PromptCoverMediaType,
 			PromptCoverMediaAspectRatio: vp.PromptCoverMediaAspectRatio,

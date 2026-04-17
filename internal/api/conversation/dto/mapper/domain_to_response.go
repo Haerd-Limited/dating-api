@@ -46,6 +46,7 @@ func MapMessageToDto(msg *domain.Message, userID string) dto.Message {
 			CoverMediaType:        msg.LikedPrompt.CoverMediaType,
 			CoverMediaAspectRatio: msg.LikedPrompt.CoverMediaAspectRatio,
 			VoiceNoteURL:          msg.LikedPrompt.VoiceNoteURL,
+			WaveformData:          msg.LikedPrompt.WaveformData,
 		}
 	}
 
@@ -137,7 +138,7 @@ func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversa
 	}
 
 	return dto.Conversation{
-		ID:              convo.ID,
+		ID: convo.ID,
 		Match: dto.Match{
 			ID:          convo.MatchedUser.ID,
 			DisplayName: convo.MatchedUser.DisplayName,
@@ -147,12 +148,12 @@ func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversa
 				Palette: convo.MatchedUser.Theme.Palette,
 			},
 		},
-		CreatedAt:       convo.CreatedAt,
-		LastActivityAt:  convo.LastActivityAt,
-		LastMessage:     message,
-		UnreadCount:     convo.UnreadCount,
-		DateMode:        convo.DateMode,
-		Photos:          MapPhotosToDTO(convo.Photos),
+		CreatedAt:      convo.CreatedAt,
+		LastActivityAt: convo.LastActivityAt,
+		LastMessage:    message,
+		UnreadCount:    convo.UnreadCount,
+		DateMode:       convo.DateMode,
+		Photos:         MapPhotosToDTO(convo.Photos),
 	}
 }
 

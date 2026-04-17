@@ -114,6 +114,7 @@ func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) domain.Pro
 			Position:              p.Position,
 			IsPrimary:             p.IsPrimary,
 			PromptType:            p.PromptType,
+			WaveformData:          p.WaveformData,
 			CoverMediaURL:         p.CoverMediaURL,
 			CoverMediaType:        p.CoverMediaType,
 			CoverMediaAspectRatio: p.CoverMediaAspectRatio,
