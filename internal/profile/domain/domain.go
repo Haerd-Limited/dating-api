@@ -22,23 +22,20 @@ type Profile struct {
 	Country   string
 
 	// Single-selects
-	GenderID              int16
-	DatingIntentionID     int16
-	SexualityID           int16
-	ReligionID            int16
-	EducationLevelID      int16
-	PoliticalBeliefID     int16
-	DrinkingID            int16
-	SmokingID             int16
-	MarijuanaID           int16
-	DrugsID               int16
-	ChildrenStatusID      *int16
-	FamilyPlanID          *int16
-	EthnicityIDs          []int16
-	CoverMediaURL         *string
-	CoverMediaType        *string
-	CoverMediaAspectRatio *float64
-	Emoji                 string
+	GenderID          int16
+	DatingIntentionID int16
+	SexualityID       int16
+	ReligionID        int16
+	EducationLevelID  int16
+	PoliticalBeliefID int16
+	DrinkingID        int16
+	SmokingID         int16
+	MarijuanaID       int16
+	DrugsID           int16
+	ChildrenStatusID  *int16
+	FamilyPlanID      *int16
+	EthnicityIDs      []int16
+	Emoji             string
 
 	// Extra text fields in user_profiles
 
@@ -58,7 +55,6 @@ type UpdateProfile struct {
 	HeightCM     *int16
 	UserID       string
 	ProfileEmoji *string
-	BaseColour   *string
 
 	// Location
 	Latitude  *float64
@@ -67,25 +63,22 @@ type UpdateProfile struct {
 	Country   *string
 
 	// Single-selects
-	GenderID              *int16
-	DatingIntentionID     *int16
-	SexualityID           *int16
-	ReligionID            *int16
-	EducationLevelID      *int16
-	PoliticalBeliefID     *int16
-	DrinkingID            *int16
-	SmokingID             *int16
-	MarijuanaID           *int16
-	DrugsID               *int16
-	ChildrenStatusID      *int16
-	FamilyPlanID          *int16
-	EthnicityIDs          []int16
-	SpokenLanguages       []int16
-	VoicePrompts          []VoicePromptUpdate
-	Photos                []Photo
-	CoverMediaURL         *string
-	CoverMediaType        *string
-	CoverMediaAspectRatio *float64
+	GenderID          *int16
+	DatingIntentionID *int16
+	SexualityID       *int16
+	ReligionID        *int16
+	EducationLevelID  *int16
+	PoliticalBeliefID *int16
+	DrinkingID        *int16
+	SmokingID         *int16
+	MarijuanaID       *int16
+	DrugsID           *int16
+	ChildrenStatusID  *int16
+	FamilyPlanID      *int16
+	EthnicityIDs      []int16
+	SpokenLanguages   []int16
+	VoicePrompts      []VoicePromptUpdate
+	Photos            []Photo
 
 	Work       *string
 	JobTitle   *string
@@ -96,15 +89,12 @@ type UpdateProfile struct {
 }
 
 type EnrichedProfile struct {
-	DisplayName           string
-	Birthdate             time.Time
-	Age                   int
-	HeightCM              int16
-	UserID                string
-	CoverMediaURL         *string
-	CoverMediaType        *string
-	CoverMediaAspectRatio *float64
-	Emoji                 string
+	DisplayName string
+	Birthdate   time.Time
+	Age         int
+	HeightCM    int16
+	UserID      string
+	Emoji       string
 
 	// Location
 	Latitude  float64
@@ -128,7 +118,6 @@ type EnrichedProfile struct {
 	SpokenLanguages []Language
 	VoicePrompts    []ProfileVoicePrompt
 	Photos          []Photo
-	Theme           UserTheme
 	Work            *string
 	JobTitle        *string
 	University      *string
@@ -136,11 +125,6 @@ type EnrichedProfile struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-type UserTheme struct {
-	BaseHex string
-	Palette []string
 }
 
 type VoicePrompt struct {
