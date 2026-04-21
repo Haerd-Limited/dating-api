@@ -103,10 +103,12 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 	if filters != nil && filters.HasSeekGenderFilter() {
 		seekGender = filters.SeekGender
 	}
+
 	var storedSeekGenderIDs []int16
 	if storedPrefs != nil {
 		storedSeekGenderIDs = storedPrefs.SeekGenderIDs
 	}
+
 	seekGenderIDs, err := s.discoverRepo.GetSeekGenderIDs(ctx, userID, seekGender, storedSeekGenderIDs)
 	if err != nil {
 		return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "get seek gender IDs", err, zap.String("userID", userID))
@@ -117,8 +119,10 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 		if preferenceUpdate == nil {
 			preferenceUpdate = &domain.DiscoverPreferenceUpdate{}
 		}
+
 		preferenceUpdate.SeekGenderIDs = seekGenderIDs
 	}
+
 	if preferenceUpdate != nil {
 		if err := s.discoverRepo.SaveUserDiscoverPreferences(ctx, userID, preferenceUpdate); err != nil {
 			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to persist discover preferences", err, zap.String("userID", userID), zap.Any("preferenceUpdate", preferenceUpdate))
@@ -198,6 +202,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 	if storedPreferences != nil {
 		storedSeekGenderIDs = storedPreferences.SeekGenderIDs
 	}
+
 	seekGenderIDs, err := s.discoverRepo.GetSeekGenderIDs(ctx, userID, nil, storedSeekGenderIDs)
 	if err != nil {
 		return nil, commonlogger.LogError(s.logger, "get seek gender IDs for VWH", err, zap.String("userID", userID))
@@ -336,11 +341,10 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 }
 
 type preferenceMatcher struct {
-	prefs           *domain.StoredDiscoverPreferences
-	datingIntentSet map[int16]struct{}
-	religionSet     map[int16]struct{}
-	sexualitySet    map[int16]struct{}
-	ethnicitySet    map[int16]struct{}
+	prefs        *domain.StoredDiscoverPreferences
+	religionSet  map[int16]struct{}
+	sexualitySet map[int16]struct{}
+	ethnicitySet map[int16]struct{}
 }
 
 // passesPostQueryFilters applies filters that can't be efficiently done in SQL
@@ -380,13 +384,6 @@ func newPreferenceMatcher(prefs *domain.StoredDiscoverPreferences) *preferenceMa
 		prefs: prefs,
 	}
 
-	if len(prefs.DatingIntentionIDs) > 0 {
-		matcher.datingIntentSet = make(map[int16]struct{}, len(prefs.DatingIntentionIDs))
-		for _, id := range prefs.DatingIntentionIDs {
-			matcher.datingIntentSet[id] = struct{}{}
-		}
-	}
-
 	if len(prefs.ReligionIDs) > 0 {
 		matcher.religionSet = make(map[int16]struct{}, len(prefs.ReligionIDs))
 		for _, id := range prefs.ReligionIDs {
@@ -415,7 +412,7 @@ func (m *preferenceMatcher) requiresEthnicity() bool {
 	return m != nil && len(m.ethnicitySet) > 0
 }
 
-func (m *preferenceMatcher) matchesAll(age int, distanceKm int, datingIntentionID *int16, religionID *int16, sexualityID *int16, candidateEthnicities []int16) bool {
+func (m *preferenceMatcher) matchesAll(age int, distanceKm int, religionID *int16, sexualityID *int16, candidateEthnicities []int16) bool {
 	if m == nil {
 		return true
 	}
@@ -428,16 +425,6 @@ func (m *preferenceMatcher) matchesAll(age int, distanceKm int, datingIntentionI
 
 	if (m.prefs.MinAge != nil || m.prefs.MaxAge != nil) && !m.ageWithinRange(age) {
 		return false
-	}
-
-	if len(m.datingIntentSet) > 0 {
-		if datingIntentionID == nil {
-			return false
-		}
-
-		if _, ok := m.datingIntentSet[*datingIntentionID]; !ok {
-			return false
-		}
 	}
 
 	if len(m.religionSet) > 0 {
@@ -477,7 +464,7 @@ func (m *preferenceMatcher) matchesAll(age int, distanceKm int, datingIntentionI
 	return true
 }
 
-func (m *preferenceMatcher) matchesAny(age int, distanceKm int, datingIntentionID *int16, religionID *int16, sexualityID *int16, candidateEthnicities []int16) bool {
+func (m *preferenceMatcher) matchesAny(age int, distanceKm int, religionID *int16, sexualityID *int16, candidateEthnicities []int16) bool {
 	if m == nil {
 		return true
 	}
@@ -488,12 +475,6 @@ func (m *preferenceMatcher) matchesAny(age int, distanceKm int, datingIntentionI
 
 	if (m.prefs.MinAge != nil || m.prefs.MaxAge != nil) && m.ageWithinRange(age) {
 		return true
-	}
-
-	if len(m.datingIntentSet) > 0 && datingIntentionID != nil {
-		if _, ok := m.datingIntentSet[*datingIntentionID]; ok {
-			return true
-		}
 	}
 
 	if len(m.religionSet) > 0 && religionID != nil {
@@ -648,13 +629,6 @@ func (s *service) evaluateCandidate(
 		return nil, commonlogger.LogError(s.logger, "failed to compute compatibility", err, zap.String("userID", userID), zap.String("profileUserID", candidate.UserID), zap.Int("minOverlap", minOverlap))
 	}
 
-	var datingIntentionID *int16
-
-	if candidate.DatingIntentionID.Valid {
-		value := candidate.DatingIntentionID.Int16
-		datingIntentionID = &value
-	}
-
 	var religionID *int16
 
 	if candidate.ReligionID.Valid {
@@ -678,8 +652,8 @@ func (s *service) evaluateCandidate(
 		evaluation.matchesAll = true
 		evaluation.matchesAny = true
 	} else {
-		evaluation.matchesAll = matcher.matchesAll(card.Age, card.DistanceKm, datingIntentionID, religionID, sexualityID, candidateEthnicities)
-		evaluation.matchesAny = matcher.matchesAny(card.Age, card.DistanceKm, datingIntentionID, religionID, sexualityID, candidateEthnicities)
+		evaluation.matchesAll = matcher.matchesAll(card.Age, card.DistanceKm, religionID, sexualityID, candidateEthnicities)
+		evaluation.matchesAny = matcher.matchesAny(card.Age, card.DistanceKm, religionID, sexualityID, candidateEthnicities)
 	}
 
 	evaluation.card = card

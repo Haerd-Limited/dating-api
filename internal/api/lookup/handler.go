@@ -21,7 +21,6 @@ type Handler interface {
 	GetEthnicities() http.HandlerFunc
 	GetGenders() http.HandlerFunc
 	GetSexualities() http.HandlerFunc
-	GetDatingIntentions() http.HandlerFunc
 	GetHabits() http.HandlerFunc
 	GetEducationLevels() http.HandlerFunc
 	GetFamilyPlans() http.HandlerFunc
@@ -167,20 +166,6 @@ func (h *handler) GetSexualities() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapToGetSexualitiesResponse(sexualities))
-	}
-}
-
-func (h *handler) GetDatingIntentions() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		intentions, err := h.lookupService.GetDatingIntentions(ctx)
-		if err != nil {
-			h.handleServiceErrorResponse(w, r, "GetDatingIntentions", err)
-			return
-		}
-
-		render.Json(w, http.StatusOK, mapper.MapToGetDatingIntentionsResponse(intentions))
 	}
 }
 

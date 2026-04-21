@@ -138,7 +138,6 @@ func New(
 				r.Get("/genders", lookupHandler.GetGenders())
 				r.Get("/sexualities", lookupHandler.GetSexualities())
 				r.Get("/habits", lookupHandler.GetHabits())
-				r.Get("/dating-intentions", lookupHandler.GetDatingIntentions())
 				r.Get("/education-levels", lookupHandler.GetEducationLevels())
 				r.Get("/family-plans", lookupHandler.GetFamilyPlans())
 				r.Get("/family-status", lookupHandler.GetFamilyStatus())
@@ -222,14 +221,13 @@ func New(
 					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
 
 					r.Get("/feedback/presign", mediaHandler.GenerateFeedbackAttachmentUploadUrl())
-
 				})
 
 				r.Route("/feedback", func(r chi.Router) {
 					r.Post("/", feedbackHandler.CreateFeedback())
 				})
 
-				r.Route("/matching", func(r chi.Router) { //TODO: change to compatibility
+				r.Route("/matching", func(r chi.Router) { // TODO: change to compatibility
 					r.Get("/overview", compatibilityHandler.GetOverview())
 					r.Get("/questions", compatibilityHandler.GetQuestions())
 					r.Post("/answers", compatibilityHandler.SaveAnswer())

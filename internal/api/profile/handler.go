@@ -121,6 +121,7 @@ func (h *handler) GetUserProfile() http.HandlerFunc {
 		}
 
 		response := mapper.ProfileToDto(userProfile)
+
 		if viewerID, ok := commoncontext.UserIDFromContext(ctx); ok && viewerID != "" {
 			compatibilitySummary, matchErr := h.discoverService.ComputeCompatibility(ctx, viewerID, userID)
 			if matchErr != nil {
@@ -129,6 +130,7 @@ func (h *handler) GetUserProfile() http.HandlerFunc {
 				response.MatchSummary = profilecarddto.MapCompatibilitySummary(compatibilitySummary)
 			}
 		}
+
 		render.Json(w, http.StatusOK, response)
 	}
 }

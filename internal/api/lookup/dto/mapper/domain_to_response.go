@@ -133,21 +133,6 @@ func MapToGetSexualitiesResponse(domainSexualities []domain.Sexuality) dto.GetSe
 	}
 }
 
-func MapToGetDatingIntentionsResponse(domainDatingIntentions []domain.DatingIntention) dto.GetDatingIntentionsResponse {
-	var datingIntentions []dto.DatingIntention
-	for _, datingIntention := range domainDatingIntentions {
-		datingIntentions = append(datingIntentions, dto.DatingIntention{
-			ID:          datingIntention.ID,
-			Label:       datingIntention.Label,
-			Description: datingIntention.Description,
-		})
-	}
-
-	return dto.GetDatingIntentionsResponse{
-		DatingIntentions: datingIntentions,
-	}
-}
-
 func MapToGetEducationLevelsResponse(domainEducationLevels []domain.EducationLevel) dto.GetEducationLevelsResponse {
 	var educationLevels []dto.EducationLevel
 	for _, educationLevel := range domainEducationLevels {

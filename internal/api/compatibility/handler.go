@@ -108,13 +108,16 @@ func (h *handler) GetQuestions() http.HandlerFunc {
 		viewAll := r.URL.Query().Get("view") == "all"
 
 		var questionID *int64
+
 		if qIDStr := r.URL.Query().Get("question_id"); qIDStr != "" {
 			qID, err := strconv.ParseInt(qIDStr, 10, 64)
 			if err != nil || qID < 1 {
 				h.logger.Sugar().Warnw("invalid question_id query param", "question_id", qIDStr)
 				render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid question_id"))
+
 				return
 			}
+
 			questionID = &qID
 		}
 

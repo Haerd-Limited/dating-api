@@ -27,14 +27,18 @@ func NewRepository(db *sqlx.DB) Repository {
 // GetLastRequestedAt returns the most recent requested_at for the user, or zero time if none.
 func (r *repository) GetLastRequestedAt(ctx context.Context, userID string) (time.Time, error) {
 	const query = `SELECT requested_at FROM data_export_requests WHERE user_id = $1 ORDER BY requested_at DESC LIMIT 1`
+
 	var t time.Time
+
 	err := r.db.GetContext(ctx, &t, query, userID)
 	if err != nil {
 		if isNoRows(err) {
 			return time.Time{}, nil
 		}
+
 		return time.Time{}, err
 	}
+
 	return t, nil
 }
 
@@ -42,6 +46,7 @@ func (r *repository) GetLastRequestedAt(ctx context.Context, userID string) (tim
 func (r *repository) InsertRequest(ctx context.Context, userID string) error {
 	const query = `INSERT INTO data_export_requests (user_id) VALUES ($1)`
 	_, err := r.db.ExecContext(ctx, query, userID)
+
 	return err
 }
 

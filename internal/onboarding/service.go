@@ -26,7 +26,7 @@ type Service interface {
 	GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error)
 	// Intro creates a new user based on the provided registration details and returns tokens and onboarding steps.
 	Intro(ctx context.Context, introDetails domain.Intro) (domain.StepResult, error)
-	// Basics updates the user's basic details such as birthdate, height, gender, and dating intention, and returns onboarding steps.
+	// Basics updates the user's basic details such as birthdate, height, gender, and sexuality, and returns onboarding steps.
 	Basics(ctx context.Context, basicDetails domain.Basics) (domain.StepResult, error)
 	// GetPreregistrationStats returns current counts and configured limits for the landing page.
 	GetPreregistrationStats(ctx context.Context) (domain.PreregistrationStats, error)
@@ -52,13 +52,13 @@ type Service interface {
 }
 
 type onboardingService struct {
-	logger                   *zap.Logger
-	userService              user.Service
-	authService              auth.Service
-	lookupRepo           lookupstorage.LookupRepository
-	mediaService         media.Service
-	profileService       profile.Service
-	verificationService  verification.Service
+	logger              *zap.Logger
+	userService         user.Service
+	authService         auth.Service
+	lookupRepo          lookupstorage.LookupRepository
+	mediaService        media.Service
+	profileService      profile.Service
+	verificationService verification.Service
 	// prereg caps
 	enablePreregCap       bool
 	maxTotalParticipants  int
@@ -80,17 +80,17 @@ func NewOnboardingService(
 	maxFemale int,
 ) Service {
 	return &onboardingService{
-		logger:               logger,
-		userService:          userService,
-		authService:          authService,
-		lookupRepo:           lookupRepo,
-		mediaService:         mediaService,
-		profileService:       profileService,
-		verificationService:  verificationService,
-		enablePreregCap:      enablePreregCap,
-		maxTotalParticipants:     maxTotal,
-		maxMaleParticipants:      maxMale,
-		maxFemaleParticipants:    maxFemale,
+		logger:                logger,
+		userService:           userService,
+		authService:           authService,
+		lookupRepo:            lookupRepo,
+		mediaService:          mediaService,
+		profileService:        profileService,
+		verificationService:   verificationService,
+		enablePreregCap:       enablePreregCap,
+		maxTotalParticipants:  maxTotal,
+		maxMaleParticipants:   maxMale,
+		maxFemaleParticipants: maxFemale,
 	}
 }
 
@@ -126,11 +126,6 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 			return domain.StepResult{}, commonlogger.LogError(os.logger, "get genders", err, zap.String("userID", userID))
 		}
 
-		datingIntentions, err := os.getDatingIntentions(ctx)
-		if err != nil {
-			return domain.StepResult{}, commonlogger.LogError(os.logger, "get dating intentions", err, zap.String("userID", userID))
-		}
-
 		sexualities, err := os.getSexualities(ctx)
 		if err != nil {
 			return domain.StepResult{}, commonlogger.LogError(os.logger, "get sexualities", err, zap.String("userID", userID))
@@ -139,9 +134,8 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 		return domain.StepResult{
 			OnboardingSteps: domain.OnboardingStepsBasics.GenerateOnboardingSteps(),
 			Content: domain.IntroContent{
-				DatingIntentions: datingIntentions,
-				Genders:          genders,
-				Sexualities:      sexualities,
+				Genders:     genders,
+				Sexualities: sexualities,
 			},
 		}, nil
 	case domain.OnboardingStepsLocation:
@@ -321,15 +315,10 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", introDetails.UserID), zap.Any("userProfile", userProfile))
 	}
 
-	// Get dating intentions, genders, and sexualities and populate Content
+	// Get genders and sexualities and populate Content
 	genders, err := os.getGenders(ctx)
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "get genders", err, zap.String("userID", introDetails.UserID))
-	}
-
-	datingIntentions, err := os.getDatingIntentions(ctx)
-	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "get dating intentions", err, zap.String("userID", introDetails.UserID))
 	}
 
 	sexualities, err := os.getSexualities(ctx)
@@ -345,9 +334,8 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 	return domain.StepResult{
 		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
 		Content: domain.IntroContent{
-			DatingIntentions: datingIntentions,
-			Genders:          genders,
-			Sexualities:      sexualities,
+			Genders:     genders,
+			Sexualities: sexualities,
 		},
 	}, nil
 }
@@ -411,7 +399,6 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 	}
 
 	userProfile.GenderID = &basicDetails.GenderID
-	userProfile.DatingIntentionID = &basicDetails.DatingIntentionID
 	userProfile.SexualityID = &basicDetails.SexualityID
 	userProfile.HeightCM = &basicDetails.HeightCm
 

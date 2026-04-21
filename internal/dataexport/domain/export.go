@@ -4,60 +4,59 @@ import "time"
 
 // ExportPayload is the full GDPR data export response (Right to Access / Data Portability).
 type ExportPayload struct {
-	ExportedAt           time.Time       `json:"exported_at"`
-	Account              AccountExport   `json:"account"`
-	Profile              ProfileExport   `json:"profile"`
-	Preferences          interface{}     `json:"preferences"`
-	Photos               []PhotoExport   `json:"photos"`
-	VoicePrompts         []VoicePromptExport `json:"voice_prompts"`
-	Swipes               []SwipeExport   `json:"swipes"`
-	Matches              []MatchExport   `json:"matches"`
-	Conversations        []ConversationExport `json:"conversations"`
-	Feedback             []FeedbackExport `json:"feedback"`
-	Events               []EventExport   `json:"events"`
-	InsightSnapshots     []InsightSnapshotExport `json:"insight_snapshots"`
+	ExportedAt           time.Time                   `json:"exported_at"`
+	Account              AccountExport               `json:"account"`
+	Profile              ProfileExport               `json:"profile"`
+	Preferences          interface{}                 `json:"preferences"`
+	Photos               []PhotoExport               `json:"photos"`
+	VoicePrompts         []VoicePromptExport         `json:"voice_prompts"`
+	Swipes               []SwipeExport               `json:"swipes"`
+	Matches              []MatchExport               `json:"matches"`
+	Conversations        []ConversationExport        `json:"conversations"`
+	Feedback             []FeedbackExport            `json:"feedback"`
+	Events               []EventExport               `json:"events"`
+	InsightSnapshots     []InsightSnapshotExport     `json:"insight_snapshots"`
 	VerificationAttempts []VerificationAttemptExport `json:"verification_attempts"`
-	Blocks               []BlockExport   `json:"blocks"`
-	Reports              []ReportExport  `json:"reports"`
-	MatchingAnswers      []UserAnswerExport `json:"matching_answers"`
+	Blocks               []BlockExport               `json:"blocks"`
+	Reports              []ReportExport              `json:"reports"`
+	MatchingAnswers      []UserAnswerExport          `json:"matching_answers"`
 }
 
 // AccountExport is the user account record (no sensitive auth details).
 type AccountExport struct {
-	ID                   string     `json:"id"`
-	Email                *string    `json:"email,omitempty"`
-	FirstName            string     `json:"first_name"`
-	LastName             *string    `json:"last_name,omitempty"`
-	Phone                *string    `json:"phone,omitempty"`
-	CreatedAt            time.Time  `json:"created_at"`
-	UpdatedAt            time.Time  `json:"updated_at"`
-	OnboardingStep       string     `json:"onboarding_step"`
-	HowDidYouHearAboutUs *string    `json:"how_did_you_hear_about_us,omitempty"`
+	ID                   string    `json:"id"`
+	Email                *string   `json:"email,omitempty"`
+	FirstName            string    `json:"first_name"`
+	LastName             *string   `json:"last_name,omitempty"`
+	Phone                *string   `json:"phone,omitempty"`
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+	OnboardingStep       string    `json:"onboarding_step"`
+	HowDidYouHearAboutUs *string   `json:"how_did_you_hear_about_us,omitempty"`
 }
 
 // ProfileExport is the user profile for export.
 type ProfileExport struct {
 	UserID            string     `json:"user_id"`
 	DisplayName       string     `json:"display_name"`
-	Birthdate        *time.Time `json:"birthdate,omitempty"`
-	HeightCM         *int       `json:"height_cm,omitempty"`
-	Geo              string     `json:"geo"`
-	City             *string    `json:"city,omitempty"`
-	Country          *string    `json:"country,omitempty"`
-	GenderID         *int       `json:"gender_id,omitempty"`
-	DatingIntentionID *int      `json:"dating_intention_id,omitempty"`
-	ReligionID       *int       `json:"religion_id,omitempty"`
-	EducationLevelID *int       `json:"education_level_id,omitempty"`
-	PoliticalBeliefID *int      `json:"political_belief_id,omitempty"`
-	Work             *string    `json:"work,omitempty"`
-	JobTitle         *string    `json:"job_title,omitempty"`
-	University       *string    `json:"university,omitempty"`
-	CreatedAt        time.Time  `json:"created_at"`
-	UpdatedAt        time.Time  `json:"updated_at"`
-	CoverMediaURL    *string    `json:"cover_media_url,omitempty"`
-	Emoji            *string    `json:"emoji,omitempty"`
-	SexualityID      *int       `json:"sexuality_id,omitempty"`
-	Verified         string     `json:"verified"`
+	Birthdate         *time.Time `json:"birthdate,omitempty"`
+	HeightCM          *int       `json:"height_cm,omitempty"`
+	Geo               string     `json:"geo"`
+	City              *string    `json:"city,omitempty"`
+	Country           *string    `json:"country,omitempty"`
+	GenderID          *int       `json:"gender_id,omitempty"`
+	ReligionID        *int       `json:"religion_id,omitempty"`
+	EducationLevelID  *int       `json:"education_level_id,omitempty"`
+	PoliticalBeliefID *int       `json:"political_belief_id,omitempty"`
+	Work              *string    `json:"work,omitempty"`
+	JobTitle          *string    `json:"job_title,omitempty"`
+	University        *string    `json:"university,omitempty"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	CoverMediaURL     *string    `json:"cover_media_url,omitempty"`
+	Emoji             *string    `json:"emoji,omitempty"`
+	SexualityID       *int       `json:"sexuality_id,omitempty"`
+	Verified          string     `json:"verified"`
 }
 
 // PhotoExport is a single photo record.
@@ -80,14 +79,14 @@ type VoicePromptExport struct {
 
 // SwipeExport is a swipe (like/pass/superlike) record.
 type SwipeExport struct {
-	ID             int64     `json:"id"`
-	ActorID        string    `json:"actor_id"`
-	TargetID       string    `json:"target_id"`
-	Action         string    `json:"action"`
-	MessageType    *string   `json:"message_type,omitempty"`
-	Message        *string   `json:"message,omitempty"`
-	PromptID       *int64    `json:"prompt_id,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
+	ID          int64     `json:"id"`
+	ActorID     string    `json:"actor_id"`
+	TargetID    string    `json:"target_id"`
+	Action      string    `json:"action"`
+	MessageType *string   `json:"message_type,omitempty"`
+	Message     *string   `json:"message,omitempty"`
+	PromptID    *int64    `json:"prompt_id,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // MatchExport is a match record.
@@ -103,22 +102,22 @@ type MatchExport struct {
 
 // ConversationExport is a conversation with its messages.
 type ConversationExport struct {
-	ID        string          `json:"id"`
-	UserA     string          `json:"user_a"`
-	UserB     string          `json:"user_b"`
-	Messages  []MessageExport `json:"messages"`
+	ID       string          `json:"id"`
+	UserA    string          `json:"user_a"`
+	UserB    string          `json:"user_b"`
+	Messages []MessageExport `json:"messages"`
 }
 
 // MessageExport is a single message.
 type MessageExport struct {
-	ID             int64     `json:"id"`
-	SenderID       string    `json:"sender_id"`
-	Type           string    `json:"type"`
-	TextBody       *string   `json:"text_body,omitempty"`
-	MediaKey       *string   `json:"media_key,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
-	EditedAt       *time.Time `json:"edited_at,omitempty"`
-	DeletedAt      *time.Time `json:"deleted_at,omitempty"`
+	ID        int64      `json:"id"`
+	SenderID  string     `json:"sender_id"`
+	Type      string     `json:"type"`
+	TextBody  *string    `json:"text_body,omitempty"`
+	MediaKey  *string    `json:"media_key,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+	EditedAt  *time.Time `json:"edited_at,omitempty"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 }
 
 // FeedbackExport is a feedback submission.
@@ -153,12 +152,12 @@ type InsightSnapshotExport struct {
 
 // VerificationAttemptExport is a verification attempt.
 type VerificationAttemptExport struct {
-	ID             string    `json:"id"`
-	Type           string    `json:"type"`
-	Status         string    `json:"status"`
-	SessionID      *string   `json:"session_id,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID        string    `json:"id"`
+	Type      string    `json:"type"`
+	Status    string    `json:"status"`
+	SessionID *string   `json:"session_id,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // BlockExport is a block record.

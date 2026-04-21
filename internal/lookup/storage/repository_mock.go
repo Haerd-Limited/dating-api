@@ -42,36 +42,6 @@ func (m *MockLookupRepository) EXPECT() *MockLookupRepositoryMockRecorder {
 	return m.recorder
 }
 
-// GetDatingIntentionByID mocks base method.
-func (m *MockLookupRepository) GetDatingIntentionByID(ctx context.Context, id int16) (*entity.DatingIntention, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDatingIntentionByID", ctx, id)
-	ret0, _ := ret[0].(*entity.DatingIntention)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDatingIntentionByID indicates an expected call of GetDatingIntentionByID.
-func (mr *MockLookupRepositoryMockRecorder) GetDatingIntentionByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatingIntentionByID", reflect.TypeOf((*MockLookupRepository)(nil).GetDatingIntentionByID), ctx, id)
-}
-
-// GetDatingIntentions mocks base method.
-func (m *MockLookupRepository) GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDatingIntentions", ctx)
-	ret0, _ := ret[0].(entity.DatingIntentionSlice)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDatingIntentions indicates an expected call of GetDatingIntentions.
-func (mr *MockLookupRepositoryMockRecorder) GetDatingIntentions(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatingIntentions", reflect.TypeOf((*MockLookupRepository)(nil).GetDatingIntentions), ctx)
-}
-
 // GetEducationLevelByID mocks base method.
 func (m *MockLookupRepository) GetEducationLevelByID(ctx context.Context, id int16) (*entity.EducationLevel, error) {
 	m.ctrl.T.Helper()

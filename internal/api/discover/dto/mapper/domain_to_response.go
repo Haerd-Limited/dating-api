@@ -49,14 +49,13 @@ func MapToGetUserPreferencesResponse(preferences *domain.StoredDiscoverPreferenc
 	}
 
 	return dto.GetUserPreferencesResponse{
-		DistanceKM:         preferences.DistanceKM,
-		MinAge:             preferences.MinAge,
-		MaxAge:             preferences.MaxAge,
-		DatingIntentionIDs: preferences.DatingIntentionIDs,
-		ReligionIDs:        preferences.ReligionIDs,
-		SexualityIDs:       preferences.SexualityIDs,
-		EthnicityIDs:       preferences.EthnicityIDs,
-		SeekGenderIDs:      preferences.SeekGenderIDs,
-		SeekGender:         preferences.SeekGender,
+		DistanceKM:    preferences.DistanceKM,
+		MinAge:        preferences.MinAge,
+		MaxAge:        preferences.MaxAge,
+		ReligionIDs:   preferences.ReligionIDs,
+		SexualityIDs:  preferences.SexualityIDs,
+		EthnicityIDs:  preferences.EthnicityIDs,
+		SeekGenderIDs: preferences.SeekGenderIDs,
+		SeekGender:    preferences.SeekGender,
 	}
 }

@@ -194,23 +194,6 @@ func MapSexualitiesToDomain(s []*entity.Sexuality) []domain.Sexuality {
 	return result
 }
 
-func MapDatingIntentionsToDomain(di []*entity.DatingIntention) []domain.DatingIntention {
-	if di == nil {
-		return nil
-	}
-
-	var result []domain.DatingIntention
-	for _, e := range di {
-		result = append(result, domain.DatingIntention{
-			ID:          e.ID,
-			Label:       e.Label,
-			Description: e.Description,
-		})
-	}
-
-	return result
-}
-
 func MapReportCategoryEntitiesToDomain(rows entity.ReportCategorySlice) []domain.ReportCategory {
 	if rows == nil {
 		return nil

@@ -312,6 +312,7 @@ func (r *discoverRepository) getDiscoverFeedCandidatesWithMods(
 		if err != nil {
 			return nil, fmt.Errorf("build filter mods: %w", err)
 		}
+
 		mods = append(mods, filterMods...)
 	}
 
@@ -346,11 +347,6 @@ func (r *discoverRepository) buildFilterMods(filters *domain.DiscoverFilters) ([
 		}
 
 		mods = append(mods, ageMods...)
-	}
-
-	// Dating intentions filter
-	if filters.HasDatingIntentionsFilter() {
-		mods = append(mods, entity.UserProfileWhere.DatingIntentionID.IN(filters.DatingIntentions.IntentionIDs))
 	}
 
 	// Religion filter
@@ -395,6 +391,7 @@ func (r *discoverRepository) calculateMaxBirthdateForAge(minAge int) string {
 	// Someone born on this date is exactly minAge today.
 	now := time.Now().UTC()
 	cutoff := now.AddDate(-minAge, 0, 0)
+
 	return cutoff.Format("2006-01-02")
 }
 
@@ -403,6 +400,7 @@ func (r *discoverRepository) calculateMinBirthdateForAge(maxAge int) string {
 	// Someone born on this date is exactly maxAge today.
 	now := time.Now().UTC()
 	cutoff := now.AddDate(-maxAge, 0, 0)
+
 	return cutoff.Format("2006-01-02")
 }
 
@@ -420,7 +418,6 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 		up.DistanceKM = null.Int16{}
 		up.AgeMin = null.Int16{}
 		up.AgeMax = null.Int16{}
-		up.SeekIntentionIds = nil
 		up.SeekReligionIds = nil
 		up.SeekSexualityIds = nil
 		up.SeekEthnicityIds = nil
@@ -430,7 +427,6 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 			entity.UserPreferenceColumns.DistanceKM,
 			entity.UserPreferenceColumns.AgeMin,
 			entity.UserPreferenceColumns.AgeMax,
-			entity.UserPreferenceColumns.SeekIntentionIds,
 			entity.UserPreferenceColumns.SeekReligionIds,
 			entity.UserPreferenceColumns.SeekSexualityIds,
 			entity.UserPreferenceColumns.SeekEthnicityIds,
@@ -438,10 +434,12 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 		}
 		updateColumns := boil.Whitelist(clearCols...)
 		insertColumns := boil.Whitelist(append([]string{entity.UserPreferenceColumns.UserID}, clearCols[1:]...)...)
+
 		err := up.Upsert(ctx, r.db, true, []string{entity.UserPreferenceColumns.UserID}, updateColumns, insertColumns)
 		if err != nil {
 			return fmt.Errorf("save user discover preferences (clear all): %w", err)
 		}
+
 		return nil
 	}
 
@@ -459,10 +457,6 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 	}
 
 	// Set array fields (convert int16 to int64)
-	if len(preferences.DatingIntentionIDs) > 0 {
-		up.SeekIntentionIds = convertInt16SliceToInt64Array(preferences.DatingIntentionIDs)
-	}
-
 	if len(preferences.ReligionIDs) > 0 {
 		up.SeekReligionIds = convertInt16SliceToInt64Array(preferences.ReligionIDs)
 	}
@@ -496,11 +490,6 @@ func (r *discoverRepository) SaveUserDiscoverPreferences(ctx context.Context, us
 	if preferences.MaxAge != nil {
 		updateCols = append(updateCols, entity.UserPreferenceColumns.AgeMax)
 		insertCols = append(insertCols, entity.UserPreferenceColumns.AgeMax)
-	}
-
-	if len(preferences.DatingIntentionIDs) > 0 {
-		updateCols = append(updateCols, entity.UserPreferenceColumns.SeekIntentionIds)
-		insertCols = append(insertCols, entity.UserPreferenceColumns.SeekIntentionIds)
 	}
 
 	if len(preferences.ReligionIDs) > 0 {
@@ -545,14 +534,13 @@ func (r *discoverRepository) GetUserDiscoverPreferences(ctx context.Context, use
 	}
 
 	return &domain.StoredDiscoverPreferences{
-		DistanceKM:         fromNullInt16(up.DistanceKM),
-		MinAge:             fromNullInt16(up.AgeMin),
-		MaxAge:             fromNullInt16(up.AgeMax),
-		DatingIntentionIDs: convertInt64ArrayToInt16Slice(up.SeekIntentionIds),
-		ReligionIDs:        convertInt64ArrayToInt16Slice(up.SeekReligionIds),
-		SexualityIDs:       convertInt64ArrayToInt16Slice(up.SeekSexualityIds),
-		EthnicityIDs:       convertInt64ArrayToInt16Slice(up.SeekEthnicityIds),
-		SeekGenderIDs:      convertInt64ArrayToInt16Slice(up.SeekGenderIds),
+		DistanceKM:    fromNullInt16(up.DistanceKM),
+		MinAge:        fromNullInt16(up.AgeMin),
+		MaxAge:        fromNullInt16(up.AgeMax),
+		ReligionIDs:   convertInt64ArrayToInt16Slice(up.SeekReligionIds),
+		SexualityIDs:  convertInt64ArrayToInt16Slice(up.SeekSexualityIds),
+		EthnicityIDs:  convertInt64ArrayToInt16Slice(up.SeekEthnicityIds),
+		SeekGenderIDs: convertInt64ArrayToInt16Slice(up.SeekGenderIds),
 	}, nil
 }
 
@@ -651,17 +639,21 @@ func (r *discoverRepository) GetSeekGenderIDs(ctx context.Context, userID string
 		if err != nil {
 			return nil, err
 		}
+
 		if len(ids) > 0 {
 			return ids, nil
 		}
 	}
+
 	if len(storedSeekGenderIDs) > 0 {
 		return storedSeekGenderIDs, nil
 	}
+
 	opposite, err := r.getOppositeGender(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
+
 	return []int16{opposite.ID}, nil
 }
 
@@ -673,12 +665,14 @@ func (r *discoverRepository) getGenderIDsBySeekLabel(ctx context.Context, seekLa
 		if err != nil {
 			return nil, fmt.Errorf("get male gender: %w", err)
 		}
+
 		return []int16{g.ID}, nil
 	case domain.SeekGenderFemale:
 		g, err := entity.Genders(entity.GenderWhere.Label.ILIKE("female"), qm.Limit(1)).One(ctx, r.db)
 		if err != nil {
 			return nil, fmt.Errorf("get female gender: %w", err)
 		}
+
 		return []int16{g.ID}, nil
 	case domain.SeekGenderBoth:
 		genders, err := entity.Genders(
@@ -687,10 +681,12 @@ func (r *discoverRepository) getGenderIDsBySeekLabel(ctx context.Context, seekLa
 		if err != nil {
 			return nil, fmt.Errorf("get male and female genders: %w", err)
 		}
+
 		ids := make([]int16, 0, len(genders))
 		for _, g := range genders {
 			ids = append(ids, g.ID)
 		}
+
 		return ids, nil
 	default:
 		return nil, fmt.Errorf("unsupported seek_gender: %q", seekLabel)
@@ -702,13 +698,16 @@ func (r *discoverRepository) GetSeekGenderLabelFromIDs(ctx context.Context, seek
 	if len(seekGenderIDs) == 0 {
 		return "", nil
 	}
+
 	if len(seekGenderIDs) >= 2 {
 		return domain.SeekGenderBoth, nil
 	}
+
 	g, err := entity.Genders(entity.GenderWhere.ID.EQ(seekGenderIDs[0])).One(ctx, r.db)
 	if err != nil {
 		return "", fmt.Errorf("get gender by id: %w", err)
 	}
+
 	switch g.Label {
 	case "Male", "male":
 		return domain.SeekGenderMale, nil

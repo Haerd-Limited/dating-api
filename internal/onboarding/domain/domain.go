@@ -159,12 +159,11 @@ type Habit struct {
 }
 
 type Basics struct {
-	UserID            string
-	Birthdate         string
-	HeightCm          int16
-	GenderID          int16
-	DatingIntentionID int16
-	SexualityID       int16
+	UserID      string
+	Birthdate   string
+	HeightCm    int16
+	GenderID    int16
+	SexualityID int16
 }
 
 type Intro struct {
@@ -185,17 +184,11 @@ type OnboardingSteps struct {
 }
 
 type IntroContent struct {
-	DatingIntentions []DatingIntention
-	Genders          []Gender
-	Sexualities      []Sexuality
+	Genders     []Gender
+	Sexualities []Sexuality
 }
 
 type Gender struct {
-	ID    int16
-	Label string
-}
-
-type DatingIntention struct {
 	ID    int16
 	Label string
 }
@@ -211,7 +204,6 @@ type Preferences struct {
 	AgeMin           *int16
 	AgeMax           *int16
 	SeekGenderIDs    *[]int32
-	SeekIntentionIDs *[]int32
 	SeekReligionIDs  *[]int32
 	SeekPoliticalIDs *[]int32
 }

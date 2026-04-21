@@ -4,28 +4,26 @@ package domain
 type DiscoverPreferenceUpdate struct {
 	// ClearAll when true instructs the repository to clear all discover preferences (set to null/empty).
 	// Used when the user explicitly clears all filters so the cleared state is persisted.
-	ClearAll           bool
-	DistanceKM         *int
-	MinAge             *int
-	MaxAge             *int
-	DatingIntentionIDs []int16
-	ReligionIDs        []int16
-	SexualityIDs       []int16
-	EthnicityIDs       []int16
-	SeekGenderIDs      []int16 // one or two gender IDs (Male, Female, or both)
+	ClearAll      bool
+	DistanceKM    *int
+	MinAge        *int
+	MaxAge        *int
+	ReligionIDs   []int16
+	SexualityIDs  []int16
+	EthnicityIDs  []int16
+	SeekGenderIDs []int16 // one or two gender IDs (Male, Female, or both)
 }
 
 // StoredDiscoverPreferences encapsulates persisted preference values.
 type StoredDiscoverPreferences struct {
-	DistanceKM         *int
-	MinAge             *int
-	MaxAge             *int
-	DatingIntentionIDs []int16
-	ReligionIDs        []int16
-	SexualityIDs       []int16
-	EthnicityIDs       []int16
-	SeekGenderIDs      []int16
-	SeekGender         string // Human-readable "Male", "Female", or "Both" derived from SeekGenderIDs (set by service when loading)
+	DistanceKM    *int
+	MinAge        *int
+	MaxAge        *int
+	ReligionIDs   []int16
+	SexualityIDs  []int16
+	EthnicityIDs  []int16
+	SeekGenderIDs []int16
+	SeekGender    string // Human-readable "Male", "Female", or "Both" derived from SeekGenderIDs (set by service when loading)
 }
 
 // HasAnyPreference returns true if the preferences contain at least one value.
@@ -37,7 +35,6 @@ func (p *StoredDiscoverPreferences) HasAnyPreference() bool {
 	return p.DistanceKM != nil ||
 		p.MinAge != nil ||
 		p.MaxAge != nil ||
-		len(p.DatingIntentionIDs) > 0 ||
 		len(p.ReligionIDs) > 0 ||
 		len(p.SexualityIDs) > 0 ||
 		len(p.EthnicityIDs) > 0 ||
@@ -50,6 +47,7 @@ func NewPreferenceUpdateFromFilters(filters *DiscoverFilters) *DiscoverPreferenc
 	if filters == nil {
 		return nil
 	}
+
 	if filters.IsEmpty() {
 		return &DiscoverPreferenceUpdate{ClearAll: true}
 	}
@@ -71,10 +69,6 @@ func NewPreferenceUpdateFromFilters(filters *DiscoverFilters) *DiscoverPreferenc
 			value := *filters.AgeRange.MaxAge
 			update.MaxAge = &value
 		}
-	}
-
-	if filters.HasDatingIntentionsFilter() {
-		update.DatingIntentionIDs = append([]int16{}, filters.DatingIntentions.IntentionIDs...)
 	}
 
 	if filters.HasReligionsFilter() {
@@ -104,7 +98,6 @@ func (u *DiscoverPreferenceUpdate) hasValues() bool {
 	return u.DistanceKM != nil ||
 		u.MinAge != nil ||
 		u.MaxAge != nil ||
-		len(u.DatingIntentionIDs) > 0 ||
 		len(u.ReligionIDs) > 0 ||
 		len(u.SexualityIDs) > 0 ||
 		len(u.EthnicityIDs) > 0 ||

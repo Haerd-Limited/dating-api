@@ -16,7 +16,6 @@ type ProfileCard struct {
 	DistanceKm int     `json:"distance_km"`
 
 	Gender                string        `json:"gender"`
-	DatingIntention       string        `json:"dating_intention"`
 	Sexuality             string        `json:"sexuality"`
 	Religion              string        `json:"religion"`
 	EducationLevel        string        `json:"education_level"`

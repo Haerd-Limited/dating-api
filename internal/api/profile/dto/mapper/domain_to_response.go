@@ -28,10 +28,6 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 			ID:    profile.Gender.ID,
 			Label: profile.Gender.Label,
 		},
-		DatingIntention: dto.DatingIntention{
-			ID:    profile.DatingIntention.ID,
-			Label: profile.DatingIntention.Label,
-		},
 		Sexuality: dto.Sexuality{
 			ID:    profile.Sexuality.ID,
 			Label: profile.Sexuality.Label,

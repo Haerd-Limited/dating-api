@@ -20,5 +20,6 @@ func (r *GetDiscoverRequest) Validate() error {
 			return fmt.Errorf("seek_gender must be %q, %q, or %q", domain.SeekGenderMale, domain.SeekGenderFemale, domain.SeekGenderBoth)
 		}
 	}
+
 	return nil
 }

@@ -87,7 +87,7 @@ var (
 	ErrInvalidMessage                      = errors.New("invalid message")
 	ErrInvalidVoiceNoteSeconds             = errors.New("invalid voice note seconds")
 	ErrTextTooLong                         = errors.New("text too long")
-	ErrInvalidTextMessage = errors.New("invalid text message")
+	ErrInvalidTextMessage                  = errors.New("invalid text message")
 )
 
 const messagePreviewMaxRunes = 120

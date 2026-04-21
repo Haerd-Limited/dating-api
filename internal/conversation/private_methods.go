@@ -68,10 +68,12 @@ func (s *service) getConversationByUserIds(ctx context.Context, userID, matchID 
 
 	// Always load match photos (photos visible from start)
 	var photos []domain.Photo
+
 	matchPhotos, err := s.profileService.GetUserPhotos(ctx, matchID)
 	if err != nil {
 		return nil, commonlogger.LogError(s.logger, "get match photos", err, zap.String("userID", userID), zap.String("matchID", matchID))
 	}
+
 	for _, photo := range matchPhotos {
 		photos = append(photos, domain.Photo{
 			URL:       photo.URL,

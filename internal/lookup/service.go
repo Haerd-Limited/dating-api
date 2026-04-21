@@ -22,7 +22,6 @@ type Service interface {
 	GetHabits(ctx context.Context) ([]domain.Habit, error)
 	GetGenders(ctx context.Context) ([]domain.Gender, error)
 	GetSexualities(ctx context.Context) ([]domain.Sexuality, error)
-	GetDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error)
 	GetFamilyStatus(ctx context.Context) ([]domain.FamilyStatus, error)
 	GetReportCategories(ctx context.Context) ([]domain.ReportCategory, error)
 }
@@ -139,15 +138,6 @@ func (s *lookupService) GetSexualities(ctx context.Context) ([]domain.Sexuality,
 	}
 
 	return mapper.MapSexualitiesToDomain(sexualityEntities), nil
-}
-
-func (s *lookupService) GetDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error) {
-	datingIntentionsEntities, err := s.lookupRepo.GetDatingIntentions(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return mapper.MapDatingIntentionsToDomain(datingIntentionsEntities), nil
 }
 
 func (s *lookupService) GetReportCategories(ctx context.Context) ([]domain.ReportCategory, error) {

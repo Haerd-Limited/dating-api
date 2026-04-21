@@ -139,6 +139,7 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 		if badgeErr != nil {
 			return out, fmt.Errorf("failed to get mandatory mismatch badges: %w", badgeErr)
 		}
+
 		out.Badges = badges
 
 		return out, nil
@@ -280,6 +281,7 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 		if err != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get question by ID: %w", err)
 		}
+
 		if question == nil {
 			return domain.QuestionsAndAnswers{}, ErrQuestionNotFound
 		}
@@ -290,10 +292,12 @@ func (s *service) GetQuestionsAndAnswers(ctx context.Context, category string, o
 		}
 
 		var userAnswer *domain.UserAnswer
+
 		existingAnswer, err := s.compatibilityRepo.GetUserAnswerForQuestion(ctx, *userID, question.ID)
 		if err != nil {
 			return domain.QuestionsAndAnswers{}, fmt.Errorf("failed to get existing answer: %w", err)
 		}
+
 		if existingAnswer != nil {
 			userAnswer = mapper.MapUserAnswerEntityToDomain(existingAnswer)
 		}
