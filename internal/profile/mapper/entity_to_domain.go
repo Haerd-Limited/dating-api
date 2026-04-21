@@ -23,6 +23,19 @@ func MapProfileToDomain(up *entity.UserProfile) *domain.Profile {
 		d.Emoji = up.Emoji.String
 	}
 
+	if up.CoverMediaURL.Valid {
+		d.CoverMediaURL = &up.CoverMediaURL.String
+	}
+
+	if up.CoverMediaType.Valid {
+		d.CoverMediaType = &up.CoverMediaType.String
+	}
+
+	if up.CoverMediaAspectRatio.Valid {
+		aspectRatio64 := float64(up.CoverMediaAspectRatio.Float32)
+		d.CoverMediaAspectRatio = &aspectRatio64
+	}
+
 	// Basic fields
 	d.DisplayName = up.DisplayName
 

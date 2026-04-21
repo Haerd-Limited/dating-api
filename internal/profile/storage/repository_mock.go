@@ -14,8 +14,9 @@ import (
 	sql "database/sql"
 	reflect "reflect"
 
-	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 	gomock "go.uber.org/mock/gomock"
+
+	entity "github.com/Haerd-Limited/dating-api/internal/entity"
 )
 
 // MockProfileRepository is a mock of ProfileRepository interface.
@@ -70,21 +71,6 @@ func (m *MockProfileRepository) CountUsersBasicsCompletedByGender(ctx context.Co
 func (mr *MockProfileRepositoryMockRecorder) CountUsersBasicsCompletedByGender(ctx, genderID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsersBasicsCompletedByGender", reflect.TypeOf((*MockProfileRepository)(nil).CountUsersBasicsCompletedByGender), ctx, genderID)
-}
-
-// GetAllVoicePromptsByUserID mocks base method.
-func (m *MockProfileRepository) GetAllVoicePromptsByUserID(ctx context.Context, userID string) ([]*entity.VoicePrompt, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllVoicePromptsByUserID", ctx, userID)
-	ret0, _ := ret[0].([]*entity.VoicePrompt)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllVoicePromptsByUserID indicates an expected call of GetAllVoicePromptsByUserID.
-func (mr *MockProfileRepositoryMockRecorder) GetAllVoicePromptsByUserID(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllVoicePromptsByUserID", reflect.TypeOf((*MockProfileRepository)(nil).GetAllVoicePromptsByUserID), ctx, userID)
 }
 
 // GetUserEthnicities mocks base method.
@@ -147,6 +133,21 @@ func (mr *MockProfileRepositoryMockRecorder) GetUserSpokenLanguages(ctx, userID 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSpokenLanguages", reflect.TypeOf((*MockProfileRepository)(nil).GetUserSpokenLanguages), ctx, userID)
 }
 
+// GetUserTheme mocks base method.
+func (m *MockProfileRepository) GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserTheme", ctx, userID)
+	ret0, _ := ret[0].(*entity.UserTheme)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserTheme indicates an expected call of GetUserTheme.
+func (mr *MockProfileRepositoryMockRecorder) GetUserTheme(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserTheme", reflect.TypeOf((*MockProfileRepository)(nil).GetUserTheme), ctx, userID)
+}
+
 // GetUserVoicePrompts mocks base method.
 func (m *MockProfileRepository) GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error) {
 	m.ctrl.T.Helper()
@@ -160,21 +161,6 @@ func (m *MockProfileRepository) GetUserVoicePrompts(ctx context.Context, userID 
 func (mr *MockProfileRepositoryMockRecorder) GetUserVoicePrompts(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserVoicePrompts", reflect.TypeOf((*MockProfileRepository)(nil).GetUserVoicePrompts), ctx, userID)
-}
-
-// GetVerificationStatus mocks base method.
-func (m *MockProfileRepository) GetVerificationStatus(ctx context.Context, userID string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVerificationStatus", ctx, userID)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetVerificationStatus indicates an expected call of GetVerificationStatus.
-func (mr *MockProfileRepositoryMockRecorder) GetVerificationStatus(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVerificationStatus", reflect.TypeOf((*MockProfileRepository)(nil).GetVerificationStatus), ctx, userID)
 }
 
 // GetVoicePromptByID mocks base method.
@@ -303,4 +289,18 @@ func (m *MockProfileRepository) UpsertUserSpokenLanguages(ctx context.Context, u
 func (mr *MockProfileRepositoryMockRecorder) UpsertUserSpokenLanguages(ctx, userID, languages, tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserSpokenLanguages", reflect.TypeOf((*MockProfileRepository)(nil).UpsertUserSpokenLanguages), ctx, userID, languages, tx)
+}
+
+// UpsertUserTheme mocks base method.
+func (m *MockProfileRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme, tx *sql.Tx) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertUserTheme", ctx, theme, tx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertUserTheme indicates an expected call of UpsertUserTheme.
+func (mr *MockProfileRepositoryMockRecorder) UpsertUserTheme(ctx, theme, tx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserTheme", reflect.TypeOf((*MockProfileRepository)(nil).UpsertUserTheme), ctx, theme, tx)
 }

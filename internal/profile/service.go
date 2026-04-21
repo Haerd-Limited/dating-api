@@ -38,6 +38,7 @@ type Service interface {
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error
+	UpsertUserTheme(ctx context.Context, userID, baseColour string) error
 	VerifyProfile(ctx context.Context, userID string) error
 	IsVerified(ctx context.Context, userID string) (bool, error)
 	SetProfileUnderReview(ctx context.Context, userID string) error
@@ -260,35 +261,38 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 	}
 
 	return domain.UpdateProfile{
-		DisplayName:       &userProfile.DisplayName,
-		Birthdate:         &userProfile.Birthdate,
-		HeightCM:          &userProfile.HeightCM,
-		UserID:            userProfile.UserID,
-		ProfileEmoji:      &userProfile.Emoji,
-		Latitude:          &userProfile.Latitude,
-		Longitude:         &userProfile.Longitude,
-		City:              &userProfile.City,
-		Country:           &userProfile.Country,
-		GenderID:          &userProfile.GenderID,
-		DatingIntentionID: &userProfile.DatingIntentionID,
-		ReligionID:        &userProfile.ReligionID,
-		EducationLevelID:  &userProfile.EducationLevelID,
-		PoliticalBeliefID: &userProfile.PoliticalBeliefID,
-		DrinkingID:        &userProfile.DrinkingID,
-		SmokingID:         &userProfile.SmokingID,
-		MarijuanaID:       &userProfile.MarijuanaID,
-		DrugsID:           &userProfile.DrugsID,
-		ChildrenStatusID:  userProfile.ChildrenStatusID,
-		FamilyPlanID:      userProfile.FamilyPlanID,
-		EthnicityIDs:      ethnicityIDs,
-		SpokenLanguages:   languageIds,
-		VoicePrompts:      VoicePrompts,
-		Photos:            Photos,
-		Work:              userProfile.Work,
-		JobTitle:          userProfile.JobTitle,
-		University:        userProfile.University,
-		CreatedAt:         &userProfile.CreatedAt,
-		UpdatedAt:         userProfile.UpdatedAt,
+		DisplayName:           &userProfile.DisplayName,
+		Birthdate:             &userProfile.Birthdate,
+		HeightCM:              &userProfile.HeightCM,
+		UserID:                userProfile.UserID,
+		ProfileEmoji:          &userProfile.Emoji,
+		Latitude:              &userProfile.Latitude,
+		Longitude:             &userProfile.Longitude,
+		City:                  &userProfile.City,
+		Country:               &userProfile.Country,
+		GenderID:              &userProfile.GenderID,
+		DatingIntentionID:     &userProfile.DatingIntentionID,
+		ReligionID:            &userProfile.ReligionID,
+		EducationLevelID:      &userProfile.EducationLevelID,
+		PoliticalBeliefID:     &userProfile.PoliticalBeliefID,
+		DrinkingID:            &userProfile.DrinkingID,
+		SmokingID:             &userProfile.SmokingID,
+		MarijuanaID:           &userProfile.MarijuanaID,
+		DrugsID:               &userProfile.DrugsID,
+		ChildrenStatusID:      userProfile.ChildrenStatusID,
+		FamilyPlanID:          userProfile.FamilyPlanID,
+		EthnicityIDs:          ethnicityIDs,
+		SpokenLanguages:       languageIds,
+		VoicePrompts:          VoicePrompts,
+		Photos:                Photos,
+		CoverMediaURL:         userProfile.CoverMediaURL,
+		CoverMediaType:        userProfile.CoverMediaType,
+		CoverMediaAspectRatio: userProfile.CoverMediaAspectRatio,
+		Work:                  userProfile.Work,
+		JobTitle:              userProfile.JobTitle,
+		University:            userProfile.University,
+		CreatedAt:             &userProfile.CreatedAt,
+		UpdatedAt:             userProfile.UpdatedAt,
 	}, nil
 }
 
@@ -340,6 +344,18 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 
 	if up.ProfileEmoji != nil {
 		prof.Emoji = *up.ProfileEmoji
+	}
+
+	if up.CoverMediaURL != nil {
+		prof.CoverMediaURL = up.CoverMediaURL
+	}
+
+	if up.CoverMediaType != nil {
+		prof.CoverMediaType = up.CoverMediaType
+	}
+
+	if up.CoverMediaAspectRatio != nil {
+		prof.CoverMediaAspectRatio = up.CoverMediaAspectRatio
 	}
 
 	// Location
@@ -427,6 +443,22 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		return commonlogger.LogError(s.logger, "update user profile", err, zap.String("userID", up.UserID))
 	}
 
+	if up.BaseColour != nil {
+		paletteJSON, err := s.generatePaletteJsonFromBaseColour(*up.BaseColour)
+		if err != nil {
+			return commonlogger.LogError(s.logger, "generate palette json", err, zap.String("userID", up.UserID))
+		}
+
+		err = s.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
+			UserID:  up.UserID,
+			BaseHex: *up.BaseColour,
+			Palette: paletteJSON,
+		}, tx.Raw())
+		if err != nil {
+			return commonlogger.LogError(s.logger, "upsert user theme", err, zap.String("userID", up.UserID))
+		}
+	}
+
 	// Update ethnicities if provided (including empty array to clear)
 	if up.EthnicityIDs != nil {
 		err = s.profileRepo.UpsertUserEthnicities(ctx, up.UserID, up.EthnicityIDs, tx.Raw())
@@ -469,22 +501,30 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	}
 
 	result := domain.EnrichedProfile{
-		DisplayName:    userProfile.DisplayName,
-		Birthdate:      userProfile.Birthdate,
-		Age:            utils.CalculateAge(userProfile.Birthdate),
-		HeightCM:       userProfile.HeightCM,
-		UserID:         userID,
-		Latitude:       userProfile.Latitude,
-		Longitude:      userProfile.Longitude,
-		City:           userProfile.City,
-		Country:        userProfile.Country,
-		Work:           userProfile.Work,
-		JobTitle:       userProfile.JobTitle,
-		University:     userProfile.University,
-		CreatedAt:      userProfile.CreatedAt,
-		UpdatedAt:      userProfile.UpdatedAt,
-		Emoji:          userProfile.Emoji,
-		VerifiedStatus: userProfile.VerifiedStatus,
+		DisplayName:           userProfile.DisplayName,
+		Birthdate:             userProfile.Birthdate,
+		Age:                   utils.CalculateAge(userProfile.Birthdate),
+		HeightCM:              userProfile.HeightCM,
+		UserID:                userID,
+		Latitude:              userProfile.Latitude,
+		Longitude:             userProfile.Longitude,
+		City:                  userProfile.City,
+		Country:               userProfile.Country,
+		Work:                  userProfile.Work,
+		JobTitle:              userProfile.JobTitle,
+		University:            userProfile.University,
+		CreatedAt:             userProfile.CreatedAt,
+		UpdatedAt:             userProfile.UpdatedAt,
+		CoverMediaURL:         userProfile.CoverMediaURL,
+		CoverMediaType:        userProfile.CoverMediaType,
+		CoverMediaAspectRatio: userProfile.CoverMediaAspectRatio,
+		Emoji:                 userProfile.Emoji,
+		VerifiedStatus:        userProfile.VerifiedStatus,
+	}
+
+	result.Theme, err = s.getUserTheme(ctx, userID)
+	if err != nil {
+		return domain.EnrichedProfile{}, fmt.Errorf("get user theme: %w", err)
 	}
 
 	result.Gender, err = s.getGenderByID(ctx, userProfile.GenderID)
@@ -604,6 +644,25 @@ func (s *service) GetProfileCardWithDistance(ctx context.Context, userID string,
 	profileCard.DistanceKm = utils.CalculateDistanceKm(currentUserLat, currentUserLon, enrichedProfile.Latitude, enrichedProfile.Longitude)
 
 	return profileCard, nil
+}
+
+func (s *service) UpsertUserTheme(ctx context.Context, userID, baseColour string) error {
+	// generate colours
+	palJSON, err := s.generatePaletteJsonFromBaseColour(baseColour)
+	if err != nil {
+		return fmt.Errorf("generate palette json: %w", err)
+	}
+	// store colours.
+	err = s.profileRepo.UpsertUserTheme(ctx, entity.UserTheme{
+		UserID:  userID,
+		BaseHex: baseColour,
+		Palette: palJSON,
+	}, nil)
+	if err != nil {
+		return fmt.Errorf("upsert user theme: %w", err)
+	}
+
+	return nil
 }
 
 func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error {

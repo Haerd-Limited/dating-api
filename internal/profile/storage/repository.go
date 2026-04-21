@@ -10,6 +10,7 @@ import (
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
+	"github.com/friendsofgo/errors"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
@@ -18,11 +19,13 @@ import (
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type ProfileRepository interface {
 	InsertProfile(ctx context.Context, userProfile *entity.UserProfile, tx *sql.Tx) error
+	UpsertUserTheme(ctx context.Context, theme entity.UserTheme, tx *sql.Tx) error
 	UpsertUserPrompts(ctx context.Context, userID string, prompts []entity.VoicePrompt, tx *sql.Tx) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []entity.Photo, tx *sql.Tx) error
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16, tx *sql.Tx) error
 	UpsertUserEthnicities(ctx context.Context, userID string, ethnicities []int16, tx *sql.Tx) error
 	UpdateUserProfile(ctx context.Context, userProfile *entity.UserProfile, whiteList []string, tx *sql.Tx) error
+	GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error)
 	GetUserProfileByUserID(ctx context.Context, userID string) (*entity.UserProfile, error)
 	GetUserSpokenLanguages(ctx context.Context, userID string) ([]int16, error)
 	GetUserEthnicities(ctx context.Context, userID string) ([]int16, error)
@@ -104,6 +107,7 @@ func (pr *profileRepository) CountUsersBasicsCompletedByGender(ctx context.Conte
 		"LANGUAGES",
 		"PHOTOS",
 		"PROMPTS",
+		"PROFILE",
 		stepComplete,
 	}
 
@@ -140,6 +144,7 @@ func (pr *profileRepository) CountUsersBasicsCompleted(ctx context.Context) (int
 		"LANGUAGES",
 		"PHOTOS",
 		"PROMPTS",
+		"PROFILE",
 		"COMPLETE",
 	}
 
@@ -173,6 +178,35 @@ func (pr *profileRepository) InsertProfile(ctx context.Context, userProfile *ent
 	}
 
 	return nil
+}
+
+func (pr *profileRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme, tx *sql.Tx) error {
+	exec := pr.executor(tx)
+
+	err := theme.Upsert(ctx, exec, true, []string{"user_id"},
+		boil.Whitelist("base_hex", "palette", "updated_at"),
+		boil.Infer())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (pr *profileRepository) GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error) {
+	ut, err := entity.UserThemes(
+		entity.UserThemeWhere.UserID.EQ(userID),
+		qm.Limit(1),
+	).One(ctx, pr.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to fetch user theme: %w", err)
+	}
+
+	return ut, nil
 }
 
 func (pr *profileRepository) GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error) {

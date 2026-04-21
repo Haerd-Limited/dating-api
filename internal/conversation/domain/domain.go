@@ -31,6 +31,12 @@ type MatchedUser struct {
 	ID          string
 	DisplayName string
 	Emoji       string
+	Theme       Theme
+}
+
+type Theme struct {
+	BaseHex string
+	Palette []string
 }
 
 type Message struct {
