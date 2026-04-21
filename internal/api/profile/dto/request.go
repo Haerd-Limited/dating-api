@@ -19,10 +19,14 @@ func (sr SwipesRequest) Validate() error {
 
 type UpdateProfileRequest struct {
 	// Profile
-	DisplayName  *string `json:"display_name,omitempty"`
-	Birthdate    *string `json:"birthdate,omitempty"` // "YYYY-MM-DD"
-	HeightCM     *int16  `json:"height_cm,omitempty"`
-	ProfileEmoji *string `json:"profile_emoji,omitempty"`
+	DisplayName           *string  `json:"display_name,omitempty"`
+	Birthdate             *string  `json:"birthdate,omitempty"` // "YYYY-MM-DD"
+	HeightCM              *int16   `json:"height_cm,omitempty"`
+	ProfileEmoji          *string  `json:"profile_emoji,omitempty"`
+	CoverMediaURL         *string  `json:"cover_media_url,omitempty"`
+	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
+	ProfileBaseColour     *string  `json:"profile_base_colour,omitempty"`
 
 	// Location
 	Latitude  *float64 `json:"latitude,omitempty"`

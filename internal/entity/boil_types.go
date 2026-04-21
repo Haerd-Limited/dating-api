@@ -139,6 +139,19 @@ func AllUserVideoVerificationStatus() []string {
 	}
 }
 
+// Enum values for CoverMediaType
+const (
+	CoverMediaTypeImage string = "image"
+	CoverMediaTypeGif   string = "gif"
+)
+
+func AllCoverMediaType() []string {
+	return []string{
+		CoverMediaTypeImage,
+		CoverMediaTypeGif,
+	}
+}
+
 // Enum values for ReportStatus
 const (
 	ReportStatusPending   string = "pending"
@@ -160,13 +173,15 @@ func AllReportStatus() []string {
 
 // Enum values for VerificationType
 const (
-	VerificationTypePhoto string = "photo"
-	VerificationTypeVideo string = "video"
+	VerificationTypePhoto       string = "photo"
+	VerificationTypeManualVideo string = "manual_video"
+	VerificationTypeVideo       string = "video"
 )
 
 func AllVerificationType() []string {
 	return []string{
 		VerificationTypePhoto,
+		VerificationTypeManualVideo,
 		VerificationTypeVideo,
 	}
 }
@@ -185,18 +200,5 @@ func AllVerificationStatus() []string {
 		VerificationStatusPassed,
 		VerificationStatusFailed,
 		VerificationStatusNeedsReview,
-	}
-}
-
-// Enum values for CoverMediaType
-const (
-	CoverMediaTypeImage string = "image"
-	CoverMediaTypeGif   string = "gif"
-)
-
-func AllCoverMediaType() []string {
-	return []string{
-		CoverMediaTypeImage,
-		CoverMediaTypeGif,
 	}
 }

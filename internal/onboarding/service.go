@@ -46,6 +46,7 @@ type Service interface {
 	Photos(ctx context.Context, uploadedPhotos domain.UploadedPhotos) (domain.StepResult, error)
 	// Prompts handles the submission of user-uploaded prompts and updates the onboarding process with the provided data.
 	Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.StepResult, error)
+	Profile(ctx context.Context, profileDetails domain.Profile) (domain.StepResult, error)
 	// VideoVerification handles the video verification step in onboarding
 	VideoVerification(ctx context.Context, videoDetails domain.VideoVerification) (domain.StepResult, error)
 }
@@ -265,6 +266,10 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 				Prompts:                prompts,
 				VoicePromptsUploadUrls: voicePromptUploadUrls,
 			},
+		}, nil
+	case domain.OnboardingStepsProfile:
+		return domain.StepResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
 		}, nil
 	case domain.OnboardingStepsVideoVerification:
 		return domain.StepResult{
@@ -748,6 +753,48 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, uploadedPrompts.UserID, StepForPrompts)
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", uploadedPrompts.UserID), zap.String("step", string(StepForPrompts)))
+	}
+
+	return domain.StepResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+	}, nil
+}
+
+func (os *onboardingService) Profile(ctx context.Context, profileDetails domain.Profile) (domain.StepResult, error) {
+	const StepForProfile = domain.OnboardingStepsProfile
+
+	err := os.ensureStep(ctx, profileDetails.UserID, StepForProfile)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", profileDetails.UserID), zap.String("step", string(StepForProfile)))
+	}
+
+	userProfile, err := os.profileService.GetProfileForUpdate(ctx, profileDetails.UserID)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "get user profile by userID", err, zap.String("userID", profileDetails.UserID))
+	}
+
+	userProfile.CoverMediaURL = &profileDetails.ProfileCoverMediaURL
+	if profileDetails.ProfileCoverMediaType != nil {
+		userProfile.CoverMediaType = profileDetails.ProfileCoverMediaType
+	}
+
+	if profileDetails.ProfileCoverMediaAspectRatio != nil {
+		userProfile.CoverMediaAspectRatio = profileDetails.ProfileCoverMediaAspectRatio
+	}
+
+	err = os.profileService.UpdateProfile(ctx, userProfile)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", profileDetails.UserID), zap.Any("userProfile", userProfile))
+	}
+
+	err = os.profileService.UpsertUserTheme(ctx, profileDetails.UserID, profileDetails.ProfileBaseColour)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "upsert user theme", err, zap.String("userID", profileDetails.UserID))
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, profileDetails.UserID, StepForProfile)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", profileDetails.UserID), zap.String("step", string(StepForProfile)))
 	}
 
 	return domain.StepResult{

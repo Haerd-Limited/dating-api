@@ -349,6 +349,9 @@ func userProfileToExport(p *entity.UserProfile) domain.ProfileExport {
 	if p.University.Valid {
 		out.University = &p.University.String
 	}
+	if p.CoverMediaURL.Valid {
+		out.CoverMediaURL = &p.CoverMediaURL.String
+	}
 	if p.Emoji.Valid {
 		out.Emoji = &p.Emoji.String
 	}

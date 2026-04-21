@@ -15,22 +15,26 @@ type ProfileCard struct {
 	Country    string  `json:"country"`
 	DistanceKm int     `json:"distance_km"`
 
-	Gender          string        `json:"gender"`
-	DatingIntention string        `json:"dating_intention"`
-	Sexuality       string        `json:"sexuality"`
-	Religion        string        `json:"religion"`
-	EducationLevel  string        `json:"education_level"`
-	PoliticalBelief string        `json:"political_belief"`
-	Drinking        string        `json:"drinking"`
-	Smoking         string        `json:"smoking"`
-	Marijuana       string        `json:"marijuana"`
-	Drugs           string        `json:"drugs"`
-	ChildrenStatus  *string       `json:"children_status"`
-	FamilyPlan      *string       `json:"family_plan"`
-	Ethnicities     []string      `json:"ethnicities"`
-	SpokenLanguages []string      `json:"spoken_languages"`
-	VoicePrompts    []VoicePrompt `json:"voice_prompts"`
-	Photos          []Photo       `json:"photos"`
+	Gender                string        `json:"gender"`
+	DatingIntention       string        `json:"dating_intention"`
+	Sexuality             string        `json:"sexuality"`
+	Religion              string        `json:"religion"`
+	EducationLevel        string        `json:"education_level"`
+	PoliticalBelief       string        `json:"political_belief"`
+	Drinking              string        `json:"drinking"`
+	Smoking               string        `json:"smoking"`
+	Marijuana             string        `json:"marijuana"`
+	Drugs                 string        `json:"drugs"`
+	ChildrenStatus        *string       `json:"children_status"`
+	FamilyPlan            *string       `json:"family_plan"`
+	Ethnicities           []string      `json:"ethnicities"`
+	SpokenLanguages       []string      `json:"spoken_languages"`
+	VoicePrompts          []VoicePrompt `json:"voice_prompts"`
+	Photos                []Photo       `json:"photos"`
+	Theme                 UserTheme     `json:"theme"`
+	CoverMediaURL         string        `json:"cover_media_url"`
+	CoverMediaType        *string       `json:"cover_media_type,omitempty"`
+	CoverMediaAspectRatio *float64      `json:"cover_media_aspect_ratio,omitempty"`
 
 	VerifiedStatus string `json:"verified_status"`
 	LikeCount      *int64 `json:"like_count"`
@@ -58,6 +62,10 @@ type MatchSummary struct {
 	OverlapCount int          `json:"overlap_count"`           // # shared questions answered
 	Badges       []MatchBadge `json:"badges"`                  // top 2–3 satisfied items
 	HiddenReason string       `json:"hidden_reason,omitempty"` // e.g., "Not enough overlap"
+}
+type UserTheme struct {
+	BaseHex string   `json:"base_hex"`
+	Palette []string `json:"palette"`
 }
 
 type VoicePrompt struct {

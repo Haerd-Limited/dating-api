@@ -3,6 +3,7 @@ package profile
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,6 +16,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/mapper"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commonErrors "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/errors"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/theme"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
@@ -67,6 +70,34 @@ func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
 		if h < constants.MinHeight || h > constants.MaxHeight {
 			return fmt.Errorf("%w: height_cm out of range", ErrInvalidHeight)
 		}
+	}
+
+	// Cover Media URL
+	if up.CoverMediaURL != nil {
+		if err := utils.ValidateHTTPURL(*up.CoverMediaURL); err != nil {
+			return fmt.Errorf("%w: cover_media_url invalid: %v", commonErrors.ErrInvalidMediaUrl, err)
+		}
+		// Optional: enforce your CDN domain
+		// if !strings.HasSuffix(u.Host, "your-cdn.com") { ... }
+	}
+
+	// Cover Media Type validation
+	if up.CoverMediaType != nil {
+		if *up.CoverMediaType != "image" && *up.CoverMediaType != "gif" {
+			return fmt.Errorf("%w: cover_media_type must be 'image' or 'gif'", commonErrors.ErrInvalidMediaUrl)
+		}
+	}
+
+	// Cover Media Aspect Ratio validation
+	if up.CoverMediaAspectRatio != nil {
+		if *up.CoverMediaAspectRatio <= 0 {
+			return fmt.Errorf("%w: cover_media_aspect_ratio must be positive", commonErrors.ErrInvalidMediaUrl)
+		}
+	}
+
+	// If cover_media_url is provided, cover_media_type should also be provided
+	if up.CoverMediaURL != nil && up.CoverMediaType == nil {
+		return fmt.Errorf("%w: cover_media_type is required when cover_media_url is provided", commonErrors.ErrInvalidMediaUrl)
 	}
 
 	return nil
@@ -125,6 +156,20 @@ func (s *service) containsSocialMediaPromotion(input string) bool {
 	return false
 }
 
+func (s *service) generatePaletteJsonFromBaseColour(baseColour string) ([]byte, error) {
+	palette, err := theme.GeneratePalette9(baseColour)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate palette: %w", err)
+	}
+
+	palJSON, err := json.Marshal(palette)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal palette: %w", err)
+	}
+
+	return palJSON, nil
+}
+
 func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Profile, tx *sql.Tx) error {
 	updatedUserProfileEntity, whitelist, err := mapper.MapProfileToEntityForUpdate(userProfile)
 	if err != nil {
@@ -137,6 +182,28 @@ func (s *service) updateUserProfile(ctx context.Context, userProfile *domain.Pro
 	}
 
 	return nil
+}
+
+func (s *service) getUserTheme(ctx context.Context, userID string) (domain.UserTheme, error) {
+	userThemeEntity, err := s.profileRepo.GetUserTheme(ctx, userID)
+	if err != nil {
+		return domain.UserTheme{}, fmt.Errorf("failed to get user theme: %w", err)
+	}
+
+	if userThemeEntity == nil {
+		return domain.UserTheme{}, nil
+	}
+
+	result := domain.UserTheme{
+		BaseHex: userThemeEntity.BaseHex,
+	}
+
+	err = userThemeEntity.Palette.Unmarshal(&result.Palette)
+	if err != nil {
+		return domain.UserTheme{}, fmt.Errorf("failed to unmarshal palette: %w", err)
+	}
+
+	return result, nil
 }
 
 func (s *service) getUserPhotos(ctx context.Context, userID string) ([]domain.Photo, error) {
