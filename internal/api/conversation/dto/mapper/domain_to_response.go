@@ -72,6 +72,7 @@ func MapMessageToDto(msg *domain.Message, userID string) dto.Message {
 		} else {
 			summaryText = "You received a voice note"
 		}
+
 		textBody = &summaryText
 	}
 
@@ -110,6 +111,7 @@ func MapToGetConversationsResponse(conversations []domain.Conversation, userID s
 
 func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversation {
 	var message *dto.Message
+
 	if convo.LastMessage != nil {
 		textBody := convo.LastMessage.TextBody
 
@@ -121,6 +123,7 @@ func MapConversationToDto(convo domain.Conversation, userID string) dto.Conversa
 			} else {
 				summaryText = "You received a voice note"
 			}
+
 			textBody = &summaryText
 		}
 

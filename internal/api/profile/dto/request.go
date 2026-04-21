@@ -35,7 +35,6 @@ type UpdateProfileRequest struct {
 	Country   *string  `json:"country,omitempty"`
 
 	GenderID          *int16  `json:"gender_id,omitempty"`
-	DatingIntentionID *int16  `json:"dating_intention_id,omitempty"`
 	SexualityID       *int16  `json:"sexuality_id,omitempty"`
 	ReligionID        *int16  `json:"religion_id,omitempty"`
 	EducationLevelID  *int16  `json:"education_level_id,omitempty"`

@@ -271,7 +271,6 @@ func (s *service) GetProfileForUpdate(ctx context.Context, userID string) (domai
 		City:                  &userProfile.City,
 		Country:               &userProfile.Country,
 		GenderID:              &userProfile.GenderID,
-		DatingIntentionID:     &userProfile.DatingIntentionID,
 		ReligionID:            &userProfile.ReligionID,
 		EducationLevelID:      &userProfile.EducationLevelID,
 		PoliticalBeliefID:     &userProfile.PoliticalBeliefID,
@@ -379,10 +378,6 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		prof.GenderID = *up.GenderID
 	}
 
-	if up.DatingIntentionID != nil {
-		prof.DatingIntentionID = *up.DatingIntentionID
-	}
-
 	if up.SexualityID != nil {
 		prof.SexualityID = *up.SexualityID
 	}
@@ -479,6 +474,7 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 		if err != nil {
 			return commonlogger.LogError(s.logger, "marshal user voice prompts", err, zap.String("userID", up.UserID))
 		}
+
 		err = s.profileRepo.UpsertUserPrompts(ctx, up.UserID, mapper.MapVoicePromptsUpdateToEntity(up.VoicePrompts, marshalledWaveformData, up.UserID), tx.Raw())
 		if err != nil {
 			return commonlogger.LogError(s.logger, "insert user voice prompts", err, zap.String("userID", up.UserID))
@@ -540,11 +536,6 @@ func (s *service) GetEnrichedProfile(ctx context.Context, userID string) (domain
 	result.Ethnicities, err = s.getEthnicitiesByIDs(ctx, ethnicityIDs)
 	if err != nil {
 		return domain.EnrichedProfile{}, fmt.Errorf("get ethnicities: %w", err)
-	}
-
-	result.DatingIntention, err = s.getDatingIntentionByID(ctx, userProfile.DatingIntentionID)
-	if err != nil {
-		return domain.EnrichedProfile{}, fmt.Errorf("get dating intention: %w", err)
 	}
 
 	result.Sexuality, err = s.getSexualityByID(ctx, userProfile.SexualityID)

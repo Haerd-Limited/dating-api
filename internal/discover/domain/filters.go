@@ -17,14 +17,13 @@ const (
 
 // DiscoverFilters represents all available filters for the discover feed
 type DiscoverFilters struct {
-	AgeRange         *AgeRangeFilter         `json:"age_range,omitempty"`
-	Distance         *DistanceFilter         `json:"distance,omitempty"`
-	DatingIntentions *DatingIntentionsFilter `json:"dating_intentions,omitempty"`
-	Religions        *ReligionsFilter        `json:"religions,omitempty"`
-	Sexualities      *SexualitiesFilter      `json:"sexualities,omitempty"`
-	Ethnicities      *EthnicitiesFilter      `json:"ethnicities,omitempty"`
-	SeekGender       *string                 `json:"seek_gender,omitempty"` // "Male", "Female", or "Both"
-	Operator         FilterOperator          `json:"operator"`                 // How to combine filters (AND/OR)
+	AgeRange    *AgeRangeFilter    `json:"age_range,omitempty"`
+	Distance    *DistanceFilter    `json:"distance,omitempty"`
+	Religions   *ReligionsFilter   `json:"religions,omitempty"`
+	Sexualities *SexualitiesFilter `json:"sexualities,omitempty"`
+	Ethnicities *EthnicitiesFilter `json:"ethnicities,omitempty"`
+	SeekGender  *string            `json:"seek_gender,omitempty"` // "Male", "Female", or "Both"
+	Operator    FilterOperator     `json:"operator"`              // How to combine filters (AND/OR)
 }
 
 // AgeRangeFilter filters profiles by age range
@@ -36,11 +35,6 @@ type AgeRangeFilter struct {
 // DistanceFilter filters profiles by distance from user's location
 type DistanceFilter struct {
 	MaxDistanceKM *int `json:"max_distance_km,omitempty"`
-}
-
-// DatingIntentionsFilter filters profiles by dating intentions
-type DatingIntentionsFilter struct {
-	IntentionIDs []int16 `json:"intention_ids,omitempty"`
 }
 
 // ReligionsFilter filters profiles by religions
@@ -62,7 +56,6 @@ type EthnicitiesFilter struct {
 func (f *DiscoverFilters) IsEmpty() bool {
 	return f.AgeRange == nil &&
 		f.Distance == nil &&
-		f.DatingIntentions == nil &&
 		f.Religions == nil &&
 		f.Sexualities == nil &&
 		f.Ethnicities == nil &&
@@ -74,7 +67,9 @@ func (f *DiscoverFilters) HasSeekGenderFilter() bool {
 	if f == nil || f.SeekGender == nil {
 		return false
 	}
+
 	s := *f.SeekGender
+
 	return s == SeekGenderMale || s == SeekGenderFemale || s == SeekGenderBoth
 }
 
@@ -86,11 +81,6 @@ func (f *DiscoverFilters) HasAgeFilter() bool {
 // HasDistanceFilter returns true if distance filter is set
 func (f *DiscoverFilters) HasDistanceFilter() bool {
 	return f.Distance != nil && f.Distance.MaxDistanceKM != nil
-}
-
-// HasDatingIntentionsFilter returns true if dating intentions filter is set
-func (f *DiscoverFilters) HasDatingIntentionsFilter() bool {
-	return f.DatingIntentions != nil && len(f.DatingIntentions.IntentionIDs) > 0
 }
 
 // HasReligionsFilter returns true if religions filter is set

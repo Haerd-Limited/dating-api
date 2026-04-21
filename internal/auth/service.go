@@ -39,14 +39,14 @@ type Service interface {
 }
 
 type authService struct {
-	logger               *zap.Logger
-	jwtSecret            string
-	UserService          user.Service
-	AuthRepo             authStorage.AuthRepository
-	awsService           aws.Service
-	communicationService communication.Service
-	codeTTL              time.Duration
-	perIDPerHour         int // e.g., 3
+	logger                   *zap.Logger
+	jwtSecret                string
+	UserService              user.Service
+	AuthRepo                 authStorage.AuthRepository
+	awsService               aws.Service
+	communicationService     communication.Service
+	codeTTL                  time.Duration
+	perIDPerHour             int // e.g., 3
 	perIPPerHour             int // e.g., 20
 	env                      string
 	notificationPhoneNumbers []string
@@ -221,10 +221,12 @@ func (as *authService) VerifyCode(ctx context.Context, in domain.VerifyCode) (*d
 				_ = commonlogger.LogError(as.logger, "count users for signup SMS", countErr)
 			} else {
 				msg := fmt.Sprintf("New Haerd signup. Total users: %d", total)
+
 				for _, phone := range as.notificationPhoneNumbers {
 					if phone == "" {
 						continue
 					}
+
 					if smsErr := as.communicationService.SendSMS(phone, msg); smsErr != nil {
 						_ = commonlogger.LogError(as.logger, "signup notification SMS", smsErr, zap.String("userID", userID))
 					}

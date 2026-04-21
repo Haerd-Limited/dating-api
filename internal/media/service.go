@@ -175,6 +175,7 @@ func (s *service) TranscribeInstagramReel(ctx context.Context, reelURL string) (
 	if err != nil {
 		return "", commonlogger.LogError(s.logger, "create temp directory", err, zap.String("reelURL", reelURL))
 	}
+
 	defer func() {
 		if cleanupErr := os.RemoveAll(tempDir); cleanupErr != nil {
 			s.logger.Warn("failed to cleanup temp directory",
@@ -222,6 +223,7 @@ func isValidInstagramReelURL(url string) bool {
 	// https://www.instagram.com/p/... (posts can also be reels)
 	pattern := `^https?://(www\.)?instagram\.com/(reel|p)/[A-Za-z0-9_-]+`
 	matched, _ := regexp.MatchString(pattern, url)
+
 	return matched
 }
 
@@ -271,9 +273,11 @@ func (s *service) downloadVideo(ctx context.Context, reelURL, outputPath string)
 			strings.Contains(outputStr, "authentication") {
 			return fmt.Errorf("%w: %s", ErrInstagramAuthRequired, outputStr)
 		}
+
 		if strings.Contains(outputStr, "rate-limit") || strings.Contains(outputStr, "rate limit") {
 			return fmt.Errorf("%w: %s", ErrInstagramRateLimited, outputStr)
 		}
+
 		return fmt.Errorf("yt-dlp failed: %w, output: %s", err, outputStr)
 	}
 

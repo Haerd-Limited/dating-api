@@ -20,7 +20,6 @@ type ProfileCard struct {
 	Country   string
 
 	Gender          string
-	DatingIntention string
 	Sexuality       string
 	Religion        string
 	EducationLevel  string

@@ -12,8 +12,6 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("DataExportRequests", testDataExportRequestsUpsert)
 
-	t.Run("DatingIntentions", testDatingIntentionsUpsert)
-
 	t.Run("DeviceTokens", testDeviceTokensUpsert)
 
 	t.Run("EducationLevels", testEducationLevelsUpsert)

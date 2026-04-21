@@ -85,6 +85,7 @@ func NewService(ctx context.Context, logger *zap.Logger, repo storage.DeviceToke
 
 	if token == "" {
 		logger.Sugar().Warn("expo access token not provided; push notifications disabled but device token APIs will continue to work")
+
 		return &service{
 			logger:            logger,
 			deviceTokenRepo:   repo,
@@ -325,6 +326,7 @@ func (s *service) sendToTokens(ctx context.Context, tokens []string, msg domain.
 	}
 
 	var invalidTokens []string
+
 	var sendErr error
 
 	for _, token := range tokens {
@@ -332,6 +334,7 @@ func (s *service) sendToTokens(ctx context.Context, tokens []string, msg domain.
 			if isInvalidTokenError(err) {
 				invalidTokens = append(invalidTokens, token)
 			}
+
 			sendErr = multierr.Append(sendErr, fmt.Errorf("send to token %s: %w", hashToken(token), err))
 			s.logger.Sugar().Warnw("failed to deliver push notification", "error", err, "token_hash", hashToken(token))
 		}
@@ -397,7 +400,9 @@ func isInvalidTokenError(err error) bool {
 	if err == nil {
 		return false
 	}
+
 	errStr := strings.ToLower(err.Error())
+
 	return strings.Contains(errStr, "devicenotregistered") ||
 		strings.Contains(errStr, "invalidexpopushtoken") ||
 		strings.Contains(errStr, "status 400")

@@ -115,11 +115,10 @@ func (lr LocationRequest) Validate() error {
 }
 
 type BasicsRequest struct {
-	Birthdate         string `json:"birthdate" validate:"required"`
-	HeightCm          int16  `json:"height_cm" validate:"required"`
-	GenderID          int16  `json:"gender_id" validate:"required"`
-	DatingIntentionID int16  `json:"dating_intention_id" validate:"required"`
-	SexualityID       int16  `json:"sexuality_id" validate:"required"`
+	Birthdate   string `json:"birthdate" validate:"required"`
+	HeightCm    int16  `json:"height_cm" validate:"required"`
+	GenderID    int16  `json:"gender_id" validate:"required"`
+	SexualityID int16  `json:"sexuality_id" validate:"required"`
 }
 
 func (br BasicsRequest) Validate() error {

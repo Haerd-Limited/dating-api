@@ -83,16 +83,6 @@ type Sexuality struct {
 	Label string `json:"label"`
 }
 
-type GetDatingIntentionsResponse struct {
-	DatingIntentions []DatingIntention `json:"dating_intentions"`
-}
-
-type DatingIntention struct {
-	ID          int16  `json:"id"`
-	Label       string `json:"label"`
-	Description string `json:"description"`
-}
-
 type GetEthnicitiesResponse struct {
 	Ethnicities []Ethnicity `json:"ethnicities"`
 }

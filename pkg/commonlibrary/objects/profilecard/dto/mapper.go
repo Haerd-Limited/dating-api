@@ -80,7 +80,7 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		CoverMediaAspectRatio: profile.CoverMediaAspectRatio,
 
 		Gender:          profile.Gender,
-		DatingIntention: profile.DatingIntention,
+		Sexuality:       profile.Sexuality,
 		Religion:        profile.Religion,
 		EducationLevel:  profile.EducationLevel,
 		PoliticalBelief: profile.PoliticalBelief,

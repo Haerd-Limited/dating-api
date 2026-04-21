@@ -30,7 +30,6 @@ type UserPreference struct {
 	AgeMin                 null.Int16       `boil:"age_min" json:"age_min,omitempty" toml:"age_min" yaml:"age_min,omitempty"`
 	AgeMax                 null.Int16       `boil:"age_max" json:"age_max,omitempty" toml:"age_max" yaml:"age_max,omitempty"`
 	SeekGenderIds          types.Int64Array `boil:"seek_gender_ids" json:"seek_gender_ids,omitempty" toml:"seek_gender_ids" yaml:"seek_gender_ids,omitempty"`
-	SeekIntentionIds       types.Int64Array `boil:"seek_intention_ids" json:"seek_intention_ids,omitempty" toml:"seek_intention_ids" yaml:"seek_intention_ids,omitempty"`
 	SeekReligionIds        types.Int64Array `boil:"seek_religion_ids" json:"seek_religion_ids,omitempty" toml:"seek_religion_ids" yaml:"seek_religion_ids,omitempty"`
 	SeekPoliticalBeliefIds types.Int64Array `boil:"seek_political_belief_ids" json:"seek_political_belief_ids,omitempty" toml:"seek_political_belief_ids" yaml:"seek_political_belief_ids,omitempty"`
 	CreatedAt              time.Time        `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
@@ -49,7 +48,6 @@ var UserPreferenceColumns = struct {
 	AgeMin                 string
 	AgeMax                 string
 	SeekGenderIds          string
-	SeekIntentionIds       string
 	SeekReligionIds        string
 	SeekPoliticalBeliefIds string
 	CreatedAt              string
@@ -63,7 +61,6 @@ var UserPreferenceColumns = struct {
 	AgeMin:                 "age_min",
 	AgeMax:                 "age_max",
 	SeekGenderIds:          "seek_gender_ids",
-	SeekIntentionIds:       "seek_intention_ids",
 	SeekReligionIds:        "seek_religion_ids",
 	SeekPoliticalBeliefIds: "seek_political_belief_ids",
 	CreatedAt:              "created_at",
@@ -79,7 +76,6 @@ var UserPreferenceTableColumns = struct {
 	AgeMin                 string
 	AgeMax                 string
 	SeekGenderIds          string
-	SeekIntentionIds       string
 	SeekReligionIds        string
 	SeekPoliticalBeliefIds string
 	CreatedAt              string
@@ -93,7 +89,6 @@ var UserPreferenceTableColumns = struct {
 	AgeMin:                 "user_preferences.age_min",
 	AgeMax:                 "user_preferences.age_max",
 	SeekGenderIds:          "user_preferences.seek_gender_ids",
-	SeekIntentionIds:       "user_preferences.seek_intention_ids",
 	SeekReligionIds:        "user_preferences.seek_religion_ids",
 	SeekPoliticalBeliefIds: "user_preferences.seek_political_belief_ids",
 	CreatedAt:              "user_preferences.created_at",
@@ -114,7 +109,6 @@ var UserPreferenceWhere = struct {
 	AgeMin                 whereHelpernull_Int16
 	AgeMax                 whereHelpernull_Int16
 	SeekGenderIds          whereHelpertypes_Int64Array
-	SeekIntentionIds       whereHelpertypes_Int64Array
 	SeekReligionIds        whereHelpertypes_Int64Array
 	SeekPoliticalBeliefIds whereHelpertypes_Int64Array
 	CreatedAt              whereHelpertime_Time
@@ -128,7 +122,6 @@ var UserPreferenceWhere = struct {
 	AgeMin:                 whereHelpernull_Int16{field: "\"user_preferences\".\"age_min\""},
 	AgeMax:                 whereHelpernull_Int16{field: "\"user_preferences\".\"age_max\""},
 	SeekGenderIds:          whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_gender_ids\""},
-	SeekIntentionIds:       whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_intention_ids\""},
 	SeekReligionIds:        whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_religion_ids\""},
 	SeekPoliticalBeliefIds: whereHelpertypes_Int64Array{field: "\"user_preferences\".\"seek_political_belief_ids\""},
 	CreatedAt:              whereHelpertime_Time{field: "\"user_preferences\".\"created_at\""},
@@ -175,9 +168,9 @@ func (r *userPreferenceR) GetUser() *User {
 type userPreferenceL struct{}
 
 var (
-	userPreferenceAllColumns            = []string{"user_id", "distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out", "seek_sexuality_ids"}
+	userPreferenceAllColumns            = []string{"user_id", "distance_km", "age_min", "age_max", "seek_gender_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out", "seek_sexuality_ids"}
 	userPreferenceColumnsWithoutDefault = []string{"user_id"}
-	userPreferenceColumnsWithDefault    = []string{"distance_km", "age_min", "age_max", "seek_gender_ids", "seek_intention_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out", "seek_sexuality_ids"}
+	userPreferenceColumnsWithDefault    = []string{"distance_km", "age_min", "age_max", "seek_gender_ids", "seek_religion_ids", "seek_political_belief_ids", "created_at", "updated_at", "seek_ethnicity_ids", "analytics_opt_out", "seek_sexuality_ids"}
 	userPreferencePrimaryKeyColumns     = []string{"user_id"}
 	userPreferenceGeneratedColumns      = []string{}
 )

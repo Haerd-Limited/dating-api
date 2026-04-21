@@ -99,15 +99,6 @@ func (os *onboardingService) getPrompts(ctx context.Context) ([]domain.Prompt, e
 	return mapper.MapPromptsToDomain(promptEntities), nil
 }
 
-func (os *onboardingService) getDatingIntentions(ctx context.Context) ([]domain.DatingIntention, error) {
-	datingIntentionsEntities, err := os.lookupRepo.GetDatingIntentions(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return mapper.MapDatingIntentionsToDomain(datingIntentionsEntities), nil
-}
-
 func (os *onboardingService) getSexualities(ctx context.Context) ([]domain.Sexuality, error) {
 	sexualityEntities, err := os.lookupRepo.GetSexualities(ctx)
 	if err != nil {

@@ -32,7 +32,6 @@ type UserProfile struct {
 	City                  null.String  `boil:"city" json:"city,omitempty" toml:"city" yaml:"city,omitempty"`
 	Country               null.String  `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
 	GenderID              null.Int16   `boil:"gender_id" json:"gender_id,omitempty" toml:"gender_id" yaml:"gender_id,omitempty"`
-	DatingIntentionID     null.Int16   `boil:"dating_intention_id" json:"dating_intention_id,omitempty" toml:"dating_intention_id" yaml:"dating_intention_id,omitempty"`
 	ReligionID            null.Int16   `boil:"religion_id" json:"religion_id,omitempty" toml:"religion_id" yaml:"religion_id,omitempty"`
 	EducationLevelID      null.Int16   `boil:"education_level_id" json:"education_level_id,omitempty" toml:"education_level_id" yaml:"education_level_id,omitempty"`
 	PoliticalBeliefID     null.Int16   `boil:"political_belief_id" json:"political_belief_id,omitempty" toml:"political_belief_id" yaml:"political_belief_id,omitempty"`
@@ -68,7 +67,6 @@ var UserProfileColumns = struct {
 	City                  string
 	Country               string
 	GenderID              string
-	DatingIntentionID     string
 	ReligionID            string
 	EducationLevelID      string
 	PoliticalBeliefID     string
@@ -99,7 +97,6 @@ var UserProfileColumns = struct {
 	City:                  "city",
 	Country:               "country",
 	GenderID:              "gender_id",
-	DatingIntentionID:     "dating_intention_id",
 	ReligionID:            "religion_id",
 	EducationLevelID:      "education_level_id",
 	PoliticalBeliefID:     "political_belief_id",
@@ -132,7 +129,6 @@ var UserProfileTableColumns = struct {
 	City                  string
 	Country               string
 	GenderID              string
-	DatingIntentionID     string
 	ReligionID            string
 	EducationLevelID      string
 	PoliticalBeliefID     string
@@ -163,7 +159,6 @@ var UserProfileTableColumns = struct {
 	City:                  "user_profiles.city",
 	Country:               "user_profiles.country",
 	GenderID:              "user_profiles.gender_id",
-	DatingIntentionID:     "user_profiles.dating_intention_id",
 	ReligionID:            "user_profiles.religion_id",
 	EducationLevelID:      "user_profiles.education_level_id",
 	PoliticalBeliefID:     "user_profiles.political_belief_id",
@@ -236,7 +231,6 @@ var UserProfileWhere = struct {
 	City                  whereHelpernull_String
 	Country               whereHelpernull_String
 	GenderID              whereHelpernull_Int16
-	DatingIntentionID     whereHelpernull_Int16
 	ReligionID            whereHelpernull_Int16
 	EducationLevelID      whereHelpernull_Int16
 	PoliticalBeliefID     whereHelpernull_Int16
@@ -267,7 +261,6 @@ var UserProfileWhere = struct {
 	City:                  whereHelpernull_String{field: "\"user_profiles\".\"city\""},
 	Country:               whereHelpernull_String{field: "\"user_profiles\".\"country\""},
 	GenderID:              whereHelpernull_Int16{field: "\"user_profiles\".\"gender_id\""},
-	DatingIntentionID:     whereHelpernull_Int16{field: "\"user_profiles\".\"dating_intention_id\""},
 	ReligionID:            whereHelpernull_Int16{field: "\"user_profiles\".\"religion_id\""},
 	EducationLevelID:      whereHelpernull_Int16{field: "\"user_profiles\".\"education_level_id\""},
 	PoliticalBeliefID:     whereHelpernull_Int16{field: "\"user_profiles\".\"political_belief_id\""},
@@ -294,7 +287,6 @@ var UserProfileWhere = struct {
 // UserProfileRels is where relationship names are stored.
 var UserProfileRels = struct {
 	ChildrenStatus  string
-	DatingIntention string
 	Drinking        string
 	Drug            string
 	EducationLevel  string
@@ -308,7 +300,6 @@ var UserProfileRels = struct {
 	User            string
 }{
 	ChildrenStatus:  "ChildrenStatus",
-	DatingIntention: "DatingIntention",
 	Drinking:        "Drinking",
 	Drug:            "Drug",
 	EducationLevel:  "EducationLevel",
@@ -325,7 +316,6 @@ var UserProfileRels = struct {
 // userProfileR is where relationships are stored.
 type userProfileR struct {
 	ChildrenStatus  *FamilyStatus    `boil:"ChildrenStatus" json:"ChildrenStatus" toml:"ChildrenStatus" yaml:"ChildrenStatus"`
-	DatingIntention *DatingIntention `boil:"DatingIntention" json:"DatingIntention" toml:"DatingIntention" yaml:"DatingIntention"`
 	Drinking        *Habit           `boil:"Drinking" json:"Drinking" toml:"Drinking" yaml:"Drinking"`
 	Drug            *Habit           `boil:"Drug" json:"Drug" toml:"Drug" yaml:"Drug"`
 	EducationLevel  *EducationLevel  `boil:"EducationLevel" json:"EducationLevel" toml:"EducationLevel" yaml:"EducationLevel"`
@@ -358,22 +348,6 @@ func (r *userProfileR) GetChildrenStatus() *FamilyStatus {
 	}
 
 	return r.ChildrenStatus
-}
-
-func (o *UserProfile) GetDatingIntention() *DatingIntention {
-	if o == nil {
-		return nil
-	}
-
-	return o.R.GetDatingIntention()
-}
-
-func (r *userProfileR) GetDatingIntention() *DatingIntention {
-	if r == nil {
-		return nil
-	}
-
-	return r.DatingIntention
 }
 
 func (o *UserProfile) GetDrinking() *Habit {
@@ -556,9 +530,9 @@ func (r *userProfileR) GetUser() *User {
 type userProfileL struct{}
 
 var (
-	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_media_url", "emoji", "sexuality_id", "verified", "cover_media_type", "cover_media_aspect_ratio"}
+	userProfileAllColumns            = []string{"user_id", "display_name", "birthdate", "height_cm", "geo", "city", "country", "gender_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_media_url", "emoji", "sexuality_id", "verified", "cover_media_type", "cover_media_aspect_ratio"}
 	userProfileColumnsWithoutDefault = []string{"user_id", "display_name"}
-	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "dating_intention_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_media_url", "emoji", "sexuality_id", "verified", "cover_media_type", "cover_media_aspect_ratio"}
+	userProfileColumnsWithDefault    = []string{"birthdate", "height_cm", "geo", "city", "country", "gender_id", "religion_id", "education_level_id", "political_belief_id", "drinking_id", "smoking_id", "marijuana_id", "drugs_id", "children_status_id", "family_plan_id", "work", "job_title", "university", "profile_meta", "created_at", "updated_at", "cover_media_url", "emoji", "sexuality_id", "verified", "cover_media_type", "cover_media_aspect_ratio"}
 	userProfilePrimaryKeyColumns     = []string{"user_id"}
 	userProfileGeneratedColumns      = []string{}
 )
@@ -879,17 +853,6 @@ func (o *UserProfile) ChildrenStatus(mods ...qm.QueryMod) familyStatusQuery {
 	return FamilyStatuses(queryMods...)
 }
 
-// DatingIntention pointed to by the foreign key.
-func (o *UserProfile) DatingIntention(mods ...qm.QueryMod) datingIntentionQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.DatingIntentionID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return DatingIntentions(queryMods...)
-}
-
 // Drinking pointed to by the foreign key.
 func (o *UserProfile) Drinking(mods ...qm.QueryMod) habitQuery {
 	queryMods := []qm.QueryMod{
@@ -1127,130 +1090,6 @@ func (userProfileL) LoadChildrenStatus(ctx context.Context, e boil.ContextExecut
 					foreign.R = &familyStatusR{}
 				}
 				foreign.R.ChildrenStatusUserProfiles = append(foreign.R.ChildrenStatusUserProfiles, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadDatingIntention allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (userProfileL) LoadDatingIntention(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserProfile interface{}, mods queries.Applicator) error {
-	var slice []*UserProfile
-	var object *UserProfile
-
-	if singular {
-		var ok bool
-		object, ok = maybeUserProfile.(*UserProfile)
-		if !ok {
-			object = new(UserProfile)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeUserProfile)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUserProfile))
-			}
-		}
-	} else {
-		s, ok := maybeUserProfile.(*[]*UserProfile)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeUserProfile)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUserProfile))
-			}
-		}
-	}
-
-	args := make(map[interface{}]struct{})
-	if singular {
-		if object.R == nil {
-			object.R = &userProfileR{}
-		}
-		if !queries.IsNil(object.DatingIntentionID) {
-			args[object.DatingIntentionID] = struct{}{}
-		}
-
-	} else {
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &userProfileR{}
-			}
-
-			if !queries.IsNil(obj.DatingIntentionID) {
-				args[obj.DatingIntentionID] = struct{}{}
-			}
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	argsSlice := make([]interface{}, len(args))
-	i := 0
-	for arg := range args {
-		argsSlice[i] = arg
-		i++
-	}
-
-	query := NewQuery(
-		qm.From(`dating_intentions`),
-		qm.WhereIn(`dating_intentions.id in ?`, argsSlice...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load DatingIntention")
-	}
-
-	var resultSlice []*DatingIntention
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice DatingIntention")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for dating_intentions")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for dating_intentions")
-	}
-
-	if len(datingIntentionAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.DatingIntention = foreign
-		if foreign.R == nil {
-			foreign.R = &datingIntentionR{}
-		}
-		foreign.R.UserProfiles = append(foreign.R.UserProfiles, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if queries.Equal(local.DatingIntentionID, foreign.ID) {
-				local.R.DatingIntention = foreign
-				if foreign.R == nil {
-					foreign.R = &datingIntentionR{}
-				}
-				foreign.R.UserProfiles = append(foreign.R.UserProfiles, local)
 				break
 			}
 		}
@@ -2694,86 +2533,6 @@ func (o *UserProfile) RemoveChildrenStatus(ctx context.Context, exec boil.Contex
 			related.R.ChildrenStatusUserProfiles[i] = related.R.ChildrenStatusUserProfiles[ln-1]
 		}
 		related.R.ChildrenStatusUserProfiles = related.R.ChildrenStatusUserProfiles[:ln-1]
-		break
-	}
-	return nil
-}
-
-// SetDatingIntention of the userProfile to the related item.
-// Sets o.R.DatingIntention to related.
-// Adds o to related.R.UserProfiles.
-func (o *UserProfile) SetDatingIntention(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DatingIntention) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE \"user_profiles\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"dating_intention_id"}),
-		strmangle.WhereClause("\"", "\"", 2, userProfilePrimaryKeyColumns),
-	)
-	values := []interface{}{related.ID, o.UserID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	queries.Assign(&o.DatingIntentionID, related.ID)
-	if o.R == nil {
-		o.R = &userProfileR{
-			DatingIntention: related,
-		}
-	} else {
-		o.R.DatingIntention = related
-	}
-
-	if related.R == nil {
-		related.R = &datingIntentionR{
-			UserProfiles: UserProfileSlice{o},
-		}
-	} else {
-		related.R.UserProfiles = append(related.R.UserProfiles, o)
-	}
-
-	return nil
-}
-
-// RemoveDatingIntention relationship.
-// Sets o.R.DatingIntention to nil.
-// Removes o from all passed in related items' relationships struct.
-func (o *UserProfile) RemoveDatingIntention(ctx context.Context, exec boil.ContextExecutor, related *DatingIntention) error {
-	var err error
-
-	queries.SetScanner(&o.DatingIntentionID, nil)
-	if _, err = o.Update(ctx, exec, boil.Whitelist("dating_intention_id")); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	if o.R != nil {
-		o.R.DatingIntention = nil
-	}
-	if related == nil || related.R == nil {
-		return nil
-	}
-
-	for i, ri := range related.R.UserProfiles {
-		if queries.Equal(o.DatingIntentionID, ri.DatingIntentionID) {
-			continue
-		}
-
-		ln := len(related.R.UserProfiles)
-		if ln > 1 && i < ln-1 {
-			related.R.UserProfiles[i] = related.R.UserProfiles[ln-1]
-		}
-		related.R.UserProfiles = related.R.UserProfiles[:ln-1]
 		break
 	}
 	return nil

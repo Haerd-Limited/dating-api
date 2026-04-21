@@ -24,7 +24,6 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 		Country:   ep.Country,
 
 		Gender:          ep.Gender.Label,
-		DatingIntention: ep.DatingIntention.Label,
 		Sexuality:       ep.Sexuality.Label,
 		Religion:        ep.Religion.Label,
 		EducationLevel:  ep.EducationLevel.Label,

@@ -228,10 +228,10 @@ func (r *repository) MandatoryMismatchBadges(ctx context.Context, viewerID, targ
 	`
 
 	type row struct {
-		ID             int64
-		Text           string
-		Label          string
-		RequirementBy  string
+		ID            int64
+		Text          string
+		Label         string
+		RequirementBy string
 	}
 
 	rows, err := queries.Raw(q, viewerID, targetID, limit).QueryContext(ctx, r.db)
@@ -245,11 +245,13 @@ func (r *repository) MandatoryMismatchBadges(ctx context.Context, viewerID, targ
 	const mandatoryWeight = 30 // from importance_weights.mandatory
 
 	var out []domain.CompatibilityBadge
+
 	for rows.Next() {
 		var rrow row
 		if err = rows.Scan(&rrow.ID, &rrow.Text, &rrow.Label, &rrow.RequirementBy); err != nil {
 			return nil, fmt.Errorf("MandatoryMismatchBadges scan: %w", err)
 		}
+
 		out = append(out, domain.CompatibilityBadge{
 			QuestionID:    rrow.ID,
 			QuestionText:  rrow.Text,
@@ -259,9 +261,11 @@ func (r *repository) MandatoryMismatchBadges(ctx context.Context, viewerID, targ
 			RequirementBy: rrow.RequirementBy,
 		})
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("MandatoryMismatchBadges rows: %w", err)
 	}
+
 	return out, nil
 }
 
@@ -535,6 +539,7 @@ func (r *repository) GetQuestionByIDAndCategory(ctx context.Context, questionID 
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
+
 		return nil, fmt.Errorf("GetQuestionByIDAndCategory: %w", err)
 	}
 

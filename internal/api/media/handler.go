@@ -130,6 +130,7 @@ func (h *handler) TranscribeInstagramReel() http.HandlerFunc {
 		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
 			h.logger.Sugar().Warnw("failed to decode and validate transcribe reel request", "error", err.Error())
 			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid request payload: reel_url is required and must be a valid URL"))
+
 			return
 		}
 
@@ -154,11 +155,14 @@ func (h *handler) handleServiceErrorResponse(w http.ResponseWriter, r *http.Requ
 	if errors.Is(err, media.ErrInstagramAuthRequired) {
 		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
 		render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("Unable to access Instagram reel: authentication required. The reel may be private or require login."))
+
 		return
 	}
+
 	if errors.Is(err, media.ErrInstagramRateLimited) {
 		h.logger.Sugar().Warnw(fmt.Sprintf("%s failure", handlerName), "error", err.Error())
 		render.Json(w, http.StatusTooManyRequests, commonMappers.ToSimpleErrorResponse("Instagram rate limit reached. Please try again later."))
+
 		return
 	}
 

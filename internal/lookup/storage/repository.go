@@ -19,7 +19,6 @@ type LookupRepository interface {
 	GetReligionByID(ctx context.Context, id int16) (*entity.Religion, error)
 	GetPoliticalBeliefByID(ctx context.Context, id int16) (*entity.PoliticalBelief, error)
 	GetHabitByID(ctx context.Context, id int16) (*entity.Habit, error)
-	GetDatingIntentionByID(ctx context.Context, id int16) (*entity.DatingIntention, error)
 	GetGenderByID(ctx context.Context, id int16) (*entity.Gender, error)
 	GetSexualityByID(ctx context.Context, id int16) (*entity.Sexuality, error)
 	GetPromptTypeByID(ctx context.Context, id int16) (*entity.PromptType, error)
@@ -29,7 +28,6 @@ type LookupRepository interface {
 	GetReligions(ctx context.Context) (entity.ReligionSlice, error)
 	GetPoliticalBeliefs(ctx context.Context) (entity.PoliticalBeliefSlice, error)
 	GetHabits(ctx context.Context) (entity.HabitSlice, error)
-	GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error)
 	GetGenders(ctx context.Context) (entity.GenderSlice, error)
 	GetSexualities(ctx context.Context) (entity.SexualitySlice, error)
 	GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error)
@@ -140,15 +138,6 @@ func (lr *lookupRepository) GetHabits(ctx context.Context) (entity.HabitSlice, e
 	return habits, nil
 }
 
-func (lr *lookupRepository) GetDatingIntentions(ctx context.Context) (entity.DatingIntentionSlice, error) {
-	di, err := entity.DatingIntentions().All(ctx, lr.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return di, nil
-}
-
 func (lr *lookupRepository) GetGenders(ctx context.Context) (entity.GenderSlice, error) {
 	genders, err := entity.Genders().All(ctx, lr.db)
 	if err != nil {
@@ -228,15 +217,6 @@ func (lr *lookupRepository) GetHabitByID(ctx context.Context, id int16) (*entity
 	}
 
 	return habit, nil
-}
-
-func (lr *lookupRepository) GetDatingIntentionByID(ctx context.Context, id int16) (*entity.DatingIntention, error) {
-	datingIntention, err := entity.DatingIntentions(entity.DatingIntentionWhere.ID.EQ(id)).One(ctx, lr.db)
-	if err != nil {
-		return nil, err
-	}
-
-	return datingIntention, nil
 }
 
 func (lr *lookupRepository) GetGenderByID(ctx context.Context, id int16) (*entity.Gender, error) {

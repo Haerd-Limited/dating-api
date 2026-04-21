@@ -17,12 +17,11 @@ func MapIntroRequestToDomain(request dto.IntroRequest, userID string) domain.Int
 
 func MapBasicRequestToDomain(req dto.BasicsRequest, userID string) domain.Basics {
 	return domain.Basics{
-		UserID:            userID,
-		Birthdate:         req.Birthdate,
-		HeightCm:          req.HeightCm,
-		GenderID:          req.GenderID,
-		DatingIntentionID: req.DatingIntentionID,
-		SexualityID:       req.SexualityID,
+		UserID:      userID,
+		Birthdate:   req.Birthdate,
+		HeightCm:    req.HeightCm,
+		GenderID:    req.GenderID,
+		SexualityID: req.SexualityID,
 	}
 }
 

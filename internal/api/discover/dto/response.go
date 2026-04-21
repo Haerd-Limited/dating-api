@@ -25,13 +25,12 @@ type DiscoverQuota struct {
 }
 
 type GetUserPreferencesResponse struct {
-	DistanceKM         *int    `json:"distance_km,omitempty"`
-	MinAge             *int    `json:"min_age,omitempty"`
-	MaxAge             *int    `json:"max_age,omitempty"`
-	DatingIntentionIDs []int16 `json:"dating_intention_ids,omitempty"`
-	ReligionIDs        []int16 `json:"religion_ids,omitempty"`
-	SexualityIDs       []int16 `json:"sexuality_ids,omitempty"`
-	EthnicityIDs       []int16 `json:"ethnicity_ids,omitempty"`
-	SeekGenderIDs      []int16 `json:"seek_gender_ids,omitempty"`
-	SeekGender         string  `json:"seek_gender,omitempty"` // "Male", "Female", or "Both"
+	DistanceKM    *int    `json:"distance_km,omitempty"`
+	MinAge        *int    `json:"min_age,omitempty"`
+	MaxAge        *int    `json:"max_age,omitempty"`
+	ReligionIDs   []int16 `json:"religion_ids,omitempty"`
+	SexualityIDs  []int16 `json:"sexuality_ids,omitempty"`
+	EthnicityIDs  []int16 `json:"ethnicity_ids,omitempty"`
+	SeekGenderIDs []int16 `json:"seek_gender_ids,omitempty"`
+	SeekGender    string  `json:"seek_gender,omitempty"` // "Male", "Female", or "Both"
 }

@@ -25,7 +25,6 @@ type Profile struct {
 	Country   string  `json:"country"`
 
 	Gender          Gender          `json:"gender"`
-	DatingIntention DatingIntention `json:"dating_intention"`
 	Sexuality       Sexuality       `json:"sexuality"`
 	Religion        Religion        `json:"religion"`
 	EducationLevel  EducationLevel  `json:"education_level"`
@@ -114,11 +113,6 @@ type PoliticalBelief struct {
 }
 
 type Gender struct {
-	ID    int16  `json:"id"`
-	Label string `json:"label"`
-}
-
-type DatingIntention struct {
 	ID    int16  `json:"id"`
 	Label string `json:"label"`
 }

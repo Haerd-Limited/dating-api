@@ -188,14 +188,6 @@ func MapLocationContentToDto(content domain.LocationContent) dto.LocationContent
 }
 
 func MapIntroContentToDto(content domain.IntroContent) dto.IntroContent {
-	var datingIntentions []dto.DatingIntention
-	for _, intention := range content.DatingIntentions {
-		datingIntentions = append(datingIntentions, dto.DatingIntention{
-			ID:    intention.ID,
-			Label: intention.Label,
-		})
-	}
-
 	var genders []dto.Gender
 	for _, gender := range content.Genders {
 		genders = append(genders, dto.Gender{
@@ -213,8 +205,7 @@ func MapIntroContentToDto(content domain.IntroContent) dto.IntroContent {
 	}
 
 	return dto.IntroContent{
-		DatingIntentions: datingIntentions,
-		Genders:          genders,
-		Sexualities:      sexualities,
+		Genders:     genders,
+		Sexualities: sexualities,
 	}
 }

@@ -20,9 +20,6 @@ func TestNewPreferenceUpdateFromFilters(t *testing.T) {
 		Distance: &DistanceFilter{
 			MaxDistanceKM: &distance,
 		},
-		DatingIntentions: &DatingIntentionsFilter{
-			IntentionIDs: []int16{1, 2},
-		},
 		Religions: &ReligionsFilter{
 			ReligionIDs: []int16{3},
 		},
@@ -43,7 +40,6 @@ func TestNewPreferenceUpdateFromFilters(t *testing.T) {
 	require.NotNil(t, update.MaxAge)
 	assert.Equal(t, maxAge, *update.MaxAge)
 
-	assert.Equal(t, []int16{1, 2}, update.DatingIntentionIDs)
 	assert.Equal(t, []int16{3}, update.ReligionIDs)
 	assert.Equal(t, []int16{4, 5}, update.EthnicityIDs)
 }

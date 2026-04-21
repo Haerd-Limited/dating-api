@@ -45,7 +45,6 @@ func TestToOne(t *testing.T) {
 	t.Run("UserPreferenceToUserUsingUser", testUserPreferenceToOneUserUsingUser)
 	t.Run("UserProfileVisibilityToUserUsingUser", testUserProfileVisibilityToOneUserUsingUser)
 	t.Run("UserProfileToFamilyStatusUsingChildrenStatus", testUserProfileToOneFamilyStatusUsingChildrenStatus)
-	t.Run("UserProfileToDatingIntentionUsingDatingIntention", testUserProfileToOneDatingIntentionUsingDatingIntention)
 	t.Run("UserProfileToHabitUsingDrinking", testUserProfileToOneHabitUsingDrinking)
 	t.Run("UserProfileToHabitUsingDrug", testUserProfileToOneHabitUsingDrug)
 	t.Run("UserProfileToEducationLevelUsingEducationLevel", testUserProfileToOneEducationLevelUsingEducationLevel)
@@ -86,7 +85,6 @@ func TestToMany(t *testing.T) {
 	t.Run("ConversationToConversationParticipants", testConversationToManyConversationParticipants)
 	t.Run("ConversationToMessages", testConversationToManyMessages)
 	t.Run("ConversationToRevealDecisions", testConversationToManyRevealDecisions)
-	t.Run("DatingIntentionToUserProfiles", testDatingIntentionToManyUserProfiles)
 	t.Run("EducationLevelToUserProfiles", testEducationLevelToManyUserProfiles)
 	t.Run("EthnicityToUsers", testEthnicityToManyUsers)
 	t.Run("FamilyPlanToUserProfiles", testFamilyPlanToManyUserProfiles)
@@ -186,7 +184,6 @@ func TestToOneSet(t *testing.T) {
 	t.Run("UserPreferenceToUserUsingUserPreference", testUserPreferenceToOneSetOpUserUsingUser)
 	t.Run("UserProfileVisibilityToUserUsingUserProfileVisibilities", testUserProfileVisibilityToOneSetOpUserUsingUser)
 	t.Run("UserProfileToFamilyStatusUsingChildrenStatusUserProfiles", testUserProfileToOneSetOpFamilyStatusUsingChildrenStatus)
-	t.Run("UserProfileToDatingIntentionUsingUserProfiles", testUserProfileToOneSetOpDatingIntentionUsingDatingIntention)
 	t.Run("UserProfileToHabitUsingDrinkingUserProfiles", testUserProfileToOneSetOpHabitUsingDrinking)
 	t.Run("UserProfileToHabitUsingDrugUserProfiles", testUserProfileToOneSetOpHabitUsingDrug)
 	t.Run("UserProfileToEducationLevelUsingUserProfiles", testUserProfileToOneSetOpEducationLevelUsingEducationLevel)
@@ -221,7 +218,6 @@ func TestToOneRemove(t *testing.T) {
 	t.Run("ReportActionToUserUsingReviewerReportActions", testReportActionToOneRemoveOpUserUsingReviewer)
 	t.Run("SwipeToVoicePromptUsingPromptSwipes", testSwipeToOneRemoveOpVoicePromptUsingPrompt)
 	t.Run("UserProfileToFamilyStatusUsingChildrenStatusUserProfiles", testUserProfileToOneRemoveOpFamilyStatusUsingChildrenStatus)
-	t.Run("UserProfileToDatingIntentionUsingUserProfiles", testUserProfileToOneRemoveOpDatingIntentionUsingDatingIntention)
 	t.Run("UserProfileToHabitUsingDrinkingUserProfiles", testUserProfileToOneRemoveOpHabitUsingDrinking)
 	t.Run("UserProfileToHabitUsingDrugUserProfiles", testUserProfileToOneRemoveOpHabitUsingDrug)
 	t.Run("UserProfileToEducationLevelUsingUserProfiles", testUserProfileToOneRemoveOpEducationLevelUsingEducationLevel)
@@ -257,7 +253,6 @@ func TestToManyAdd(t *testing.T) {
 	t.Run("ConversationToConversationParticipants", testConversationToManyAddOpConversationParticipants)
 	t.Run("ConversationToMessages", testConversationToManyAddOpMessages)
 	t.Run("ConversationToRevealDecisions", testConversationToManyAddOpRevealDecisions)
-	t.Run("DatingIntentionToUserProfiles", testDatingIntentionToManyAddOpUserProfiles)
 	t.Run("EducationLevelToUserProfiles", testEducationLevelToManyAddOpUserProfiles)
 	t.Run("EthnicityToUsers", testEthnicityToManyAddOpUsers)
 	t.Run("FamilyPlanToUserProfiles", testFamilyPlanToManyAddOpUserProfiles)
@@ -320,7 +315,6 @@ func TestToManyAdd(t *testing.T) {
 // TestToManySet tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManySet(t *testing.T) {
-	t.Run("DatingIntentionToUserProfiles", testDatingIntentionToManySetOpUserProfiles)
 	t.Run("EducationLevelToUserProfiles", testEducationLevelToManySetOpUserProfiles)
 	t.Run("EthnicityToUsers", testEthnicityToManySetOpUsers)
 	t.Run("FamilyPlanToUserProfiles", testFamilyPlanToManySetOpUserProfiles)
@@ -352,7 +346,6 @@ func TestToManySet(t *testing.T) {
 // TestToManyRemove tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManyRemove(t *testing.T) {
-	t.Run("DatingIntentionToUserProfiles", testDatingIntentionToManyRemoveOpUserProfiles)
 	t.Run("EducationLevelToUserProfiles", testEducationLevelToManyRemoveOpUserProfiles)
 	t.Run("EthnicityToUsers", testEthnicityToManyRemoveOpUsers)
 	t.Run("FamilyPlanToUserProfiles", testFamilyPlanToManyRemoveOpUserProfiles)

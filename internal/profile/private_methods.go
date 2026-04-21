@@ -133,6 +133,7 @@ func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate) error {
 
 func marshalVoicePromptsForEntity(prompts []domain.VoicePromptUpdate) ([]null.JSON, error) {
 	marshalledWaveformData := make([]null.JSON, 0, len(prompts))
+
 	for _, prompt := range prompts {
 		waveformData, err := mapper.MarshalWaveformData(prompt.WaveformData)
 		if err != nil {
@@ -360,22 +361,6 @@ func (s *service) getGenderByID(ctx context.Context, genderID int16) (domain.Gen
 	return domain.Gender{
 		ID:    genderEntity.ID,
 		Label: genderEntity.Label,
-	}, nil
-}
-
-func (s *service) getDatingIntentionByID(ctx context.Context, datingIntentionID int16) (domain.DatingIntention, error) {
-	datingIntentionEntity, err := s.lookupRepo.GetDatingIntentionByID(ctx, datingIntentionID)
-	if err != nil {
-		return domain.DatingIntention{}, fmt.Errorf("failed to get dating intention by ID: %w", err)
-	}
-
-	if datingIntentionEntity == nil {
-		return domain.DatingIntention{}, errors.New("dating intention not found")
-	}
-
-	return domain.DatingIntention{
-		ID:    datingIntentionEntity.ID,
-		Label: datingIntentionEntity.Label,
 	}, nil
 }
 
