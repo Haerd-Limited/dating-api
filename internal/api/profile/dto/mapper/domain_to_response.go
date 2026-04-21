@@ -20,10 +20,6 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		City:           profile.City,
 		Country:        profile.Country,
 		VerifiedStatus: profile.VerifiedStatus,
-		Theme: dto.UserTheme{
-			BaseHex: profile.Theme.BaseHex,
-			Palette: profile.Theme.Palette,
-		},
 		Gender: dto.Gender{
 			ID:    profile.Gender.ID,
 			Label: profile.Gender.Label,
@@ -69,18 +65,6 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 		University: profile.University,
 		CreatedAt:  profile.CreatedAt.Format(time.DateOnly),
 		UpdatedAt:  profile.UpdatedAt.Format(time.DateOnly),
-	}
-
-	if profile.CoverMediaURL != nil {
-		result.CoverMediaURL = *profile.CoverMediaURL
-	}
-
-	if profile.CoverMediaType != nil {
-		result.CoverMediaType = profile.CoverMediaType
-	}
-
-	if profile.CoverMediaAspectRatio != nil {
-		result.CoverMediaAspectRatio = profile.CoverMediaAspectRatio
 	}
 
 	if profile.Ethnicities != nil {

@@ -168,7 +168,6 @@ func New(
 						r.Post("/languages", onboardingHandler.Languages())
 						r.Post("/photos", onboardingHandler.Photos())
 						r.Post("/prompts", onboardingHandler.Prompts())
-						r.Post("/profile", onboardingHandler.Profile())
 						r.Post("/video-verification", onboardingHandler.VideoVerification())
 					},
 				)
@@ -222,14 +221,13 @@ func New(
 					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
 
 					r.Get("/feedback/presign", mediaHandler.GenerateFeedbackAttachmentUploadUrl())
-
 				})
 
 				r.Route("/feedback", func(r chi.Router) {
 					r.Post("/", feedbackHandler.CreateFeedback())
 				})
 
-				r.Route("/matching", func(r chi.Router) { //TODO: change to compatibility
+				r.Route("/matching", func(r chi.Router) { // TODO: change to compatibility
 					r.Get("/overview", compatibilityHandler.GetOverview())
 					r.Get("/questions", compatibilityHandler.GetQuestions())
 					r.Post("/answers", compatibilityHandler.SaveAnswer())

@@ -7,16 +7,13 @@ import (
 
 func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profilecard.ProfileCard {
 	fp := profilecard.ProfileCard{
-		DisplayName:           ep.DisplayName,
-		Birthdate:             ep.Birthdate,
-		Age:                   ep.Age,
-		HeightCM:              ep.HeightCM,
-		UserID:                ep.UserID,
-		CoverMediaURL:         ep.CoverMediaURL,
-		CoverMediaType:        ep.CoverMediaType,
-		CoverMediaAspectRatio: ep.CoverMediaAspectRatio,
-		Emoji:                 ep.Emoji,
-		VerifiedStatus:        ep.VerifiedStatus,
+		DisplayName:    ep.DisplayName,
+		Birthdate:      ep.Birthdate,
+		Age:            ep.Age,
+		HeightCM:       ep.HeightCM,
+		UserID:         ep.UserID,
+		Emoji:          ep.Emoji,
+		VerifiedStatus: ep.VerifiedStatus,
 
 		Latitude:  ep.Latitude,
 		Longitude: ep.Longitude,
@@ -40,10 +37,6 @@ func MapEnrichedProfileToProfileCard(ep profiledomain.EnrichedProfile) profileca
 
 		CreatedAt: ep.CreatedAt,
 		UpdatedAt: ep.UpdatedAt,
-		Theme: profilecard.UserTheme{
-			BaseHex: ep.Theme.BaseHex,
-			Palette: ep.Theme.Palette,
-		},
 	}
 
 	// Optional statuses -> pointers to label

@@ -35,7 +35,6 @@ type Handler interface {
 	Languages() http.HandlerFunc
 	Photos() http.HandlerFunc
 	Prompts() http.HandlerFunc
-	Profile() http.HandlerFunc
 	VideoVerification() http.HandlerFunc
 }
 
@@ -430,41 +429,6 @@ func (h *handler) Prompts() http.HandlerFunc {
 		result, err := h.onboardingService.Prompts(ctx, mapper.MapPromptsRequestToDomain(req, userID))
 		if err != nil {
 			render.HandleServiceErrorResponse(h.logger, w, r, "Prompts", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
-			return
-		}
-
-		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
-	}
-}
-
-func (h *handler) Profile() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		userID, ok := commoncontext.UserIDFromContext(ctx)
-		if !ok {
-			render.UnauthorizedResponse(w, r, h.logger)
-			return
-		}
-
-		var req dto.ProfileRequest
-
-		// Validates and decodes request
-		err := request.DecodeAndValidate(r.Body, &req)
-		if err != nil {
-			h.logger.Sugar().Warnw("failed to decode and validate profile request body", "error", err)
-			render.Json(
-				w,
-				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse(messages.MissingSomeRequiredFieldsMsg),
-			)
-
-			return
-		}
-
-		result, err := h.onboardingService.Profile(ctx, mapper.MapProfileToDomain(req, userID))
-		if err != nil {
-			render.HandleServiceErrorResponse(h.logger, w, r, "Profile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return
 		}
 
