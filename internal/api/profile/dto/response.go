@@ -7,16 +7,13 @@ type GetProfileResponse struct {
 }
 
 type Profile struct {
-	DisplayName           string   `json:"display_name"`
-	Birthdate             string   `json:"birthdate"`
-	Age                   int      `json:"age"`
-	HeightCM              int16    `json:"height_cm"`
-	UserID                string   `json:"user_id"`
-	CoverMediaURL         string   `json:"cover_media_url"`
-	CoverMediaType        *string  `json:"cover_media_type,omitempty"`
-	CoverMediaAspectRatio *float64 `json:"cover_media_aspect_ratio,omitempty"`
-	Emoji                 string   `json:"emoji"`
-	VerifiedStatus        string   `json:"verified_status"`
+	DisplayName    string `json:"display_name"`
+	Birthdate      string `json:"birthdate"`
+	Age            int    `json:"age"`
+	HeightCM       int16  `json:"height_cm"`
+	UserID         string `json:"user_id"`
+	Emoji          string `json:"emoji"`
+	VerifiedStatus string `json:"verified_status"`
 
 	// Location
 	Latitude  float64 `json:"latitude"`
@@ -40,20 +37,14 @@ type Profile struct {
 	VoicePrompts    []VoicePrompt   `json:"voice_prompts"`
 	Photos          []Photo         `json:"photos"`
 
-	Work       *string   `json:"work"`
-	JobTitle   *string   `json:"job_title"`
-	University *string   `json:"university"`
-	Theme      UserTheme `json:"theme"`
+	Work       *string `json:"work"`
+	JobTitle   *string `json:"job_title"`
+	University *string `json:"university"`
 
 	MatchSummary *profilecarddto.MatchSummary `json:"match_summary,omitempty"`
 
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
-}
-
-type UserTheme struct {
-	BaseHex string   `json:"base_hex"`
-	Palette []string `json:"palette"`
 }
 
 type Photo struct {

@@ -133,21 +133,6 @@ func (mr *MockProfileRepositoryMockRecorder) GetUserSpokenLanguages(ctx, userID 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserSpokenLanguages", reflect.TypeOf((*MockProfileRepository)(nil).GetUserSpokenLanguages), ctx, userID)
 }
 
-// GetUserTheme mocks base method.
-func (m *MockProfileRepository) GetUserTheme(ctx context.Context, userID string) (*entity.UserTheme, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserTheme", ctx, userID)
-	ret0, _ := ret[0].(*entity.UserTheme)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserTheme indicates an expected call of GetUserTheme.
-func (mr *MockProfileRepositoryMockRecorder) GetUserTheme(ctx, userID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserTheme", reflect.TypeOf((*MockProfileRepository)(nil).GetUserTheme), ctx, userID)
-}
-
 // GetUserVoicePrompts mocks base method.
 func (m *MockProfileRepository) GetUserVoicePrompts(ctx context.Context, userID string) ([]*entity.VoicePrompt, error) {
 	m.ctrl.T.Helper()
@@ -289,18 +274,4 @@ func (m *MockProfileRepository) UpsertUserSpokenLanguages(ctx context.Context, u
 func (mr *MockProfileRepositoryMockRecorder) UpsertUserSpokenLanguages(ctx, userID, languages, tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserSpokenLanguages", reflect.TypeOf((*MockProfileRepository)(nil).UpsertUserSpokenLanguages), ctx, userID, languages, tx)
-}
-
-// UpsertUserTheme mocks base method.
-func (m *MockProfileRepository) UpsertUserTheme(ctx context.Context, theme entity.UserTheme, tx *sql.Tx) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertUserTheme", ctx, theme, tx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpsertUserTheme indicates an expected call of UpsertUserTheme.
-func (mr *MockProfileRepositoryMockRecorder) UpsertUserTheme(ctx, theme, tx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserTheme", reflect.TypeOf((*MockProfileRepository)(nil).UpsertUserTheme), ctx, theme, tx)
 }

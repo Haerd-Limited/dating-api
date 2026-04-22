@@ -1,13 +1,5 @@
 package domain
 
-type Profile struct {
-	UserID                       string
-	ProfileBaseColour            string
-	ProfileCoverMediaURL         string
-	ProfileCoverMediaType        *string
-	ProfileCoverMediaAspectRatio *float64
-}
-
 type VideoVerification struct {
 	UserID   string
 	VideoKey string

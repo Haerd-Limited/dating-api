@@ -3,15 +3,12 @@ package profilecard
 import "time"
 
 type ProfileCard struct {
-	DisplayName           string
-	Birthdate             time.Time
-	Age                   int
-	HeightCM              int16
-	UserID                string
-	CoverMediaURL         *string
-	CoverMediaType        *string
-	CoverMediaAspectRatio *float64
-	Emoji                 string
+	DisplayName string
+	Birthdate   time.Time
+	Age         int
+	HeightCM    int16
+	UserID      string
+	Emoji       string
 
 	// Location
 	Latitude  float64
@@ -34,7 +31,6 @@ type ProfileCard struct {
 	SpokenLanguages []string
 	VoicePrompts    []VoicePrompt
 	Photos          []Photo
-	Theme           UserTheme
 
 	Work       *string
 	JobTitle   *string
@@ -65,11 +61,6 @@ type CompatibilitySummary struct {
 	OverlapCount         int                  // # shared questions answered
 	Badges               []CompatibilityBadge // top 2–3 satisfied items
 	HiddenReason         string               // e.g., "Not enough overlap"
-}
-
-type UserTheme struct {
-	BaseHex string
-	Palette []string
 }
 
 type VoicePrompt struct {

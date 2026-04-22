@@ -53,7 +53,6 @@ type ProfileExport struct {
 	University        *string    `json:"university,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`
 	UpdatedAt         time.Time  `json:"updated_at"`
-	CoverMediaURL     *string    `json:"cover_media_url,omitempty"`
 	Emoji             *string    `json:"emoji,omitempty"`
 	SexualityID       *int       `json:"sexuality_id,omitempty"`
 	Verified          string     `json:"verified"`
