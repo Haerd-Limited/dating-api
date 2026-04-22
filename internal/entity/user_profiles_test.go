@@ -2553,7 +2553,7 @@ func testUserProfilesSelect(t *testing.T) {
 }
 
 var (
-	userProfileDBTypes = map[string]string{`UserID`: `uuid`, `DisplayName`: `text`, `Birthdate`: `date`, `HeightCM`: `smallint`, `Geo`: `USER-DEFINED`, `City`: `text`, `Country`: `text`, `GenderID`: `smallint`, `ReligionID`: `smallint`, `EducationLevelID`: `smallint`, `PoliticalBeliefID`: `smallint`, `DrinkingID`: `smallint`, `SmokingID`: `smallint`, `MarijuanaID`: `smallint`, `DrugsID`: `smallint`, `ChildrenStatusID`: `smallint`, `FamilyPlanID`: `smallint`, `Work`: `text`, `JobTitle`: `text`, `University`: `text`, `ProfileMeta`: `jsonb`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `CoverMediaURL`: `text`, `Emoji`: `text`, `SexualityID`: `smallint`, `Verified`: `enum.user_video_verification_status('VERIFIED','UNVERIFIED','UNDER_REVIEW')`, `CoverMediaType`: `enum.cover_media_type('image','gif')`, `CoverMediaAspectRatio`: `real`}
+	userProfileDBTypes = map[string]string{`UserID`: `uuid`, `DisplayName`: `text`, `Birthdate`: `date`, `HeightCM`: `smallint`, `Geo`: `USER-DEFINED`, `City`: `text`, `Country`: `text`, `GenderID`: `smallint`, `ReligionID`: `smallint`, `EducationLevelID`: `smallint`, `PoliticalBeliefID`: `smallint`, `DrinkingID`: `smallint`, `SmokingID`: `smallint`, `MarijuanaID`: `smallint`, `DrugsID`: `smallint`, `ChildrenStatusID`: `smallint`, `FamilyPlanID`: `smallint`, `Work`: `text`, `JobTitle`: `text`, `University`: `text`, `ProfileMeta`: `jsonb`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `SexualityID`: `smallint`, `Verified`: `enum.user_video_verification_status('VERIFIED','UNVERIFIED','UNDER_REVIEW')`, `Emoji`: `text`}
 	_                  = bytes.MinRead
 )
 
