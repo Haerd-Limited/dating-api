@@ -94,16 +94,6 @@ func MapPhotosRequestToDomain(req dto.PhotosRequest, userID string) domain.Uploa
 	}
 }
 
-func MapProfileToDomain(req dto.ProfileRequest, userID string) domain.Profile {
-	return domain.Profile{
-		UserID:                       userID,
-		ProfileBaseColour:            req.ProfileBaseColour,
-		ProfileCoverMediaURL:         req.ProfileCoverMediaURL,
-		ProfileCoverMediaType:        req.ProfileCoverMediaType,
-		ProfileCoverMediaAspectRatio: req.ProfileCoverMediaAspectRatio,
-	}
-}
-
 func MapPromptsRequestToDomain(req dto.PromptsRequest, userID string) domain.Prompts {
 	var voicePrompts []domain.VoicePrompt
 

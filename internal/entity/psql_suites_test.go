@@ -102,8 +102,6 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("UserReports", testUserReportsUpsert)
 
-	t.Run("UserThemes", testUserThemesUpsert)
-
 	t.Run("UserVerificationStatuses", testUserVerificationStatusesUpsert)
 
 	t.Run("Users", testUsersUpsert)
@@ -111,8 +109,6 @@ func TestUpsert(t *testing.T) {
 	t.Run("VerificationAttempts", testVerificationAttemptsUpsert)
 
 	t.Run("VerificationCodes", testVerificationCodesUpsert)
-
-	t.Run("VerificationVideoSubmissions", testVerificationVideoSubmissionsUpsert)
 
 	t.Run("VoicePrompts", testVoicePromptsUpsert)
 

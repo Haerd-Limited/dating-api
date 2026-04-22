@@ -4,17 +4,6 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type ProfileRequest struct {
-	ProfileBaseColour            string   `json:"profile_base_colour" validate:"required"`
-	ProfileCoverMediaURL         string   `json:"profile_cover_media_url" validate:"required"`
-	ProfileCoverMediaType        *string  `json:"profile_cover_media_type,omitempty"`
-	ProfileCoverMediaAspectRatio *float64 `json:"profile_cover_media_aspect_ratio,omitempty"`
-}
-
-func (pr ProfileRequest) Validate() error {
-	return validator.New().Struct(pr)
-}
-
 type VideoVerificationRequest struct {
 	VideoKey string `json:"video_key" validate:"required"`
 }

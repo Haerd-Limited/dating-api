@@ -57,11 +57,6 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		})
 	}
 
-	var coverMediaURL string
-	if profile.CoverMediaURL != nil {
-		coverMediaURL = *profile.CoverMediaURL
-	}
-
 	return ProfileCard{
 		DisplayName: profile.DisplayName,
 		Birthdate:   birthdateStr,
@@ -69,15 +64,12 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		HeightCM:    profile.HeightCM,
 		UserID:      profile.UserID,
 
-		Latitude:              profile.Latitude,
-		Longitude:             profile.Longitude,
-		City:                  profile.City,
-		Country:               profile.Country,
-		DistanceKm:            profile.DistanceKm,
-		Emoji:                 profile.Emoji,
-		CoverMediaURL:         coverMediaURL,
-		CoverMediaType:        profile.CoverMediaType,
-		CoverMediaAspectRatio: profile.CoverMediaAspectRatio,
+		Latitude:   profile.Latitude,
+		Longitude:  profile.Longitude,
+		City:       profile.City,
+		Country:    profile.Country,
+		DistanceKm: profile.DistanceKm,
+		Emoji:      profile.Emoji,
 
 		Gender:          profile.Gender,
 		Sexuality:       profile.Sexuality,
@@ -96,10 +88,6 @@ func ProfileCardToDto(profile profilecard.ProfileCard) ProfileCard {
 		Photos:          photos,
 		LikeCount:       profile.LikeCount,
 		VerifiedStatus:  profile.VerifiedStatus,
-		Theme: UserTheme{
-			BaseHex: profile.Theme.BaseHex,
-			Palette: profile.Theme.Palette,
-		},
 
 		Work:         profile.Work,
 		JobTitle:     profile.JobTitle,

@@ -35,23 +35,6 @@ func MapProfileToEntityForUpdate(p *domain.Profile) (*entity.UserProfile, []stri
 		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.Emoji)
 	}
 
-	if p.CoverMediaURL != nil {
-		ent.CoverMediaURL = null.StringFromPtr(p.CoverMediaURL)
-		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverMediaURL)
-	}
-
-	if p.CoverMediaType != nil {
-		ent.CoverMediaType = null.StringFromPtr(p.CoverMediaType)
-		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverMediaType)
-	}
-
-	if p.CoverMediaAspectRatio != nil {
-		aspectRatio32 := float32(*p.CoverMediaAspectRatio)
-		ent.CoverMediaAspectRatio = null.Float32FromPtr(&aspectRatio32)
-
-		columnWhitelist = append(columnWhitelist, entity.UserProfileColumns.CoverMediaAspectRatio)
-	}
-
 	// Strings
 	if p.DisplayName != "" {
 		ent.DisplayName = p.DisplayName
