@@ -134,6 +134,10 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, messages.InvalidDobMsg
 	case errors.Is(err, storage2.ErrAlreadySwiped):
 		return http.StatusConflict, "You've already swiped on this user"
+	case errors.Is(err, interaction.ErrMatchLimitReached):
+		return http.StatusConflict, "You already have 2 active matches. Unmatch someone to make room."
+	case errors.Is(err, interaction.ErrTargetMatchLimitReached):
+		return http.StatusConflict, "This person already has the maximum number of active matches."
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}

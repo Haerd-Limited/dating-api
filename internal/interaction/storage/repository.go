@@ -1,5 +1,7 @@
 package storage
 
+//go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
+
 import (
 	"context"
 	"database/sql"
@@ -26,6 +28,9 @@ type InteractionRepository interface {
 	GetSwipeByActorIDAndTargetID(ctx context.Context, actorID, targetID string) (*entity.Swipe, error)
 	GetFirstLikeSwipeByBetweenUsers(ctx context.Context, userA, userB string) (*entity.Swipe, error)
 	CountSuperlikesSince(ctx context.Context, userID string, since time.Time, exec boil.ContextExecutor) (int64, error)
+	CountActiveMatches(ctx context.Context, userID string, exec boil.ContextExecutor) (int64, error)
+	CountActiveMatchesForUsers(ctx context.Context, userIDs []string) (map[string]int64, error)
+	LockUsersForMatchCreation(ctx context.Context, tx *sql.Tx, userA, userB string) error
 	ListSwipesByUserID(ctx context.Context, userID string) ([]*entity.Swipe, error)
 }
 
@@ -197,4 +202,89 @@ func (is *repository) CountSuperlikesSince(ctx context.Context, userID string, s
 	}
 
 	return count, nil
+}
+
+func (is *repository) CountActiveMatches(ctx context.Context, userID string, exec boil.ContextExecutor) (int64, error) {
+	if exec == nil {
+		exec = is.db
+	}
+
+	count, err := entity.Matches(
+		qm.Where("(user_a = ? OR user_b = ?) AND status = ?", userID, userID, string(entity.MatchStatusActive)),
+	).Count(ctx, exec)
+	if err != nil {
+		return 0, fmt.Errorf("count active matches userID=%s: %w", userID, err)
+	}
+
+	return count, nil
+}
+
+// CountActiveMatchesForUsers returns a map of userID -> active match count for
+// the given user IDs. Missing keys mean zero. The caller should treat absent
+// entries as 0.
+func (is *repository) CountActiveMatchesForUsers(ctx context.Context, userIDs []string) (map[string]int64, error) {
+	if len(userIDs) == 0 {
+		return map[string]int64{}, nil
+	}
+
+	const query = `
+		SELECT user_id, COUNT(*)::bigint AS active_count
+		FROM (
+			SELECT user_a AS user_id FROM matches
+			WHERE status = 'active' AND user_a = ANY($1)
+			UNION ALL
+			SELECT user_b AS user_id FROM matches
+			WHERE status = 'active' AND user_b = ANY($1)
+		) t
+		GROUP BY user_id
+	`
+
+	rows, err := is.db.QueryContext(ctx, query, pq.Array(userIDs))
+	if err != nil {
+		return nil, fmt.Errorf("query active matches for users: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	counts := make(map[string]int64, len(userIDs))
+
+	for rows.Next() {
+		var (
+			id    string
+			count int64
+		)
+
+		if err := rows.Scan(&id, &count); err != nil {
+			return nil, fmt.Errorf("scan active matches row: %w", err)
+		}
+
+		counts[id] = count
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate active matches rows: %w", err)
+	}
+
+	return counts, nil
+}
+
+// LockUsersForMatchCreation acquires two transaction-scoped advisory locks
+// (one per user) inside the given tx, sorted to avoid deadlocks. Use
+// hashtextextended (PG 13+) which returns int8 matching pg_advisory_xact_lock's
+// signature without a cast.
+func (is *repository) LockUsersForMatchCreation(ctx context.Context, tx *sql.Tx, userA, userB string) error {
+	a, b := userA, userB
+	if b < a {
+		a, b = b, a
+	}
+
+	_, err := tx.ExecContext(ctx,
+		`SELECT pg_advisory_xact_lock(hashtextextended($1, 0)),
+		        pg_advisory_xact_lock(hashtextextended($2, 0))`,
+		a, b,
+	)
+	if err != nil {
+		return fmt.Errorf("acquire advisory locks for match creation userA=%s userB=%s: %w", a, b, err)
+	}
+
+	return nil
 }

@@ -15,14 +15,17 @@ type Swipe struct {
 }
 
 type Likes struct {
-	Verified   []Like
-	Unverified []Like
+	Verified           []Like
+	Unverified         []Like
+	ActiveMatchesCount int64
+	MatchSlotLimit     int64
 }
 
 type Like struct {
-	Profile profilecard.ProfileCard
-	Message *Message
-	Prompt  *Prompt
+	Profile            profilecard.ProfileCard
+	Message            *Message
+	Prompt             *Prompt
+	TargetAtMatchLimit bool
 }
 type Prompt struct {
 	PromptID              int64

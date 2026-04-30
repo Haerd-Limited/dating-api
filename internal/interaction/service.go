@@ -1,11 +1,14 @@
 package interaction
 
+//go:generate mockgen -source=service.go -destination=service_mock.go -package=interaction
+
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/friendsofgo/errors"
 	"go.uber.org/zap"
 
@@ -80,6 +83,8 @@ var (
 	ErrWeeklySuperlikeLimitReached             = errors.New("weekly superlike limit reached")
 	ErrBlockedUser                             = errors.New("cannot interact with a blocked user")
 	ErrUnverifiedUser                          = errors.New("user must be verified before matching")
+	ErrMatchLimitReached                       = errors.New("user is at the active match limit")
+	ErrTargetMatchLimitReached                 = errors.New("target user is at the active match limit")
 )
 
 const (
@@ -89,6 +94,10 @@ const (
 )
 
 const weeklySuperlikeAllowance int64 = 1
+
+// maxActiveMatches is the per-user cap on simultaneously active matches.
+// Surfaced to the API as `match_slot_limit` on GET /api/v1/likes.
+const maxActiveMatches int64 = 2
 
 func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error) {
 	// this should all be a single transaction
@@ -199,6 +208,19 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 		if !verified {
 			return "", ErrUnverifiedUser
+		}
+
+		// Enforce the symmetric 2-active-match cap. Acquire transaction-scoped
+		// advisory locks on both users so concurrent reciprocal-like flows
+		// can't both pass the count check and create a 3rd match.
+		err = is.interactionRepo.LockUsersForMatchCreation(ctx, tx.Raw(), swipe.UserID, swipe.TargetUserID)
+		if err != nil {
+			return "", commonlogger.LogError(is.logger, "lock users for match creation", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
+		}
+
+		err = is.enforceActiveMatchCap(ctx, tx.Raw(), swipe.UserID, swipe.TargetUserID)
+		if err != nil {
+			return "", err
 		}
 
 		err = is.interactionRepo.InsertSwipe(ctx, mapper.SwipeToEntity(swipe), tx.Raw())
@@ -390,6 +412,13 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		return domain.Likes{}, err
 	}
 
+	// Batch-fetch active match counts for all likers so we can populate
+	// `target_at_match_limit` per Like without an N+1 query.
+	likerCounts, err := is.interactionRepo.CountActiveMatchesForUsers(ctx, likesUserIDs)
+	if err != nil {
+		return domain.Likes{}, commonlogger.LogError(is.logger, "count active matches for likers", err, zap.String("userID", userID))
+	}
+
 	var likes domain.Likes
 
 	for _, id := range likesUserIDs {
@@ -431,9 +460,10 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		}
 
 		like := domain.Like{
-			Profile: p,
-			Message: &domain.Message{},
-			Prompt:  &domain.Prompt{},
+			Profile:            p,
+			Message:            &domain.Message{},
+			Prompt:             &domain.Prompt{},
+			TargetAtMatchLimit: likerCounts[id] >= maxActiveMatches,
 		}
 
 		var voicePrompt profiledomain.VoicePrompt
@@ -462,7 +492,45 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		}
 	}
 
+	// Surface the viewer's own match-slot status so the FE can render N/2
+	// and pre-gate the like-back UI.
+	viewerActive, err := is.interactionRepo.CountActiveMatches(ctx, userID, nil)
+	if err != nil {
+		return domain.Likes{}, commonlogger.LogError(is.logger, "count active matches for viewer", err, zap.String("userID", userID))
+	}
+
+	likes.ActiveMatchesCount = viewerActive
+	likes.MatchSlotLimit = maxActiveMatches
+
 	return likes, nil
+}
+
+// enforceActiveMatchCap returns ErrMatchLimitReached if the actor is already
+// at maxActiveMatches, or ErrTargetMatchLimitReached if the target is.
+// The caller MUST have already acquired the per-user advisory locks via
+// LockUsersForMatchCreation against the same exec; otherwise the count is
+// racy. Pass `nil` for exec to count against the default db connection
+// (only safe in non-tx call sites such as GetLikes).
+func (is *service) enforceActiveMatchCap(ctx context.Context, exec boil.ContextExecutor, actorID, targetID string) error {
+	actorActive, err := is.interactionRepo.CountActiveMatches(ctx, actorID, exec)
+	if err != nil {
+		return commonlogger.LogError(is.logger, "count actor active matches", err, zap.String("userID", actorID))
+	}
+
+	if actorActive >= maxActiveMatches {
+		return ErrMatchLimitReached
+	}
+
+	targetActive, err := is.interactionRepo.CountActiveMatches(ctx, targetID, exec)
+	if err != nil {
+		return commonlogger.LogError(is.logger, "count target active matches", err, zap.String("targetUserID", targetID))
+	}
+
+	if targetActive >= maxActiveMatches {
+		return ErrTargetMatchLimitReached
+	}
+
+	return nil
 }
 
 func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatchable bool) error {

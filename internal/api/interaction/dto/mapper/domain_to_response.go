@@ -24,9 +24,10 @@ func MapToGetLikesResponse(domainLikes *domain.Likes) dto.GetLikesResponse {
 
 	for _, domainLike := range domainLikes.Verified {
 		like := dto.Like{
-			Profile: commonprofile.ProfileCardToDto(domainLike.Profile),
-			Message: &dto.Message{},
-			Prompt:  &dto.Prompt{},
+			Profile:            commonprofile.ProfileCardToDto(domainLike.Profile),
+			Message:            &dto.Message{},
+			Prompt:             &dto.Prompt{},
+			TargetAtMatchLimit: domainLike.TargetAtMatchLimit,
 		}
 
 		if domainLike.Prompt != nil {
@@ -51,9 +52,10 @@ func MapToGetLikesResponse(domainLikes *domain.Likes) dto.GetLikesResponse {
 
 	for _, domainLike := range domainLikes.Unverified {
 		like := dto.Like{
-			Profile: commonprofile.ProfileCardToDto(domainLike.Profile),
-			Message: &dto.Message{},
-			Prompt:  &dto.Prompt{},
+			Profile:            commonprofile.ProfileCardToDto(domainLike.Profile),
+			Message:            &dto.Message{},
+			Prompt:             &dto.Prompt{},
+			TargetAtMatchLimit: domainLike.TargetAtMatchLimit,
 		}
 
 		if domainLike.Prompt != nil {
@@ -75,7 +77,9 @@ func MapToGetLikesResponse(domainLikes *domain.Likes) dto.GetLikesResponse {
 	}
 
 	return dto.GetLikesResponse{
-		Verified:   verified,
-		Unverified: unverified,
+		Verified:           verified,
+		Unverified:         unverified,
+		ActiveMatchesCount: domainLikes.ActiveMatchesCount,
+		MatchSlotLimit:     domainLikes.MatchSlotLimit,
 	}
 }

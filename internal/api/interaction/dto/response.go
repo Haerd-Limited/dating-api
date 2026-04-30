@@ -16,14 +16,17 @@ type SwipesResponse struct {
 }
 
 type GetLikesResponse struct {
-	Verified   []Like `json:"verified"`
-	Unverified []Like `json:"unverified"`
+	Verified           []Like `json:"verified"`
+	Unverified         []Like `json:"unverified"`
+	ActiveMatchesCount int64  `json:"active_matches_count"`
+	MatchSlotLimit     int64  `json:"match_slot_limit"`
 }
 
 type Like struct {
-	Profile dto.ProfileCard `json:"profile"`
-	Message *Message        `json:"message"`
-	Prompt  *Prompt         `json:"prompt"`
+	Profile            dto.ProfileCard `json:"profile"`
+	Message            *Message        `json:"message"`
+	Prompt             *Prompt         `json:"prompt"`
+	TargetAtMatchLimit bool            `json:"target_at_match_limit"`
 }
 
 type Prompt struct {
