@@ -1,6 +1,6 @@
 # Create Implementation Plan
 
-Given a task description, produce a concrete, actionable implementation plan for this codebase. Switch to plan mode — no edits until I confirm.
+Given a linear ticket link or task description, produce a concrete, actionable implementation plan for this codebase. Switch to plan mode — no edits until I confirm.
 
 ## Step 1: Gather Context
 
