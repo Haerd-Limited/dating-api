@@ -86,10 +86,12 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 			result.VoicePrompts = append(result.VoicePrompts, dto.VoicePrompt{
 				URL: prompt.URL,
 				PromptType: dto.Prompt{
-					ID:       prompt.PromptType.ID,
-					Label:    prompt.PromptType.Label,
-					Key:      prompt.PromptType.Key,
-					Category: prompt.PromptType.Category,
+					ID:           prompt.PromptType.ID,
+					Label:        prompt.PromptType.Label,
+					Key:          prompt.PromptType.Key,
+					Category:     prompt.PromptType.Category,
+					IsCore:       prompt.PromptType.IsCore,
+					CorePosition: prompt.PromptType.CorePosition,
 				},
 				IsPrimary:             prompt.IsPrimary,
 				Position:              prompt.Position,

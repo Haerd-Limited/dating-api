@@ -42,6 +42,21 @@ func (m *MockLookupRepository) EXPECT() *MockLookupRepositoryMockRecorder {
 	return m.recorder
 }
 
+// GetCorePromptTypeIDs mocks base method.
+func (m *MockLookupRepository) GetCorePromptTypeIDs(ctx context.Context) ([]int16, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCorePromptTypeIDs", ctx)
+	ret0, _ := ret[0].([]int16)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCorePromptTypeIDs indicates an expected call of GetCorePromptTypeIDs.
+func (mr *MockLookupRepositoryMockRecorder) GetCorePromptTypeIDs(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCorePromptTypeIDs", reflect.TypeOf((*MockLookupRepository)(nil).GetCorePromptTypeIDs), ctx)
+}
+
 // GetEducationLevelByID mocks base method.
 func (m *MockLookupRepository) GetEducationLevelByID(ctx context.Context, id int16) (*entity.EducationLevel, error) {
 	m.ctrl.T.Helper()

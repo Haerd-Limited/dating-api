@@ -57,6 +57,21 @@ func (mr *MockServiceMockRecorder) DeleteAllUserFiles(ctx, userID any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllUserFiles", reflect.TypeOf((*MockService)(nil).DeleteAllUserFiles), ctx, userID)
 }
 
+// GenerateDownloadURL mocks base method.
+func (m *MockService) GenerateDownloadURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateDownloadURL", ctx, key, ttl)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateDownloadURL indicates an expected call of GenerateDownloadURL.
+func (mr *MockServiceMockRecorder) GenerateDownloadURL(ctx, key, ttl any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateDownloadURL", reflect.TypeOf((*MockService)(nil).GenerateDownloadURL), ctx, key, ttl)
+}
+
 // GenerateUploadURLs mocks base method.
 func (m *MockService) GenerateUploadURLs(ctx context.Context, userID string, count int, contentType string, ttl time.Duration, purpose *string) ([]storage.UploadSlot, error) {
 	m.ctrl.T.Helper()

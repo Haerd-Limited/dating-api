@@ -34,10 +34,12 @@ type PhotosContent struct {
 }
 
 type Prompt struct {
-	ID       int16
-	Key      string
-	Label    string
-	Category string
+	ID           int16
+	Key          string
+	Label        string
+	Category     string
+	IsCore       bool
+	CorePosition *int16
 }
 
 type UploadedPhotos struct {

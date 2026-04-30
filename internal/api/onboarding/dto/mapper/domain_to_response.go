@@ -84,10 +84,12 @@ func MapPhotosContentToDto(content domain.PhotosContent) dto.PhotosContent {
 	var prompts []dto.Prompt
 	for _, prompt := range content.Prompts {
 		prompts = append(prompts, dto.Prompt{
-			ID:       prompt.ID,
-			Label:    prompt.Label,
-			Key:      prompt.Key,
-			Category: prompt.Category,
+			ID:           prompt.ID,
+			Label:        prompt.Label,
+			Key:          prompt.Key,
+			Category:     prompt.Category,
+			IsCore:       prompt.IsCore,
+			CorePosition: prompt.CorePosition,
 		})
 	}
 

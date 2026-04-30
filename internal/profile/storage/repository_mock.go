@@ -73,6 +73,21 @@ func (mr *MockProfileRepositoryMockRecorder) CountUsersBasicsCompletedByGender(c
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsersBasicsCompletedByGender", reflect.TypeOf((*MockProfileRepository)(nil).CountUsersBasicsCompletedByGender), ctx, genderID)
 }
 
+// GetAllVoicePromptsByUserID mocks base method.
+func (m *MockProfileRepository) GetAllVoicePromptsByUserID(ctx context.Context, userID string) ([]*entity.VoicePrompt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllVoicePromptsByUserID", ctx, userID)
+	ret0, _ := ret[0].([]*entity.VoicePrompt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllVoicePromptsByUserID indicates an expected call of GetAllVoicePromptsByUserID.
+func (mr *MockProfileRepositoryMockRecorder) GetAllVoicePromptsByUserID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllVoicePromptsByUserID", reflect.TypeOf((*MockProfileRepository)(nil).GetAllVoicePromptsByUserID), ctx, userID)
+}
+
 // GetUserEthnicities mocks base method.
 func (m *MockProfileRepository) GetUserEthnicities(ctx context.Context, userID string) ([]int16, error) {
 	m.ctrl.T.Helper()
@@ -146,6 +161,21 @@ func (m *MockProfileRepository) GetUserVoicePrompts(ctx context.Context, userID 
 func (mr *MockProfileRepositoryMockRecorder) GetUserVoicePrompts(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserVoicePrompts", reflect.TypeOf((*MockProfileRepository)(nil).GetUserVoicePrompts), ctx, userID)
+}
+
+// GetVerificationStatus mocks base method.
+func (m *MockProfileRepository) GetVerificationStatus(ctx context.Context, userID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVerificationStatus", ctx, userID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVerificationStatus indicates an expected call of GetVerificationStatus.
+func (mr *MockProfileRepositoryMockRecorder) GetVerificationStatus(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVerificationStatus", reflect.TypeOf((*MockProfileRepository)(nil).GetVerificationStatus), ctx, userID)
 }
 
 // GetVoicePromptByID mocks base method.

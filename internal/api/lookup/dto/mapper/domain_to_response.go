@@ -37,10 +37,12 @@ func MapToGetPromptsResponse(domainPrompts []domain.Prompt) dto.GetPromptsRespon
 	var prompts []dto.Prompt
 	for _, prompt := range domainPrompts {
 		prompts = append(prompts, dto.Prompt{
-			ID:       prompt.ID,
-			Label:    prompt.Label,
-			Key:      prompt.Key,
-			Category: prompt.Category,
+			ID:           prompt.ID,
+			Label:        prompt.Label,
+			Key:          prompt.Key,
+			Category:     prompt.Category,
+			IsCore:       prompt.IsCore,
+			CorePosition: prompt.CorePosition,
 		})
 	}
 

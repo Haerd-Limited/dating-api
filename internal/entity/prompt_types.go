@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -23,51 +24,65 @@ import (
 
 // PromptType is an object representing the database table.
 type PromptType struct {
-	ID       int16  `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Key      string `boil:"key" json:"key" toml:"key" yaml:"key"`
-	Label    string `boil:"label" json:"label" toml:"label" yaml:"label"`
-	Category string `boil:"category" json:"category" toml:"category" yaml:"category"`
+	ID           int16      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Key          string     `boil:"key" json:"key" toml:"key" yaml:"key"`
+	Label        string     `boil:"label" json:"label" toml:"label" yaml:"label"`
+	Category     string     `boil:"category" json:"category" toml:"category" yaml:"category"`
+	IsCore       bool       `boil:"is_core" json:"is_core" toml:"is_core" yaml:"is_core"`
+	CorePosition null.Int16 `boil:"core_position" json:"core_position,omitempty" toml:"core_position" yaml:"core_position,omitempty"`
 
 	R *promptTypeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L promptTypeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var PromptTypeColumns = struct {
-	ID       string
-	Key      string
-	Label    string
-	Category string
+	ID           string
+	Key          string
+	Label        string
+	Category     string
+	IsCore       string
+	CorePosition string
 }{
-	ID:       "id",
-	Key:      "key",
-	Label:    "label",
-	Category: "category",
+	ID:           "id",
+	Key:          "key",
+	Label:        "label",
+	Category:     "category",
+	IsCore:       "is_core",
+	CorePosition: "core_position",
 }
 
 var PromptTypeTableColumns = struct {
-	ID       string
-	Key      string
-	Label    string
-	Category string
+	ID           string
+	Key          string
+	Label        string
+	Category     string
+	IsCore       string
+	CorePosition string
 }{
-	ID:       "prompt_types.id",
-	Key:      "prompt_types.key",
-	Label:    "prompt_types.label",
-	Category: "prompt_types.category",
+	ID:           "prompt_types.id",
+	Key:          "prompt_types.key",
+	Label:        "prompt_types.label",
+	Category:     "prompt_types.category",
+	IsCore:       "prompt_types.is_core",
+	CorePosition: "prompt_types.core_position",
 }
 
 // Generated where
 
 var PromptTypeWhere = struct {
-	ID       whereHelperint16
-	Key      whereHelperstring
-	Label    whereHelperstring
-	Category whereHelperstring
+	ID           whereHelperint16
+	Key          whereHelperstring
+	Label        whereHelperstring
+	Category     whereHelperstring
+	IsCore       whereHelperbool
+	CorePosition whereHelpernull_Int16
 }{
-	ID:       whereHelperint16{field: "\"prompt_types\".\"id\""},
-	Key:      whereHelperstring{field: "\"prompt_types\".\"key\""},
-	Label:    whereHelperstring{field: "\"prompt_types\".\"label\""},
-	Category: whereHelperstring{field: "\"prompt_types\".\"category\""},
+	ID:           whereHelperint16{field: "\"prompt_types\".\"id\""},
+	Key:          whereHelperstring{field: "\"prompt_types\".\"key\""},
+	Label:        whereHelperstring{field: "\"prompt_types\".\"label\""},
+	Category:     whereHelperstring{field: "\"prompt_types\".\"category\""},
+	IsCore:       whereHelperbool{field: "\"prompt_types\".\"is_core\""},
+	CorePosition: whereHelpernull_Int16{field: "\"prompt_types\".\"core_position\""},
 }
 
 // PromptTypeRels is where relationship names are stored.
@@ -107,9 +122,9 @@ func (r *promptTypeR) GetVoicePrompts() VoicePromptSlice {
 type promptTypeL struct{}
 
 var (
-	promptTypeAllColumns            = []string{"id", "key", "label", "category"}
+	promptTypeAllColumns            = []string{"id", "key", "label", "category", "is_core", "core_position"}
 	promptTypeColumnsWithoutDefault = []string{"key", "label", "category"}
-	promptTypeColumnsWithDefault    = []string{"id"}
+	promptTypeColumnsWithDefault    = []string{"id", "is_core", "core_position"}
 	promptTypePrimaryKeyColumns     = []string{"id"}
 	promptTypeGeneratedColumns      = []string{}
 )

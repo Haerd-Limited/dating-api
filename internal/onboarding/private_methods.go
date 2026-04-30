@@ -6,6 +6,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/mapper"
+	"github.com/Haerd-Limited/dating-api/internal/profile"
 	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
@@ -20,7 +21,7 @@ func (os *onboardingService) getLanguages(ctx context.Context) ([]domain.Languag
 	return mapper.MapLanguagesToDomain(languageEntities), nil
 }
 
-func (os *onboardingService) validatePrompts(uploadedPrompts domain.Prompts) error {
+func (os *onboardingService) validatePrompts(ctx context.Context, uploadedPrompts domain.Prompts) error {
 	if len(uploadedPrompts.UploadedPrompts) == 0 {
 		return ErrMissingPrompts
 	}
@@ -31,6 +32,22 @@ func (os *onboardingService) validatePrompts(uploadedPrompts domain.Prompts) err
 
 	if len(uploadedPrompts.UploadedPrompts) > constants.MaximumNumberOfPrompts {
 		return fmt.Errorf("%w. please provide atmost %v", ErrTooManyPromptsProvided, constants.MaximumNumberOfPrompts)
+	}
+
+	coreIDs, err := os.lookupRepo.GetCorePromptTypeIDs(ctx)
+	if err != nil {
+		return fmt.Errorf("load core prompt ids: %w", err)
+	}
+
+	submitted := make(map[int16]struct{}, len(uploadedPrompts.UploadedPrompts))
+	for _, p := range uploadedPrompts.UploadedPrompts {
+		submitted[p.PromptType] = struct{}{}
+	}
+
+	for _, id := range coreIDs {
+		if _, ok := submitted[id]; !ok {
+			return fmt.Errorf("%w: prompt_type_id=%d", profile.ErrMissingRequiredCorePrompts, id)
+		}
 	}
 
 	return nil

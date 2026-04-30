@@ -72,7 +72,7 @@ func (s *service) validateProfileUpdate(up domain.UpdateProfile) error {
 	return nil
 }
 
-func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate) error {
+func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate, coreIDs []int16) error {
 	if len(prompts) == 0 {
 		return ErrMissingPrompts
 	}
@@ -95,6 +95,17 @@ func validateUserPromptsUpsert(prompts []domain.VoicePromptUpdate) error {
 		}
 
 		seen[p.Position] = struct{}{}
+	}
+
+	submitted := make(map[int16]struct{}, len(prompts))
+	for _, p := range prompts {
+		submitted[p.PromptTypeID] = struct{}{}
+	}
+
+	for _, id := range coreIDs {
+		if _, ok := submitted[id]; !ok {
+			return fmt.Errorf("%w: prompt_type_id=%d", ErrMissingRequiredCorePrompts, id)
+		}
 	}
 
 	return nil
@@ -201,14 +212,23 @@ func (s *service) getUserVoicePrompts(ctx context.Context, userID string) ([]dom
 			promptCoverMediaAspectRatio = &aspectRatio64
 		}
 
+		var corePosition *int16
+
+		if promptType.CorePosition.Valid {
+			pos := promptType.CorePosition.Int16
+			corePosition = &pos
+		}
+
 		voicePrompts = append(voicePrompts, domain.ProfileVoicePrompt{
 			ID:  vpe.ID,
 			URL: vpe.AudioURL,
 			PromptType: domain.Prompt{
-				ID:       promptType.ID,
-				Label:    promptType.Label,
-				Key:      promptType.Key,
-				Category: promptType.Category,
+				ID:           promptType.ID,
+				Label:        promptType.Label,
+				Key:          promptType.Key,
+				Category:     promptType.Category,
+				IsCore:       promptType.IsCore,
+				CorePosition: corePosition,
 			},
 			IsPrimary:                   vpe.IsPrimary,
 			Position:                    vpe.Position.Int16,

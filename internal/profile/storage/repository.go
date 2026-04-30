@@ -176,7 +176,9 @@ func (pr *profileRepository) InsertProfile(ctx context.Context, userProfile *ent
 }
 
 func (pr *profileRepository) GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error) {
-	prompts, err := entity.PromptTypes().All(ctx, pr.db)
+	prompts, err := entity.PromptTypes(
+		qm.OrderBy("is_core DESC, core_position ASC NULLS LAST, id ASC"),
+	).All(ctx, pr.db)
 	if err != nil {
 		return nil, err
 	}

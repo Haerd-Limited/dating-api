@@ -420,7 +420,7 @@ func (h *handler) Prompts() http.HandlerFunc {
 			render.Json(
 				w,
 				http.StatusBadRequest,
-				commonMappers.ToSimpleErrorResponse(fmt.Sprintf("Please provide at least 4 prompts. Maximum %v prompts. Prompt type, url and position are required fields", constants.MaximumNumberOfPrompts)),
+				commonMappers.ToSimpleErrorResponse(fmt.Sprintf("Please provide at least 5 prompts (all 5 core prompts) and at most %v prompts. Prompt type, url and position are required fields", constants.MaximumNumberOfPrompts)),
 			)
 
 			return
@@ -482,6 +482,14 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Invalid prompt position"
 	case errors.Is(err, profile.ErrDuplicatePromptPosition):
 		return http.StatusBadRequest, "Duplicate prompt position"
+	case errors.Is(err, profile.ErrMissingRequiredCorePrompts):
+		return http.StatusBadRequest, "All Core prompts must be answered."
+	case errors.Is(err, onboarding.ErrNotEnoughPromptsProvided):
+		return http.StatusBadRequest, "Please provide at least 5 prompts (including all Core prompts)."
+	case errors.Is(err, onboarding.ErrTooManyPromptsProvided):
+		return http.StatusBadRequest, fmt.Sprintf("Please provide at most %d prompts.", constants.MaximumNumberOfPrompts)
+	case errors.Is(err, onboarding.ErrMissingPrompts):
+		return http.StatusBadRequest, "Please provide your voice prompts."
 	case errors.Is(err, profile.ErrDuplicatePhotoPosition):
 		return http.StatusBadRequest, "Duplicate photo position"
 	case errors.Is(err, commonErrors.ErrInvalidEmail):

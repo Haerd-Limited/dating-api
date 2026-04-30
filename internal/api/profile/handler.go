@@ -261,6 +261,12 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Duplicate prompt position"
 	case errors.Is(err, profile.ErrDuplicatePhotoPosition):
 		return http.StatusBadRequest, "Duplicate photo position"
+	case errors.Is(err, profile.ErrMissingRequiredCorePrompts):
+		return http.StatusBadRequest, "All Core prompts must be answered when updating your voice prompts."
+	case errors.Is(err, profile.ErrTooManyPromptsProvided):
+		return http.StatusBadRequest, fmt.Sprintf("Please provide at most %d prompts.", constants.MaximumNumberOfPrompts)
+	case errors.Is(err, profile.ErrMissingPrompts):
+		return http.StatusBadRequest, "Please provide your voice prompts."
 	case errors.Is(err, commonErrors.ErrInvalidMediaUrl):
 		return http.StatusBadRequest, "Invalid media url"
 	case errors.Is(err, profile.ErrInvalidHeight):

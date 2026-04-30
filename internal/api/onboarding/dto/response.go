@@ -22,10 +22,12 @@ type PhotosContent struct {
 }
 
 type Prompt struct {
-	ID       int16  `json:"id"`
-	Key      string `json:"key"`
-	Label    string `json:"label"`
-	Category string `json:"category"`
+	ID           int16  `json:"id"`
+	Key          string `json:"key"`
+	Label        string `json:"label"`
+	Category     string `json:"category"`
+	IsCore       bool   `json:"is_core"`
+	CorePosition *int16 `json:"core_position,omitempty"`
 }
 
 type LanguagesContent struct {

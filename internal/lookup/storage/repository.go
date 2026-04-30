@@ -34,6 +34,7 @@ type LookupRepository interface {
 	GetFamilyPlans(ctx context.Context) (entity.FamilyPlanSlice, error)
 	GetFamilyStatus(ctx context.Context) (entity.FamilyStatusSlice, error)
 	GetReportCategories(ctx context.Context) (entity.ReportCategorySlice, error)
+	GetCorePromptTypeIDs(ctx context.Context) ([]int16, error)
 }
 
 type lookupRepository struct {
@@ -76,12 +77,31 @@ func (lr *lookupRepository) GetFamilyPlans(ctx context.Context) (entity.FamilyPl
 }
 
 func (lr *lookupRepository) GetPrompts(ctx context.Context) (entity.PromptTypeSlice, error) {
-	prompts, err := entity.PromptTypes().All(ctx, lr.db)
+	prompts, err := entity.PromptTypes(
+		qm.OrderBy("is_core DESC, core_position ASC NULLS LAST, id ASC"),
+	).All(ctx, lr.db)
 	if err != nil {
 		return nil, err
 	}
 
 	return prompts, nil
+}
+
+func (lr *lookupRepository) GetCorePromptTypeIDs(ctx context.Context) ([]int16, error) {
+	rows, err := entity.PromptTypes(
+		entity.PromptTypeWhere.IsCore.EQ(true),
+		qm.OrderBy(entity.PromptTypeColumns.CorePosition+" ASC"),
+	).All(ctx, lr.db)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]int16, 0, len(rows))
+	for _, r := range rows {
+		ids = append(ids, r.ID)
+	}
+
+	return ids, nil
 }
 
 func (lr *lookupRepository) GetLanguages(ctx context.Context) (entity.LanguageSlice, error) {

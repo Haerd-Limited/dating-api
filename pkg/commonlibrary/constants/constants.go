@@ -21,7 +21,7 @@ const (
 	VisibilityStateRevealed                     = "REVEALED"
 	MaxVoiceNoteLengthInSeconds                 = 60
 	MaxTextLengthRunes                          = 1000
-	MaximumNumberOfPrompts                      = 6
+	MaximumNumberOfPrompts                      = 10
 	MaxAge                                      = 110
 	MinAge                                      = 18
 	MinHeight                                   = 100

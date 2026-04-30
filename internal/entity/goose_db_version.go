@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -26,7 +27,7 @@ type GooseDBVersion struct {
 	ID        int       `boil:"id" json:"id" toml:"id" yaml:"id"`
 	VersionID int64     `boil:"version_id" json:"version_id" toml:"version_id" yaml:"version_id"`
 	IsApplied bool      `boil:"is_applied" json:"is_applied" toml:"is_applied" yaml:"is_applied"`
-	Tstamp    time.Time `boil:"tstamp" json:"tstamp" toml:"tstamp" yaml:"tstamp"`
+	Tstamp    null.Time `boil:"tstamp" json:"tstamp,omitempty" toml:"tstamp" yaml:"tstamp,omitempty"`
 
 	R *gooseDBVersionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L gooseDBVersionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -85,12 +86,12 @@ var GooseDBVersionWhere = struct {
 	ID        whereHelperint
 	VersionID whereHelperint64
 	IsApplied whereHelperbool
-	Tstamp    whereHelpertime_Time
+	Tstamp    whereHelpernull_Time
 }{
 	ID:        whereHelperint{field: "\"goose_db_version\".\"id\""},
 	VersionID: whereHelperint64{field: "\"goose_db_version\".\"version_id\""},
 	IsApplied: whereHelperbool{field: "\"goose_db_version\".\"is_applied\""},
-	Tstamp:    whereHelpertime_Time{field: "\"goose_db_version\".\"tstamp\""},
+	Tstamp:    whereHelpernull_Time{field: "\"goose_db_version\".\"tstamp\""},
 }
 
 // GooseDBVersionRels is where relationship names are stored.

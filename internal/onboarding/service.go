@@ -21,6 +21,7 @@ import (
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
+//go:generate mockgen -source=service.go -destination=service_mock.go -package=onboarding
 type Service interface {
 	// GetUserCurrentStep retrieves the current onboarding step for a user based on their unique user ID. Returns a GetUserCurrentStepResult.
 	GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error)
@@ -102,7 +103,7 @@ var (
 )
 
 const (
-	MinimumNumberOfPrompts = 4
+	MinimumNumberOfPrompts = 5
 )
 
 func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID string) (domain.StepResult, error) {
@@ -721,7 +722,7 @@ func (os *onboardingService) Prompts(ctx context.Context, uploadedPrompts domain
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", uploadedPrompts.UserID), zap.String("step", string(StepForPrompts)))
 	}
 
-	err = os.validatePrompts(uploadedPrompts)
+	err = os.validatePrompts(ctx, uploadedPrompts)
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "validate prompts", err, zap.String("userID", uploadedPrompts.UserID))
 	}

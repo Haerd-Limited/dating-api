@@ -13,7 +13,7 @@ func (vvr VideoVerificationRequest) Validate() error {
 }
 
 type PromptsRequest struct {
-	UploadedPrompts []VoicePrompt `json:"uploaded_prompts" validate:"required,min=4,max=6,dive"`
+	UploadedPrompts []VoicePrompt `json:"uploaded_prompts" validate:"required,min=5,max=10,dive"`
 }
 
 type VoicePrompt struct {

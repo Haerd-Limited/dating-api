@@ -115,11 +115,20 @@ func MapPromptsToDomain(g []*entity.PromptType) []domain.Prompt {
 	var result []domain.Prompt
 
 	for _, e := range g {
+		var corePosition *int16
+
+		if e.CorePosition.Valid {
+			pos := e.CorePosition.Int16
+			corePosition = &pos
+		}
+
 		result = append(result, domain.Prompt{
-			ID:       e.ID,
-			Label:    e.Label,
-			Key:      e.Key,
-			Category: e.Category,
+			ID:           e.ID,
+			Label:        e.Label,
+			Key:          e.Key,
+			Category:     e.Category,
+			IsCore:       e.IsCore,
+			CorePosition: corePosition,
 		})
 	}
 

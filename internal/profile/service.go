@@ -88,6 +88,7 @@ var (
 	ErrInvalidPromptPosition        = errors.New("invalid prompt position")
 	ErrDuplicatePromptPosition      = errors.New("duplicate prompt position")
 	ErrDuplicatePhotoPosition       = errors.New("duplicate photo position")
+	ErrMissingRequiredCorePrompts   = errors.New("missing required core prompts")
 )
 
 func (s *service) VerifyProfile(ctx context.Context, userID string) error {
@@ -438,6 +439,15 @@ func (s *service) UpdateProfile(ctx context.Context, up domain.UpdateProfile) er
 	}
 
 	if len(up.VoicePrompts) > 0 {
+		coreIDs, err := s.lookupRepo.GetCorePromptTypeIDs(ctx)
+		if err != nil {
+			return commonlogger.LogError(s.logger, "load core prompt ids", err, zap.String("userID", up.UserID))
+		}
+
+		if err := validateUserPromptsUpsert(up.VoicePrompts, coreIDs); err != nil {
+			return commonlogger.LogError(s.logger, "validate user voice prompts", err, zap.String("userID", up.UserID))
+		}
+
 		marshalledWaveformData, err := marshalVoicePromptsForEntity(up.VoicePrompts)
 		if err != nil {
 			return commonlogger.LogError(s.logger, "marshal user voice prompts", err, zap.String("userID", up.UserID))
@@ -598,7 +608,12 @@ func (s *service) GetProfileCardWithDistance(ctx context.Context, userID string,
 }
 
 func (s *service) UpsertUserPrompts(ctx context.Context, userID string, prompts []domain.VoicePromptUpdate) error {
-	if err := validateUserPromptsUpsert(prompts); err != nil {
+	coreIDs, err := s.lookupRepo.GetCorePromptTypeIDs(ctx)
+	if err != nil {
+		return fmt.Errorf("load core prompt ids: %w", err)
+	}
+
+	if err := validateUserPromptsUpsert(prompts, coreIDs); err != nil {
 		return fmt.Errorf("validate user prompts: %w", err)
 	}
 
