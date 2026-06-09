@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
+import (
+	"errors"
+
+	profiledto "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard/dto"
+)
 
 type Match struct {
 	UserID         string `json:"user_id"`
@@ -16,17 +20,30 @@ type SwipesResponse struct {
 }
 
 type GetLikesResponse struct {
-	Verified           []Like `json:"verified"`
-	Unverified         []Like `json:"unverified"`
+	FreeToMatch        []Like `json:"free_to_match"`
+	SlotsFull          []Like `json:"slots_full"`
 	ActiveMatchesCount int64  `json:"active_matches_count"`
 	MatchSlotLimit     int64  `json:"match_slot_limit"`
 }
 
 type Like struct {
-	Profile            dto.ProfileCard `json:"profile"`
-	Message            *Message        `json:"message"`
-	Prompt             *Prompt         `json:"prompt"`
-	TargetAtMatchLimit bool            `json:"target_at_match_limit"`
+	Profile            profiledto.ProfileCard `json:"profile"`
+	Message            *Message               `json:"message"`
+	Prompt             *Prompt                `json:"prompt"`
+	TargetAtMatchLimit bool                   `json:"target_at_match_limit"`
+	IsFavourited       bool                   `json:"is_favourited"`
+}
+
+type AddFavouriteRequest struct {
+	WatchedUserID string `json:"watched_user_id"`
+}
+
+func (r AddFavouriteRequest) Validate() error {
+	if r.WatchedUserID == "" {
+		return errors.New("watched_user_id is required")
+	}
+
+	return nil
 }
 
 type Prompt struct {

@@ -186,6 +186,8 @@ func New(
 
 				r.Route("/likes", func(r chi.Router) {
 					r.Get("/", interactionHandler.GetLikes())
+					r.Post("/favourites", interactionHandler.AddFavourite())
+					r.Delete("/favourites/{watchedUserID}", interactionHandler.RemoveFavourite())
 				})
 
 				r.Route("/insights", func(r chi.Router) {

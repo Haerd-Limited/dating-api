@@ -42,6 +42,20 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// AddFavourite mocks base method.
+func (m *MockService) AddFavourite(ctx context.Context, watcherID, watchedUserID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddFavourite", ctx, watcherID, watchedUserID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddFavourite indicates an expected call of AddFavourite.
+func (mr *MockServiceMockRecorder) AddFavourite(ctx, watcherID, watchedUserID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFavourite", reflect.TypeOf((*MockService)(nil).AddFavourite), ctx, watcherID, watchedUserID)
+}
+
 // CreateSwipe mocks base method.
 func (m *MockService) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error) {
 	m.ctrl.T.Helper()
@@ -70,4 +84,18 @@ func (m *MockService) GetLikes(ctx context.Context, userID, direction string, of
 func (mr *MockServiceMockRecorder) GetLikes(ctx, userID, direction, offset, limit any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLikes", reflect.TypeOf((*MockService)(nil).GetLikes), ctx, userID, direction, offset, limit)
+}
+
+// RemoveFavourite mocks base method.
+func (m *MockService) RemoveFavourite(ctx context.Context, watcherID, watchedUserID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveFavourite", ctx, watcherID, watchedUserID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveFavourite indicates an expected call of RemoveFavourite.
+func (mr *MockServiceMockRecorder) RemoveFavourite(ctx, watcherID, watchedUserID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFavourite", reflect.TypeOf((*MockService)(nil).RemoveFavourite), ctx, watcherID, watchedUserID)
 }

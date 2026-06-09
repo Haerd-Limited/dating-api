@@ -38,6 +38,7 @@ type Service interface {
 	SendNewMessageNotification(ctx context.Context, senderID, senderName, conversationID, recipientUserID, preview string) error
 	SendVerificationApprovedNotification(ctx context.Context, recipientUserID string) error
 	SendVerificationRejectedNotification(ctx context.Context, recipientUserID, rejectionReason string) error
+	SendSlotFreedNotification(ctx context.Context, freedUserID, freedUserName, recipientUserID string) error
 	SendWeeklyRefreshNotifications(ctx context.Context) error
 	StartWeeklyRefreshScheduler(ctx context.Context)
 }
@@ -194,6 +195,27 @@ func (s *service) SendVerificationApprovedNotification(ctx context.Context, reci
 			"type":          "verification.approved",
 			"recipient_id":  recipientUserID,
 			"timestamp_utc": time.Now().UTC().Format(time.RFC3339),
+		},
+	}
+
+	return s.sendToUsers(ctx, []string{recipientUserID}, msg)
+}
+
+func (s *service) SendSlotFreedNotification(ctx context.Context, freedUserID, freedUserName, recipientUserID string) error {
+	body := "One of your likes is now free to match!"
+	if freedUserName != "" {
+		body = fmt.Sprintf("%s is now free to match!", freedUserName)
+	}
+
+	msg := domain.Message{
+		Title: "Available to match",
+		Body:  body,
+		Data: map[string]string{
+			"type":            "match_slot.freed",
+			"freed_user_id":   freedUserID,
+			"freed_user_name": freedUserName,
+			"recipient_id":    recipientUserID,
+			"timestamp_utc":   time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 
@@ -377,7 +399,8 @@ func (s *service) sendToExpo(ctx context.Context, token string, msg domain.Messa
 	if err != nil {
 		return fmt.Errorf("send request: %w", err)
 	}
-	defer resp.Body.Close()
+
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

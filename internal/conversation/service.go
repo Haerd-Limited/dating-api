@@ -20,6 +20,7 @@ import (
 	scoredomain "github.com/Haerd-Limited/dating-api/internal/conversation/score/domain"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	storage3 "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/internal/matchslot"
 	"github.com/Haerd-Limited/dating-api/internal/notification"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
@@ -43,15 +44,16 @@ type Service interface {
 }
 
 type service struct {
-	logger           *zap.Logger
-	conversationRepo storage.ConversationRepository
-	profileService   profile.Service
-	flake            interface{ Next() int64 }
-	hub              realtime.Broadcaster
-	interactionRepo  storage3.InteractionRepository
-	scoreService     score.Service
-	uow              uow.UoW
-	notificationSvc  notification.Service
+	logger            *zap.Logger
+	conversationRepo  storage.ConversationRepository
+	profileService    profile.Service
+	flake             interface{ Next() int64 }
+	hub               realtime.Broadcaster
+	interactionRepo   storage3.InteractionRepository
+	scoreService      score.Service
+	uow               uow.UoW
+	notificationSvc   notification.Service
+	matchSlotNotifier matchslot.Notifier
 }
 
 func NewConversationService(
@@ -64,17 +66,19 @@ func NewConversationService(
 	scoreService score.Service,
 	uow uow.UoW,
 	notificationSvc notification.Service,
+	matchSlotNotifier matchslot.Notifier,
 ) Service {
 	return &service{
-		logger:           logger,
-		conversationRepo: conversationRepo,
-		profileService:   profileService,
-		flake:            flake,
-		hub:              hub,
-		interactionRepo:  interactionRepo,
-		scoreService:     scoreService,
-		uow:              uow,
-		notificationSvc:  notificationSvc,
+		logger:            logger,
+		conversationRepo:  conversationRepo,
+		profileService:    profileService,
+		flake:             flake,
+		hub:               hub,
+		interactionRepo:   interactionRepo,
+		scoreService:      scoreService,
+		uow:               uow,
+		notificationSvc:   notificationSvc,
+		matchSlotNotifier: matchSlotNotifier,
 	}
 }
 
@@ -535,6 +539,19 @@ func (s *service) Unmatch(ctx context.Context, userID, conversationID string, re
 		otherUserID = conversation.UserA
 	}
 
+	blockerMatches, err := s.conversationRepo.GetMatches(ctx, userID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "get matches before unmatch", err, zap.String("userID", userID))
+	}
+
+	otherMatches, err := s.conversationRepo.GetMatches(ctx, otherUserID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "get matches before unmatch", err, zap.String("otherUserID", otherUserID))
+	}
+
+	blockerActiveCount := int64(len(blockerMatches))
+	otherActiveCount := int64(len(otherMatches))
+
 	// Use transaction to update match status and archive conversation
 	tx, err := s.uow.Begin(ctx)
 	if err != nil {
@@ -563,7 +580,18 @@ func (s *service) Unmatch(ctx context.Context, userID, conversationID string, re
 	// Broadcast unmatch event to both users
 	s.broadcastUnmatch(ctx, conversationID, userID)
 
+	s.notifySlotFreedIfWasAtLimit(ctx, userID, blockerActiveCount)
+	s.notifySlotFreedIfWasAtLimit(ctx, otherUserID, otherActiveCount)
+
 	return nil
+}
+
+func (s *service) notifySlotFreedIfWasAtLimit(ctx context.Context, userID string, preUnmatchCount int64) {
+	if s.matchSlotNotifier == nil || preUnmatchCount < constants.MaxActiveMatches {
+		return
+	}
+
+	s.matchSlotNotifier.NotifySlotFreed(ctx, userID)
 }
 
 func (s *service) broadcastUnmatch(ctx context.Context, conversationID, actorID string) {

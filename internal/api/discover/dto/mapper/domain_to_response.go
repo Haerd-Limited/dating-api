@@ -27,8 +27,10 @@ func MapToGetDiscoverResponse(result domain.DiscoverFeedResult) dto.GetDiscoverR
 	}
 
 	return dto.GetDiscoverResponse{
-		Profiles: profiles,
-		Quota:    mapQuota(result.Quota),
+		Profiles:       profiles,
+		Quota:          mapQuota(result.Quota),
+		AtMatchLimit:   result.AtMatchLimit,
+		MatchSlotLimit: result.MatchSlotLimit,
 	}
 }
 

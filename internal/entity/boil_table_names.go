@@ -22,6 +22,7 @@ var TableNames = struct {
 	InsightSnapshots             string
 	Interests                    string
 	Languages                    string
+	MatchSlotWatches             string
 	Matches                      string
 	MessageReceipts              string
 	Messages                     string
@@ -82,6 +83,7 @@ var TableNames = struct {
 	InsightSnapshots:             "insight_snapshots",
 	Interests:                    "interests",
 	Languages:                    "languages",
+	MatchSlotWatches:             "match_slot_watches",
 	Matches:                      "matches",
 	MessageReceipts:              "message_receipts",
 	Messages:                     "messages",

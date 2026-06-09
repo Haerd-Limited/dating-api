@@ -42,6 +42,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Languages", testLanguagesUpsert)
 
+	t.Run("MatchSlotWatches", testMatchSlotWatchesUpsert)
+
 	t.Run("Matches", testMatchesUpsert)
 
 	t.Run("MessageReceipts", testMessageReceiptsUpsert)

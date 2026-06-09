@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 )
 
 // newServiceWithRepo builds a partially-wired service exposing only the
@@ -133,6 +134,7 @@ func TestGetLikesEmptyIncomingPopulatesViewerCounts(t *testing.T) {
 
 			repo.EXPECT().GetIncomingLikes(ctx, userID, 5, 0).Return(nil, nil)
 			repo.EXPECT().CountActiveMatchesForUsers(ctx, gomock.Nil()).Return(map[string]int64{}, nil)
+			repo.EXPECT().GetWatchedUserIDs(ctx, userID).Return(map[string]struct{}{}, nil)
 			repo.EXPECT().CountActiveMatches(ctx, userID, gomock.Nil()).Return(tc.viewerActiveCount, nil)
 
 			svc := newServiceWithRepo(t, repo)
@@ -142,8 +144,8 @@ func TestGetLikesEmptyIncomingPopulatesViewerCounts(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tc.viewerActiveCount, likes.ActiveMatchesCount)
 			assert.Equal(t, tc.wantSlotLimit, likes.MatchSlotLimit)
-			assert.Empty(t, likes.Verified)
-			assert.Empty(t, likes.Unverified)
+			assert.Empty(t, likes.FreeToMatch)
+			assert.Empty(t, likes.SlotsFull)
 		})
 	}
 }
@@ -161,13 +163,13 @@ func TestGetLikesInvalidDirectionShortCircuits(t *testing.T) {
 
 	require.Error(t, err)
 	assert.ErrorIs(t, err, ErrInvalidDirection)
-	assert.Empty(t, likes.Verified)
-	assert.Empty(t, likes.Unverified)
+	assert.Empty(t, likes.FreeToMatch)
+	assert.Empty(t, likes.SlotsFull)
 }
 
 // TestMaxActiveMatchesIsTwo pins the spec contract: HAE-411 requires a hard
 // cap of 2. If anyone bumps this, they should also revisit the FE copy and
 // the messages exposed by the swipes handler.
 func TestMaxActiveMatchesIsTwo(t *testing.T) {
-	assert.Equal(t, int64(2), maxActiveMatches, "match cap must remain 2 per HAE-411")
+	assert.Equal(t, int64(2), constants.MaxActiveMatches, "match cap must remain 2 per HAE-411")
 }

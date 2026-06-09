@@ -12,12 +12,14 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	conversationdomain "github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
+	"github.com/Haerd-Limited/dating-api/internal/matchslot"
 	realtimehub "github.com/Haerd-Limited/dating-api/internal/realtime"
 	safetydomain "github.com/Haerd-Limited/dating-api/internal/safety/domain"
 	safetymapper "github.com/Haerd-Limited/dating-api/internal/safety/mapper"
 	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
 	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
@@ -33,11 +35,12 @@ type Service interface {
 }
 
 type service struct {
-	logger           *zap.Logger
-	repo             safetystorage.Repository
-	conversationRepo conversationstorage.ConversationRepository
-	uow              uow.UoW
-	hub              realtimehub.Broadcaster
+	logger            *zap.Logger
+	repo              safetystorage.Repository
+	conversationRepo  conversationstorage.ConversationRepository
+	uow               uow.UoW
+	hub               realtimehub.Broadcaster
+	matchSlotNotifier matchslot.Notifier
 }
 
 func NewService(
@@ -46,13 +49,15 @@ func NewService(
 	conversationRepo conversationstorage.ConversationRepository,
 	uow uow.UoW,
 	hub realtimehub.Broadcaster,
+	matchSlotNotifier matchslot.Notifier,
 ) Service {
 	return &service{
-		logger:           logger,
-		repo:             repo,
-		conversationRepo: conversationRepo,
-		uow:              uow,
-		hub:              hub,
+		logger:            logger,
+		repo:              repo,
+		conversationRepo:  conversationRepo,
+		uow:               uow,
+		hub:               hub,
+		matchSlotNotifier: matchSlotNotifier,
 	}
 }
 
@@ -88,6 +93,19 @@ func (s *service) BlockUser(ctx context.Context, req safetydomain.BlockRequest) 
 
 	defer func() { _ = tx.Rollback() }()
 
+	blockerMatches, err := s.conversationRepo.GetMatches(ctx, req.BlockerID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "get matches before block", err, zap.String("blockerID", req.BlockerID))
+	}
+
+	blockedMatches, err := s.conversationRepo.GetMatches(ctx, req.BlockedID)
+	if err != nil {
+		return commonlogger.LogError(s.logger, "get matches before block", err, zap.String("blockedID", req.BlockedID))
+	}
+
+	blockerActiveCount := int64(len(blockerMatches))
+	blockedActiveCount := int64(len(blockedMatches))
+
 	blockEntity := safetymapper.BlockRequestToEntity(req)
 
 	err = s.repo.CreateBlock(ctx, blockEntity, tx.Raw())
@@ -111,6 +129,9 @@ func (s *service) BlockUser(ctx context.Context, req safetydomain.BlockRequest) 
 	}
 
 	s.broadcastBlockEvent(req.BlockerID, req.BlockedID, convoID)
+
+	s.notifySlotFreedIfWasAtLimit(ctx, req.BlockerID, blockerActiveCount)
+	s.notifySlotFreedIfWasAtLimit(ctx, req.BlockedID, blockedActiveCount)
 
 	// analytics: user blocked
 	commonanalytics.Track(ctx, "safety.user_blocked", &req.BlockerID, nil, map[string]any{
@@ -272,6 +293,14 @@ func (s *service) ResolveReport(ctx context.Context, req safetydomain.ResolveRep
 	}
 
 	return nil
+}
+
+func (s *service) notifySlotFreedIfWasAtLimit(ctx context.Context, userID string, preChangeCount int64) {
+	if s.matchSlotNotifier == nil || preChangeCount < constants.MaxActiveMatches {
+		return
+	}
+
+	s.matchSlotNotifier.NotifySlotFreed(ctx, userID)
 }
 
 func (s *service) broadcastBlockEvent(blockerID, blockedID string, convoID *string) {

@@ -119,6 +119,8 @@ var UserRels = struct {
 	Events                       string
 	Feedbacks                    string
 	InsightSnapshots             string
+	WatchedUserMatchSlotWatches  string
+	WatcherUserMatchSlotWatches  string
 	UserAMatches                 string
 	UserBMatches                 string
 	MessageReceipts              string
@@ -155,6 +157,8 @@ var UserRels = struct {
 	Events:                       "Events",
 	Feedbacks:                    "Feedbacks",
 	InsightSnapshots:             "InsightSnapshots",
+	WatchedUserMatchSlotWatches:  "WatchedUserMatchSlotWatches",
+	WatcherUserMatchSlotWatches:  "WatcherUserMatchSlotWatches",
 	UserAMatches:                 "UserAMatches",
 	UserBMatches:                 "UserBMatches",
 	MessageReceipts:              "MessageReceipts",
@@ -194,6 +198,8 @@ type userR struct {
 	Events                       EventSlice                       `boil:"Events" json:"Events" toml:"Events" yaml:"Events"`
 	Feedbacks                    FeedbackSlice                    `boil:"Feedbacks" json:"Feedbacks" toml:"Feedbacks" yaml:"Feedbacks"`
 	InsightSnapshots             InsightSnapshotSlice             `boil:"InsightSnapshots" json:"InsightSnapshots" toml:"InsightSnapshots" yaml:"InsightSnapshots"`
+	WatchedUserMatchSlotWatches  MatchSlotWatchSlice              `boil:"WatchedUserMatchSlotWatches" json:"WatchedUserMatchSlotWatches" toml:"WatchedUserMatchSlotWatches" yaml:"WatchedUserMatchSlotWatches"`
+	WatcherUserMatchSlotWatches  MatchSlotWatchSlice              `boil:"WatcherUserMatchSlotWatches" json:"WatcherUserMatchSlotWatches" toml:"WatcherUserMatchSlotWatches" yaml:"WatcherUserMatchSlotWatches"`
 	UserAMatches                 MatchSlice                       `boil:"UserAMatches" json:"UserAMatches" toml:"UserAMatches" yaml:"UserAMatches"`
 	UserBMatches                 MatchSlice                       `boil:"UserBMatches" json:"UserBMatches" toml:"UserBMatches" yaml:"UserBMatches"`
 	MessageReceipts              MessageReceiptSlice              `boil:"MessageReceipts" json:"MessageReceipts" toml:"MessageReceipts" yaml:"MessageReceipts"`
@@ -399,6 +405,38 @@ func (r *userR) GetInsightSnapshots() InsightSnapshotSlice {
 	}
 
 	return r.InsightSnapshots
+}
+
+func (o *User) GetWatchedUserMatchSlotWatches() MatchSlotWatchSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetWatchedUserMatchSlotWatches()
+}
+
+func (r *userR) GetWatchedUserMatchSlotWatches() MatchSlotWatchSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.WatchedUserMatchSlotWatches
+}
+
+func (o *User) GetWatcherUserMatchSlotWatches() MatchSlotWatchSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetWatcherUserMatchSlotWatches()
+}
+
+func (r *userR) GetWatcherUserMatchSlotWatches() MatchSlotWatchSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.WatcherUserMatchSlotWatches
 }
 
 func (o *User) GetUserAMatches() MatchSlice {
@@ -1244,6 +1282,34 @@ func (o *User) InsightSnapshots(mods ...qm.QueryMod) insightSnapshotQuery {
 	)
 
 	return InsightSnapshots(queryMods...)
+}
+
+// WatchedUserMatchSlotWatches retrieves all the match_slot_watch's MatchSlotWatches with an executor via watched_user_id column.
+func (o *User) WatchedUserMatchSlotWatches(mods ...qm.QueryMod) matchSlotWatchQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"match_slot_watches\".\"watched_user_id\"=?", o.ID),
+	)
+
+	return MatchSlotWatches(queryMods...)
+}
+
+// WatcherUserMatchSlotWatches retrieves all the match_slot_watch's MatchSlotWatches with an executor via watcher_user_id column.
+func (o *User) WatcherUserMatchSlotWatches(mods ...qm.QueryMod) matchSlotWatchQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"match_slot_watches\".\"watcher_user_id\"=?", o.ID),
+	)
+
+	return MatchSlotWatches(queryMods...)
 }
 
 // UserAMatches retrieves all the match's Matches with an executor via user_a column.
@@ -2832,6 +2898,232 @@ func (userL) LoadInsightSnapshots(ctx context.Context, e boil.ContextExecutor, s
 					foreign.R = &insightSnapshotR{}
 				}
 				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadWatchedUserMatchSlotWatches allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadWatchedUserMatchSlotWatches(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`match_slot_watches`),
+		qm.WhereIn(`match_slot_watches.watched_user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load match_slot_watches")
+	}
+
+	var resultSlice []*MatchSlotWatch
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice match_slot_watches")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on match_slot_watches")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for match_slot_watches")
+	}
+
+	if len(matchSlotWatchAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.WatchedUserMatchSlotWatches = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &matchSlotWatchR{}
+			}
+			foreign.R.WatchedUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.WatchedUserID {
+				local.R.WatchedUserMatchSlotWatches = append(local.R.WatchedUserMatchSlotWatches, foreign)
+				if foreign.R == nil {
+					foreign.R = &matchSlotWatchR{}
+				}
+				foreign.R.WatchedUser = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadWatcherUserMatchSlotWatches allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadWatcherUserMatchSlotWatches(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`match_slot_watches`),
+		qm.WhereIn(`match_slot_watches.watcher_user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load match_slot_watches")
+	}
+
+	var resultSlice []*MatchSlotWatch
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice match_slot_watches")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on match_slot_watches")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for match_slot_watches")
+	}
+
+	if len(matchSlotWatchAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.WatcherUserMatchSlotWatches = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &matchSlotWatchR{}
+			}
+			foreign.R.WatcherUser = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.WatcherUserID {
+				local.R.WatcherUserMatchSlotWatches = append(local.R.WatcherUserMatchSlotWatches, foreign)
+				if foreign.R == nil {
+					foreign.R = &matchSlotWatchR{}
+				}
+				foreign.R.WatcherUser = local
 				break
 			}
 		}
@@ -6322,6 +6614,112 @@ func (o *User) RemoveInsightSnapshots(ctx context.Context, exec boil.ContextExec
 		}
 	}
 
+	return nil
+}
+
+// AddWatchedUserMatchSlotWatches adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.WatchedUserMatchSlotWatches.
+// Sets related.R.WatchedUser appropriately.
+func (o *User) AddWatchedUserMatchSlotWatches(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*MatchSlotWatch) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.WatchedUserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"match_slot_watches\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"watched_user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, matchSlotWatchPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.WatchedUserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			WatchedUserMatchSlotWatches: related,
+		}
+	} else {
+		o.R.WatchedUserMatchSlotWatches = append(o.R.WatchedUserMatchSlotWatches, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &matchSlotWatchR{
+				WatchedUser: o,
+			}
+		} else {
+			rel.R.WatchedUser = o
+		}
+	}
+	return nil
+}
+
+// AddWatcherUserMatchSlotWatches adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.WatcherUserMatchSlotWatches.
+// Sets related.R.WatcherUser appropriately.
+func (o *User) AddWatcherUserMatchSlotWatches(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*MatchSlotWatch) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.WatcherUserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"match_slot_watches\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"watcher_user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, matchSlotWatchPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.WatcherUserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			WatcherUserMatchSlotWatches: related,
+		}
+	} else {
+		o.R.WatcherUserMatchSlotWatches = append(o.R.WatcherUserMatchSlotWatches, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &matchSlotWatchR{
+				WatcherUser: o,
+			}
+		} else {
+			rel.R.WatcherUser = o
+		}
+	}
 	return nil
 }
 

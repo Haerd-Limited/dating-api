@@ -11,8 +11,10 @@ type GetVoicesWorthHearingResponse struct {
 }
 
 type GetDiscoverResponse struct {
-	Profiles []profiledto.ProfileCard `json:"profiles"`
-	Quota    DiscoverQuota            `json:"quota"`
+	Profiles       []profiledto.ProfileCard `json:"profiles"`
+	Quota          DiscoverQuota            `json:"quota"`
+	AtMatchLimit   bool                     `json:"at_match_limit"`
+	MatchSlotLimit int64                    `json:"match_slot_limit"`
 }
 
 type DiscoverQuota struct {

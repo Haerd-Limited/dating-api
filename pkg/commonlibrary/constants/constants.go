@@ -30,4 +30,6 @@ const (
 	RevealDecisionContinue                      = "continue"
 	RevealDecisionDate                          = "date"
 	RevealDecisionUnmatch                       = "unmatch"
+	// MaxActiveMatches is the per-user cap on simultaneously active matches.
+	MaxActiveMatches int64 = 2
 )

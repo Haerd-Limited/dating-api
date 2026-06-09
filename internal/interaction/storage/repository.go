@@ -32,6 +32,11 @@ type InteractionRepository interface {
 	CountActiveMatchesForUsers(ctx context.Context, userIDs []string) (map[string]int64, error)
 	LockUsersForMatchCreation(ctx context.Context, tx *sql.Tx, userA, userB string) error
 	ListSwipesByUserID(ctx context.Context, userID string) ([]*entity.Swipe, error)
+	HasIncomingLike(ctx context.Context, watcherID, likerID string) (bool, error)
+	InsertWatch(ctx context.Context, watcherID, watchedID string) error
+	DeleteWatch(ctx context.Context, watcherID, watchedID string) error
+	DeleteWatchBetween(ctx context.Context, userA, userB string) error
+	GetWatchedUserIDs(ctx context.Context, watcherID string) (map[string]struct{}, error)
 }
 
 type repository struct {
@@ -243,6 +248,7 @@ func (is *repository) CountActiveMatchesForUsers(ctx context.Context, userIDs []
 	if err != nil {
 		return nil, fmt.Errorf("query active matches for users: %w", err)
 	}
+
 	defer func() { _ = rows.Close() }()
 
 	counts := make(map[string]int64, len(userIDs))
@@ -287,4 +293,84 @@ func (is *repository) LockUsersForMatchCreation(ctx context.Context, tx *sql.Tx,
 	}
 
 	return nil
+}
+
+func (is *repository) HasIncomingLike(ctx context.Context, watcherID, likerID string) (bool, error) {
+	ok, err := entity.Swipes(
+		entity.SwipeWhere.ActorID.EQ(likerID),
+		entity.SwipeWhere.TargetID.EQ(watcherID),
+		qm.Where("action IN (?, ?)", constants.ActionLike, constants.ActionSuperlike),
+	).Exists(ctx, is.db)
+	if err != nil {
+		return false, fmt.Errorf("check incoming like watcherID=%s likerID=%s: %w", watcherID, likerID, err)
+	}
+
+	return ok, nil
+}
+
+func (is *repository) InsertWatch(ctx context.Context, watcherID, watchedID string) error {
+	const stmt = `
+INSERT INTO match_slot_watches (watcher_user_id, watched_user_id)
+VALUES ($1, $2)
+ON CONFLICT (watcher_user_id, watched_user_id) DO NOTHING`
+
+	_, err := is.db.ExecContext(ctx, stmt, watcherID, watchedID)
+	if err != nil {
+		return fmt.Errorf("insert watch watcherID=%s watchedID=%s: %w", watcherID, watchedID, err)
+	}
+
+	return nil
+}
+
+func (is *repository) DeleteWatch(ctx context.Context, watcherID, watchedID string) error {
+	const stmt = `DELETE FROM match_slot_watches WHERE watcher_user_id = $1 AND watched_user_id = $2`
+
+	_, err := is.db.ExecContext(ctx, stmt, watcherID, watchedID)
+	if err != nil {
+		return fmt.Errorf("delete watch watcherID=%s watchedID=%s: %w", watcherID, watchedID, err)
+	}
+
+	return nil
+}
+
+func (is *repository) DeleteWatchBetween(ctx context.Context, userA, userB string) error {
+	const stmt = `
+DELETE FROM match_slot_watches
+WHERE (watcher_user_id = $1 AND watched_user_id = $2)
+   OR (watcher_user_id = $2 AND watched_user_id = $1)`
+
+	_, err := is.db.ExecContext(ctx, stmt, userA, userB)
+	if err != nil {
+		return fmt.Errorf("delete watch between userA=%s userB=%s: %w", userA, userB, err)
+	}
+
+	return nil
+}
+
+func (is *repository) GetWatchedUserIDs(ctx context.Context, watcherID string) (map[string]struct{}, error) {
+	const stmt = `SELECT watched_user_id FROM match_slot_watches WHERE watcher_user_id = $1`
+
+	rows, err := is.db.QueryContext(ctx, stmt, watcherID)
+	if err != nil {
+		return nil, fmt.Errorf("get watched user ids watcherID=%s: %w", watcherID, err)
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	watched := make(map[string]struct{})
+
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan watched user id: %w", err)
+		}
+
+		watched[id] = struct{}{}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate watched user ids: %w", err)
+	}
+
+	return watched, nil
 }

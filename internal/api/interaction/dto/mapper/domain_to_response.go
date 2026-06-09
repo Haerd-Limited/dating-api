@@ -15,71 +15,52 @@ func MapToSwipesResponse(result string) dto.SwipesResponse {
 func MapToGetLikesResponse(domainLikes *domain.Likes) dto.GetLikesResponse {
 	if domainLikes == nil {
 		return dto.GetLikesResponse{
-			Verified:   []dto.Like{},
-			Unverified: []dto.Like{},
+			FreeToMatch: []dto.Like{},
+			SlotsFull:   []dto.Like{},
 		}
-	}
-
-	var verified []dto.Like
-
-	for _, domainLike := range domainLikes.Verified {
-		like := dto.Like{
-			Profile:            commonprofile.ProfileCardToDto(domainLike.Profile),
-			Message:            &dto.Message{},
-			Prompt:             &dto.Prompt{},
-			TargetAtMatchLimit: domainLike.TargetAtMatchLimit,
-		}
-
-		if domainLike.Prompt != nil {
-			like.Prompt = &dto.Prompt{
-				PromptID:              domainLike.Prompt.PromptID,
-				Prompt:                domainLike.Prompt.Prompt,
-				VoiceNoteURL:          domainLike.Prompt.VoiceNoteURL,
-				CoverMediaURL:         domainLike.Prompt.CoverMediaURL,
-				CoverMediaType:        domainLike.Prompt.CoverMediaType,
-				CoverMediaAspectRatio: domainLike.Prompt.CoverMediaAspectRatio,
-			}
-		}
-
-		if domainLike.Message != nil {
-			like.Message.MessageText, like.Message.MessageType = domainLike.Message.MessageText, domainLike.Message.MessageType
-		}
-
-		verified = append(verified, like)
-	}
-
-	var unverified []dto.Like
-
-	for _, domainLike := range domainLikes.Unverified {
-		like := dto.Like{
-			Profile:            commonprofile.ProfileCardToDto(domainLike.Profile),
-			Message:            &dto.Message{},
-			Prompt:             &dto.Prompt{},
-			TargetAtMatchLimit: domainLike.TargetAtMatchLimit,
-		}
-
-		if domainLike.Prompt != nil {
-			like.Prompt = &dto.Prompt{
-				PromptID:              domainLike.Prompt.PromptID,
-				Prompt:                domainLike.Prompt.Prompt,
-				VoiceNoteURL:          domainLike.Prompt.VoiceNoteURL,
-				CoverMediaURL:         domainLike.Prompt.CoverMediaURL,
-				CoverMediaType:        domainLike.Prompt.CoverMediaType,
-				CoverMediaAspectRatio: domainLike.Prompt.CoverMediaAspectRatio,
-			}
-		}
-
-		if domainLike.Message != nil {
-			like.Message.MessageText, like.Message.MessageType = domainLike.Message.MessageText, domainLike.Message.MessageType
-		}
-
-		unverified = append(unverified, like)
 	}
 
 	return dto.GetLikesResponse{
-		Verified:           verified,
-		Unverified:         unverified,
+		FreeToMatch:        mapLikes(domainLikes.FreeToMatch),
+		SlotsFull:          mapLikes(domainLikes.SlotsFull),
 		ActiveMatchesCount: domainLikes.ActiveMatchesCount,
 		MatchSlotLimit:     domainLikes.MatchSlotLimit,
 	}
+}
+
+func mapLikes(domainLikes []domain.Like) []dto.Like {
+	if len(domainLikes) == 0 {
+		return []dto.Like{}
+	}
+
+	likes := make([]dto.Like, 0, len(domainLikes))
+
+	for _, domainLike := range domainLikes {
+		like := dto.Like{
+			Profile:            commonprofile.ProfileCardToDto(domainLike.Profile),
+			Message:            &dto.Message{},
+			Prompt:             &dto.Prompt{},
+			TargetAtMatchLimit: domainLike.TargetAtMatchLimit,
+			IsFavourited:       domainLike.IsFavourited,
+		}
+
+		if domainLike.Prompt != nil {
+			like.Prompt = &dto.Prompt{
+				PromptID:              domainLike.Prompt.PromptID,
+				Prompt:                domainLike.Prompt.Prompt,
+				VoiceNoteURL:          domainLike.Prompt.VoiceNoteURL,
+				CoverMediaURL:         domainLike.Prompt.CoverMediaURL,
+				CoverMediaType:        domainLike.Prompt.CoverMediaType,
+				CoverMediaAspectRatio: domainLike.Prompt.CoverMediaAspectRatio,
+			}
+		}
+
+		if domainLike.Message != nil {
+			like.Message.MessageText, like.Message.MessageType = domainLike.Message.MessageText, domainLike.Message.MessageType
+		}
+
+		likes = append(likes, like)
+	}
+
+	return likes
 }

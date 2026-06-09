@@ -38,6 +38,7 @@ type DiscoverRepository interface {
 	GetUsersEthnicityIDs(ctx context.Context, userIDs []string) (map[string][]int16, error)
 	GetWeeklyVoiceWorthHearingIDs(ctx context.Context, userID string, weekStart time.Time) ([]string, error)
 	SaveWeeklyVoiceWorthHearingIDs(ctx context.Context, userID string, weekStart time.Time, candidateIDs []string) error
+	CountActiveMatches(ctx context.Context, userID string) (int64, error)
 }
 
 type discoverRepository struct {
@@ -283,6 +284,11 @@ func (r *discoverRepository) getDiscoverFeedCandidatesWithMods(
                  WHERE (b.blocker_user_id = ? AND b.blocked_user_id = user_profiles.user_id)
                     OR (b.blocker_user_id = user_profiles.user_id AND b.blocked_user_id = ?)
             )`, userID, userID),
+
+		// exclude users who are at the active match limit
+		qm.Where(`(SELECT COUNT(*) FROM matches m
+            WHERE (m.user_a = user_profiles.user_id OR m.user_b = user_profiles.user_id)
+              AND m.status = 'active') < ?`, constants.MaxActiveMatches),
 	}
 
 	excludeIDs, err := r.GetVoiceWorthHearingIDs(ctx, userID, seekGenderIDs)
@@ -838,6 +844,17 @@ DO UPDATE SET candidate_ids = EXCLUDED.candidate_ids,
 	}
 
 	return nil
+}
+
+func (r *discoverRepository) CountActiveMatches(ctx context.Context, userID string) (int64, error) {
+	count, err := entity.Matches(
+		qm.Where("(user_a = ? OR user_b = ?) AND status = ?", userID, userID, string(entity.MatchStatusActive)),
+	).Count(ctx, r.db)
+	if err != nil {
+		return 0, fmt.Errorf("count active matches userID=%s: %w", userID, err)
+	}
+
+	return count, nil
 }
 
 func startOfWeek(t time.Time, weekStart time.Weekday) time.Time {

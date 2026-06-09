@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
+	interactionDTO "github.com/Haerd-Limited/dating-api/internal/api/interaction/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/interaction/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto"
 	convostorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
@@ -25,6 +27,8 @@ import (
 type Handler interface {
 	Create() http.HandlerFunc
 	GetLikes() http.HandlerFunc
+	AddFavourite() http.HandlerFunc
+	RemoveFavourite() http.HandlerFunc
 }
 
 type handler struct {
@@ -108,6 +112,58 @@ func (h *handler) GetLikes() http.HandlerFunc {
 	}
 }
 
+func (h *handler) AddFavourite() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		var req interactionDTO.AddFavouriteRequest
+		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
+			h.logger.Sugar().Warnw("failed to decode add favourite request", "error", err)
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("watched_user_id is required"))
+
+			return
+		}
+
+		if err := h.interactionService.AddFavourite(ctx, userID, req.WatchedUserID); err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "AddFavourite", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	}
+}
+
+func (h *handler) RemoveFavourite() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		watchedUserID := chi.URLParam(r, "watchedUserID")
+		if watchedUserID == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("watched user id is required"))
+			return
+		}
+
+		if err := h.interactionService.RemoveFavourite(ctx, userID, watchedUserID); err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "RemoveFavourite", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 	switch {
 	case errors.Is(err, convostorage.ErrClientMsgIDNotUnique):
@@ -138,6 +194,10 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusConflict, "You already have 2 active matches. Unmatch someone to make room."
 	case errors.Is(err, interaction.ErrTargetMatchLimitReached):
 		return http.StatusConflict, "This person already has the maximum number of active matches."
+	case errors.Is(err, interaction.ErrSelfWatch):
+		return http.StatusBadRequest, "You cannot favourite yourself"
+	case errors.Is(err, interaction.ErrNotAnIncomingLiker):
+		return http.StatusBadRequest, "You can only favourite someone who has liked you"
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg
 	}

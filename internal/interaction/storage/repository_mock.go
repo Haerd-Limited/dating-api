@@ -134,6 +134,34 @@ func (mr *MockInteractionRepositoryMockRecorder) CreateMatch(ctx, match, tx any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMatch", reflect.TypeOf((*MockInteractionRepository)(nil).CreateMatch), ctx, match, tx)
 }
 
+// DeleteWatch mocks base method.
+func (m *MockInteractionRepository) DeleteWatch(ctx context.Context, watcherID, watchedID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWatch", ctx, watcherID, watchedID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWatch indicates an expected call of DeleteWatch.
+func (mr *MockInteractionRepositoryMockRecorder) DeleteWatch(ctx, watcherID, watchedID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWatch", reflect.TypeOf((*MockInteractionRepository)(nil).DeleteWatch), ctx, watcherID, watchedID)
+}
+
+// DeleteWatchBetween mocks base method.
+func (m *MockInteractionRepository) DeleteWatchBetween(ctx context.Context, userA, userB string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteWatchBetween", ctx, userA, userB)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWatchBetween indicates an expected call of DeleteWatchBetween.
+func (mr *MockInteractionRepositoryMockRecorder) DeleteWatchBetween(ctx, userA, userB any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWatchBetween", reflect.TypeOf((*MockInteractionRepository)(nil).DeleteWatchBetween), ctx, userA, userB)
+}
+
 // GetFirstLikeSwipeByBetweenUsers mocks base method.
 func (m *MockInteractionRepository) GetFirstLikeSwipeByBetweenUsers(ctx context.Context, userA, userB string) (*entity.Swipe, error) {
 	m.ctrl.T.Helper()
@@ -194,6 +222,36 @@ func (mr *MockInteractionRepositoryMockRecorder) GetSwipeByActorIDAndTargetID(ct
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSwipeByActorIDAndTargetID", reflect.TypeOf((*MockInteractionRepository)(nil).GetSwipeByActorIDAndTargetID), ctx, actorID, targetID)
 }
 
+// GetWatchedUserIDs mocks base method.
+func (m *MockInteractionRepository) GetWatchedUserIDs(ctx context.Context, watcherID string) (map[string]struct{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWatchedUserIDs", ctx, watcherID)
+	ret0, _ := ret[0].(map[string]struct{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWatchedUserIDs indicates an expected call of GetWatchedUserIDs.
+func (mr *MockInteractionRepositoryMockRecorder) GetWatchedUserIDs(ctx, watcherID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWatchedUserIDs", reflect.TypeOf((*MockInteractionRepository)(nil).GetWatchedUserIDs), ctx, watcherID)
+}
+
+// HasIncomingLike mocks base method.
+func (m *MockInteractionRepository) HasIncomingLike(ctx context.Context, watcherID, likerID string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasIncomingLike", ctx, watcherID, likerID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HasIncomingLike indicates an expected call of HasIncomingLike.
+func (mr *MockInteractionRepositoryMockRecorder) HasIncomingLike(ctx, watcherID, likerID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasIncomingLike", reflect.TypeOf((*MockInteractionRepository)(nil).HasIncomingLike), ctx, watcherID, likerID)
+}
+
 // InsertSwipe mocks base method.
 func (m *MockInteractionRepository) InsertSwipe(ctx context.Context, swipe entity.Swipe, tx *sql.Tx) error {
 	m.ctrl.T.Helper()
@@ -206,6 +264,20 @@ func (m *MockInteractionRepository) InsertSwipe(ctx context.Context, swipe entit
 func (mr *MockInteractionRepositoryMockRecorder) InsertSwipe(ctx, swipe, tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertSwipe", reflect.TypeOf((*MockInteractionRepository)(nil).InsertSwipe), ctx, swipe, tx)
+}
+
+// InsertWatch mocks base method.
+func (m *MockInteractionRepository) InsertWatch(ctx context.Context, watcherID, watchedID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertWatch", ctx, watcherID, watchedID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertWatch indicates an expected call of InsertWatch.
+func (mr *MockInteractionRepositoryMockRecorder) InsertWatch(ctx, watcherID, watchedID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertWatch", reflect.TypeOf((*MockInteractionRepository)(nil).InsertWatch), ctx, watcherID, watchedID)
 }
 
 // ListSwipesByUserID mocks base method.

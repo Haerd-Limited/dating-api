@@ -20,6 +20,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/internal/matchslot"
 	"github.com/Haerd-Limited/dating-api/internal/notification"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
@@ -35,6 +36,8 @@ import (
 type Service interface {
 	CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error)
 	GetLikes(ctx context.Context, userID, direction string, offset, limit int) (domain.Likes, error)
+	AddFavourite(ctx context.Context, watcherID, watchedUserID string) error
+	RemoveFavourite(ctx context.Context, watcherID, watchedUserID string) error
 }
 
 type service struct {
@@ -47,6 +50,7 @@ type service struct {
 	uow                 uow.UoW
 	hub                 realtime.Broadcaster
 	notificationService notification.Service
+	matchSlotNotifier   matchslot.Notifier
 }
 
 func NewInteractionService(
@@ -59,6 +63,7 @@ func NewInteractionService(
 	uow uow.UoW,
 	hub realtime.Broadcaster,
 	notificationService notification.Service,
+	matchSlotNotifier matchslot.Notifier,
 ) Service {
 	return &service{
 		logger:              logger,
@@ -70,6 +75,7 @@ func NewInteractionService(
 		uow:                 uow,
 		hub:                 hub,
 		notificationService: notificationService,
+		matchSlotNotifier:   matchSlotNotifier,
 	}
 }
 
@@ -85,6 +91,8 @@ var (
 	ErrUnverifiedUser                          = errors.New("user must be verified before matching")
 	ErrMatchLimitReached                       = errors.New("user is at the active match limit")
 	ErrTargetMatchLimitReached                 = errors.New("target user is at the active match limit")
+	ErrSelfWatch                               = errors.New("cannot watch yourself")
+	ErrNotAnIncomingLiker                      = errors.New("watched user has not liked you")
 )
 
 const (
@@ -94,10 +102,6 @@ const (
 )
 
 const weeklySuperlikeAllowance int64 = 1
-
-// maxActiveMatches is the per-user cap on simultaneously active matches.
-// Surfaced to the API as `match_slot_limit` on GET /api/v1/likes.
-const maxActiveMatches int64 = 2
 
 func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string, error) {
 	// this should all be a single transaction
@@ -365,6 +369,14 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		is.hub.BroadcastToUser(swipe.TargetUserID, byts)
 		is.hub.BroadcastToUser(swipe.UserID, byts)
 
+		if delErr := is.interactionRepo.DeleteWatchBetween(ctx, swipe.UserID, swipe.TargetUserID); delErr != nil {
+			_ = commonlogger.LogError(is.logger, "delete match slot watches between matched users", delErr,
+				zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
+		}
+
+		is.notifyMatchSlotFilledIfNeeded(ctx, swipe.UserID)
+		is.notifyMatchSlotFilledIfNeeded(ctx, swipe.TargetUserID)
+
 		is.sendMatchNotifications(ctx, swipe.UserID, swipe.TargetUserID, convoID)
 
 		// analytics: match created
@@ -419,6 +431,11 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		return domain.Likes{}, commonlogger.LogError(is.logger, "count active matches for likers", err, zap.String("userID", userID))
 	}
 
+	watchedIDs, err := is.interactionRepo.GetWatchedUserIDs(ctx, userID)
+	if err != nil {
+		return domain.Likes{}, commonlogger.LogError(is.logger, "get watched user ids", err, zap.String("userID", userID))
+	}
+
 	var likes domain.Likes
 
 	for _, id := range likesUserIDs {
@@ -449,7 +466,7 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 
 		compatibilitySummary, matchErr := is.discoverService.ComputeCompatibility(ctx, userID, id)
 		if matchErr != nil {
-			commonlogger.LogError(is.logger, "compute match summary for like", matchErr, zap.String("userID", userID), zap.String("targetUserID", id))
+			_ = commonlogger.LogError(is.logger, "compute match summary for like", matchErr, zap.String("userID", userID), zap.String("targetUserID", id))
 		} else {
 			p.CompatibilitySummary = compatibilitySummary
 		}
@@ -459,11 +476,14 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 			return domain.Likes{}, commonlogger.LogError(is.logger, "get swipe by actorID and targetID", likesErr, zap.String("userID", userID), zap.String("targetUserID", id))
 		}
 
+		_, isFavourited := watchedIDs[id]
+
 		like := domain.Like{
 			Profile:            p,
 			Message:            &domain.Message{},
 			Prompt:             &domain.Prompt{},
-			TargetAtMatchLimit: likerCounts[id] >= maxActiveMatches,
+			TargetAtMatchLimit: likerCounts[id] >= constants.MaxActiveMatches,
+			IsFavourited:       isFavourited,
 		}
 
 		var voicePrompt profiledomain.VoicePrompt
@@ -485,10 +505,10 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 			like.Message.MessageText, like.Message.MessageType = swipe.Message.Ptr(), swipe.MessageType.Ptr()
 		}
 
-		if p.VerifiedStatus == "VERIFIED" {
-			likes.Verified = append(likes.Verified, like)
+		if likerCounts[id] >= constants.MaxActiveMatches {
+			likes.SlotsFull = append(likes.SlotsFull, like)
 		} else {
-			likes.Unverified = append(likes.Unverified, like)
+			likes.FreeToMatch = append(likes.FreeToMatch, like)
 		}
 	}
 
@@ -500,13 +520,65 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 	}
 
 	likes.ActiveMatchesCount = viewerActive
-	likes.MatchSlotLimit = maxActiveMatches
+	likes.MatchSlotLimit = constants.MaxActiveMatches
 
 	return likes, nil
 }
 
+func (is *service) AddFavourite(ctx context.Context, watcherID, watchedUserID string) error {
+	if watcherID == watchedUserID {
+		return ErrSelfWatch
+	}
+
+	hasLike, err := is.interactionRepo.HasIncomingLike(ctx, watcherID, watchedUserID)
+	if err != nil {
+		return commonlogger.LogError(is.logger, "check incoming like for favourite", err,
+			zap.String("watcherID", watcherID), zap.String("watchedUserID", watchedUserID))
+	}
+
+	if !hasLike {
+		return ErrNotAnIncomingLiker
+	}
+
+	if err := is.interactionRepo.InsertWatch(ctx, watcherID, watchedUserID); err != nil {
+		return commonlogger.LogError(is.logger, "insert match slot watch", err,
+			zap.String("watcherID", watcherID), zap.String("watchedUserID", watchedUserID))
+	}
+
+	return nil
+}
+
+func (is *service) RemoveFavourite(ctx context.Context, watcherID, watchedUserID string) error {
+	if watcherID == watchedUserID {
+		return ErrSelfWatch
+	}
+
+	if err := is.interactionRepo.DeleteWatch(ctx, watcherID, watchedUserID); err != nil {
+		return commonlogger.LogError(is.logger, "delete match slot watch", err,
+			zap.String("watcherID", watcherID), zap.String("watchedUserID", watchedUserID))
+	}
+
+	return nil
+}
+
+func (is *service) notifyMatchSlotFilledIfNeeded(ctx context.Context, userID string) {
+	if is.matchSlotNotifier == nil {
+		return
+	}
+
+	active, err := is.interactionRepo.CountActiveMatches(ctx, userID, nil)
+	if err != nil {
+		_ = commonlogger.LogError(is.logger, "count active matches after match created", err, zap.String("userID", userID))
+		return
+	}
+
+	if active >= constants.MaxActiveMatches {
+		is.matchSlotNotifier.NotifySlotFilled(ctx, userID)
+	}
+}
+
 // enforceActiveMatchCap returns ErrMatchLimitReached if the actor is already
-// at maxActiveMatches, or ErrTargetMatchLimitReached if the target is.
+// at constants.MaxActiveMatches, or ErrTargetMatchLimitReached if the target is.
 // The caller MUST have already acquired the per-user advisory locks via
 // LockUsersForMatchCreation against the same exec; otherwise the count is
 // racy. Pass `nil` for exec to count against the default db connection
@@ -517,7 +589,7 @@ func (is *service) enforceActiveMatchCap(ctx context.Context, exec boil.ContextE
 		return commonlogger.LogError(is.logger, "count actor active matches", err, zap.String("userID", actorID))
 	}
 
-	if actorActive >= maxActiveMatches {
+	if actorActive >= constants.MaxActiveMatches {
 		return ErrMatchLimitReached
 	}
 
@@ -526,7 +598,7 @@ func (is *service) enforceActiveMatchCap(ctx context.Context, exec boil.ContextE
 		return commonlogger.LogError(is.logger, "count target active matches", err, zap.String("targetUserID", targetID))
 	}
 
-	if targetActive >= maxActiveMatches {
+	if targetActive >= constants.MaxActiveMatches {
 		return ErrTargetMatchLimitReached
 	}
 

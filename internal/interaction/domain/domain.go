@@ -15,8 +15,8 @@ type Swipe struct {
 }
 
 type Likes struct {
-	Verified           []Like
-	Unverified         []Like
+	FreeToMatch        []Like
+	SlotsFull          []Like
 	ActiveMatchesCount int64
 	MatchSlotLimit     int64
 }
@@ -26,6 +26,7 @@ type Like struct {
 	Message            *Message
 	Prompt             *Prompt
 	TargetAtMatchLimit bool
+	IsFavourited       bool
 }
 type Prompt struct {
 	PromptID              int64

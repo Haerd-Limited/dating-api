@@ -567,7 +567,7 @@ func (s *service) validateSequentialAnswering(ctx context.Context, userID string
 	}
 
 	// Find the target question's position (index) in the ordered list
-	var targetIndex int = -1
+	targetIndex := -1
 
 	for i, q := range allQuestions {
 		if q.ID == questionID {

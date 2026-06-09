@@ -1480,6 +1480,162 @@ func testUserToManyInsightSnapshots(t *testing.T) {
 	}
 }
 
+func testUserToManyWatchedUserMatchSlotWatches(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c MatchSlotWatch
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, matchSlotWatchDBTypes, false, matchSlotWatchColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, matchSlotWatchDBTypes, false, matchSlotWatchColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.WatchedUserID = a.ID
+	c.WatchedUserID = a.ID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.WatchedUserMatchSlotWatches().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.WatchedUserID == b.WatchedUserID {
+			bFound = true
+		}
+		if v.WatchedUserID == c.WatchedUserID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := UserSlice{&a}
+	if err = a.L.LoadWatchedUserMatchSlotWatches(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.WatchedUserMatchSlotWatches); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.WatchedUserMatchSlotWatches = nil
+	if err = a.L.LoadWatchedUserMatchSlotWatches(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.WatchedUserMatchSlotWatches); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
+func testUserToManyWatcherUserMatchSlotWatches(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c MatchSlotWatch
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, true, userColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize User struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, matchSlotWatchDBTypes, false, matchSlotWatchColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, matchSlotWatchDBTypes, false, matchSlotWatchColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	b.WatcherUserID = a.ID
+	c.WatcherUserID = a.ID
+
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.WatcherUserMatchSlotWatches().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if v.WatcherUserID == b.WatcherUserID {
+			bFound = true
+		}
+		if v.WatcherUserID == c.WatcherUserID {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := UserSlice{&a}
+	if err = a.L.LoadWatcherUserMatchSlotWatches(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.WatcherUserMatchSlotWatches); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.WatcherUserMatchSlotWatches = nil
+	if err = a.L.LoadWatcherUserMatchSlotWatches(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.WatcherUserMatchSlotWatches); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
 func testUserToManyUserAMatches(t *testing.T) {
 	var err error
 	ctx := context.Background()
@@ -4319,6 +4475,156 @@ func testUserToManyRemoveOpInsightSnapshots(t *testing.T) {
 	}
 }
 
+func testUserToManyAddOpWatchedUserMatchSlotWatches(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e MatchSlotWatch
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*MatchSlotWatch{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, matchSlotWatchDBTypes, false, strmangle.SetComplement(matchSlotWatchPrimaryKeyColumns, matchSlotWatchColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*MatchSlotWatch{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddWatchedUserMatchSlotWatches(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.WatchedUserID {
+			t.Error("foreign key was wrong value", a.ID, first.WatchedUserID)
+		}
+		if a.ID != second.WatchedUserID {
+			t.Error("foreign key was wrong value", a.ID, second.WatchedUserID)
+		}
+
+		if first.R.WatchedUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.WatchedUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.WatchedUserMatchSlotWatches[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.WatchedUserMatchSlotWatches[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.WatchedUserMatchSlotWatches().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+func testUserToManyAddOpWatcherUserMatchSlotWatches(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a User
+	var b, c, d, e MatchSlotWatch
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userDBTypes, false, strmangle.SetComplement(userPrimaryKeyColumns, userColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*MatchSlotWatch{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, matchSlotWatchDBTypes, false, strmangle.SetComplement(matchSlotWatchPrimaryKeyColumns, matchSlotWatchColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*MatchSlotWatch{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddWatcherUserMatchSlotWatches(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if a.ID != first.WatcherUserID {
+			t.Error("foreign key was wrong value", a.ID, first.WatcherUserID)
+		}
+		if a.ID != second.WatcherUserID {
+			t.Error("foreign key was wrong value", a.ID, second.WatcherUserID)
+		}
+
+		if first.R.WatcherUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.WatcherUser != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.WatcherUserMatchSlotWatches[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.WatcherUserMatchSlotWatches[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.WatcherUserMatchSlotWatches().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
 func testUserToManyAddOpUserAMatches(t *testing.T) {
 	var err error
 

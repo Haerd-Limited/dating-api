@@ -41,6 +41,8 @@ import (
 	interactionstorage "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
 	"github.com/Haerd-Limited/dating-api/internal/lookup"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
+	"github.com/Haerd-Limited/dating-api/internal/matchslot"
+	matchslotstorage "github.com/Haerd-Limited/dating-api/internal/matchslot/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/notification"
 	notificationstorage "github.com/Haerd-Limited/dating-api/internal/notification/storage"
@@ -157,9 +159,11 @@ func main() {
 
 	notificationService.StartWeeklyRefreshScheduler(ctx)
 	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger, hub, notificationService)
-	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork, notificationService)
-	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub)
-	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService)
+	matchSlotRepo := matchslotstorage.NewRepository(db)
+	matchSlotNotifier := matchslot.NewNotifier(logger, matchSlotRepo, hub, notificationService, profileService)
+	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork, notificationService, matchSlotNotifier)
+	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub, matchSlotNotifier)
+	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService, matchSlotNotifier)
 	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)

@@ -81,6 +81,15 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 
 	quota := domain.NewQuotaStatus(domain.DiscoverQuotaLimit, domain.DiscoverQuotaWindow, totalSwipes, gatingSwipeAt)
 
+	activeMatches, err := s.discoverRepo.CountActiveMatches(ctx, userID)
+	if err != nil {
+		return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "count active matches for viewer", err, zap.String("userID", userID))
+	}
+
+	if activeMatches >= constants.MaxActiveMatches {
+		return domain.NewDiscoverFeedResultAtMatchLimit(quota), nil
+	}
+
 	remaining := quota.SwipesRemaining
 	if remaining <= 0 {
 		return domain.NewDiscoverFeedResult(nil, quota), nil
@@ -301,7 +310,7 @@ func (s *service) GetUserPreferences(ctx context.Context, userID string) (*domai
 	if len(preferences.SeekGenderIDs) > 0 {
 		label, err := s.discoverRepo.GetSeekGenderLabelFromIDs(ctx, preferences.SeekGenderIDs)
 		if err != nil {
-			commonlogger.LogError(s.logger, "get seek gender label from ids", err, zap.String("userID", userID))
+			_ = commonlogger.LogError(s.logger, "get seek gender label from ids", err, zap.String("userID", userID))
 		} else {
 			preferences.SeekGender = label
 		}
