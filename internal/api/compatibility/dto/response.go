@@ -55,3 +55,21 @@ type GetQuestionsAndAnswersResponse struct {
 	// PrevOffset *int               `json:"prev_offset,omitempty"`
 	// HasMore    bool               `json:"has_more"`
 }
+
+type CompatibilityResponse struct {
+	OverallScore int                              `json:"overall_score"`
+	Breakdown    []CategoryScoreResponse          `json:"breakdown"`
+	Highlights   []CompatibilityHighlightResponse `json:"highlights"`
+}
+
+type CategoryScoreResponse struct {
+	CategoryKey  string `json:"category_key"`
+	CategoryName string `json:"category_name"`
+	Score        int    `json:"score"`
+}
+
+type CompatibilityHighlightResponse struct {
+	Question    string `json:"question"`
+	YourAnswer  string `json:"your_answer"`
+	TheirAnswer string `json:"their_answer"`
+}

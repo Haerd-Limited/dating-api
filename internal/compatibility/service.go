@@ -142,6 +142,10 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 
 		out.Badges = badges
 
+		if err := s.hydrateCompatibilityDetails(ctx, out, viewerID, targetID); err != nil {
+			return out, err
+		}
+
 		return out, nil
 	}
 
@@ -164,36 +168,15 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 		out.CompatibilityPercent = 0
 		out.Badges = []domain.CompatibilityBadge{}
 
+		if err := s.hydrateCompatibilityDetails(ctx, out, viewerID, targetID); err != nil {
+			return out, err
+		}
+
 		return out, nil
 	}
 
-	// 4) Match math (guard divide-by-zero by treating zero-total as denominator=1)
-	sA := 0.0
-	if totalAB > 0 {
-		sA = float64(earnedAB) / float64(totalAB)
-	} else {
-		sA = 1.0
-	}
-
-	sB := 0.0
-	if totalBA > 0 {
-		sB = float64(earnedBA) / float64(totalBA)
-	} else {
-		sB = 1.0
-	}
-
-	match := math.Sqrt(sA * sB)
-
-	percent := int(math.Round(match * 100.0))
-	if percent < 0 {
-		percent = 0
-	}
-
-	if percent > 100 {
-		percent = 100
-	}
-
-	out.CompatibilityPercent = percent
+	// 4) helper function to calculate compatibility percent
+	out.CompatibilityPercent = calculateCompatibilityPercent(earnedAB, totalAB, earnedBA, totalBA)
 
 	// 5) Badges (viewer-perspective satisfied, highest-weight)
 	badges, err := s.compatibilityRepo.TopBadges(ctx, viewerID, targetID, defaultBadgeLimit)
@@ -203,7 +186,85 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 
 	out.Badges = badges
 
+	if err := s.hydrateCompatibilityDetails(ctx, out, viewerID, targetID); err != nil {
+		return out, err
+	}
+
 	return out, nil
+}
+
+func (s *service) hydrateCompatibilityDetails(ctx context.Context, out *domain.CompatibilitySummary, viewerID, targetID string) error {
+	breakdown, err := s.computeCategoryBreakdown(ctx, viewerID, targetID)
+	if err != nil {
+		return fmt.Errorf("failed to compute category breakdown: %w", err)
+	}
+
+	highlights, err := s.compatibilityRepo.CompatibilityHighlights(ctx, viewerID, targetID, 5)
+	if err != nil {
+		return fmt.Errorf("failed to get compatibility highlights: %w", err)
+	}
+
+	out.Breakdown = breakdown
+	out.Highlights = highlights
+
+	return nil
+}
+
+func (s *service) computeCategoryBreakdown(ctx context.Context, viewerID, targetID string) ([]domain.CategoryScore, error) {
+	categories, err := s.getQuestionCategories(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	breakdown := make([]domain.CategoryScore, 0, len(categories))
+
+	for _, category := range categories {
+		earnedAB, totalAB, overlapAB, err := s.compatibilityRepo.PerspectiveSumsByCategory(ctx, viewerID, targetID, category.Key)
+		if err != nil {
+			return nil, fmt.Errorf("compute perspective sums category=%s AB: %w", category.Key, err)
+		}
+
+		earnedBA, totalBA, _, err := s.compatibilityRepo.PerspectiveSumsByCategory(ctx, targetID, viewerID, category.Key)
+		if err != nil {
+			return nil, fmt.Errorf("compute perspective sums category=%s BA: %w", category.Key, err)
+		}
+
+		score := 0
+		if overlapAB > 0 {
+			score = calculateCompatibilityPercent(earnedAB, totalAB, earnedBA, totalBA)
+		}
+
+		breakdown = append(breakdown, domain.CategoryScore{
+			CategoryKey:  category.Key,
+			CategoryName: category.Name,
+			Score:        score,
+		})
+	}
+
+	return breakdown, nil
+}
+
+func calculateCompatibilityPercent(earnedAB, totalAB, earnedBA, totalBA int) int {
+	sA := 1.0
+	if totalAB > 0 {
+		sA = float64(earnedAB) / float64(totalAB)
+	}
+
+	sB := 1.0
+	if totalBA > 0 {
+		sB = float64(earnedBA) / float64(totalBA)
+	}
+
+	percent := int(math.Round(math.Sqrt(sA*sB) * 100.0))
+	if percent < 0 {
+		return 0
+	}
+
+	if percent > 100 {
+		return 100
+	}
+
+	return percent
 }
 
 func (s *service) SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error {

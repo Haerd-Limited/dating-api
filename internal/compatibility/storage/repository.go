@@ -27,6 +27,8 @@ type CompatibilityRepository interface {
 
 	HasMandatoryMismatch(ctx context.Context, aID, bID string) (bool, error)
 	PerspectiveSums(ctx context.Context, aID, bID string) (earned int, total int, overlap int, err error)
+	PerspectiveSumsByCategory(ctx context.Context, aID, bID, categoryKey string) (earned int, total int, overlap int, err error)
+	CompatibilityHighlights(ctx context.Context, viewerID, targetID string, limit int) ([]domain.CompatibilityHighlight, error)
 	TopBadges(ctx context.Context, aID, bID string, limit int) ([]domain.CompatibilityBadge, error)
 	MandatoryMismatchBadges(ctx context.Context, viewerID, targetID string, limit int) ([]domain.CompatibilityBadge, error)
 
@@ -130,6 +132,101 @@ func (r *repository) PerspectiveSums(ctx context.Context, aID, bID string) (earn
 	}
 
 	return
+}
+
+func (r *repository) PerspectiveSumsByCategory(ctx context.Context, aID, bID, categoryKey string) (earned int, total int, overlap int, err error) {
+	const q = `
+		WITH overlap AS (
+			SELECT uaA.importance,
+			       uaA.acceptable_answer_ids AS acc,
+			       uaB.answer_id             AS b_ans
+			FROM user_answers uaA
+			JOIN user_answers uaB
+			  ON uaB.user_id = $2
+			 AND uaB.question_id = uaA.question_id
+			JOIN questions q
+			  ON q.id = uaA.question_id
+			JOIN question_categories qc
+			  ON qc.id = q.category_id
+			WHERE uaA.user_id = $1
+			  AND qc.key = $3
+		),
+		w AS (SELECT key, weight FROM importance_weights)
+		SELECT
+			COALESCE(SUM(CASE WHEN b_ans = ANY(acc) THEN w.weight ELSE 0 END), 0)::int AS earned,
+			COALESCE(SUM(w.weight), 0)::int                                             AS total,
+			COUNT(*)::int                                                               AS overlap
+		FROM overlap o
+		JOIN w ON w.key = o.importance;
+	`
+	err = queries.Raw(q, aID, bID, categoryKey).QueryRowContext(ctx, r.db).Scan(&earned, &total, &overlap)
+	if err != nil {
+		err = fmt.Errorf("PerspectiveSumsByCategory: %w", err)
+	}
+
+	return
+}
+
+func (r *repository) CompatibilityHighlights(ctx context.Context, viewerID, targetID string, limit int) ([]domain.CompatibilityHighlight, error) {
+	if limit <= 0 {
+		limit = 5
+	}
+
+	const q = `
+
+		SELECT q.text, qa_viewer.label, qa_target.label
+		FROM user_answers ua_viewer
+		JOIN user_answers ua_target
+		  ON ua_target.user_id = $2
+		 AND ua_target.question_id = ua_viewer.question_id
+		JOIN questions q
+		  ON q.id = ua_viewer.question_id
+		JOIN question_answers qa_viewer
+		  ON qa_viewer.id = ua_viewer.answer_id
+		JOIN question_answers qa_target
+		  ON qa_target.id = ua_target.answer_id
+		JOIN importance_weights iw
+		  ON iw.key = ua_viewer.importance
+		WHERE ua_viewer.user_id = $1
+		  AND ua_viewer.answer_id = ua_target.answer_id
+		  AND ua_viewer.importance IN ('very', 'mandatory')
+		ORDER BY iw.weight DESC, q.id
+		LIMIT $3;
+
+	`
+
+	rows, err := queries.Raw(q, viewerID, targetID, limit).QueryContext(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("CompatibilityHighlights query: %w", err)
+	}
+
+	defer func(rows *sql.Rows) {
+		closeErr := rows.Close()
+
+		if closeErr != nil {
+			r.logger.Error("CompatibilityHighlights close", zap.Error(closeErr))
+		}
+	}(rows)
+
+	var out []domain.CompatibilityHighlight
+
+	for rows.Next() {
+
+		var highlight domain.CompatibilityHighlight
+
+		if err = rows.Scan(&highlight.Question, &highlight.YourAnswer, &highlight.TheirAnswer); err != nil {
+			return nil, fmt.Errorf("CompatibilityHighlights scan: %w", err)
+		}
+
+		out = append(out, highlight)
+
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("CompatibilityHighlights rows: %w", err)
+	}
+
+	return out, nil
 }
 
 // TopBadges returns A-perspective satisfied, highest-weight overlaps vs B.

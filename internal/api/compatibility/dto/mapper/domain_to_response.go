@@ -80,3 +80,33 @@ func MapDomainToQuestionAndAnswerResponse(d domain.QuestionsAndAnswers) dto.GetQ
 
 	return out
 }
+
+func MapDomainToCompatibilityResponse(d *domain.CompatibilitySummary) dto.CompatibilityResponse {
+	if d == nil {
+		return dto.CompatibilityResponse{}
+	}
+
+	out := dto.CompatibilityResponse{
+		OverallScore: d.CompatibilityPercent,
+		Breakdown:    make([]dto.CategoryScoreResponse, 0, len(d.Breakdown)),
+		Highlights:   make([]dto.CompatibilityHighlightResponse, 0, len(d.Highlights)),
+	}
+
+	for _, score := range d.Breakdown {
+		out.Breakdown = append(out.Breakdown, dto.CategoryScoreResponse{
+			CategoryKey:  score.CategoryKey,
+			CategoryName: score.CategoryName,
+			Score:        score.Score,
+		})
+	}
+
+	for _, highlight := range d.Highlights {
+		out.Highlights = append(out.Highlights, dto.CompatibilityHighlightResponse{
+			Question:    highlight.Question,
+			YourAnswer:  highlight.YourAnswer,
+			TheirAnswer: highlight.TheirAnswer,
+		})
+	}
+
+	return out
+}

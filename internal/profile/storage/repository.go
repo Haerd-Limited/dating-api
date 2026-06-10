@@ -428,7 +428,7 @@ func (pr *profileRepository) UpsertUserSpokenLanguages(
 			sb.WriteString(",")
 		}
 		// user_id is always $1; each language_id is $2, $3, ...
-		sb.WriteString(fmt.Sprintf("($1,$%d)", i+2))
+		fmt.Fprintf(&sb, "($1,$%d)", i+2)
 
 		args[i+1] = lid
 	}
@@ -512,7 +512,7 @@ func (pr *profileRepository) UpsertUserEthnicities(
 			sb.WriteString(",")
 		}
 		// user_id is always $1; each ethnicity_id is $2, $3, ...
-		sb.WriteString(fmt.Sprintf("($1,$%d)", i+2))
+		fmt.Fprintf(&sb, "($1,$%d)", i+2)
 
 		args[i+1] = eid
 	}

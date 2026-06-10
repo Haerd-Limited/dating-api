@@ -21,6 +21,7 @@ type Handler interface {
 	GetQuestions() http.HandlerFunc
 	GetOverview() http.HandlerFunc
 	SaveAnswer() http.HandlerFunc
+	GetCompatibility() http.HandlerFunc
 }
 
 type handler struct {
@@ -55,6 +56,32 @@ func (h *handler) GetOverview() http.HandlerFunc {
 		}
 
 		render.Json(w, http.StatusOK, mapper.MapDomainToGetOverviewResponse(result))
+	}
+}
+
+func (h *handler) GetCompatibility() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		viewerID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		targetID := r.URL.Query().Get("target_user_id")
+		if targetID == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("target_user_id is required"))
+			return
+		}
+
+		result, err := h.compatibilityService.ComputeCompatibility(ctx, viewerID, targetID, 0)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetCompatibility", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.MapDomainToCompatibilityResponse(result))
 	}
 }
 
