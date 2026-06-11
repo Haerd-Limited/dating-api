@@ -39,6 +39,8 @@ func NewCompatibilityHandler(
 	}
 }
 
+const defaultCompatibilityMinOverlap = 0
+
 func (h *handler) GetOverview() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -75,7 +77,7 @@ func (h *handler) GetCompatibility() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.compatibilityService.ComputeCompatibility(ctx, viewerID, targetID, 0)
+		result, err := h.compatibilityService.ComputeCompatibilityDetailed(ctx, viewerID, targetID, defaultCompatibilityMinOverlap)
 		if err != nil {
 			render.HandleServiceErrorResponse(h.logger, w, r, "GetCompatibility", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
 			return

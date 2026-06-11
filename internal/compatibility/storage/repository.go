@@ -56,6 +56,8 @@ func NewCompatibilityRepository(
 	}
 }
 
+const defaultCompatibilityHighlightsLimit = 5
+
 func (r *repository) GetUserAnswers(ctx context.Context, userID string) (entity.UserAnswerSlice, error) {
 	result, err := entity.UserAnswers(
 		entity.UserAnswerWhere.UserID.EQ(userID),
@@ -169,11 +171,10 @@ func (r *repository) PerspectiveSumsByCategory(ctx context.Context, aID, bID, ca
 
 func (r *repository) CompatibilityHighlights(ctx context.Context, viewerID, targetID string, limit int) ([]domain.CompatibilityHighlight, error) {
 	if limit <= 0 {
-		limit = 5
+		limit = defaultCompatibilityHighlightsLimit
 	}
 
 	const q = `
-
 		SELECT q.text, qa_viewer.label, qa_target.label
 		FROM user_answers ua_viewer
 		JOIN user_answers ua_target
@@ -188,13 +189,11 @@ func (r *repository) CompatibilityHighlights(ctx context.Context, viewerID, targ
 		JOIN importance_weights iw
 		  ON iw.key = ua_viewer.importance
 		WHERE ua_viewer.user_id = $1
-		  AND ua_viewer.answer_id = ua_target.answer_id
+		  AND ua_target.answer_id = ANY(ua_viewer.acceptable_answer_ids)
 		  AND ua_viewer.importance IN ('very', 'mandatory')
 		ORDER BY iw.weight DESC, q.id
 		LIMIT $3;
-
 	`
-
 	rows, err := queries.Raw(q, viewerID, targetID, limit).QueryContext(ctx, r.db)
 	if err != nil {
 		return nil, fmt.Errorf("CompatibilityHighlights query: %w", err)
@@ -211,15 +210,11 @@ func (r *repository) CompatibilityHighlights(ctx context.Context, viewerID, targ
 	var out []domain.CompatibilityHighlight
 
 	for rows.Next() {
-
 		var highlight domain.CompatibilityHighlight
-
 		if err = rows.Scan(&highlight.Question, &highlight.YourAnswer, &highlight.TheirAnswer); err != nil {
 			return nil, fmt.Errorf("CompatibilityHighlights scan: %w", err)
 		}
-
 		out = append(out, highlight)
-
 	}
 
 	if err := rows.Err(); err != nil {

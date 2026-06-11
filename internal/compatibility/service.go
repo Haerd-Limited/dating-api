@@ -18,6 +18,7 @@ type Service interface {
 	GetQuestionsAndAnswers(ctx context.Context, category string, offset, limit int, userID *string, viewAll bool, questionID *int64) (domain.QuestionsAndAnswers, error)
 	SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error
 	ComputeCompatibility(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.CompatibilitySummary, error)
+	ComputeCompatibilityDetailed(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.CompatibilitySummary, error)
 }
 
 type service struct {
@@ -46,7 +47,10 @@ var (
 	ErrQuestionNotFound            = fmt.Errorf("question not found")
 )
 
-const defaultBadgeLimit = 3
+const (
+	defaultBadgeLimit     = 3
+	defaultHighlightLimit = 5
+)
 
 func (s *service) GetOverview(ctx context.Context, userID string) (domain.Overview, error) {
 	categories, err := s.getQuestionCategories(ctx)
@@ -142,10 +146,6 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 
 		out.Badges = badges
 
-		if err := s.hydrateCompatibilityDetails(ctx, out, viewerID, targetID); err != nil {
-			return out, err
-		}
-
 		return out, nil
 	}
 
@@ -168,9 +168,6 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 		out.CompatibilityPercent = 0
 		out.Badges = []domain.CompatibilityBadge{}
 
-		if err := s.hydrateCompatibilityDetails(ctx, out, viewerID, targetID); err != nil {
-			return out, err
-		}
 
 		return out, nil
 	}
@@ -186,6 +183,19 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 
 	out.Badges = badges
 
+	return out, nil
+}
+
+func (s *service) ComputeCompatibilityDetailed(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.CompatibilitySummary, error) {
+	out, err := s.ComputeCompatibility(ctx, viewerID, targetID, minOverlap)
+	if err != nil {
+		return out, err
+	}
+
+	if out.HiddenReason != "" {
+		return out, nil
+	}
+
 	if err := s.hydrateCompatibilityDetails(ctx, out, viewerID, targetID); err != nil {
 		return out, err
 	}
@@ -199,7 +209,7 @@ func (s *service) hydrateCompatibilityDetails(ctx context.Context, out *domain.C
 		return fmt.Errorf("failed to compute category breakdown: %w", err)
 	}
 
-	highlights, err := s.compatibilityRepo.CompatibilityHighlights(ctx, viewerID, targetID, 5)
+	highlights, err := s.compatibilityRepo.CompatibilityHighlights(ctx, viewerID, targetID, defaultHighlightLimit)
 	if err != nil {
 		return fmt.Errorf("failed to get compatibility highlights: %w", err)
 	}
