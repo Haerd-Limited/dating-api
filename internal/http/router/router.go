@@ -231,6 +231,7 @@ func New(
 				r.Route("/matching", func(r chi.Router) { // TODO: change to compatibility
 					r.Get("/overview", compatibilityHandler.GetOverview())
 					r.Get("/questions", compatibilityHandler.GetQuestions())
+					r.Get("/compatibility", compatibilityHandler.GetCompatibility())
 					r.Post("/answers", compatibilityHandler.SaveAnswer())
 				})
 

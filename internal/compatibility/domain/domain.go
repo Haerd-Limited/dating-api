@@ -22,11 +22,25 @@ type CompatibilityBadge struct {
 	RequirementBy string // when IsMismatch: "viewer" = viewer's mandatory that other failed; "target" = target's mandatory that viewer failed
 }
 
+type CategoryScore struct {
+	CategoryKey  string
+	CategoryName string
+	Score        int
+}
+
+type CompatibilityHighlight struct {
+	Question    string
+	YourAnswer  string
+	TheirAnswer string
+}
+
 type CompatibilitySummary struct {
 	CompatibilityPercent int                  // 0–100
 	OverlapCount         int                  // # shared questions answered
 	Badges               []CompatibilityBadge // top 2–3 satisfied items
 	HiddenReason         string               // e.g., "Not enough overlap"
+	Breakdown            []CategoryScore
+	Highlights           []CompatibilityHighlight
 }
 
 type SaveAnswerCommand struct {
