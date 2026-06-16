@@ -21,6 +21,7 @@ type UserRepository interface {
 	CheckUserExistenceByPhoneNumber(ctx context.Context, number string) (bool, error)
 	CountUsers(ctx context.Context) (int64, error)
 	GetUserByID(ctx context.Context, id string) (*entity.User, error)
+	ListByOnboardingSteps(ctx context.Context, steps []string) ([]*entity.User, error)
 	UpdateUser(ctx context.Context, e *entity.User, cols []string) error
 	DeleteUser(ctx context.Context, userID string) error
 }
@@ -114,6 +115,22 @@ func (r *userRepository) GetUserByID(ctx context.Context, id string) (*entity.Us
 	}
 
 	return user, nil
+}
+
+func (r *userRepository) ListByOnboardingSteps(ctx context.Context, steps []string) ([]*entity.User, error) {
+	if len(steps) == 0 {
+		return nil, nil
+	}
+
+	users, err := entity.Users(
+		entity.UserWhere.OnboardingStep.IN(steps),
+		entity.UserWhere.Phone.IsNotNull(),
+	).All(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("list users by onboarding steps: %w", err)
+	}
+
+	return users, nil
 }
 
 func (r *userRepository) CountUsers(ctx context.Context) (int64, error) {

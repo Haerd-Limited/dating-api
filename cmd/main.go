@@ -21,6 +21,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	authstorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
+	"github.com/Haerd-Limited/dating-api/internal/broadcast"
+	broadcaststorage "github.com/Haerd-Limited/dating-api/internal/broadcast/storage"
 	"github.com/Haerd-Limited/dating-api/internal/communication"
 	"github.com/Haerd-Limited/dating-api/internal/compatibility"
 	compatibilitystorage "github.com/Haerd-Limited/dating-api/internal/compatibility/storage"
@@ -127,6 +129,7 @@ func main() {
 	interactionRepo := interactionstorage.NewInteractionRepository(db)
 	safetyRepo := safetystorage.NewRepository(db)
 	feedbackRepo := feedbackstorage.NewRepository(db)
+	broadcastRepo := broadcaststorage.NewRepository(db)
 	userRepo := storage.NewUserRepository(db)
 	authRepo := authstorage.NewAuthRepository(db)
 	compatibilityRepo := compatibilitystorage.NewCompatibilityRepository(db, logger)
@@ -172,6 +175,7 @@ func main() {
 	backendEngineerPhoneNumbers := parsePhoneNumbers(cfg.BackendEngineerPhoneNumbers)
 	frontendEngineerPhoneNumbers := parsePhoneNumbers(cfg.FrontendEngineerPhoneNumbers)
 	feedbackService := feedback.NewService(logger, feedbackRepo, unitOfWork, communicationService, notificationPhoneNumbers)
+	broadcastService := broadcast.NewService(logger, broadcastRepo, userService, communicationService)
 
 	// Initialize error notification handler for SMS alerts
 	render.InitErrorNotificationHandler(
@@ -238,6 +242,7 @@ func main() {
 		insSvc,
 		userService,
 		feedbackService,
+		broadcastService,
 		dataExportService,
 		cfg.AdminAPIKey,
 	)

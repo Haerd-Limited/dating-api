@@ -88,6 +88,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Sexualities", testSexualitiesUpsert)
 
+	t.Run("SMSBroadcasts", testSMSBroadcastsUpsert)
+
 	t.Run("SpatialRefSys", testSpatialRefSysUpsert)
 
 	t.Run("Swipes", testSwipesUpsert)

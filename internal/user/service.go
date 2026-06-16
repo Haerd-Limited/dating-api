@@ -29,6 +29,7 @@ type Service interface {
 	GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (*domain.User, error)
 	GetUser(ctx context.Context, id string) (*domain.User, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]*domain.User, error)
+	ListWaitlistUsers(ctx context.Context, steps []string) ([]*domain.User, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
 	UserExistsByIdentifier(ctx context.Context, channel, identifier string) (bool, error)
 	CountUsers(ctx context.Context) (int64, error)
@@ -143,6 +144,20 @@ func (us *userService) GetUsersByIDs(ctx context.Context, ids []string) ([]*doma
 
 		user := mapper.UserEntityToUserDomain(userEntity)
 		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func (us *userService) ListWaitlistUsers(ctx context.Context, steps []string) ([]*domain.User, error) {
+	userEntities, err := us.userRepo.ListByOnboardingSteps(ctx, steps)
+	if err != nil {
+		return nil, fmt.Errorf("list waitlist users: %w", err)
+	}
+
+	users := make([]*domain.User, 0, len(userEntities))
+	for _, userEntity := range userEntities {
+		users = append(users, mapper.UserEntityToUserDomain(userEntity))
 	}
 
 	return users, nil

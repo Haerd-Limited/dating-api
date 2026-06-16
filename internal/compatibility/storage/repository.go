@@ -161,6 +161,7 @@ func (r *repository) PerspectiveSumsByCategory(ctx context.Context, aID, bID, ca
 		FROM overlap o
 		JOIN w ON w.key = o.importance;
 	`
+
 	err = queries.Raw(q, aID, bID, categoryKey).QueryRowContext(ctx, r.db).Scan(&earned, &total, &overlap)
 	if err != nil {
 		err = fmt.Errorf("PerspectiveSumsByCategory: %w", err)
@@ -194,6 +195,7 @@ func (r *repository) CompatibilityHighlights(ctx context.Context, viewerID, targ
 		ORDER BY iw.weight DESC, q.id
 		LIMIT $3;
 	`
+
 	rows, err := queries.Raw(q, viewerID, targetID, limit).QueryContext(ctx, r.db)
 	if err != nil {
 		return nil, fmt.Errorf("CompatibilityHighlights query: %w", err)
@@ -214,6 +216,7 @@ func (r *repository) CompatibilityHighlights(ctx context.Context, viewerID, targ
 		if err = rows.Scan(&highlight.Question, &highlight.YourAnswer, &highlight.TheirAnswer); err != nil {
 			return nil, fmt.Errorf("CompatibilityHighlights scan: %w", err)
 		}
+
 		out = append(out, highlight)
 	}
 

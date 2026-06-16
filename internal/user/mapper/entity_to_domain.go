@@ -16,6 +16,7 @@ func UserEntityToUserDomain(user *entity.User) *domain.User {
 		PhoneNumber:    user.Phone.String,
 		FirstName:      user.FirstName,
 		OnboardingStep: user.OnboardingStep,
+		CreatedAt:      user.CreatedAt,
 	}
 
 	if user.LastName.Valid {

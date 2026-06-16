@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
+	apibroadcast "github.com/Haerd-Limited/dating-api/internal/api/broadcast"
 	"github.com/Haerd-Limited/dating-api/internal/api/compatibility"
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
@@ -24,6 +25,7 @@ import (
 	apisafety "github.com/Haerd-Limited/dating-api/internal/api/safety"
 	"github.com/Haerd-Limited/dating-api/internal/api/verification"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
+	internalbroadcast "github.com/Haerd-Limited/dating-api/internal/broadcast"
 	internalcompatibility "github.com/Haerd-Limited/dating-api/internal/compatibility"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldataexport "github.com/Haerd-Limited/dating-api/internal/dataexport"
@@ -63,6 +65,7 @@ func New(
 	insightsService internalinsights.Service,
 	userService internaluser.Service,
 	feedbackService internalfeedback.Service,
+	broadcastService internalbroadcast.Service,
 	dataExportService internaldataexport.Service,
 	adminAPIKey string,
 ) http.Handler {
@@ -109,6 +112,7 @@ func New(
 	safetyHandler := apisafety.NewHandler(logger, safetyService)
 	insightsHandler := apiinsights.NewHandler(logger, insightsService)
 	feedbackHandler := apifeedback.NewFeedbackHandler(logger, feedbackService)
+	broadcastHandler := apibroadcast.NewHandler(logger, broadcastService)
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
@@ -283,6 +287,11 @@ func New(
 						r.Post("/{attemptID}/approve", verificationHandler.AdminApproveVideoAttempt())
 						r.Post("/{attemptID}/reject", verificationHandler.AdminRejectVideoAttempt())
 					})
+				})
+
+				r.Route("/waitlist", func(r chi.Router) {
+					r.Get("/users", broadcastHandler.ListWaitlistUsers())
+					r.Post("/broadcast", broadcastHandler.SendBroadcast())
 				})
 			})
 		},

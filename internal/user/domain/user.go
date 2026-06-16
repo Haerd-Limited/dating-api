@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type (
 	User struct {
 		ID                   string
@@ -9,5 +11,6 @@ type (
 		LastName             *string
 		OnboardingStep       string
 		HowDidYouHearAboutUs *string
+		CreatedAt            time.Time
 	}
 )

@@ -168,7 +168,6 @@ func (s *service) ComputeCompatibility(ctx context.Context, viewerID, targetID s
 		out.CompatibilityPercent = 0
 		out.Badges = []domain.CompatibilityBadge{}
 
-
 		return out, nil
 	}
 
