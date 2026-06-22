@@ -18,23 +18,25 @@ import (
 	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/aarondl/sqlboiler/v4/queries/qmhelper"
+	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/aarondl/strmangle"
 	"github.com/friendsofgo/errors"
 )
 
 // Swipe is an object representing the database table.
 type Swipe struct {
-	ID             int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	ActorID        string      `boil:"actor_id" json:"actor_id" toml:"actor_id" yaml:"actor_id"`
-	TargetID       string      `boil:"target_id" json:"target_id" toml:"target_id" yaml:"target_id"`
-	Action         string      `boil:"action" json:"action" toml:"action" yaml:"action"`
-	IdempotencyKey null.String `boil:"idempotency_key" json:"idempotency_key,omitempty" toml:"idempotency_key" yaml:"idempotency_key,omitempty"`
-	CreatedAt      time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
-	UpdatedAt      time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
-	MessageType    null.String `boil:"message_type" json:"message_type,omitempty" toml:"message_type" yaml:"message_type,omitempty"`
-	Message        null.String `boil:"message" json:"message,omitempty" toml:"message" yaml:"message,omitempty"`
-	VoicenoteURL   null.String `boil:"voicenote_url" json:"voicenote_url,omitempty" toml:"voicenote_url" yaml:"voicenote_url,omitempty"`
-	PromptID       null.Int64  `boil:"prompt_id" json:"prompt_id,omitempty" toml:"prompt_id" yaml:"prompt_id,omitempty"`
+	ID             int64             `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ActorID        string            `boil:"actor_id" json:"actor_id" toml:"actor_id" yaml:"actor_id"`
+	TargetID       string            `boil:"target_id" json:"target_id" toml:"target_id" yaml:"target_id"`
+	Action         string            `boil:"action" json:"action" toml:"action" yaml:"action"`
+	IdempotencyKey null.String       `boil:"idempotency_key" json:"idempotency_key,omitempty" toml:"idempotency_key" yaml:"idempotency_key,omitempty"`
+	CreatedAt      time.Time         `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	UpdatedAt      time.Time         `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
+	MessageType    null.String       `boil:"message_type" json:"message_type,omitempty" toml:"message_type" yaml:"message_type,omitempty"`
+	Message        null.String       `boil:"message" json:"message,omitempty" toml:"message" yaml:"message,omitempty"`
+	VoicenoteURL   null.String       `boil:"voicenote_url" json:"voicenote_url,omitempty" toml:"voicenote_url" yaml:"voicenote_url,omitempty"`
+	PromptID       null.Int64        `boil:"prompt_id" json:"prompt_id,omitempty" toml:"prompt_id" yaml:"prompt_id,omitempty"`
+	MediaSeconds   types.NullDecimal `boil:"media_seconds" json:"media_seconds,omitempty" toml:"media_seconds" yaml:"media_seconds,omitempty"`
 
 	R *swipeR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L swipeL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -52,6 +54,7 @@ var SwipeColumns = struct {
 	Message        string
 	VoicenoteURL   string
 	PromptID       string
+	MediaSeconds   string
 }{
 	ID:             "id",
 	ActorID:        "actor_id",
@@ -64,6 +67,7 @@ var SwipeColumns = struct {
 	Message:        "message",
 	VoicenoteURL:   "voicenote_url",
 	PromptID:       "prompt_id",
+	MediaSeconds:   "media_seconds",
 }
 
 var SwipeTableColumns = struct {
@@ -78,6 +82,7 @@ var SwipeTableColumns = struct {
 	Message        string
 	VoicenoteURL   string
 	PromptID       string
+	MediaSeconds   string
 }{
 	ID:             "swipes.id",
 	ActorID:        "swipes.actor_id",
@@ -90,6 +95,7 @@ var SwipeTableColumns = struct {
 	Message:        "swipes.message",
 	VoicenoteURL:   "swipes.voicenote_url",
 	PromptID:       "swipes.prompt_id",
+	MediaSeconds:   "swipes.media_seconds",
 }
 
 // Generated where
@@ -106,6 +112,7 @@ var SwipeWhere = struct {
 	Message        whereHelpernull_String
 	VoicenoteURL   whereHelpernull_String
 	PromptID       whereHelpernull_Int64
+	MediaSeconds   whereHelpertypes_NullDecimal
 }{
 	ID:             whereHelperint64{field: "\"swipes\".\"id\""},
 	ActorID:        whereHelperstring{field: "\"swipes\".\"actor_id\""},
@@ -118,6 +125,7 @@ var SwipeWhere = struct {
 	Message:        whereHelpernull_String{field: "\"swipes\".\"message\""},
 	VoicenoteURL:   whereHelpernull_String{field: "\"swipes\".\"voicenote_url\""},
 	PromptID:       whereHelpernull_Int64{field: "\"swipes\".\"prompt_id\""},
+	MediaSeconds:   whereHelpertypes_NullDecimal{field: "\"swipes\".\"media_seconds\""},
 }
 
 // SwipeRels is where relationship names are stored.
@@ -195,9 +203,9 @@ func (r *swipeR) GetTarget() *User {
 type swipeL struct{}
 
 var (
-	swipeAllColumns            = []string{"id", "actor_id", "target_id", "action", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url", "prompt_id"}
+	swipeAllColumns            = []string{"id", "actor_id", "target_id", "action", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url", "prompt_id", "media_seconds"}
 	swipeColumnsWithoutDefault = []string{"actor_id", "target_id", "action"}
-	swipeColumnsWithDefault    = []string{"id", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url", "prompt_id"}
+	swipeColumnsWithDefault    = []string{"id", "idempotency_key", "created_at", "updated_at", "message_type", "message", "voicenote_url", "prompt_id", "media_seconds"}
 	swipePrimaryKeyColumns     = []string{"id"}
 	swipeGeneratedColumns      = []string{}
 )

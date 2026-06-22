@@ -56,6 +56,8 @@ type Prompt struct {
 }
 
 type Message struct {
-	MessageText *string `json:"message_text"`
-	MessageType *string `json:"message_type"`
+	MessageText  *string  `json:"message_text"`
+	MessageType  *string  `json:"message_type"`
+	VoiceNoteURL *string  `json:"voice_note_url,omitempty"`
+	MediaSeconds *float64 `json:"media_seconds,omitempty"`
 }

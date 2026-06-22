@@ -38,6 +38,8 @@ type Prompt struct {
 }
 
 type Message struct {
-	MessageText *string
-	MessageType *string
+	MessageText  *string
+	MessageType  *string
+	VoiceNoteURL *string
+	MediaSeconds *float64
 }

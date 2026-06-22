@@ -5,6 +5,7 @@ import (
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
 func SwipeToEntity(s domain.Swipe) entity.Swipe {
@@ -23,5 +24,6 @@ func SwipeToEntity(s domain.Swipe) entity.Swipe {
 		MessageType:    null.StringFromPtr(s.MessageType),
 		VoicenoteURL:   null.StringFromPtr(s.VoiceNoteURL),
 		IdempotencyKey: null.StringFromPtr(s.IdempotencyKey),
+		MediaSeconds:   utils.FloatPtrToNullDecimal(s.MediaSeconds),
 	}
 }

@@ -56,7 +56,10 @@ func mapLikes(domainLikes []domain.Like) []dto.Like {
 		}
 
 		if domainLike.Message != nil {
-			like.Message.MessageText, like.Message.MessageType = domainLike.Message.MessageText, domainLike.Message.MessageType
+			like.Message.MessageText = domainLike.Message.MessageText
+			like.Message.MessageType = domainLike.Message.MessageType
+			like.Message.VoiceNoteURL = domainLike.Message.VoiceNoteURL
+			like.Message.MediaSeconds = domainLike.Message.MediaSeconds
 		}
 
 		likes = append(likes, like)

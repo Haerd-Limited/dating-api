@@ -274,37 +274,22 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 		targetUserSentMeALikeWithAMessage := targetUserSwipe.Message.Valid && targetUserSwipe.MessageType.Valid && targetUserSwipe.IdempotencyKey.Valid
 		if targetUserSentMeALikeWithAMessage {
-			// if the user i'm about to match, sent me a like with a message, we want to include that message as the first message in our conversation.
-			messageType := conversationDomain.MessageTypeText
-
-			var textBody *string
-
-			var mediaUrl *string
-
-			var mediaSeconds *float64
-
-			if targetUserSwipe.MessageType.String == constants.MessageTypeVoice {
-				messageType = conversationDomain.MessageTypeVoice
-				mediaUrl = targetUserSwipe.VoicenoteURL.Ptr()
-				// Note: MediaSeconds is not stored in swipes table yet, so we can't retrieve it for existing swipes.
-				// A migration is needed to add media_seconds column to the swipes table.
-				// For now, this will be nil for existing swipes, which may cause validation errors when creating the message.
-				mediaSeconds = nil
-			} else {
-				textBody = targetUserSwipe.Message.Ptr()
+			firstMessage, seedMessage, buildErr := mapper.BuildTargetUserFirstMessage(targetUserSwipe, convoID, swipe.TargetUserID)
+			if buildErr != nil {
+				return "", commonlogger.LogError(is.logger, "build target user's first message", buildErr, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 			}
 
-			_, err = is.conversationService.SendMessage(ctx, tx.Raw(), conversationDomain.Message{
-				ConversationID: convoID,
-				SenderID:       swipe.TargetUserID,
-				Type:           messageType,
-				TextBody:       textBody,
-				MediaUrl:       mediaUrl,
-				MediaSeconds:   mediaSeconds,
-				ClientMsgID:    targetUserSwipe.IdempotencyKey.String,
-			})
-			if err != nil {
-				return "", commonlogger.LogError(is.logger, "send target user's message to conversation", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
+			if !seedMessage {
+				is.logger.Warn(
+					"legacy voice swipe missing media_seconds; skipping first message seed",
+					zap.String("actorID", swipe.TargetUserID),
+					zap.String("targetUserID", swipe.UserID),
+				)
+			} else {
+				_, err = is.conversationService.SendMessage(ctx, tx.Raw(), firstMessage)
+				if err != nil {
+					return "", commonlogger.LogError(is.logger, "send target user's message to conversation", err, zap.String("userID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
+				}
 			}
 		}
 
@@ -502,7 +487,14 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 		}
 
 		if swipe.Message.Valid && swipe.MessageType.Valid {
-			like.Message.MessageText, like.Message.MessageType = swipe.Message.Ptr(), swipe.MessageType.Ptr()
+			likeMessage, likesErr := mapper.SwipeMessageToDomain(swipe)
+			if likesErr != nil {
+				return domain.Likes{}, commonlogger.LogError(is.logger, "map swipe message to domain", likesErr, zap.String("userID", userID), zap.String("targetUserID", id))
+			}
+
+			if likeMessage != nil {
+				like.Message = likeMessage
+			}
 		}
 
 		if likerCounts[id] >= constants.MaxActiveMatches {
