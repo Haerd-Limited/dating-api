@@ -131,6 +131,21 @@ func (mr *MockServiceMockRecorder) GetUsersByIDs(ctx, ids any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersByIDs", reflect.TypeOf((*MockService)(nil).GetUsersByIDs), ctx, ids)
 }
 
+// ListWaitlistUsers mocks base method.
+func (m *MockService) ListWaitlistUsers(ctx context.Context, steps []string) ([]*domain.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWaitlistUsers", ctx, steps)
+	ret0, _ := ret[0].([]*domain.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWaitlistUsers indicates an expected call of ListWaitlistUsers.
+func (mr *MockServiceMockRecorder) ListWaitlistUsers(ctx, steps any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWaitlistUsers", reflect.TypeOf((*MockService)(nil).ListWaitlistUsers), ctx, steps)
+}
+
 // UpdateUser mocks base method.
 func (m *MockService) UpdateUser(ctx context.Context, user *domain.User) error {
 	m.ctrl.T.Helper()

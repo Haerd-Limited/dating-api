@@ -14,6 +14,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/profile/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/dataexport"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
+	"github.com/Haerd-Limited/dating-api/internal/preference"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	"github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -35,6 +36,7 @@ type Handler interface {
 	GetVoicePromptTranscript() http.HandlerFunc
 	DeleteAccount() http.HandlerFunc
 	GetDataExport() http.HandlerFunc
+	SetAnalyticsOptOut() http.HandlerFunc
 }
 
 type handler struct {
@@ -43,6 +45,7 @@ type handler struct {
 	userService       user.Service
 	dataExportService dataexport.Service
 	discoverService   discover.Service
+	preferenceService preference.Service
 }
 
 func NewProfileHandler(
@@ -51,6 +54,7 @@ func NewProfileHandler(
 	userService user.Service,
 	dataExportService dataexport.Service,
 	discoverService discover.Service,
+	preferenceService preference.Service,
 ) Handler {
 	return &handler{
 		logger:            logger,
@@ -58,6 +62,7 @@ func NewProfileHandler(
 		userService:       userService,
 		dataExportService: dataExportService,
 		discoverService:   discoverService,
+		preferenceService: preferenceService,
 	}
 }
 
@@ -248,6 +253,34 @@ func (h *handler) GetDataExport() http.HandlerFunc {
 
 		w.Header().Set("Content-Disposition", `attachment; filename="haerd-data-export.json"`)
 		render.Json(w, http.StatusOK, payload)
+	}
+}
+
+func (h *handler) SetAnalyticsOptOut() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		var req dto.AnalyticsOptOutRequest
+		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
+			h.logger.Sugar().Warnw("failed to decode analytics opt-out request", "error", err)
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("invalid request payload"))
+
+			return
+		}
+
+		err := h.preferenceService.SetAnalyticsOptOut(ctx, userID, req.OptedOut)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "SetAnalyticsOptOut", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dto.AnalyticsOptOutResponse(req))
 	}
 }
 

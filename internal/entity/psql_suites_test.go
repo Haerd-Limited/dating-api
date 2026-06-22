@@ -98,6 +98,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("UserBlocks", testUserBlocksUpsert)
 
+	t.Run("UserConsents", testUserConsentsUpsert)
+
 	t.Run("UserPreferences", testUserPreferencesUpsert)
 
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesUpsert)

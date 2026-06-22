@@ -135,6 +135,7 @@ var UserRels = struct {
 	TargetSwipes                 string
 	BlockedUserUserBlocks        string
 	BlockerUserUserBlocks        string
+	UserConsents                 string
 	Ethnicities                  string
 	Interests                    string
 	Languages                    string
@@ -174,6 +175,7 @@ var UserRels = struct {
 	TargetSwipes:                 "TargetSwipes",
 	BlockedUserUserBlocks:        "BlockedUserUserBlocks",
 	BlockerUserUserBlocks:        "BlockerUserUserBlocks",
+	UserConsents:                 "UserConsents",
 	Ethnicities:                  "Ethnicities",
 	Interests:                    "Interests",
 	Languages:                    "Languages",
@@ -216,6 +218,7 @@ type userR struct {
 	TargetSwipes                 SwipeSlice                       `boil:"TargetSwipes" json:"TargetSwipes" toml:"TargetSwipes" yaml:"TargetSwipes"`
 	BlockedUserUserBlocks        UserBlockSlice                   `boil:"BlockedUserUserBlocks" json:"BlockedUserUserBlocks" toml:"BlockedUserUserBlocks" yaml:"BlockedUserUserBlocks"`
 	BlockerUserUserBlocks        UserBlockSlice                   `boil:"BlockerUserUserBlocks" json:"BlockerUserUserBlocks" toml:"BlockerUserUserBlocks" yaml:"BlockerUserUserBlocks"`
+	UserConsents                 UserConsentSlice                 `boil:"UserConsents" json:"UserConsents" toml:"UserConsents" yaml:"UserConsents"`
 	Ethnicities                  EthnicitySlice                   `boil:"Ethnicities" json:"Ethnicities" toml:"Ethnicities" yaml:"Ethnicities"`
 	Interests                    InterestSlice                    `boil:"Interests" json:"Interests" toml:"Interests" yaml:"Interests"`
 	Languages                    LanguageSlice                    `boil:"Languages" json:"Languages" toml:"Languages" yaml:"Languages"`
@@ -664,6 +667,22 @@ func (r *userR) GetBlockerUserUserBlocks() UserBlockSlice {
 	}
 
 	return r.BlockerUserUserBlocks
+}
+
+func (o *User) GetUserConsents() UserConsentSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetUserConsents()
+}
+
+func (r *userR) GetUserConsents() UserConsentSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.UserConsents
 }
 
 func (o *User) GetEthnicities() EthnicitySlice {
@@ -1525,6 +1544,20 @@ func (o *User) BlockerUserUserBlocks(mods ...qm.QueryMod) userBlockQuery {
 	)
 
 	return UserBlocks(queryMods...)
+}
+
+// UserConsents retrieves all the user_consent's UserConsents with an executor.
+func (o *User) UserConsents(mods ...qm.QueryMod) userConsentQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"user_consents\".\"user_id\"=?", o.ID),
+	)
+
+	return UserConsents(queryMods...)
 }
 
 // Ethnicities retrieves all the ethnicity's Ethnicities with an executor.
@@ -4747,6 +4780,119 @@ func (userL) LoadBlockerUserUserBlocks(ctx context.Context, e boil.ContextExecut
 	return nil
 }
 
+// LoadUserConsents allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadUserConsents(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_consents`),
+		qm.WhereIn(`user_consents.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load user_consents")
+	}
+
+	var resultSlice []*UserConsent
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice user_consents")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on user_consents")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_consents")
+	}
+
+	if len(userConsentAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.UserConsents = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &userConsentR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.UserConsents = append(local.R.UserConsents, foreign)
+				if foreign.R == nil {
+					foreign.R = &userConsentR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadEthnicities allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (userL) LoadEthnicities(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
@@ -7754,6 +7900,59 @@ func (o *User) AddBlockerUserUserBlocks(ctx context.Context, exec boil.ContextEx
 			}
 		} else {
 			rel.R.BlockerUser = o
+		}
+	}
+	return nil
+}
+
+// AddUserConsents adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.UserConsents.
+// Sets related.R.User appropriately.
+func (o *User) AddUserConsents(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserConsent) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"user_consents\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, userConsentPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			UserConsents: related,
+		}
+	} else {
+		o.R.UserConsents = append(o.R.UserConsents, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &userConsentR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
 		}
 	}
 	return nil

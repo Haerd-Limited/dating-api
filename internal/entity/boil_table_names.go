@@ -50,6 +50,7 @@ var TableNames = struct {
 	Swipes                       string
 	UserAnswers                  string
 	UserBlocks                   string
+	UserConsents                 string
 	UserEthnicities              string
 	UserInterests                string
 	UserLanguages                string
@@ -112,6 +113,7 @@ var TableNames = struct {
 	Swipes:                       "swipes",
 	UserAnswers:                  "user_answers",
 	UserBlocks:                   "user_blocks",
+	UserConsents:                 "user_consents",
 	UserEthnicities:              "user_ethnicities",
 	UserInterests:                "user_interests",
 	UserLanguages:                "user_languages",

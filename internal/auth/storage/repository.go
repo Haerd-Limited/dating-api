@@ -26,6 +26,7 @@ type AuthRepository interface {
 	FindActiveVerificationCode(ctx context.Context, channel, identifier, purpose string) (*entity.VerificationCode, error)
 	IncrementAttempts(ctx context.Context, id int64) error
 	ConsumeVerificationCode(ctx context.Context, id int64) (bool, error) // true if consumed
+	DeleteVerificationCodesForUser(ctx context.Context, phone, email *string) error
 }
 
 type authRepository struct {
@@ -160,6 +161,28 @@ func (r *authRepository) RevokeAllRefreshTokens(ctx context.Context, userID stri
 	_, err := entity.RefreshTokens(entity.RefreshTokenWhere.UserID.EQ(userID)).DeleteAll(ctx, r.db)
 	if err != nil {
 		return fmt.Errorf("repo auth delete refresh tokens userID=%s: %w", userID, err)
+	}
+
+	return nil
+}
+
+func (r *authRepository) DeleteVerificationCodesForUser(ctx context.Context, phone, email *string) error {
+	var phoneVal, emailVal sql.NullString
+	if phone != nil {
+		phoneVal = sql.NullString{String: *phone, Valid: true}
+	}
+
+	if email != nil {
+		emailVal = sql.NullString{String: *email, Valid: true}
+	}
+
+	_, err := r.db.ExecContext(ctx, `
+		DELETE FROM verification_codes
+		 WHERE (channel = 'sms'   AND $1::text IS NOT NULL AND identifier = $1)
+		    OR (channel = 'email' AND $2::text IS NOT NULL AND identifier = $2)
+	`, phoneVal, emailVal)
+	if err != nil {
+		return fmt.Errorf("delete verification codes for user: %w", err)
 	}
 
 	return nil

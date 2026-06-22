@@ -10,6 +10,7 @@ import (
 	"github.com/coocood/freecache"
 	"go.uber.org/zap"
 
+	authstorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/preference"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
@@ -40,6 +41,7 @@ type Service interface {
 type userService struct {
 	logger            *zap.Logger
 	userRepo          storage.UserRepository
+	authRepo          authstorage.AuthRepository
 	awsService        aws.Service
 	cache             *freecache.Cache
 	uow               uow.UoW
@@ -50,6 +52,7 @@ type userService struct {
 func NewUserService(
 	logger *zap.Logger,
 	userRepo storage.UserRepository,
+	authRepo authstorage.AuthRepository,
 	awsService aws.Service,
 	cache *freecache.Cache,
 	uow uow.UoW,
@@ -59,6 +62,7 @@ func NewUserService(
 	return &userService{
 		logger:            logger,
 		userRepo:          userRepo,
+		authRepo:          authRepo,
 		awsService:        awsService,
 		cache:             cache,
 		uow:               uow,
@@ -238,8 +242,8 @@ func looksLikeEmail(s string) bool { return strings.Contains(s, "@") && strings.
 func (us *userService) DeleteAccount(ctx context.Context, userID string) error {
 	us.logger.Info("Starting account deletion", zap.String("userID", userID))
 
-	// Step 1: Verify user exists
-	_, err := us.userRepo.GetUserByID(ctx, userID)
+	// Step 1: Verify user exists and capture identifiers for verification-code purge
+	userEntity, err := us.userRepo.GetUserByID(ctx, userID)
 	if err != nil {
 		return commonlogger.LogError(us.logger, "failed to get user", err, zap.String("userID", userID))
 	}
@@ -254,7 +258,25 @@ func (us *userService) DeleteAccount(ctx context.Context, userID string) error {
 		// This ensures account is still deleted from DB even if S3 operations have issues
 	}
 
-	// Step 3: Delete user from database (CASCADE will handle all related records)
+	// Step 3: Purge verification codes tied to phone/email (not linked via FK)
+	var phone, email *string
+
+	if userEntity.Phone.Valid {
+		p := userEntity.Phone.String
+		phone = &p
+	}
+
+	if userEntity.Email.Valid {
+		e := userEntity.Email.String
+		email = &e
+	}
+
+	if err := us.authRepo.DeleteVerificationCodesForUser(ctx, phone, email); err != nil {
+		us.logger.Warn("failed to purge verification codes on delete",
+			zap.String("userID", userID), zap.Error(err))
+	}
+
+	// Step 4: Delete user from database (CASCADE will handle all related records)
 	us.logger.Info("Deleting user from database", zap.String("userID", userID))
 
 	err = us.userRepo.DeleteUser(ctx, userID)
@@ -262,7 +284,7 @@ func (us *userService) DeleteAccount(ctx context.Context, userID string) error {
 		return commonlogger.LogError(us.logger, "failed to delete user from database", err, zap.String("userID", userID))
 	}
 
-	// Step 4: Clear any cached data for this user
+	// Step 5: Clear any cached data for this user
 	// The cache key would depend on your cache implementation
 	// Since we're using freecache, we could clear entries if needed, but it will expire naturally
 

@@ -11,6 +11,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
 	apibroadcast "github.com/Haerd-Limited/dating-api/internal/api/broadcast"
 	"github.com/Haerd-Limited/dating-api/internal/api/compatibility"
+	apiconsent "github.com/Haerd-Limited/dating-api/internal/api/consent"
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
 	apifeedback "github.com/Haerd-Limited/dating-api/internal/api/feedback"
@@ -27,6 +28,7 @@ import (
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalbroadcast "github.com/Haerd-Limited/dating-api/internal/broadcast"
 	internalcompatibility "github.com/Haerd-Limited/dating-api/internal/compatibility"
+	internalconsent "github.com/Haerd-Limited/dating-api/internal/consent"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
 	internaldataexport "github.com/Haerd-Limited/dating-api/internal/dataexport"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
@@ -38,6 +40,7 @@ import (
 	haerdmiddleware "github.com/Haerd-Limited/dating-api/internal/middleware"
 	internalnotification "github.com/Haerd-Limited/dating-api/internal/notification"
 	internalonboarding "github.com/Haerd-Limited/dating-api/internal/onboarding"
+	internalpreference "github.com/Haerd-Limited/dating-api/internal/preference"
 	internalprofile "github.com/Haerd-Limited/dating-api/internal/profile"
 	internalrealtime "github.com/Haerd-Limited/dating-api/internal/realtime"
 	internalsafety "github.com/Haerd-Limited/dating-api/internal/safety"
@@ -67,6 +70,9 @@ func New(
 	feedbackService internalfeedback.Service,
 	broadcastService internalbroadcast.Service,
 	dataExportService internaldataexport.Service,
+	preferenceService internalpreference.Service,
+	consentService internalconsent.Service,
+	enableConsentGate bool,
 	adminAPIKey string,
 ) http.Handler {
 	// Create a new Chi router.
@@ -98,7 +104,8 @@ func New(
 	router.Use(middleware.Recoverer) // recovers from panics
 
 	authHandler := auth.NewAuthHandler(logger, authService)
-	profileHandler := profile.NewProfileHandler(logger, profileService, userService, dataExportService, discoverService)
+	profileHandler := profile.NewProfileHandler(logger, profileService, userService, dataExportService, discoverService, preferenceService)
+	consentHandler := apiconsent.NewConsentHandler(logger, consentService)
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	notificationHandler := apinotification.NewNotificationHandler(logger, notificationService)
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
@@ -151,113 +158,124 @@ func New(
 			// --- Protected (must be logged in)
 			r.Group(func(r chi.Router) {
 				r.Use(haerdmiddleware.AuthMiddleware([]byte(jwtSecret)))
-				r.Use(haerdmiddleware.AppOpenTracker())
 
-				r.Route("/safety", func(r chi.Router) {
-					r.Post("/block", safetyHandler.Block())
-					r.Post("/report", safetyHandler.Report())
+				// Carve-outs that bypass the consent gate (Articles 15, 17 + consent endpoints).
+				r.Route("/consents", func(r chi.Router) {
+					r.Post("/", consentHandler.Record())
+					r.Get("/", consentHandler.List())
+					r.Delete("/{type}", consentHandler.Revoke())
 				})
-
-				r.Route(
-					"/onboarding", func(r chi.Router) {
-						r.Get("/step", onboardingHandler.GetStep())
-						r.Post("/intro", onboardingHandler.Intro())
-						r.Patch("/basics", onboardingHandler.Basics())
-						r.Patch("/location", onboardingHandler.Location())
-						r.Patch("/lifestyle", onboardingHandler.Lifestyle())
-						r.Patch("/beliefs", onboardingHandler.Beliefs())
-						r.Patch("/background", onboardingHandler.Background())
-						r.Patch("/work-and-education", onboardingHandler.WorkAndEducation())
-						r.Post("/languages", onboardingHandler.Languages())
-						r.Post("/photos", onboardingHandler.Photos())
-						r.Post("/prompts", onboardingHandler.Prompts())
-						r.Post("/video-verification", onboardingHandler.VideoVerification())
-					},
-				)
-
-				r.Route("/discover", func(r chi.Router) {
-					r.Get("/", discoverHandler.GetDiscover())
-					r.Post("/filters", discoverHandler.GetDiscoverWithFilters())
-					r.Get("/preferences", discoverHandler.GetUserPreferences())
-				})
-				r.Get("/voice-prompts/{id}/transcript", profileHandler.GetVoicePromptTranscript())
-				r.Route("/vwh", func(r chi.Router) {
-					r.Get("/", discoverHandler.GetVoiceWorthHearing())
-				})
-				r.Route("/swipes", func(r chi.Router) {
-					r.Post("/", interactionHandler.Create())
-				})
-
-				r.Route("/likes", func(r chi.Router) {
-					r.Get("/", interactionHandler.GetLikes())
-					r.Post("/favourites", interactionHandler.AddFavourite())
-					r.Delete("/favourites/{watchedUserID}", interactionHandler.RemoveFavourite())
-				})
-
-				r.Route("/insights", func(r chi.Router) {
-					r.Get("/me/weekly", insightsHandler.GetMeWeekly())
-					r.Get("/me/wrapped", insightsHandler.GetMyWrapped())
-				})
-
+				r.Get("/users/me/data-export", profileHandler.GetDataExport())
+				r.Delete("/users/me", profileHandler.DeleteAccount())
 				r.Route("/notifications", func(r chi.Router) {
 					r.Post("/device-tokens", notificationHandler.RegisterDeviceToken())
 					r.Delete("/device-tokens", notificationHandler.RemoveDeviceToken())
 				})
 
-				// router.go
-				r.Route("/rt", func(r chi.Router) {
-					r.Get("/ws", wsHandler.ServeWS())
-				})
+				r.Group(func(r chi.Router) {
+					r.Use(haerdmiddleware.ConsentRequired(consentService, enableConsentGate, logger))
+					r.Use(haerdmiddleware.AppOpenTracker())
 
-				r.Route("/conversations", func(r chi.Router) {
-					r.Get("/", conversationHandler.GetConversations())
-					r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
-					r.Post("/{id}/messages", conversationHandler.SendMessage())
-					r.Post("/{id}/unmatch", conversationHandler.Unmatch())
-				})
-
-				r.Route("/media", func(r chi.Router) {
-					r.Get("/photos/presign", mediaHandler.GeneratePhotoUploadUrl()) // returns URL/fields
-					// r.Post("/media/photos", mediaHandler.AttachPhoto())          // save URL, position, is_primary
-					// r.Patch("/media/photos/{id}", mediaHandler.UpdatePhoto())    // reorder / set primary
-					// r.Delete("/media/photos/{id}", mediaHandler.DeletePhoto())
-
-					r.Get("/voice/presign", mediaHandler.GenerateVoiceNoteUploadUrl())
-					// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
-
-					r.Get("/feedback/presign", mediaHandler.GenerateFeedbackAttachmentUploadUrl())
-				})
-
-				r.Route("/feedback", func(r chi.Router) {
-					r.Post("/", feedbackHandler.CreateFeedback())
-				})
-
-				r.Route("/matching", func(r chi.Router) { // TODO: change to compatibility
-					r.Get("/overview", compatibilityHandler.GetOverview())
-					r.Get("/questions", compatibilityHandler.GetQuestions())
-					r.Get("/compatibility", compatibilityHandler.GetCompatibility())
-					r.Post("/answers", compatibilityHandler.SaveAnswer())
-				})
-
-				// Current user
-				r.Route("/users/me", func(r chi.Router) {
-					r.Get("/", profileHandler.GetMyProfile())
-					r.Get("/data-export", profileHandler.GetDataExport())
-					r.Patch("/", profileHandler.UpdateMyProfile())
-					r.Patch("/verify", profileHandler.Verify())   // Simple version that doesnt use AWS. call when not in uat/prod.
-					r.Delete("/", profileHandler.DeleteAccount()) // Delete account and all user data
-
-					r.Route("/verification", func(r chi.Router) {
-						r.Post("/photo/start", verificationHandler.Start()) // returns {session_id, region}
-						r.Post("/photo/complete", verificationHandler.Complete())
-						r.Post("/video/start", verificationHandler.StartVideo())   // returns {code, upload_url, upload_key}
-						r.Post("/video/submit", verificationHandler.SubmitVideo()) // submits video for review
+					r.Route("/safety", func(r chi.Router) {
+						r.Post("/block", safetyHandler.Block())
+						r.Post("/report", safetyHandler.Report())
 					})
-				})
 
-				// User profiles by ID
-				r.Route("/users", func(r chi.Router) {
-					r.Get("/{userID}", profileHandler.GetUserProfile())
+					r.Route(
+						"/onboarding", func(r chi.Router) {
+							r.Get("/step", onboardingHandler.GetStep())
+							r.Post("/intro", onboardingHandler.Intro())
+							r.Patch("/basics", onboardingHandler.Basics())
+							r.Patch("/location", onboardingHandler.Location())
+							r.Patch("/lifestyle", onboardingHandler.Lifestyle())
+							r.Patch("/beliefs", onboardingHandler.Beliefs())
+							r.Patch("/background", onboardingHandler.Background())
+							r.Patch("/work-and-education", onboardingHandler.WorkAndEducation())
+							r.Post("/languages", onboardingHandler.Languages())
+							r.Post("/photos", onboardingHandler.Photos())
+							r.Post("/prompts", onboardingHandler.Prompts())
+							r.Post("/video-verification", onboardingHandler.VideoVerification())
+						},
+					)
+
+					r.Route("/discover", func(r chi.Router) {
+						r.Get("/", discoverHandler.GetDiscover())
+						r.Post("/filters", discoverHandler.GetDiscoverWithFilters())
+						r.Get("/preferences", discoverHandler.GetUserPreferences())
+					})
+					r.Get("/voice-prompts/{id}/transcript", profileHandler.GetVoicePromptTranscript())
+					r.Route("/vwh", func(r chi.Router) {
+						r.Get("/", discoverHandler.GetVoiceWorthHearing())
+					})
+					r.Route("/swipes", func(r chi.Router) {
+						r.Post("/", interactionHandler.Create())
+					})
+
+					r.Route("/likes", func(r chi.Router) {
+						r.Get("/", interactionHandler.GetLikes())
+						r.Post("/favourites", interactionHandler.AddFavourite())
+						r.Delete("/favourites/{watchedUserID}", interactionHandler.RemoveFavourite())
+					})
+
+					r.Route("/insights", func(r chi.Router) {
+						r.Get("/me/weekly", insightsHandler.GetMeWeekly())
+						r.Get("/me/wrapped", insightsHandler.GetMyWrapped())
+					})
+
+					// router.go
+					r.Route("/rt", func(r chi.Router) {
+						r.Get("/ws", wsHandler.ServeWS())
+					})
+
+					r.Route("/conversations", func(r chi.Router) {
+						r.Get("/", conversationHandler.GetConversations())
+						r.Get("/{id}/messages", conversationHandler.GetConversationMessages())
+						r.Post("/{id}/messages", conversationHandler.SendMessage())
+						r.Post("/{id}/unmatch", conversationHandler.Unmatch())
+					})
+
+					r.Route("/media", func(r chi.Router) {
+						r.Get("/photos/presign", mediaHandler.GeneratePhotoUploadUrl()) // returns URL/fields
+						// r.Post("/media/photos", mediaHandler.AttachPhoto())          // save URL, position, is_primary
+						// r.Patch("/media/photos/{id}", mediaHandler.UpdatePhoto())    // reorder / set primary
+						// r.Delete("/media/photos/{id}", mediaHandler.DeletePhoto())
+
+						r.Get("/voice/presign", mediaHandler.GenerateVoiceNoteUploadUrl())
+						// r.Delete("/media/voice/{id}", mediaHandler.DeleteVoice())
+
+						r.Get("/feedback/presign", mediaHandler.GenerateFeedbackAttachmentUploadUrl())
+					})
+
+					r.Route("/feedback", func(r chi.Router) {
+						r.Post("/", feedbackHandler.CreateFeedback())
+					})
+
+					r.Route("/matching", func(r chi.Router) { // TODO: change to compatibility
+						r.Get("/overview", compatibilityHandler.GetOverview())
+						r.Get("/questions", compatibilityHandler.GetQuestions())
+						r.Get("/compatibility", compatibilityHandler.GetCompatibility())
+						r.Post("/answers", compatibilityHandler.SaveAnswer())
+					})
+
+					// Current user
+					r.Route("/users/me", func(r chi.Router) {
+						r.Get("/", profileHandler.GetMyProfile())
+						r.Patch("/", profileHandler.UpdateMyProfile())
+						r.Patch("/preferences/analytics-opt-out", profileHandler.SetAnalyticsOptOut())
+						r.Patch("/verify", profileHandler.Verify()) // Simple version that doesnt use AWS. call when not in uat/prod.
+
+						r.Route("/verification", func(r chi.Router) {
+							r.Post("/photo/start", verificationHandler.Start()) // returns {session_id, region}
+							r.Post("/photo/complete", verificationHandler.Complete())
+							r.Post("/video/start", verificationHandler.StartVideo())   // returns {code, upload_url, upload_key}
+							r.Post("/video/submit", verificationHandler.SubmitVideo()) // submits video for review
+						})
+					})
+
+					// User profiles by ID
+					r.Route("/users", func(r chi.Router) {
+						r.Get("/{userID}", profileHandler.GetUserProfile())
+					})
 				})
 			})
 

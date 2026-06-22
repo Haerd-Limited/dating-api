@@ -132,6 +132,21 @@ func (mr *MockUserRepositoryMockRecorder) InsertUser(ctx, user, tx any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertUser", reflect.TypeOf((*MockUserRepository)(nil).InsertUser), ctx, user, tx)
 }
 
+// ListByOnboardingSteps mocks base method.
+func (m *MockUserRepository) ListByOnboardingSteps(ctx context.Context, steps []string) ([]*entity.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByOnboardingSteps", ctx, steps)
+	ret0, _ := ret[0].([]*entity.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByOnboardingSteps indicates an expected call of ListByOnboardingSteps.
+func (mr *MockUserRepositoryMockRecorder) ListByOnboardingSteps(ctx, steps any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByOnboardingSteps", reflect.TypeOf((*MockUserRepository)(nil).ListByOnboardingSteps), ctx, steps)
+}
+
 // UpdateUser mocks base method.
 func (m *MockUserRepository) UpdateUser(ctx context.Context, e *entity.User, cols []string) error {
 	m.ctrl.T.Helper()

@@ -1,8 +1,10 @@
+//go:generate mockgen -source=service.go -destination=service_mock.go -package=preference
 package preference
 
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/aarondl/null/v8"
 	"go.uber.org/zap"
@@ -14,6 +16,8 @@ import (
 
 type Service interface {
 	ScaffoldUserPreferences(ctx context.Context, tx *sql.Tx, userID string) error
+	IsAnalyticsOptedOut(ctx context.Context, userID string) (bool, error)
+	SetAnalyticsOptOut(ctx context.Context, userID string, optedOut bool) error
 }
 
 type service struct {
@@ -40,6 +44,24 @@ func (s *service) ScaffoldUserPreferences(ctx context.Context, tx *sql.Tx, userI
 	})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *service) IsAnalyticsOptedOut(ctx context.Context, userID string) (bool, error) {
+	optedOut, err := s.preferenceRepo.IsAnalyticsOptedOut(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("is analytics opted out: %w", err)
+	}
+
+	return optedOut, nil
+}
+
+func (s *service) SetAnalyticsOptOut(ctx context.Context, userID string, optedOut bool) error {
+	err := s.preferenceRepo.SetAnalyticsOptOut(ctx, userID, optedOut)
+	if err != nil {
+		return fmt.Errorf("set analytics opt out: %w", err)
 	}
 
 	return nil

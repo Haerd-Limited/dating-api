@@ -51,6 +51,18 @@ type UpdateProfileRequest struct {
 	Photos          []Photo              `json:"photos,omitempty"`
 }
 
+type AnalyticsOptOutRequest struct {
+	OptedOut bool `json:"opted_out"`
+}
+
+func (r AnalyticsOptOutRequest) Validate() error {
+	return nil
+}
+
+type AnalyticsOptOutResponse struct {
+	OptedOut bool `json:"opted_out"`
+}
+
 func (upr UpdateProfileRequest) Validate() error {
 	return validator.New().Struct(upr)
 }

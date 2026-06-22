@@ -88,6 +88,20 @@ func (mr *MockAuthRepositoryMockRecorder) CountRecentSendsByIP(ctx, ip, since an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountRecentSendsByIP", reflect.TypeOf((*MockAuthRepository)(nil).CountRecentSendsByIP), ctx, ip, since)
 }
 
+// DeleteVerificationCodesForUser mocks base method.
+func (m *MockAuthRepository) DeleteVerificationCodesForUser(ctx context.Context, phone, email *string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteVerificationCodesForUser", ctx, phone, email)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteVerificationCodesForUser indicates an expected call of DeleteVerificationCodesForUser.
+func (mr *MockAuthRepositoryMockRecorder) DeleteVerificationCodesForUser(ctx, phone, email any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteVerificationCodesForUser", reflect.TypeOf((*MockAuthRepository)(nil).DeleteVerificationCodesForUser), ctx, phone, email)
+}
+
 // FindActiveVerificationCode mocks base method.
 func (m *MockAuthRepository) FindActiveVerificationCode(ctx context.Context, channel, identifier, purpose string) (*entity.VerificationCode, error) {
 	m.ctrl.T.Helper()

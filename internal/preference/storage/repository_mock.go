@@ -56,3 +56,32 @@ func (mr *MockPreferenceRepositoryMockRecorder) InsertPreference(ctx, tx, prefer
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertPreference", reflect.TypeOf((*MockPreferenceRepository)(nil).InsertPreference), ctx, tx, preference)
 }
+
+// IsAnalyticsOptedOut mocks base method.
+func (m *MockPreferenceRepository) IsAnalyticsOptedOut(ctx context.Context, userID string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsAnalyticsOptedOut", ctx, userID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsAnalyticsOptedOut indicates an expected call of IsAnalyticsOptedOut.
+func (mr *MockPreferenceRepositoryMockRecorder) IsAnalyticsOptedOut(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAnalyticsOptedOut", reflect.TypeOf((*MockPreferenceRepository)(nil).IsAnalyticsOptedOut), ctx, userID)
+}
+
+// SetAnalyticsOptOut mocks base method.
+func (m *MockPreferenceRepository) SetAnalyticsOptOut(ctx context.Context, userID string, optedOut bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetAnalyticsOptOut", ctx, userID, optedOut)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetAnalyticsOptOut indicates an expected call of SetAnalyticsOptOut.
+func (mr *MockPreferenceRepositoryMockRecorder) SetAnalyticsOptOut(ctx, userID, optedOut any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAnalyticsOptOut", reflect.TypeOf((*MockPreferenceRepository)(nil).SetAnalyticsOptOut), ctx, userID, optedOut)
+}

@@ -27,6 +27,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/compatibility"
 	compatibilitystorage "github.com/Haerd-Limited/dating-api/internal/compatibility/storage"
 	"github.com/Haerd-Limited/dating-api/internal/config"
+	"github.com/Haerd-Limited/dating-api/internal/consent"
+	consentstorage "github.com/Haerd-Limited/dating-api/internal/consent/storage"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
@@ -55,6 +57,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profilestorage "github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	"github.com/Haerd-Limited/dating-api/internal/realtime"
+	"github.com/Haerd-Limited/dating-api/internal/retention"
 	"github.com/Haerd-Limited/dating-api/internal/safety"
 	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
@@ -150,6 +153,29 @@ func main() {
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
 	profileService := profile.NewProfileService(logger, profileRepo, lookupRepo, verificationRepo, openaiService, awsService, unitOfWork)
 	preferenceService := preference.NewPreferenceService(logger, preferenceRepo)
+
+	optOutCache := freecache.NewCache(2 * 1024 * 1024)
+	commonanalytics.OptOutFunc = func(userID string) bool {
+		key := []byte("optout:" + userID)
+		if val, err := optOutCache.Get(key); err == nil {
+			return val[0] == 1
+		}
+
+		optedOut, err := preferenceRepo.IsAnalyticsOptedOut(context.Background(), userID)
+		if err != nil {
+			return false
+		}
+
+		var b byte
+		if optedOut {
+			b = 1
+		}
+
+		_ = optOutCache.Set(key, []byte{b}, 60)
+
+		return optedOut
+	}
+
 	discoverService := discover.NewDiscoverService(logger, profileService, compatibilityService, discoverRepo)
 	scoreService := score.NewScoreService(logger, conversationRepo, unitOfWork)
 
@@ -167,7 +193,7 @@ func main() {
 	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork, notificationService, matchSlotNotifier)
 	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub, matchSlotNotifier)
 	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService, matchSlotNotifier)
-	userService := user.NewUserService(logger, userRepo, awsService, cache, unitOfWork, profileService, preferenceService)
+	userService := user.NewUserService(logger, userRepo, authRepo, awsService, cache, unitOfWork, profileService, preferenceService)
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env, notificationPhoneNumbers)
@@ -220,8 +246,16 @@ func main() {
 		compatibilityRepo,
 	)
 
+	// Consent (GDPR)
+	consentRepo := consentstorage.NewRepository(db)
+	consentService := consent.NewService(logger, consentRepo)
+
+	// Retention purge (GDPR)
+	retentionService := retention.NewService(logger, db)
+
 	// Start background weekly scheduler for insights (runs inside API process).
 	runInsightsWeekly(ctx, logger, insSvc, insRepo)
+	runRetentionDaily(ctx, logger, retentionService)
 
 	mux := router.New(
 		logger,
@@ -244,6 +278,9 @@ func main() {
 		feedbackService,
 		broadcastService,
 		dataExportService,
+		preferenceService,
+		consentService,
+		cfg.EnableConsentGate,
 		cfg.AdminAPIKey,
 	)
 
@@ -320,6 +357,33 @@ func runInsightsWeekly(ctx context.Context, logger *zap.Logger, ins insightsvc.S
 			} else {
 				logger.Sugar().Infof("Insights weekly snapshot stored for %s", weekStart.Format("2006-01-02"))
 			}
+		}
+	}()
+}
+
+func runRetentionDaily(ctx context.Context, logger *zap.Logger, svc retention.Service) {
+	go func() {
+		for {
+			now := time.Now().UTC()
+			next := time.Date(now.Year(), now.Month(), now.Day(), 3, 0, 0, 0, time.UTC)
+
+			if !next.After(now) {
+				next = next.Add(24 * time.Hour)
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Until(next)):
+			}
+
+			stats, err := svc.PurgeOnce(ctx)
+			if err != nil {
+				logger.Sugar().Warnw("retention purge failed", "error", err)
+				continue
+			}
+
+			logger.Sugar().Infow("retention purge complete", "stats", stats)
 		}
 	}()
 }
