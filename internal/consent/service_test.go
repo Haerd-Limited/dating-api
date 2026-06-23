@@ -96,7 +96,7 @@ func TestRecordInvalidConsentType(t *testing.T) {
 	err := svc.Record(context.Background(), domain.RecordRequest{
 		UserID:  "user-1",
 		Type:    "marketing",
-		Version: "2026-04-30",
+		Version: constants.CurrentPrivacyPolicyVersion,
 	})
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ErrInvalidConsentType))

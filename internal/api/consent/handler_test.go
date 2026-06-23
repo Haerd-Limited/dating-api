@@ -56,7 +56,7 @@ func TestRecordConsentInvalidType(t *testing.T) {
 
 	body, err := json.Marshal(dto.RecordConsentRequest{
 		Type:     "marketing",
-		Version:  "2026-04-30",
+		Version:  constants.CurrentPrivacyPolicyVersion,
 		Accepted: true,
 	})
 	require.NoError(t, err)
