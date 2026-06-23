@@ -281,6 +281,7 @@ func New(
 					// User profiles by ID
 					r.Route("/users", func(r chi.Router) {
 						r.Get("/{userID}", profileHandler.GetUserProfile())
+						r.Get("/{userID}/voice-prompts/transcripts", profileHandler.GetUserPromptTranscripts())
 					})
 				})
 			})

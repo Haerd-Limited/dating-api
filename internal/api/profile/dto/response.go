@@ -119,3 +119,12 @@ type Habit struct {
 	ID    int16  `json:"id"`
 	Label string `json:"label"`
 }
+
+type VoicePromptTranscriptItem struct {
+	PromptID   int64  `json:"prompt_id"`
+	Transcript string `json:"transcript"`
+}
+
+type VoicePromptTranscriptsResponse struct {
+	Transcripts []VoicePromptTranscriptItem `json:"transcripts"`
+}

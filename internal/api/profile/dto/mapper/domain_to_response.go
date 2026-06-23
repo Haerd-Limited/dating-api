@@ -132,3 +132,17 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 
 	return result
 }
+
+func DomainToTranscriptsResponse(transcripts []domain.VoicePromptTranscript) dto.VoicePromptTranscriptsResponse {
+	items := make([]dto.VoicePromptTranscriptItem, 0, len(transcripts))
+	for _, t := range transcripts {
+		items = append(items, dto.VoicePromptTranscriptItem{
+			PromptID:   t.PromptID,
+			Transcript: t.Transcript,
+		})
+	}
+
+	return dto.VoicePromptTranscriptsResponse{
+		Transcripts: items,
+	}
+}

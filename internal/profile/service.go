@@ -8,6 +8,7 @@ import (
 
 	"github.com/aarondl/null/v8"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
@@ -34,6 +35,7 @@ type Service interface {
 	GetVoicePromptByID(ctx context.Context, id int64) (domain.VoicePrompt, error)
 	GetUserPhotos(ctx context.Context, userID string) ([]domain.Photo, error)
 	GetTranscript(ctx context.Context, voicePromptID int64) (string, error)
+	GetUserPromptTranscripts(ctx context.Context, userID string) ([]domain.VoicePromptTranscript, error)
 
 	UpsertUserSpokenLanguages(ctx context.Context, userID string, languages []int16) error
 	UpsertUserPhotos(ctx context.Context, userID string, photos []domain.Photo) error
@@ -179,41 +181,93 @@ func (s *service) GetVoicePromptByID(ctx context.Context, id int64) (domain.Voic
 	}, nil
 }
 
+const maxConcurrentTranscriptions = 4
+
 func (s *service) GetTranscript(ctx context.Context, voicePromptID int64) (string, error) {
-	// 1. Get voice prompt from DB
 	vp, err := s.profileRepo.GetVoicePromptByID(ctx, voicePromptID)
 	if err != nil {
 		return "", fmt.Errorf("voice prompt not found: %w", err)
 	}
 
-	// 2. Return if transcript already exists
 	if vp.Transcript.Valid && vp.Transcript.String != "" {
 		return vp.Transcript.String, nil
 	}
 
-	// 3. Extract S3 key from audio_url
+	return s.transcribeAndPersist(ctx, vp)
+}
+
+func (s *service) GetUserPromptTranscripts(ctx context.Context, userID string) ([]domain.VoicePromptTranscript, error) {
+	prompts, err := s.profileRepo.GetUserVoicePrompts(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get user voice prompts: %w", err)
+	}
+
+	if len(prompts) == 0 {
+		return []domain.VoicePromptTranscript{}, nil
+	}
+
+	results := make([]domain.VoicePromptTranscript, len(prompts))
+
+	var g errgroup.Group
+
+	g.SetLimit(maxConcurrentTranscriptions)
+
+	for i, vp := range prompts {
+		results[i] = domain.VoicePromptTranscript{
+			PromptID: vp.ID,
+		}
+
+		if vp.Transcript.Valid && vp.Transcript.String != "" {
+			results[i].Transcript = vp.Transcript.String
+			continue
+		}
+
+		i := i
+		vp := vp
+
+		g.Go(func() error {
+			transcript, err := s.transcribeAndPersist(ctx, vp)
+			if err != nil {
+				s.logger.Warn("failed to transcribe voice prompt",
+					zap.Int64("voicePromptID", vp.ID),
+					zap.String("userID", userID),
+					zap.Error(err))
+
+				return nil
+			}
+
+			results[i].Transcript = transcript
+
+			return nil
+		})
+	}
+
+	_ = g.Wait()
+
+	return results, nil
+}
+
+func (s *service) transcribeAndPersist(ctx context.Context, vp *entity.VoicePrompt) (string, error) {
 	key, err := utils.S3KeyFromURL(vp.AudioURL)
 	if err != nil {
 		return "", fmt.Errorf("invalid audio URL: %w", err)
 	}
 
-	// 4. Download audio from S3
 	audioData, err := s.awsService.GetObjectBytes(ctx, key)
 	if err != nil {
 		return "", fmt.Errorf("failed to download audio: %w", err)
 	}
 
-	// 5. Transcribe with OpenAI
 	transcript, err := s.openaiService.TranscribeAudio(ctx, audioData, key)
 	if err != nil {
 		return "", fmt.Errorf("transcription failed: %w", err)
 	}
 
-	// 6. Save to database
-	err = s.profileRepo.UpdateVoicePromptTranscript(ctx, voicePromptID, transcript)
+	err = s.profileRepo.UpdateVoicePromptTranscript(ctx, vp.ID, transcript)
 	if err != nil {
-		s.logger.Warn("failed to save transcript", zap.Error(err))
-		// Don't fail - return the transcript anyway
+		s.logger.Warn("failed to save transcript",
+			zap.Error(err),
+			zap.Int64("voicePromptID", vp.ID))
 	}
 
 	return transcript, nil

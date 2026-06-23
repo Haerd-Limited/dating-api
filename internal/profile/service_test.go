@@ -5,12 +5,16 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/aarondl/null/v8"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap/zaptest"
 
+	"github.com/Haerd-Limited/dating-api/internal/aws"
+	"github.com/Haerd-Limited/dating-api/internal/entity"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
+	"github.com/Haerd-Limited/dating-api/internal/openai"
 	"github.com/Haerd-Limited/dating-api/internal/profile/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile/storage"
 )
@@ -147,4 +151,139 @@ func TestValidateUserPromptsUpsertCoreCheckOnly(t *testing.T) {
 		err := validateUserPromptsUpsert(buildPromptUpdates(7, 8, 9, 10, 11), nil)
 		require.NoError(t, err)
 	})
+}
+
+const testAudioURL = "https://bucket.s3.us-east-1.amazonaws.com/user-123/prompts/audio.m4a"
+
+func newProfileServiceWithMediaDeps(
+	t *testing.T,
+	profileRepo storage.ProfileRepository,
+	awsSvc aws.Service,
+	openaiSvc openai.Service,
+) *service {
+	t.Helper()
+
+	return &service{
+		logger:        zaptest.NewLogger(t),
+		profileRepo:   profileRepo,
+		awsService:    awsSvc,
+		openaiService: openaiSvc,
+	}
+}
+
+func TestGetUserPromptTranscriptsCacheHit(t *testing.T) {
+	ctx := context.Background()
+	userID := "user-123"
+
+	ctrl := gomock.NewController(t)
+	profileRepo := storage.NewMockProfileRepository(ctrl)
+	awsSvc := aws.NewMockService(ctrl)
+	openaiSvc := openai.NewMockService(ctrl)
+
+	profileRepo.EXPECT().GetUserVoicePrompts(ctx, userID).Return([]*entity.VoicePrompt{
+		{
+			ID:         1,
+			AudioURL:   testAudioURL,
+			Transcript: null.StringFrom("cached transcript one"),
+		},
+		{
+			ID:         2,
+			AudioURL:   testAudioURL,
+			Transcript: null.StringFrom("cached transcript two"),
+		},
+	}, nil)
+
+	svc := newProfileServiceWithMediaDeps(t, profileRepo, awsSvc, openaiSvc)
+
+	results, err := svc.GetUserPromptTranscripts(ctx, userID)
+	require.NoError(t, err)
+	require.Len(t, results, 2)
+	assert.Equal(t, int64(1), results[0].PromptID)
+	assert.Equal(t, "cached transcript one", results[0].Transcript)
+	assert.Equal(t, int64(2), results[1].PromptID)
+	assert.Equal(t, "cached transcript two", results[1].Transcript)
+}
+
+func TestGetUserPromptTranscriptsCacheMiss(t *testing.T) {
+	ctx := context.Background()
+	userID := "user-123"
+	audioKey := "user-123/prompts/audio.m4a"
+	audioData := []byte("audio-bytes")
+	transcript := "hello from whisper"
+
+	ctrl := gomock.NewController(t)
+	profileRepo := storage.NewMockProfileRepository(ctrl)
+	awsSvc := aws.NewMockService(ctrl)
+	openaiSvc := openai.NewMockService(ctrl)
+
+	profileRepo.EXPECT().GetUserVoicePrompts(ctx, userID).Return([]*entity.VoicePrompt{
+		{
+			ID:       10,
+			AudioURL: testAudioURL,
+		},
+	}, nil)
+	awsSvc.EXPECT().GetObjectBytes(ctx, audioKey).Return(audioData, nil)
+	openaiSvc.EXPECT().TranscribeAudio(ctx, audioData, audioKey).Return(transcript, nil)
+	profileRepo.EXPECT().UpdateVoicePromptTranscript(ctx, int64(10), transcript).Return(nil)
+
+	svc := newProfileServiceWithMediaDeps(t, profileRepo, awsSvc, openaiSvc)
+
+	results, err := svc.GetUserPromptTranscripts(ctx, userID)
+	require.NoError(t, err)
+	require.Len(t, results, 1)
+	assert.Equal(t, int64(10), results[0].PromptID)
+	assert.Equal(t, transcript, results[0].Transcript)
+}
+
+func TestGetUserPromptTranscriptsPartialFailure(t *testing.T) {
+	ctx := context.Background()
+	userID := "user-123"
+	audioKey := "user-123/prompts/audio.m4a"
+	audioData := []byte("audio-bytes")
+
+	ctrl := gomock.NewController(t)
+	profileRepo := storage.NewMockProfileRepository(ctrl)
+	awsSvc := aws.NewMockService(ctrl)
+	openaiSvc := openai.NewMockService(ctrl)
+
+	profileRepo.EXPECT().GetUserVoicePrompts(ctx, userID).Return([]*entity.VoicePrompt{
+		{
+			ID:         1,
+			AudioURL:   testAudioURL,
+			Transcript: null.StringFrom("cached"),
+		},
+		{
+			ID:       2,
+			AudioURL: testAudioURL,
+		},
+	}, nil)
+	awsSvc.EXPECT().GetObjectBytes(ctx, audioKey).Return(audioData, nil)
+	openaiSvc.EXPECT().TranscribeAudio(ctx, audioData, audioKey).Return("", errors.New("openai down"))
+
+	svc := newProfileServiceWithMediaDeps(t, profileRepo, awsSvc, openaiSvc)
+
+	results, err := svc.GetUserPromptTranscripts(ctx, userID)
+	require.NoError(t, err)
+	require.Len(t, results, 2)
+	assert.Equal(t, "cached", results[0].Transcript)
+	assert.Equal(t, int64(2), results[1].PromptID)
+	assert.Empty(t, results[1].Transcript)
+}
+
+func TestGetUserPromptTranscriptsEmpty(t *testing.T) {
+	ctx := context.Background()
+	userID := "user-123"
+
+	ctrl := gomock.NewController(t)
+	profileRepo := storage.NewMockProfileRepository(ctrl)
+	awsSvc := aws.NewMockService(ctrl)
+	openaiSvc := openai.NewMockService(ctrl)
+
+	profileRepo.EXPECT().GetUserVoicePrompts(ctx, userID).Return([]*entity.VoicePrompt{}, nil)
+
+	svc := newProfileServiceWithMediaDeps(t, profileRepo, awsSvc, openaiSvc)
+
+	results, err := svc.GetUserPromptTranscripts(ctx, userID)
+	require.NoError(t, err)
+	assert.Empty(t, results)
 }

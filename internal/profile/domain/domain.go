@@ -134,6 +134,11 @@ type VoicePrompt struct {
 	CoverMediaAspectRatio *float64
 }
 
+type VoicePromptTranscript struct {
+	PromptID   int64
+	Transcript string
+}
+
 type ProfileVoicePrompt struct {
 	ID                          int64
 	URL                         string

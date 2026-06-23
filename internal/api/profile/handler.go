@@ -34,6 +34,7 @@ type Handler interface {
 	UpdateMyProfile() http.HandlerFunc
 	Verify() http.HandlerFunc
 	GetVoicePromptTranscript() http.HandlerFunc
+	GetUserPromptTranscripts() http.HandlerFunc
 	DeleteAccount() http.HandlerFunc
 	GetDataExport() http.HandlerFunc
 	SetAnalyticsOptOut() http.HandlerFunc
@@ -212,6 +213,32 @@ func (h *handler) GetVoicePromptTranscript() http.HandlerFunc {
 		render.Json(w, http.StatusOK, map[string]string{
 			"transcript": transcript,
 		})
+	}
+}
+
+func (h *handler) GetUserPromptTranscripts() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		_, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		userID := chi.URLParam(r, "userID")
+		if userID == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("Invalid user ID"))
+			return
+		}
+
+		transcripts, err := h.profileService.GetUserPromptTranscripts(ctx, userID)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetUserPromptTranscripts", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.DomainToTranscriptsResponse(transcripts))
 	}
 }
 
