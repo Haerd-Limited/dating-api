@@ -203,11 +203,10 @@ func (h *handler) AdminResolveReport() http.HandlerFunc {
 			return
 		}
 
-		adminID, ok := commoncontext.UserIDFromContext(ctx)
-		if !ok {
-			render.UnauthorizedResponse(w, r, h.logger)
-			return
-		}
+		// Admin routes are authenticated via the static admin API key, not a user
+		// JWT, so there is usually no user ID in context. Record it as the reviewer
+		// when present (e.g. an internal caller), otherwise leave the reviewer null.
+		adminID, _ := commoncontext.UserIDFromContext(ctx)
 
 		var req dto.ResolveReportRequest
 		if err := request.DecodeAndValidate(r.Body, &req); err != nil {

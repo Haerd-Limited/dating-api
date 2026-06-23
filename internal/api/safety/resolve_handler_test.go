@@ -55,3 +55,43 @@ func TestAdminResolveReportSuspendMissingUntil(t *testing.T) {
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &actual))
 	assert.Equal(t, safety.ErrInvalidSuspendUntil.Error(), actual["error"])
 }
+
+// TestAdminResolveReportNoUserContext is a regression test for the bug where
+// resolving a report logged the admin out. Admin routes authenticate with the
+// static admin API key and do not populate a user ID in context, so the handler
+// must NOT respond 401 (which the dashboard treats as a session expiry) when no
+// user ID is present.
+func TestAdminResolveReportNoUserContext(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockService := safety.NewMockService(ctrl)
+
+	mockService.EXPECT().
+		ResolveReport(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	body, err := json.Marshal(dto.ResolveReportRequest{
+		ActionType: "ban_user",
+		NewStatus:  "resolved",
+	})
+	require.NoError(t, err)
+
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("reportID", "report-1")
+
+	// No commoncontext.UserIDKey set, mirroring the admin API-key auth flow.
+	ctx := context.WithValue(context.Background(), chi.RouteCtxKey, rctx)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/admin/reports/report-1/resolve", bytes.NewReader(body))
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	h := NewHandler(zaptest.NewLogger(t), mockService)
+	h.AdminResolveReport().ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusOK, recorder.Code)
+
+	var actual map[string]string
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &actual))
+	assert.Equal(t, "resolved", actual["status"])
+}
