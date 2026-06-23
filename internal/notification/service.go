@@ -38,6 +38,9 @@ type Service interface {
 	SendNewMessageNotification(ctx context.Context, senderID, senderName, conversationID, recipientUserID, preview string) error
 	SendVerificationApprovedNotification(ctx context.Context, recipientUserID string) error
 	SendVerificationRejectedNotification(ctx context.Context, recipientUserID, rejectionReason string) error
+	SendModerationWarningNotification(ctx context.Context, recipientUserID, message string) error
+	SendAccountSuspendedNotification(ctx context.Context, recipientUserID string, until time.Time) error
+	SendAccountBannedNotification(ctx context.Context, recipientUserID string) error
 	SendSlotFreedNotification(ctx context.Context, freedUserID, freedUserName, recipientUserID string) error
 	SendWeeklyRefreshNotifications(ctx context.Context) error
 	StartWeeklyRefreshScheduler(ctx context.Context)
@@ -236,6 +239,54 @@ func (s *service) SendVerificationRejectedNotification(ctx context.Context, reci
 			"recipient_id":     recipientUserID,
 			"rejection_reason": rejectionReason,
 			"timestamp_utc":    time.Now().UTC().Format(time.RFC3339),
+		},
+	}
+
+	return s.sendToUsers(ctx, []string{recipientUserID}, msg)
+}
+
+func (s *service) SendModerationWarningNotification(ctx context.Context, recipientUserID, message string) error {
+	body := message
+	if body == "" {
+		body = "You have received a warning from our moderation team. Please open the app to review it."
+	}
+
+	msg := domain.Message{
+		Title: "Account warning",
+		Body:  body,
+		Data: map[string]string{
+			"type":          "moderation.warning",
+			"recipient_id":  recipientUserID,
+			"timestamp_utc": time.Now().UTC().Format(time.RFC3339),
+		},
+	}
+
+	return s.sendToUsers(ctx, []string{recipientUserID}, msg)
+}
+
+func (s *service) SendAccountSuspendedNotification(ctx context.Context, recipientUserID string, until time.Time) error {
+	msg := domain.Message{
+		Title: "Account suspended",
+		Body:  fmt.Sprintf("Your account has been suspended until %s.", until.UTC().Format(time.RFC3339)),
+		Data: map[string]string{
+			"type":          "account.suspended",
+			"recipient_id":  recipientUserID,
+			"until":         until.UTC().Format(time.RFC3339),
+			"timestamp_utc": time.Now().UTC().Format(time.RFC3339),
+		},
+	}
+
+	return s.sendToUsers(ctx, []string{recipientUserID}, msg)
+}
+
+func (s *service) SendAccountBannedNotification(ctx context.Context, recipientUserID string) error {
+	msg := domain.Message{
+		Title: "Account banned",
+		Body:  "Your account has been permanently banned for violating our community guidelines.",
+		Data: map[string]string{
+			"type":          "account.banned",
+			"recipient_id":  recipientUserID,
+			"timestamp_utc": time.Now().UTC().Format(time.RFC3339),
 		},
 	}
 

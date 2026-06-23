@@ -21,21 +21,23 @@ const (
 )
 
 type Report struct {
-	ID             string
-	ReporterUserID string
-	ReportedUserID string
-	SubjectType    SubjectType
-	SubjectID      *string
-	Category       string
-	Notes          *string
-	Status         ReportStatus
-	Severity       *string
-	Metadata       map[string]any
-	AutoAction     *string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	ResolvedAt     *time.Time
-	Actions        []ReportAction
+	ID                         string
+	ReporterUserID             string
+	ReportedUserID             string
+	SubjectType                SubjectType
+	SubjectID                  *string
+	Category                   string
+	Notes                      *string
+	Status                     ReportStatus
+	Severity                   *string
+	Metadata                   map[string]any
+	AutoAction                 *string
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
+	ResolvedAt                 *time.Time
+	Actions                    []ReportAction
+	ReportedUserStatus         *string
+	ReportedUserSuspendedUntil *time.Time
 }
 
 type ReportAction struct {

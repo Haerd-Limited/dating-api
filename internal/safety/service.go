@@ -10,19 +10,24 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
+	"github.com/Haerd-Limited/dating-api/internal/auth"
 	conversationdomain "github.com/Haerd-Limited/dating-api/internal/conversation/domain"
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/matchslot"
+	"github.com/Haerd-Limited/dating-api/internal/notification"
 	realtimehub "github.com/Haerd-Limited/dating-api/internal/realtime"
 	safetydomain "github.com/Haerd-Limited/dating-api/internal/safety/domain"
 	safetymapper "github.com/Haerd-Limited/dating-api/internal/safety/mapper"
 	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	"github.com/Haerd-Limited/dating-api/internal/uow"
+	"github.com/Haerd-Limited/dating-api/internal/user"
+	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
+//go:generate mockgen -source=service.go -destination=service_mock.go -package=safety
 type Service interface {
 	BlockUser(ctx context.Context, req safetydomain.BlockRequest) error
 	IsBlocked(ctx context.Context, userID, otherUserID string) (bool, error)
@@ -32,15 +37,21 @@ type Service interface {
 	ListReports(ctx context.Context, filter safetydomain.ReportListFilter) ([]safetydomain.Report, error)
 	GetReport(ctx context.Context, reportID string) (*safetydomain.Report, error)
 	ResolveReport(ctx context.Context, req safetydomain.ResolveReportRequest) error
+	GetAccountStatus(ctx context.Context, userID string) (safetydomain.AccountStatusSummary, error)
+	ListUnacknowledgedWarnings(ctx context.Context, userID string) ([]safetydomain.ModerationWarning, error)
+	AcknowledgeWarning(ctx context.Context, userID, warningID string) error
 }
 
 type service struct {
-	logger            *zap.Logger
-	repo              safetystorage.Repository
-	conversationRepo  conversationstorage.ConversationRepository
-	uow               uow.UoW
-	hub               realtimehub.Broadcaster
-	matchSlotNotifier matchslot.Notifier
+	logger              *zap.Logger
+	repo                safetystorage.Repository
+	conversationRepo    conversationstorage.ConversationRepository
+	uow                 uow.UoW
+	hub                 realtimehub.Broadcaster
+	matchSlotNotifier   matchslot.Notifier
+	userService         user.Service
+	authService         auth.Service
+	notificationService notification.Service
 }
 
 func NewService(
@@ -50,23 +61,31 @@ func NewService(
 	uow uow.UoW,
 	hub realtimehub.Broadcaster,
 	matchSlotNotifier matchslot.Notifier,
+	userService user.Service,
+	authService auth.Service,
+	notificationService notification.Service,
 ) Service {
 	return &service{
-		logger:            logger,
-		repo:              repo,
-		conversationRepo:  conversationRepo,
-		uow:               uow,
-		hub:               hub,
-		matchSlotNotifier: matchSlotNotifier,
+		logger:              logger,
+		repo:                repo,
+		conversationRepo:    conversationRepo,
+		uow:                 uow,
+		hub:                 hub,
+		matchSlotNotifier:   matchSlotNotifier,
+		userService:         userService,
+		authService:         authService,
+		notificationService: notificationService,
 	}
 }
 
 var (
-	ErrInvalidBlockRequest  = errors.New("blocker_id and blocked_id are required")
-	ErrSelfBlock            = errors.New("you cannot block yourself")
-	ErrInvalidReportRequest = errors.New("reporter_id and reported_user_id are required")
-	ErrSelfReport           = errors.New("you cannot report yourself")
-	ErrReportNotFound       = errors.New("report not found")
+	ErrInvalidBlockRequest   = errors.New("blocker_id and blocked_id are required")
+	ErrSelfBlock             = errors.New("you cannot block yourself")
+	ErrInvalidReportRequest  = errors.New("reporter_id and reported_user_id are required")
+	ErrSelfReport            = errors.New("you cannot report yourself")
+	ErrReportNotFound        = errors.New("report not found")
+	ErrInvalidSuspendUntil   = errors.New("suspend_until is required and must be a future RFC3339 timestamp")
+	ErrMissingWarningMessage = errors.New("warning message is required for warn_user")
 )
 
 func (s *service) validateBlockRequest(req safetydomain.BlockRequest) error {
@@ -241,6 +260,20 @@ func (s *service) GetReport(ctx context.Context, reportID string) (*safetydomain
 		return nil, commonlogger.LogError(s.logger, "map report entity to domain", err, zap.String("reportID", reportID))
 	}
 
+	accountState, err := s.userService.GetAccountGateState(ctx, reportEntity.ReportedUserID)
+	if err != nil {
+		return nil, commonlogger.LogError(s.logger, "get reported user account state", err, zap.String("reportID", reportID))
+	}
+
+	now := time.Now().UTC()
+	status := accountState.EffectiveStatus(now)
+	reportDomain.ReportedUserStatus = &status
+
+	if accountState.SuspendedUntil != nil && status == userdomain.AccountStatusSuspended {
+		until := accountState.SuspendedUntil.UTC()
+		reportDomain.ReportedUserSuspendedUntil = &until
+	}
+
 	return &reportDomain, nil
 }
 
@@ -288,9 +321,16 @@ func (s *service) ResolveReport(ctx context.Context, req safetydomain.ResolveRep
 		return commonlogger.LogError(s.logger, "update report", err, zap.String("reportID", req.ReportID))
 	}
 
+	sideEffect, err := s.applyModerationAction(ctx, req, reportEntity, tx.Raw())
+	if err != nil {
+		return commonlogger.LogError(s.logger, "apply moderation action", err, zap.String("reportID", req.ReportID))
+	}
+
 	if err := tx.Commit(); err != nil {
 		return commonlogger.LogError(s.logger, "commit tx", err)
 	}
+
+	s.runPostCommitModerationEffects(ctx, sideEffect)
 
 	return nil
 }

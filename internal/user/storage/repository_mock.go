@@ -13,10 +13,11 @@ import (
 	context "context"
 	sql "database/sql"
 	reflect "reflect"
-
-	gomock "go.uber.org/mock/gomock"
+	time "time"
 
 	entity "github.com/Haerd-Limited/dating-api/internal/entity"
+	domain "github.com/Haerd-Limited/dating-api/internal/user/domain"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockUserRepository is a mock of UserRepository interface.
@@ -87,6 +88,21 @@ func (mr *MockUserRepositoryMockRecorder) DeleteUser(ctx, userID any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockUserRepository)(nil).DeleteUser), ctx, userID)
 }
 
+// GetAccountGateState mocks base method.
+func (m *MockUserRepository) GetAccountGateState(ctx context.Context, userID string) (*domain.AccountState, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountGateState", ctx, userID)
+	ret0, _ := ret[0].(*domain.AccountState)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountGateState indicates an expected call of GetAccountGateState.
+func (mr *MockUserRepositoryMockRecorder) GetAccountGateState(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountGateState", reflect.TypeOf((*MockUserRepository)(nil).GetAccountGateState), ctx, userID)
+}
+
 // GetByPhoneNumber mocks base method.
 func (m *MockUserRepository) GetByPhoneNumber(ctx context.Context, number string) (*entity.User, error) {
 	m.ctrl.T.Helper()
@@ -145,6 +161,20 @@ func (m *MockUserRepository) ListByOnboardingSteps(ctx context.Context, steps []
 func (mr *MockUserRepositoryMockRecorder) ListByOnboardingSteps(ctx, steps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByOnboardingSteps", reflect.TypeOf((*MockUserRepository)(nil).ListByOnboardingSteps), ctx, steps)
+}
+
+// UpdateAccountStatus mocks base method.
+func (m *MockUserRepository) UpdateAccountStatus(ctx context.Context, userID, status string, suspendedUntil *time.Time, reason *string, tx *sql.Tx) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAccountStatus", ctx, userID, status, suspendedUntil, reason, tx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAccountStatus indicates an expected call of UpdateAccountStatus.
+func (mr *MockUserRepositoryMockRecorder) UpdateAccountStatus(ctx, userID, status, suspendedUntil, reason, tx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountStatus", reflect.TypeOf((*MockUserRepository)(nil).UpdateAccountStatus), ctx, userID, status, suspendedUntil, reason, tx)
 }
 
 // UpdateUser mocks base method.

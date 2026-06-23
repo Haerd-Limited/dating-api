@@ -13,9 +13,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
-
 	domain "github.com/Haerd-Limited/dating-api/internal/auth/domain"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.
@@ -85,6 +84,20 @@ func (m *MockService) RequestCode(ctx context.Context, requestCodeDetails domain
 func (mr *MockServiceMockRecorder) RequestCode(ctx, requestCodeDetails any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestCode", reflect.TypeOf((*MockService)(nil).RequestCode), ctx, requestCodeDetails)
+}
+
+// RevokeAllUserSessions mocks base method.
+func (m *MockService) RevokeAllUserSessions(ctx context.Context, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RevokeAllUserSessions", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RevokeAllUserSessions indicates an expected call of RevokeAllUserSessions.
+func (mr *MockServiceMockRecorder) RevokeAllUserSessions(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeAllUserSessions", reflect.TypeOf((*MockService)(nil).RevokeAllUserSessions), ctx, userID)
 }
 
 // RevokeRefreshToken mocks base method.

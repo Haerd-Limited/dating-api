@@ -36,6 +36,7 @@ type Service interface {
 	RefreshToken(ctx context.Context, refreshInput domain.Refresh) (*domain.AuthResult, error)
 	RevokeRefreshToken(ctx context.Context, revokeRefreshTokenInput domain.RevokeRefreshToken) error
 	GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthResult, error)
+	RevokeAllUserSessions(ctx context.Context, userID string) error
 }
 
 type authService struct {
@@ -376,6 +377,10 @@ func (as *authService) RefreshToken(ctx context.Context, refreshInput domain.Ref
 		return nil, ErrRefreshTokenRevoked
 	}
 
+	if err := as.ensureAccountCanAuthenticate(ctx, refreshToken.UserID); err != nil {
+		return nil, err
+	}
+
 	err = as.AuthRepo.RevokeRefreshToken(ctx, refreshToken.ID)
 	if err != nil {
 		return nil, commonlogger.LogError(as.logger, "failed to revoke token", err, zap.String("tokenID", refreshToken.ID))
@@ -420,6 +425,10 @@ func (as *authService) RevokeRefreshToken(ctx context.Context, revokeRefreshToke
 }
 
 func (as *authService) GenerateAccessAndRefreshToken(ctx context.Context, userID string) (*domain.AuthResult, error) {
+	if err := as.ensureAccountCanAuthenticate(ctx, userID); err != nil {
+		return nil, err
+	}
+
 	accessToken, err := auth.GenerateAccessToken(userID, []byte(as.jwtSecret))
 	if err != nil {
 		return nil, commonlogger.LogError(as.logger, "failed to generate access token", err, zap.String("userID", userID))

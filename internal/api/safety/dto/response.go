@@ -6,21 +6,23 @@ type BlockResponse struct {
 }
 
 type ReportResponse struct {
-	ID             string            `json:"id"`
-	ReporterUserID string            `json:"reporter_user_id"`
-	ReportedUserID string            `json:"reported_user_id"`
-	SubjectType    string            `json:"subject_type"`
-	SubjectID      *string           `json:"subject_id,omitempty"`
-	Category       string            `json:"category"`
-	Notes          *string           `json:"notes,omitempty"`
-	Status         string            `json:"status"`
-	Severity       *string           `json:"severity,omitempty"`
-	Metadata       map[string]any    `json:"metadata,omitempty"`
-	AutoAction     *string           `json:"auto_action,omitempty"`
-	CreatedAt      string            `json:"created_at"`
-	UpdatedAt      string            `json:"updated_at"`
-	ResolvedAt     *string           `json:"resolved_at,omitempty"`
-	Actions        []ReportActionDTO `json:"actions,omitempty"`
+	ID                         string            `json:"id"`
+	ReporterUserID             string            `json:"reporter_user_id"`
+	ReportedUserID             string            `json:"reported_user_id"`
+	SubjectType                string            `json:"subject_type"`
+	SubjectID                  *string           `json:"subject_id,omitempty"`
+	Category                   string            `json:"category"`
+	Notes                      *string           `json:"notes,omitempty"`
+	Status                     string            `json:"status"`
+	Severity                   *string           `json:"severity,omitempty"`
+	Metadata                   map[string]any    `json:"metadata,omitempty"`
+	AutoAction                 *string           `json:"auto_action,omitempty"`
+	CreatedAt                  string            `json:"created_at"`
+	UpdatedAt                  string            `json:"updated_at"`
+	ResolvedAt                 *string           `json:"resolved_at,omitempty"`
+	Actions                    []ReportActionDTO `json:"actions,omitempty"`
+	ReportedUserStatus         *string           `json:"reported_user_status,omitempty"`
+	ReportedUserSuspendedUntil *string           `json:"reported_user_suspended_until,omitempty"`
 }
 
 type ReportActionDTO struct {

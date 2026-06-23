@@ -55,6 +55,7 @@ var TableNames = struct {
 	UserEthnicities              string
 	UserInterests                string
 	UserLanguages                string
+	UserModerationWarnings       string
 	UserPreferences              string
 	UserProfileVisibility        string
 	UserProfiles                 string
@@ -119,6 +120,7 @@ var TableNames = struct {
 	UserEthnicities:              "user_ethnicities",
 	UserInterests:                "user_interests",
 	UserLanguages:                "user_languages",
+	UserModerationWarnings:       "user_moderation_warnings",
 	UserPreferences:              "user_preferences",
 	UserProfileVisibility:        "user_profile_visibility",
 	UserProfiles:                 "user_profiles",

@@ -11,11 +11,12 @@ package user
 
 import (
 	context "context"
+	sql "database/sql"
 	reflect "reflect"
-
-	gomock "go.uber.org/mock/gomock"
+	time "time"
 
 	domain "github.com/Haerd-Limited/dating-api/internal/user/domain"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockService is a mock of Service interface.
@@ -86,6 +87,21 @@ func (mr *MockServiceMockRecorder) DeleteAccount(ctx, userID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccount", reflect.TypeOf((*MockService)(nil).DeleteAccount), ctx, userID)
 }
 
+// GetAccountGateState mocks base method.
+func (m *MockService) GetAccountGateState(ctx context.Context, userID string) (domain.AccountState, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAccountGateState", ctx, userID)
+	ret0, _ := ret[0].(domain.AccountState)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAccountGateState indicates an expected call of GetAccountGateState.
+func (mr *MockServiceMockRecorder) GetAccountGateState(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountGateState", reflect.TypeOf((*MockService)(nil).GetAccountGateState), ctx, userID)
+}
+
 // GetUser mocks base method.
 func (m *MockService) GetUser(ctx context.Context, id string) (*domain.User, error) {
 	m.ctrl.T.Helper()
@@ -144,6 +160,20 @@ func (m *MockService) ListWaitlistUsers(ctx context.Context, steps []string) ([]
 func (mr *MockServiceMockRecorder) ListWaitlistUsers(ctx, steps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWaitlistUsers", reflect.TypeOf((*MockService)(nil).ListWaitlistUsers), ctx, steps)
+}
+
+// UpdateAccountStatus mocks base method.
+func (m *MockService) UpdateAccountStatus(ctx context.Context, userID, status string, suspendedUntil *time.Time, reason *string, tx *sql.Tx) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAccountStatus", ctx, userID, status, suspendedUntil, reason, tx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAccountStatus indicates an expected call of UpdateAccountStatus.
+func (mr *MockServiceMockRecorder) UpdateAccountStatus(ctx, userID, status, suspendedUntil, reason, tx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountStatus", reflect.TypeOf((*MockService)(nil).UpdateAccountStatus), ctx, userID, status, suspendedUntil, reason, tx)
 }
 
 // UpdateUser mocks base method.

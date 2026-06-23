@@ -102,6 +102,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("UserConsents", testUserConsentsUpsert)
 
+	t.Run("UserModerationWarnings", testUserModerationWarningsUpsert)
+
 	t.Run("UserPreferences", testUserPreferencesUpsert)
 
 	t.Run("UserProfileVisibilities", testUserProfileVisibilitiesUpsert)

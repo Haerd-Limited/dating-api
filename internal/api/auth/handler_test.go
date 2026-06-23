@@ -82,7 +82,7 @@ func TestRefreshHandler(t *testing.T) {
 			name:       "a service error",
 			wantStatus: http.StatusInternalServerError,
 			wantBody: map[string]interface{}{
-				"message": messages.InternalServerErrorMsg,
+				"error": messages.InternalServerErrorMsg,
 			},
 			input: dto.RefreshRequest{
 				RefreshToken: "testRefreshToken",
@@ -103,7 +103,7 @@ func TestRefreshHandler(t *testing.T) {
 			name:       "token revoked or missing",
 			wantStatus: http.StatusUnauthorized,
 			wantBody: map[string]interface{}{
-				"message": TokenRevokedOrExpiredMsg,
+				"error": TokenRevokedOrExpiredMsg,
 			},
 			input: dto.RefreshRequest{
 				RefreshToken: "testRefreshToken",
@@ -203,7 +203,7 @@ func TestLogoutHandler(t *testing.T) {
 			input:      dto.LogoutRequest{},
 			wantStatus: http.StatusBadRequest,
 			wantBody: map[string]interface{}{
-				"message": InvalidRefreshTokenMsg,
+				"error": InvalidRefreshTokenMsg,
 			},
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
@@ -219,7 +219,7 @@ func TestLogoutHandler(t *testing.T) {
 			},
 			wantStatus: http.StatusInternalServerError,
 			wantBody: map[string]interface{}{
-				"message": messages.InternalServerErrorMsg,
+				"error": messages.InternalServerErrorMsg,
 			},
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()
@@ -237,7 +237,7 @@ func TestLogoutHandler(t *testing.T) {
 			},
 			wantStatus: http.StatusOK,
 			wantBody: map[string]interface{}{
-				"message": TokenRevokedOrExpiredMsg,
+				"error": TokenRevokedOrExpiredMsg,
 			},
 			ctx: func(ctx context.Context) context.Context {
 				return context.Background()

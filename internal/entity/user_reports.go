@@ -143,20 +143,23 @@ var UserReportWhere = struct {
 
 // UserReportRels is where relationship names are stored.
 var UserReportRels = struct {
-	ReportedUser        string
-	ReporterUser        string
-	ReportReportActions string
+	ReportedUser                 string
+	ReporterUser                 string
+	ReportReportActions          string
+	ReportUserModerationWarnings string
 }{
-	ReportedUser:        "ReportedUser",
-	ReporterUser:        "ReporterUser",
-	ReportReportActions: "ReportReportActions",
+	ReportedUser:                 "ReportedUser",
+	ReporterUser:                 "ReporterUser",
+	ReportReportActions:          "ReportReportActions",
+	ReportUserModerationWarnings: "ReportUserModerationWarnings",
 }
 
 // userReportR is where relationships are stored.
 type userReportR struct {
-	ReportedUser        *User             `boil:"ReportedUser" json:"ReportedUser" toml:"ReportedUser" yaml:"ReportedUser"`
-	ReporterUser        *User             `boil:"ReporterUser" json:"ReporterUser" toml:"ReporterUser" yaml:"ReporterUser"`
-	ReportReportActions ReportActionSlice `boil:"ReportReportActions" json:"ReportReportActions" toml:"ReportReportActions" yaml:"ReportReportActions"`
+	ReportedUser                 *User                      `boil:"ReportedUser" json:"ReportedUser" toml:"ReportedUser" yaml:"ReportedUser"`
+	ReporterUser                 *User                      `boil:"ReporterUser" json:"ReporterUser" toml:"ReporterUser" yaml:"ReporterUser"`
+	ReportReportActions          ReportActionSlice          `boil:"ReportReportActions" json:"ReportReportActions" toml:"ReportReportActions" yaml:"ReportReportActions"`
+	ReportUserModerationWarnings UserModerationWarningSlice `boil:"ReportUserModerationWarnings" json:"ReportUserModerationWarnings" toml:"ReportUserModerationWarnings" yaml:"ReportUserModerationWarnings"`
 }
 
 // NewStruct creates a new relationship struct
@@ -210,6 +213,22 @@ func (r *userReportR) GetReportReportActions() ReportActionSlice {
 	}
 
 	return r.ReportReportActions
+}
+
+func (o *UserReport) GetReportUserModerationWarnings() UserModerationWarningSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetReportUserModerationWarnings()
+}
+
+func (r *userReportR) GetReportUserModerationWarnings() UserModerationWarningSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.ReportUserModerationWarnings
 }
 
 // userReportL is where Load methods for each relationship are stored.
@@ -562,6 +581,20 @@ func (o *UserReport) ReportReportActions(mods ...qm.QueryMod) reportActionQuery 
 	)
 
 	return ReportActions(queryMods...)
+}
+
+// ReportUserModerationWarnings retrieves all the user_moderation_warning's UserModerationWarnings with an executor via report_id column.
+func (o *UserReport) ReportUserModerationWarnings(mods ...qm.QueryMod) userModerationWarningQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"user_moderation_warnings\".\"report_id\"=?", o.ID),
+	)
+
+	return UserModerationWarnings(queryMods...)
 }
 
 // LoadReportedUser allows an eager lookup of values, cached into the
@@ -917,6 +950,119 @@ func (userReportL) LoadReportReportActions(ctx context.Context, e boil.ContextEx
 	return nil
 }
 
+// LoadReportUserModerationWarnings allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userReportL) LoadReportUserModerationWarnings(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUserReport interface{}, mods queries.Applicator) error {
+	var slice []*UserReport
+	var object *UserReport
+
+	if singular {
+		var ok bool
+		object, ok = maybeUserReport.(*UserReport)
+		if !ok {
+			object = new(UserReport)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUserReport)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUserReport))
+			}
+		}
+	} else {
+		s, ok := maybeUserReport.(*[]*UserReport)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUserReport)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUserReport))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userReportR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userReportR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_moderation_warnings`),
+		qm.WhereIn(`user_moderation_warnings.report_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load user_moderation_warnings")
+	}
+
+	var resultSlice []*UserModerationWarning
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice user_moderation_warnings")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on user_moderation_warnings")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_moderation_warnings")
+	}
+
+	if len(userModerationWarningAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.ReportUserModerationWarnings = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &userModerationWarningR{}
+			}
+			foreign.R.Report = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if queries.Equal(local.ID, foreign.ReportID) {
+				local.R.ReportUserModerationWarnings = append(local.R.ReportUserModerationWarnings, foreign)
+				if foreign.R == nil {
+					foreign.R = &userModerationWarningR{}
+				}
+				foreign.R.Report = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetReportedUser of the userReport to the related item.
 // Sets o.R.ReportedUser to related.
 // Adds o to related.R.ReportedUserUserReports.
@@ -1061,6 +1207,133 @@ func (o *UserReport) AddReportReportActions(ctx context.Context, exec boil.Conte
 			rel.R.Report = o
 		}
 	}
+	return nil
+}
+
+// AddReportUserModerationWarnings adds the given related objects to the existing relationships
+// of the user_report, optionally inserting them as new records.
+// Appends related to o.R.ReportUserModerationWarnings.
+// Sets related.R.Report appropriately.
+func (o *UserReport) AddReportUserModerationWarnings(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserModerationWarning) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			queries.Assign(&rel.ReportID, o.ID)
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"user_moderation_warnings\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"report_id"}),
+				strmangle.WhereClause("\"", "\"", 2, userModerationWarningPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			queries.Assign(&rel.ReportID, o.ID)
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userReportR{
+			ReportUserModerationWarnings: related,
+		}
+	} else {
+		o.R.ReportUserModerationWarnings = append(o.R.ReportUserModerationWarnings, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &userModerationWarningR{
+				Report: o,
+			}
+		} else {
+			rel.R.Report = o
+		}
+	}
+	return nil
+}
+
+// SetReportUserModerationWarnings removes all previously related items of the
+// user_report replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Report's ReportUserModerationWarnings accordingly.
+// Replaces o.R.ReportUserModerationWarnings with related.
+// Sets related.R.Report's ReportUserModerationWarnings accordingly.
+func (o *UserReport) SetReportUserModerationWarnings(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserModerationWarning) error {
+	query := "update \"user_moderation_warnings\" set \"report_id\" = null where \"report_id\" = $1"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	if o.R != nil {
+		for _, rel := range o.R.ReportUserModerationWarnings {
+			queries.SetScanner(&rel.ReportID, nil)
+			if rel.R == nil {
+				continue
+			}
+
+			rel.R.Report = nil
+		}
+		o.R.ReportUserModerationWarnings = nil
+	}
+
+	return o.AddReportUserModerationWarnings(ctx, exec, insert, related...)
+}
+
+// RemoveReportUserModerationWarnings relationships from objects passed in.
+// Removes related items from R.ReportUserModerationWarnings (uses pointer comparison, removal does not keep order)
+// Sets related.R.Report.
+func (o *UserReport) RemoveReportUserModerationWarnings(ctx context.Context, exec boil.ContextExecutor, related ...*UserModerationWarning) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	for _, rel := range related {
+		queries.SetScanner(&rel.ReportID, nil)
+		if rel.R != nil {
+			rel.R.Report = nil
+		}
+		if _, err = rel.Update(ctx, exec, boil.Whitelist("report_id")); err != nil {
+			return err
+		}
+	}
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.ReportUserModerationWarnings {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.ReportUserModerationWarnings)
+			if ln > 1 && i < ln-1 {
+				o.R.ReportUserModerationWarnings[i] = o.R.ReportUserModerationWarnings[ln-1]
+			}
+			o.R.ReportUserModerationWarnings = o.R.ReportUserModerationWarnings[:ln-1]
+			break
+		}
+	}
+
 	return nil
 }
 

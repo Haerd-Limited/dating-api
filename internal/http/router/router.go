@@ -169,6 +169,9 @@ func New(
 				})
 				r.Get("/users/me/data-export", profileHandler.GetDataExport())
 				r.Delete("/users/me", profileHandler.DeleteAccount())
+				r.Get("/users/me/account-status", safetyHandler.GetMyAccountStatus())
+				r.Get("/users/me/warnings", safetyHandler.ListMyWarnings())
+				r.Post("/users/me/warnings/{warningID}/acknowledge", safetyHandler.AcknowledgeWarning())
 				r.Route("/notifications", func(r chi.Router) {
 					r.Post("/device-tokens", notificationHandler.RegisterDeviceToken())
 					r.Delete("/device-tokens", notificationHandler.RemoveDeviceToken())
@@ -176,6 +179,7 @@ func New(
 
 				r.Group(func(r chi.Router) {
 					r.Use(haerdmiddleware.ConsentRequired(consentService, enableConsentGate, logger))
+					r.Use(haerdmiddleware.AccountStatusRequired(userService, logger))
 					r.Use(haerdmiddleware.AppOpenTracker())
 
 					r.Route("/safety", func(r chi.Router) {

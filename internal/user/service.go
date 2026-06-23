@@ -2,9 +2,11 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/coocood/freecache"
@@ -36,6 +38,8 @@ type Service interface {
 	CountUsers(ctx context.Context) (int64, error)
 	// DeleteAccount deletes all user data including their account, profile, preferences, and all associated S3 files
 	DeleteAccount(ctx context.Context, userID string) error
+	GetAccountGateState(ctx context.Context, userID string) (domain.AccountState, error)
+	UpdateAccountStatus(ctx context.Context, userID, status string, suspendedUntil *time.Time, reason *string, tx *sql.Tx) error
 }
 
 type userService struct {
@@ -289,6 +293,29 @@ func (us *userService) DeleteAccount(ctx context.Context, userID string) error {
 	// Since we're using freecache, we could clear entries if needed, but it will expire naturally
 
 	us.logger.Info("Account deletion completed successfully", zap.String("userID", userID))
+
+	return nil
+}
+
+func (us *userService) GetAccountGateState(ctx context.Context, userID string) (domain.AccountState, error) {
+	state, err := us.userRepo.GetAccountGateState(ctx, userID)
+	if err != nil {
+		return domain.AccountState{}, commonlogger.LogError(us.logger, "get account gate state", err, zap.String("userID", userID))
+	}
+
+	return *state, nil
+}
+
+func (us *userService) UpdateAccountStatus(
+	ctx context.Context,
+	userID, status string,
+	suspendedUntil *time.Time,
+	reason *string,
+	tx *sql.Tx,
+) error {
+	if err := us.userRepo.UpdateAccountStatus(ctx, userID, status, suspendedUntil, reason, tx); err != nil {
+		return commonlogger.LogError(us.logger, "update account status", err, zap.String("userID", userID))
+	}
 
 	return nil
 }

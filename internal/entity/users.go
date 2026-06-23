@@ -33,6 +33,10 @@ type User struct {
 	UpdatedAt            time.Time   `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	OnboardingStep       string      `boil:"onboarding_step" json:"onboarding_step" toml:"onboarding_step" yaml:"onboarding_step"`
 	HowDidYouHearAboutUs null.String `boil:"how_did_you_hear_about_us" json:"how_did_you_hear_about_us,omitempty" toml:"how_did_you_hear_about_us" yaml:"how_did_you_hear_about_us,omitempty"`
+	AccountStatus        string      `boil:"account_status" json:"account_status" toml:"account_status" yaml:"account_status"`
+	SuspendedUntil       null.Time   `boil:"suspended_until" json:"suspended_until,omitempty" toml:"suspended_until" yaml:"suspended_until,omitempty"`
+	ModerationReason     null.String `boil:"moderation_reason" json:"moderation_reason,omitempty" toml:"moderation_reason" yaml:"moderation_reason,omitempty"`
+	StatusUpdatedAt      null.Time   `boil:"status_updated_at" json:"status_updated_at,omitempty" toml:"status_updated_at" yaml:"status_updated_at,omitempty"`
 
 	R *userR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,6 +52,10 @@ var UserColumns = struct {
 	UpdatedAt            string
 	OnboardingStep       string
 	HowDidYouHearAboutUs string
+	AccountStatus        string
+	SuspendedUntil       string
+	ModerationReason     string
+	StatusUpdatedAt      string
 }{
 	ID:                   "id",
 	Email:                "email",
@@ -58,6 +66,10 @@ var UserColumns = struct {
 	UpdatedAt:            "updated_at",
 	OnboardingStep:       "onboarding_step",
 	HowDidYouHearAboutUs: "how_did_you_hear_about_us",
+	AccountStatus:        "account_status",
+	SuspendedUntil:       "suspended_until",
+	ModerationReason:     "moderation_reason",
+	StatusUpdatedAt:      "status_updated_at",
 }
 
 var UserTableColumns = struct {
@@ -70,6 +82,10 @@ var UserTableColumns = struct {
 	UpdatedAt            string
 	OnboardingStep       string
 	HowDidYouHearAboutUs string
+	AccountStatus        string
+	SuspendedUntil       string
+	ModerationReason     string
+	StatusUpdatedAt      string
 }{
 	ID:                   "users.id",
 	Email:                "users.email",
@@ -80,6 +96,10 @@ var UserTableColumns = struct {
 	UpdatedAt:            "users.updated_at",
 	OnboardingStep:       "users.onboarding_step",
 	HowDidYouHearAboutUs: "users.how_did_you_hear_about_us",
+	AccountStatus:        "users.account_status",
+	SuspendedUntil:       "users.suspended_until",
+	ModerationReason:     "users.moderation_reason",
+	StatusUpdatedAt:      "users.status_updated_at",
 }
 
 // Generated where
@@ -94,6 +114,10 @@ var UserWhere = struct {
 	UpdatedAt            whereHelpertime_Time
 	OnboardingStep       whereHelperstring
 	HowDidYouHearAboutUs whereHelpernull_String
+	AccountStatus        whereHelperstring
+	SuspendedUntil       whereHelpernull_Time
+	ModerationReason     whereHelpernull_String
+	StatusUpdatedAt      whereHelpernull_Time
 }{
 	ID:                   whereHelperstring{field: "\"users\".\"id\""},
 	Email:                whereHelpernull_String{field: "\"users\".\"email\""},
@@ -104,6 +128,10 @@ var UserWhere = struct {
 	UpdatedAt:            whereHelpertime_Time{field: "\"users\".\"updated_at\""},
 	OnboardingStep:       whereHelperstring{field: "\"users\".\"onboarding_step\""},
 	HowDidYouHearAboutUs: whereHelpernull_String{field: "\"users\".\"how_did_you_hear_about_us\""},
+	AccountStatus:        whereHelperstring{field: "\"users\".\"account_status\""},
+	SuspendedUntil:       whereHelpernull_Time{field: "\"users\".\"suspended_until\""},
+	ModerationReason:     whereHelpernull_String{field: "\"users\".\"moderation_reason\""},
+	StatusUpdatedAt:      whereHelpernull_Time{field: "\"users\".\"status_updated_at\""},
 }
 
 // UserRels is where relationship names are stored.
@@ -139,6 +167,7 @@ var UserRels = struct {
 	Ethnicities                  string
 	Interests                    string
 	Languages                    string
+	UserModerationWarnings       string
 	UserProfileVisibilities      string
 	ReportedUserUserReports      string
 	ReporterUserUserReports      string
@@ -179,6 +208,7 @@ var UserRels = struct {
 	Ethnicities:                  "Ethnicities",
 	Interests:                    "Interests",
 	Languages:                    "Languages",
+	UserModerationWarnings:       "UserModerationWarnings",
 	UserProfileVisibilities:      "UserProfileVisibilities",
 	ReportedUserUserReports:      "ReportedUserUserReports",
 	ReporterUserUserReports:      "ReporterUserUserReports",
@@ -222,6 +252,7 @@ type userR struct {
 	Ethnicities                  EthnicitySlice                   `boil:"Ethnicities" json:"Ethnicities" toml:"Ethnicities" yaml:"Ethnicities"`
 	Interests                    InterestSlice                    `boil:"Interests" json:"Interests" toml:"Interests" yaml:"Interests"`
 	Languages                    LanguageSlice                    `boil:"Languages" json:"Languages" toml:"Languages" yaml:"Languages"`
+	UserModerationWarnings       UserModerationWarningSlice       `boil:"UserModerationWarnings" json:"UserModerationWarnings" toml:"UserModerationWarnings" yaml:"UserModerationWarnings"`
 	UserProfileVisibilities      UserProfileVisibilitySlice       `boil:"UserProfileVisibilities" json:"UserProfileVisibilities" toml:"UserProfileVisibilities" yaml:"UserProfileVisibilities"`
 	ReportedUserUserReports      UserReportSlice                  `boil:"ReportedUserUserReports" json:"ReportedUserUserReports" toml:"ReportedUserUserReports" yaml:"ReportedUserUserReports"`
 	ReporterUserUserReports      UserReportSlice                  `boil:"ReporterUserUserReports" json:"ReporterUserUserReports" toml:"ReporterUserUserReports" yaml:"ReporterUserUserReports"`
@@ -733,6 +764,22 @@ func (r *userR) GetLanguages() LanguageSlice {
 	return r.Languages
 }
 
+func (o *User) GetUserModerationWarnings() UserModerationWarningSlice {
+	if o == nil {
+		return nil
+	}
+
+	return o.R.GetUserModerationWarnings()
+}
+
+func (r *userR) GetUserModerationWarnings() UserModerationWarningSlice {
+	if r == nil {
+		return nil
+	}
+
+	return r.UserModerationWarnings
+}
+
 func (o *User) GetUserProfileVisibilities() UserProfileVisibilitySlice {
 	if o == nil {
 		return nil
@@ -865,9 +912,9 @@ func (r *userR) GetWrappedAnnuals() WrappedAnnualSlice {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "email", "first_name", "last_name", "phone", "created_at", "updated_at", "onboarding_step", "how_did_you_hear_about_us"}
+	userAllColumns            = []string{"id", "email", "first_name", "last_name", "phone", "created_at", "updated_at", "onboarding_step", "how_did_you_hear_about_us", "account_status", "suspended_until", "moderation_reason", "status_updated_at"}
 	userColumnsWithoutDefault = []string{"first_name"}
-	userColumnsWithDefault    = []string{"id", "email", "last_name", "phone", "created_at", "updated_at", "onboarding_step", "how_did_you_hear_about_us"}
+	userColumnsWithDefault    = []string{"id", "email", "last_name", "phone", "created_at", "updated_at", "onboarding_step", "how_did_you_hear_about_us", "account_status", "suspended_until", "moderation_reason", "status_updated_at"}
 	userPrimaryKeyColumns     = []string{"id"}
 	userGeneratedColumns      = []string{}
 )
@@ -1603,6 +1650,20 @@ func (o *User) Languages(mods ...qm.QueryMod) languageQuery {
 	)
 
 	return Languages(queryMods...)
+}
+
+// UserModerationWarnings retrieves all the user_moderation_warning's UserModerationWarnings with an executor.
+func (o *User) UserModerationWarnings(mods ...qm.QueryMod) userModerationWarningQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"user_moderation_warnings\".\"user_id\"=?", o.ID),
+	)
+
+	return UserModerationWarnings(queryMods...)
 }
 
 // UserProfileVisibilities retrieves all the user_profile_visibility's UserProfileVisibilities with an executor.
@@ -5283,6 +5344,119 @@ func (userL) LoadLanguages(ctx context.Context, e boil.ContextExecutor, singular
 	return nil
 }
 
+// LoadUserModerationWarnings allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (userL) LoadUserModerationWarnings(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+	var slice []*User
+	var object *User
+
+	if singular {
+		var ok bool
+		object, ok = maybeUser.(*User)
+		if !ok {
+			object = new(User)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeUser))
+			}
+		}
+	} else {
+		s, ok := maybeUser.(*[]*User)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeUser)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeUser))
+			}
+		}
+	}
+
+	args := make(map[interface{}]struct{})
+	if singular {
+		if object.R == nil {
+			object.R = &userR{}
+		}
+		args[object.ID] = struct{}{}
+	} else {
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &userR{}
+			}
+			args[obj.ID] = struct{}{}
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	argsSlice := make([]interface{}, len(args))
+	i := 0
+	for arg := range args {
+		argsSlice[i] = arg
+		i++
+	}
+
+	query := NewQuery(
+		qm.From(`user_moderation_warnings`),
+		qm.WhereIn(`user_moderation_warnings.user_id in ?`, argsSlice...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load user_moderation_warnings")
+	}
+
+	var resultSlice []*UserModerationWarning
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice user_moderation_warnings")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on user_moderation_warnings")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for user_moderation_warnings")
+	}
+
+	if len(userModerationWarningAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.UserModerationWarnings = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &userModerationWarningR{}
+			}
+			foreign.R.User = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.UserID {
+				local.R.UserModerationWarnings = append(local.R.UserModerationWarnings, foreign)
+				if foreign.R == nil {
+					foreign.R = &userModerationWarningR{}
+				}
+				foreign.R.User = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // LoadUserProfileVisibilities allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
 func (userL) LoadUserProfileVisibilities(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
@@ -8391,6 +8565,59 @@ func removeLanguagesFromUsersSlice(o *User, related []*Language) {
 			break
 		}
 	}
+}
+
+// AddUserModerationWarnings adds the given related objects to the existing relationships
+// of the user, optionally inserting them as new records.
+// Appends related to o.R.UserModerationWarnings.
+// Sets related.R.User appropriately.
+func (o *User) AddUserModerationWarnings(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*UserModerationWarning) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.UserID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"user_moderation_warnings\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.WhereClause("\"", "\"", 2, userModerationWarningPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.UserID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &userR{
+			UserModerationWarnings: related,
+		}
+	} else {
+		o.R.UserModerationWarnings = append(o.R.UserModerationWarnings, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &userModerationWarningR{
+				User: o,
+			}
+		} else {
+			rel.R.User = o
+		}
+	}
+	return nil
 }
 
 // AddUserProfileVisibilities adds the given related objects to the existing relationships

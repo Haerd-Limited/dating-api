@@ -13,6 +13,7 @@ import (
 	dtoMapper "github.com/Haerd-Limited/dating-api/internal/api/safety/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/safety"
 	safetydomain "github.com/Haerd-Limited/dating-api/internal/safety/domain"
+	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonMappers "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/mappers"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/messages"
@@ -26,6 +27,9 @@ type Handler interface {
 	AdminListReports() http.HandlerFunc
 	AdminGetReport() http.HandlerFunc
 	AdminResolveReport() http.HandlerFunc
+	GetMyAccountStatus() http.HandlerFunc
+	ListMyWarnings() http.HandlerFunc
+	AcknowledgeWarning() http.HandlerFunc
 }
 
 type handler struct {
@@ -227,6 +231,11 @@ func (h *handler) AdminResolveReport() http.HandlerFunc {
 				return
 			}
 
+			if errors.Is(err, safety.ErrInvalidSuspendUntil) || errors.Is(err, safety.ErrMissingWarningMessage) {
+				render.Json(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+				return
+			}
+
 			h.logger.Sugar().Errorw("resolve report", "reportID", reportID, "error", err)
 			render.Json(w, http.StatusInternalServerError, map[string]string{"error": messages.InternalServerErrorMsg})
 
@@ -236,6 +245,78 @@ func (h *handler) AdminResolveReport() http.HandlerFunc {
 		render.Json(w, http.StatusOK, map[string]string{
 			"status": string(req.NewStatus),
 		})
+	}
+}
+
+func (h *handler) GetMyAccountStatus() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		status, err := h.safetyService.GetAccountStatus(ctx, userID)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetMyAccountStatus", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dtoMapper.MapAccountStatusToDTO(status))
+	}
+}
+
+func (h *handler) ListMyWarnings() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		warnings, err := h.safetyService.ListUnacknowledgedWarnings(ctx, userID)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "ListMyWarnings", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, dtoMapper.MapModerationWarningsToDTO(warnings))
+	}
+}
+
+func (h *handler) AcknowledgeWarning() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		warningID := chi.URLParam(r, "warningID")
+		if strings.TrimSpace(warningID) == "" {
+			render.Json(w, http.StatusBadRequest, commonMappers.ToSimpleErrorResponse("warningID is required"))
+			return
+		}
+
+		err := h.safetyService.AcknowledgeWarning(ctx, userID, warningID)
+		if err != nil {
+			if errors.Is(err, safetystorage.ErrModerationWarningNotFound) {
+				render.Json(w, http.StatusNotFound, commonMappers.ToSimpleErrorResponse("warning not found"))
+				return
+			}
+
+			render.HandleServiceErrorResponse(h.logger, w, r, "AcknowledgeWarning", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+
+			return
+		}
+
+		render.Json(w, http.StatusOK, map[string]string{"status": "acknowledged"})
 	}
 }
 

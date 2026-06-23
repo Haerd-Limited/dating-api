@@ -123,3 +123,28 @@ func ReportActionEntityToDomain(action *entity.ReportAction) (safetydomain.Repor
 
 	return out, nil
 }
+
+func ModerationWarningEntityToDomain(warning *entity.UserModerationWarning) safetydomain.ModerationWarning {
+	if warning == nil {
+		return safetydomain.ModerationWarning{}
+	}
+
+	out := safetydomain.ModerationWarning{
+		ID:        warning.ID,
+		UserID:    warning.UserID,
+		Message:   warning.Message,
+		CreatedAt: warning.CreatedAt,
+	}
+
+	if warning.ReportID.Valid {
+		reportID := warning.ReportID.String
+		out.ReportID = &reportID
+	}
+
+	if warning.AcknowledgedAt.Valid {
+		ack := warning.AcknowledgedAt.Time
+		out.AcknowledgedAt = &ack
+	}
+
+	return out
+}

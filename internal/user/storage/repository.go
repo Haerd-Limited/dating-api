@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
@@ -12,6 +13,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/Haerd-Limited/dating-api/internal/entity"
+	"github.com/Haerd-Limited/dating-api/internal/user/domain"
 )
 
 //go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
@@ -24,6 +26,8 @@ type UserRepository interface {
 	ListByOnboardingSteps(ctx context.Context, steps []string) ([]*entity.User, error)
 	UpdateUser(ctx context.Context, e *entity.User, cols []string) error
 	DeleteUser(ctx context.Context, userID string) error
+	GetAccountGateState(ctx context.Context, userID string) (*domain.AccountState, error)
+	UpdateAccountStatus(ctx context.Context, userID, status string, suspendedUntil *time.Time, reason *string, tx *sql.Tx) error
 }
 
 type userRepository struct {

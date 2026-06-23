@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -139,7 +140,20 @@ func (h *handler) VerifyCode() http.HandlerFunc {
 				)
 
 				return
+			case errors.Is(err, auth.ErrAccountBanned):
+				render.Json(w, http.StatusForbidden, map[string]string{"error": "account_banned"})
+				return
 			default:
+				var suspendedErr *auth.SuspendedAccountError
+				if errors.As(err, &suspendedErr) {
+					render.Json(w, http.StatusForbidden, map[string]string{
+						"error": "account_suspended",
+						"until": suspendedErr.Until.UTC().Format(time.RFC3339),
+					})
+
+					return
+				}
+
 				// Anti-enumeration: still 200 OK, but log server-side
 				h.logger.Warn("failed to verify code", zap.Error(err))
 			}
@@ -172,7 +186,23 @@ func (h *handler) Refresh() http.HandlerFunc {
 
 		result, err := h.authService.RefreshToken(ctx, mapper.MapRefreshRequestToDomain(req))
 		if err != nil {
+			if errors.Is(err, auth.ErrAccountBanned) {
+				render.Json(w, http.StatusForbidden, map[string]string{"error": "account_banned"})
+				return
+			}
+
+			var suspendedErr *auth.SuspendedAccountError
+			if errors.As(err, &suspendedErr) {
+				render.Json(w, http.StatusForbidden, map[string]string{
+					"error": "account_suspended",
+					"until": suspendedErr.Until.UTC().Format(time.RFC3339),
+				})
+
+				return
+			}
+
 			render.HandleServiceErrorResponse(h.logger, w, r, "Refresh", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+
 			return
 		}
 

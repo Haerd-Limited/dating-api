@@ -572,6 +572,83 @@ func testUserReportToManyReportReportActions(t *testing.T) {
 	}
 }
 
+func testUserReportToManyReportUserModerationWarnings(t *testing.T) {
+	var err error
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a UserReport
+	var b, c UserModerationWarning
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userReportDBTypes, true, userReportColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize UserReport struct: %s", err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = randomize.Struct(seed, &b, userModerationWarningDBTypes, false, userModerationWarningColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, userModerationWarningDBTypes, false, userModerationWarningColumnsWithDefault...); err != nil {
+		t.Fatal(err)
+	}
+
+	queries.Assign(&b.ReportID, a.ID)
+	queries.Assign(&c.ReportID, a.ID)
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := a.ReportUserModerationWarnings().All(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bFound, cFound := false, false
+	for _, v := range check {
+		if queries.Equal(v.ReportID, b.ReportID) {
+			bFound = true
+		}
+		if queries.Equal(v.ReportID, c.ReportID) {
+			cFound = true
+		}
+	}
+
+	if !bFound {
+		t.Error("expected to find b")
+	}
+	if !cFound {
+		t.Error("expected to find c")
+	}
+
+	slice := UserReportSlice{&a}
+	if err = a.L.LoadReportUserModerationWarnings(ctx, tx, false, (*[]*UserReport)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.ReportUserModerationWarnings); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	a.R.ReportUserModerationWarnings = nil
+	if err = a.L.LoadReportUserModerationWarnings(ctx, tx, true, &a, nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(a.R.ReportUserModerationWarnings); got != 2 {
+		t.Error("number of eager loaded records wrong, got:", got)
+	}
+
+	if t.Failed() {
+		t.Logf("%#v", check)
+	}
+}
+
 func testUserReportToManyAddOpReportReportActions(t *testing.T) {
 	var err error
 
@@ -647,6 +724,257 @@ func testUserReportToManyAddOpReportReportActions(t *testing.T) {
 		}
 	}
 }
+func testUserReportToManyAddOpReportUserModerationWarnings(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a UserReport
+	var b, c, d, e UserModerationWarning
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userReportDBTypes, false, strmangle.SetComplement(userReportPrimaryKeyColumns, userReportColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*UserModerationWarning{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, userModerationWarningDBTypes, false, strmangle.SetComplement(userModerationWarningPrimaryKeyColumns, userModerationWarningColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignersSplitByInsertion := [][]*UserModerationWarning{
+		{&b, &c},
+		{&d, &e},
+	}
+
+	for i, x := range foreignersSplitByInsertion {
+		err = a.AddReportUserModerationWarnings(ctx, tx, i != 0, x...)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		first := x[0]
+		second := x[1]
+
+		if !queries.Equal(a.ID, first.ReportID) {
+			t.Error("foreign key was wrong value", a.ID, first.ReportID)
+		}
+		if !queries.Equal(a.ID, second.ReportID) {
+			t.Error("foreign key was wrong value", a.ID, second.ReportID)
+		}
+
+		if first.R.Report != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+		if second.R.Report != &a {
+			t.Error("relationship was not added properly to the foreign slice")
+		}
+
+		if a.R.ReportUserModerationWarnings[i*2] != first {
+			t.Error("relationship struct slice not set to correct value")
+		}
+		if a.R.ReportUserModerationWarnings[i*2+1] != second {
+			t.Error("relationship struct slice not set to correct value")
+		}
+
+		count, err := a.ReportUserModerationWarnings().Count(ctx, tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := int64((i + 1) * 2); count != want {
+			t.Error("want", want, "got", count)
+		}
+	}
+}
+
+func testUserReportToManySetOpReportUserModerationWarnings(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a UserReport
+	var b, c, d, e UserModerationWarning
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userReportDBTypes, false, strmangle.SetComplement(userReportPrimaryKeyColumns, userReportColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*UserModerationWarning{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, userModerationWarningDBTypes, false, strmangle.SetComplement(userModerationWarningPrimaryKeyColumns, userModerationWarningColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err = a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = c.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	err = a.SetReportUserModerationWarnings(ctx, tx, false, &b, &c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err := a.ReportUserModerationWarnings().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	err = a.SetReportUserModerationWarnings(ctx, tx, true, &d, &e)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err = a.ReportUserModerationWarnings().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	if !queries.IsValuerNil(b.ReportID) {
+		t.Error("want b's foreign key value to be nil")
+	}
+	if !queries.IsValuerNil(c.ReportID) {
+		t.Error("want c's foreign key value to be nil")
+	}
+	if !queries.Equal(a.ID, d.ReportID) {
+		t.Error("foreign key was wrong value", a.ID, d.ReportID)
+	}
+	if !queries.Equal(a.ID, e.ReportID) {
+		t.Error("foreign key was wrong value", a.ID, e.ReportID)
+	}
+
+	if b.R.Report != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if c.R.Report != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if d.R.Report != &a {
+		t.Error("relationship was not added properly to the foreign struct")
+	}
+	if e.R.Report != &a {
+		t.Error("relationship was not added properly to the foreign struct")
+	}
+
+	if a.R.ReportUserModerationWarnings[0] != &d {
+		t.Error("relationship struct slice not set to correct value")
+	}
+	if a.R.ReportUserModerationWarnings[1] != &e {
+		t.Error("relationship struct slice not set to correct value")
+	}
+}
+
+func testUserReportToManyRemoveOpReportUserModerationWarnings(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a UserReport
+	var b, c, d, e UserModerationWarning
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, userReportDBTypes, false, strmangle.SetComplement(userReportPrimaryKeyColumns, userReportColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	foreigners := []*UserModerationWarning{&b, &c, &d, &e}
+	for _, x := range foreigners {
+		if err = randomize.Struct(seed, x, userModerationWarningDBTypes, false, strmangle.SetComplement(userModerationWarningPrimaryKeyColumns, userModerationWarningColumnsWithoutDefault)...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	err = a.AddReportUserModerationWarnings(ctx, tx, true, foreigners...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err := a.ReportUserModerationWarnings().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 4 {
+		t.Error("count was wrong:", count)
+	}
+
+	err = a.RemoveReportUserModerationWarnings(ctx, tx, foreigners[:2]...)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	count, err = a.ReportUserModerationWarnings().Count(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Error("count was wrong:", count)
+	}
+
+	if !queries.IsValuerNil(b.ReportID) {
+		t.Error("want b's foreign key value to be nil")
+	}
+	if !queries.IsValuerNil(c.ReportID) {
+		t.Error("want c's foreign key value to be nil")
+	}
+
+	if b.R.Report != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if c.R.Report != nil {
+		t.Error("relationship was not removed properly from the foreign struct")
+	}
+	if d.R.Report != &a {
+		t.Error("relationship to a should have been preserved")
+	}
+	if e.R.Report != &a {
+		t.Error("relationship to a should have been preserved")
+	}
+
+	if len(a.R.ReportUserModerationWarnings) != 2 {
+		t.Error("should have preserved two relationships")
+	}
+
+	// Removal doesn't do a stable deletion for performance so we have to flip the order
+	if a.R.ReportUserModerationWarnings[1] != &d {
+		t.Error("relationship to d should have been preserved")
+	}
+	if a.R.ReportUserModerationWarnings[0] != &e {
+		t.Error("relationship to e should have been preserved")
+	}
+}
+
 func testUserReportToOneUserUsingReportedUser(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))

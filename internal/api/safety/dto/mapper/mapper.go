@@ -96,6 +96,15 @@ func MapReportDomainToDTO(report safetydomain.Report) dto.ReportResponse {
 		}
 	}
 
+	if report.ReportedUserStatus != nil {
+		resp.ReportedUserStatus = report.ReportedUserStatus
+	}
+
+	if report.ReportedUserSuspendedUntil != nil {
+		until := report.ReportedUserSuspendedUntil.UTC().Format(time.RFC3339)
+		resp.ReportedUserSuspendedUntil = &until
+	}
+
 	return resp
 }
 
@@ -103,6 +112,34 @@ func MapReportsDomainToDTO(reports []safetydomain.Report) []dto.ReportResponse {
 	out := make([]dto.ReportResponse, 0, len(reports))
 	for _, report := range reports {
 		out = append(out, MapReportDomainToDTO(report))
+	}
+
+	return out
+}
+
+func MapAccountStatusToDTO(summary safetydomain.AccountStatusSummary) dto.AccountStatusResponse {
+	resp := dto.AccountStatusResponse{
+		Status:            summary.Status,
+		HasPendingWarning: summary.HasPendingWarning,
+	}
+
+	if summary.SuspendedUntil != nil {
+		until := summary.SuspendedUntil.UTC().Format(time.RFC3339)
+		resp.SuspendedUntil = &until
+	}
+
+	return resp
+}
+
+func MapModerationWarningsToDTO(warnings []safetydomain.ModerationWarning) []dto.ModerationWarningResponse {
+	out := make([]dto.ModerationWarningResponse, 0, len(warnings))
+	for _, warning := range warnings {
+		out = append(out, dto.ModerationWarningResponse{
+			ID:        warning.ID,
+			Message:   warning.Message,
+			ReportID:  warning.ReportID,
+			CreatedAt: warning.CreatedAt.UTC().Format(time.RFC3339),
+		})
 	}
 
 	return out

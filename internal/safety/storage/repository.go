@@ -20,6 +20,7 @@ type ReportListFilter struct {
 	Offset     int
 }
 
+//go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
 type Repository interface {
 	CreateBlock(ctx context.Context, block *entity.UserBlock, tx *sql.Tx) error
 	IsBlockedPair(ctx context.Context, userID, otherUserID string) (bool, error)
@@ -30,6 +31,11 @@ type Repository interface {
 	ListReports(ctx context.Context, filter ReportListFilter) (entity.UserReportSlice, error)
 	UpdateReport(ctx context.Context, report *entity.UserReport, tx *sql.Tx) error
 	InsertReportAction(ctx context.Context, action *entity.ReportAction, tx *sql.Tx) error
+
+	InsertModerationWarning(ctx context.Context, warning *entity.UserModerationWarning, tx *sql.Tx) error
+	ListUnacknowledgedWarnings(ctx context.Context, userID string) (entity.UserModerationWarningSlice, error)
+	GetWarningByID(ctx context.Context, warningID string) (*entity.UserModerationWarning, error)
+	AcknowledgeWarning(ctx context.Context, warningID, userID string) error
 }
 
 type repository struct {
