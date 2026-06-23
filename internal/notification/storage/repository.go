@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+
+	"github.com/Haerd-Limited/dating-api/internal/entity"
 )
 
 type DeviceTokenRepository interface {
@@ -14,6 +17,7 @@ type DeviceTokenRepository interface {
 	DeleteToken(ctx context.Context, userID, token string) error
 	DeleteTokens(ctx context.Context, tokens []string) error
 	GetTokensByUserIDs(ctx context.Context, userIDs []string) (map[string][]string, error)
+	ListByUserID(ctx context.Context, userID string) ([]*entity.DeviceToken, error)
 	ListUserIDsWithTokens(ctx context.Context) ([]string, error)
 }
 
@@ -110,6 +114,18 @@ WHERE user_id = ANY($1)`
 	}
 
 	return result, nil
+}
+
+func (r *repository) ListByUserID(ctx context.Context, userID string) ([]*entity.DeviceToken, error) {
+	tokens, err := entity.DeviceTokens(
+		entity.DeviceTokenWhere.UserID.EQ(userID),
+		qm.OrderBy("created_at ASC"),
+	).All(ctx, r.db)
+	if err != nil {
+		return nil, fmt.Errorf("list device tokens userID=%s: %w", userID, err)
+	}
+
+	return tokens, nil
 }
 
 func (r *repository) ListUserIDsWithTokens(ctx context.Context) (userIDs []string, err error) {

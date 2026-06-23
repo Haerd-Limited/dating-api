@@ -182,8 +182,7 @@ func (s *service) sendNegativeFeedbackNotification(ctx context.Context, req feed
 		err := s.communicationService.SendSMS(phoneNumber, message)
 		if err != nil {
 			_ = commonlogger.LogError(s.logger, "failed to send negative feedback notification SMS", err,
-				zap.String("feedbackID", feedbackID),
-				zap.String("phoneNumber", phoneNumber))
+				zap.String("feedbackID", feedbackID))
 			// Continue sending to other numbers even if one fails
 		}
 	}

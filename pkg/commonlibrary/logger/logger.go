@@ -34,3 +34,7 @@ func New(cfg *config.Config) *zap.Logger {
 
 	return logger
 }
+
+// Logging hygiene (GDPR): do not log whole structs that may contain PII (profiles,
+// messages, swipes, coordinates, phone numbers). Log scalar identifiers only
+// (userID, conversationID, counts, booleans). See AGENTS.md "Logging hygiene".

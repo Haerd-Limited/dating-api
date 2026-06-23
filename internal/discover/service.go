@@ -134,7 +134,7 @@ func (s *service) GetDiscoverFeedWithFilters(ctx context.Context, userID string,
 
 	if preferenceUpdate != nil {
 		if err := s.discoverRepo.SaveUserDiscoverPreferences(ctx, userID, preferenceUpdate); err != nil {
-			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to persist discover preferences", err, zap.String("userID", userID), zap.Any("preferenceUpdate", preferenceUpdate))
+			return domain.DiscoverFeedResult{}, commonlogger.LogError(s.logger, "failed to persist discover preferences", err, zap.String("userID", userID))
 		}
 	}
 
@@ -280,7 +280,7 @@ func (s *service) GetVoiceWorthHearing(ctx context.Context, userID string) ([]pr
 
 	profiles, selectedIDs, err := s.selectVoiceWorthHearingProfiles(ctx, matcher, candidates, userID, &currentUserProfile, ethnicityByUser)
 	if err != nil {
-		return nil, commonlogger.LogError(s.logger, "select voice worth hearing profiles", err, zap.String("userID", userID), zap.Any("matcher", matcher), zap.Int("len(candidates)", len(candidates)), zap.Float64("currentUserProfile.Latitude", currentUserProfile.Latitude), zap.Float64("currentUserProfile.Longitude", currentUserProfile.Longitude), zap.Any("ethnicityByUser", ethnicityByUser))
+		return nil, commonlogger.LogError(s.logger, "select voice worth hearing profiles", err, zap.String("userID", userID), zap.Int("len(candidates)", len(candidates)))
 	}
 
 	if len(profiles) == 0 {

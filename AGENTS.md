@@ -294,7 +294,9 @@ func EntityToDomain(e *entity.SomeEntity) domain.SomeModel {
 
 9. **Log appropriately** - Use structured logging with zap, log errors in handlers, log important state changes in services
 
-10. **Update error mappings** - Always update `mapErrorsToStatusCodeAndUserFriendlyMessages` in handlers when adding new error types
+10. **Logging hygiene (GDPR)** - Never use `zap.Any` on whole structs that may contain PII (user profiles, messages, swipes, coordinates, phone numbers). Log scalar identifiers only: `userID`, `conversationID`, counts, booleans. See `pkg/commonlibrary/logger/logger.go`.
+
+11. **Update error mappings** - Always update `mapErrorsToStatusCodeAndUserFriendlyMessages` in handlers when adding new error types
 
 ## Key Reminders
 

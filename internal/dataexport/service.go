@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 
 	compatibilitystorage "github.com/Haerd-Limited/dating-api/internal/compatibility/storage"
+	consentstorage "github.com/Haerd-Limited/dating-api/internal/consent/storage"
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
 	"github.com/Haerd-Limited/dating-api/internal/dataexport/domain"
 	"github.com/Haerd-Limited/dating-api/internal/dataexport/storage"
@@ -18,6 +19,7 @@ import (
 	feedbackstorage "github.com/Haerd-Limited/dating-api/internal/feedback/storage"
 	insightstorage "github.com/Haerd-Limited/dating-api/internal/insights/storage"
 	interactionstorage "github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	notificationstorage "github.com/Haerd-Limited/dating-api/internal/notification/storage"
 	profilestorage "github.com/Haerd-Limited/dating-api/internal/profile/storage"
 	safetystorage "github.com/Haerd-Limited/dating-api/internal/safety/storage"
 	userstorage "github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -46,6 +48,8 @@ type service struct {
 	verificationRepo  verificationstorage.VerificationRepository
 	safetyRepo        safetystorage.Repository
 	compatibilityRepo compatibilitystorage.CompatibilityRepository
+	consentRepo       consentstorage.Repository
+	deviceTokenRepo   notificationstorage.DeviceTokenRepository
 }
 
 // NewService returns a new data export service.
@@ -62,6 +66,8 @@ func NewService(
 	verificationRepo verificationstorage.VerificationRepository,
 	safetyRepo safetystorage.Repository,
 	compatibilityRepo compatibilitystorage.CompatibilityRepository,
+	consentRepo consentstorage.Repository,
+	deviceTokenRepo notificationstorage.DeviceTokenRepository,
 ) Service {
 	return &service{
 		logger:            logger,
@@ -76,6 +82,8 @@ func NewService(
 		verificationRepo:  verificationRepo,
 		safetyRepo:        safetyRepo,
 		compatibilityRepo: compatibilityRepo,
+		consentRepo:       consentRepo,
+		deviceTokenRepo:   deviceTokenRepo,
 	}
 }
 
@@ -122,6 +130,8 @@ func (s *service) assembleExport(ctx context.Context, userID string) (*domain.Ex
 		Blocks:               nil,
 		Reports:              nil,
 		MatchingAnswers:      nil,
+		Consents:             nil,
+		DeviceTokens:         nil,
 	}
 
 	// Account
@@ -214,6 +224,18 @@ func (s *service) assembleExport(ctx context.Context, userID string) (*domain.Ex
 	answers, err := s.compatibilityRepo.GetUserAnswers(ctx, userID)
 	if err == nil {
 		payload.MatchingAnswers = userAnswersToExport(answers)
+	}
+
+	// Consents
+	consents, err := s.consentRepo.ListForUser(ctx, userID)
+	if err == nil {
+		payload.Consents = consentsToExport(consents)
+	}
+
+	// Device tokens
+	deviceTokens, err := s.deviceTokenRepo.ListByUserID(ctx, userID)
+	if err == nil {
+		payload.DeviceTokens = deviceTokensToExport(deviceTokens)
 	}
 
 	return payload, nil
@@ -667,6 +689,45 @@ func userAnswersToExport(answers entity.UserAnswerSlice) []domain.UserAnswerExpo
 			AnswerID:   a.AnswerID,
 			Importance: a.Importance,
 			UpdatedAt:  a.UpdatedAt,
+		})
+	}
+
+	return out
+}
+
+func consentsToExport(consents []*entity.UserConsent) []domain.ConsentExport {
+	out := make([]domain.ConsentExport, 0, len(consents))
+
+	for _, c := range consents {
+		var revokedAt *time.Time
+		if c.RevokedAt.Valid {
+			revokedAt = &c.RevokedAt.Time
+		}
+
+		out = append(out, domain.ConsentExport{
+			ConsentType: c.ConsentType,
+			Version:     c.Version,
+			Accepted:    c.Accepted,
+			AcceptedAt:  c.AcceptedAt,
+			RevokedAt:   revokedAt,
+		})
+	}
+
+	return out
+}
+
+func deviceTokensToExport(tokens []*entity.DeviceToken) []domain.DeviceTokenExport {
+	out := make([]domain.DeviceTokenExport, 0, len(tokens))
+
+	for _, t := range tokens {
+		createdAt := time.Time{}
+		if t.CreatedAt.Valid {
+			createdAt = t.CreatedAt.Time
+		}
+
+		out = append(out, domain.DeviceTokenExport{
+			Token:     t.Token,
+			CreatedAt: createdAt,
 		})
 	}
 

@@ -12,6 +12,7 @@ import "testing"
 // It does NOT run each operation group in parallel.
 // Separating the tests thusly grants avoidance of Postgres deadlocks.
 func TestParent(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogs)
 	t.Run("ConversationParticipants", testConversationParticipants)
 	t.Run("Conversations", testConversations)
 	t.Run("DataExportRequests", testDataExportRequests)
@@ -74,6 +75,7 @@ func TestParent(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsDelete)
 	t.Run("ConversationParticipants", testConversationParticipantsDelete)
 	t.Run("Conversations", testConversationsDelete)
 	t.Run("DataExportRequests", testDataExportRequestsDelete)
@@ -136,6 +138,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestQueryDeleteAll(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsQueryDeleteAll)
 	t.Run("ConversationParticipants", testConversationParticipantsQueryDeleteAll)
 	t.Run("Conversations", testConversationsQueryDeleteAll)
 	t.Run("DataExportRequests", testDataExportRequestsQueryDeleteAll)
@@ -198,6 +201,7 @@ func TestQueryDeleteAll(t *testing.T) {
 }
 
 func TestSliceDeleteAll(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsSliceDeleteAll)
 	t.Run("ConversationParticipants", testConversationParticipantsSliceDeleteAll)
 	t.Run("Conversations", testConversationsSliceDeleteAll)
 	t.Run("DataExportRequests", testDataExportRequestsSliceDeleteAll)
@@ -260,6 +264,7 @@ func TestSliceDeleteAll(t *testing.T) {
 }
 
 func TestExists(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsExists)
 	t.Run("ConversationParticipants", testConversationParticipantsExists)
 	t.Run("Conversations", testConversationsExists)
 	t.Run("DataExportRequests", testDataExportRequestsExists)
@@ -322,6 +327,7 @@ func TestExists(t *testing.T) {
 }
 
 func TestFind(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsFind)
 	t.Run("ConversationParticipants", testConversationParticipantsFind)
 	t.Run("Conversations", testConversationsFind)
 	t.Run("DataExportRequests", testDataExportRequestsFind)
@@ -384,6 +390,7 @@ func TestFind(t *testing.T) {
 }
 
 func TestBind(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsBind)
 	t.Run("ConversationParticipants", testConversationParticipantsBind)
 	t.Run("Conversations", testConversationsBind)
 	t.Run("DataExportRequests", testDataExportRequestsBind)
@@ -446,6 +453,7 @@ func TestBind(t *testing.T) {
 }
 
 func TestOne(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsOne)
 	t.Run("ConversationParticipants", testConversationParticipantsOne)
 	t.Run("Conversations", testConversationsOne)
 	t.Run("DataExportRequests", testDataExportRequestsOne)
@@ -508,6 +516,7 @@ func TestOne(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsAll)
 	t.Run("ConversationParticipants", testConversationParticipantsAll)
 	t.Run("Conversations", testConversationsAll)
 	t.Run("DataExportRequests", testDataExportRequestsAll)
@@ -570,6 +579,7 @@ func TestAll(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsCount)
 	t.Run("ConversationParticipants", testConversationParticipantsCount)
 	t.Run("Conversations", testConversationsCount)
 	t.Run("DataExportRequests", testDataExportRequestsCount)
@@ -632,6 +642,7 @@ func TestCount(t *testing.T) {
 }
 
 func TestHooks(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsHooks)
 	t.Run("ConversationParticipants", testConversationParticipantsHooks)
 	t.Run("Conversations", testConversationsHooks)
 	t.Run("DataExportRequests", testDataExportRequestsHooks)
@@ -694,6 +705,8 @@ func TestHooks(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsInsert)
+	t.Run("AdminAuditLogs", testAdminAuditLogsInsertWhitelist)
 	t.Run("ConversationParticipants", testConversationParticipantsInsert)
 	t.Run("ConversationParticipants", testConversationParticipantsInsertWhitelist)
 	t.Run("Conversations", testConversationsInsert)
@@ -815,6 +828,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestReload(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsReload)
 	t.Run("ConversationParticipants", testConversationParticipantsReload)
 	t.Run("Conversations", testConversationsReload)
 	t.Run("DataExportRequests", testDataExportRequestsReload)
@@ -877,6 +891,7 @@ func TestReload(t *testing.T) {
 }
 
 func TestReloadAll(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsReloadAll)
 	t.Run("ConversationParticipants", testConversationParticipantsReloadAll)
 	t.Run("Conversations", testConversationsReloadAll)
 	t.Run("DataExportRequests", testDataExportRequestsReloadAll)
@@ -939,6 +954,7 @@ func TestReloadAll(t *testing.T) {
 }
 
 func TestSelect(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsSelect)
 	t.Run("ConversationParticipants", testConversationParticipantsSelect)
 	t.Run("Conversations", testConversationsSelect)
 	t.Run("DataExportRequests", testDataExportRequestsSelect)
@@ -1001,6 +1017,7 @@ func TestSelect(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsUpdate)
 	t.Run("ConversationParticipants", testConversationParticipantsUpdate)
 	t.Run("Conversations", testConversationsUpdate)
 	t.Run("DataExportRequests", testDataExportRequestsUpdate)
@@ -1063,6 +1080,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestSliceUpdateAll(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsSliceUpdateAll)
 	t.Run("ConversationParticipants", testConversationParticipantsSliceUpdateAll)
 	t.Run("Conversations", testConversationsSliceUpdateAll)
 	t.Run("DataExportRequests", testDataExportRequestsSliceUpdateAll)

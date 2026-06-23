@@ -130,7 +130,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 
 	err = is.validateSwipe(ctx, swipe, matchable)
 	if err != nil {
-		return "", commonlogger.LogError(is.logger, "validate swipe", err, zap.Any("swipe", swipe))
+		return "", commonlogger.LogError(is.logger, "validate swipe", err, zap.String("actorID", swipe.UserID), zap.String("targetUserID", swipe.TargetUserID))
 	}
 
 	switch swipe.Action {

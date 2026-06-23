@@ -308,7 +308,7 @@ func (os *onboardingService) Intro(ctx context.Context, introDetails domain.Intr
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", introDetails.UserID), zap.Any("userProfile", userProfile))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", introDetails.UserID))
 	}
 
 	// Get genders and sexualities and populate Content
@@ -407,7 +407,7 @@ func (os *onboardingService) Basics(ctx context.Context, basicDetails domain.Bas
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", basicDetails.UserID), zap.Any("userProfile", userProfile))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", basicDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, basicDetails.UserID, StepForBasics)
@@ -440,7 +440,7 @@ func (os *onboardingService) Location(ctx context.Context, locationDetails domai
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", locationDetails.UserID), zap.Any("userProfile", userProfile))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", locationDetails.UserID))
 	}
 
 	habits, err := os.getHabits(ctx)
@@ -479,7 +479,7 @@ func (os *onboardingService) Lifestyle(ctx context.Context, lifestyleDetails dom
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", lifestyleDetails.UserID), zap.Any("userProfile", userProfile))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", lifestyleDetails.UserID))
 	}
 
 	religions, err := os.getReligions(ctx)
@@ -566,7 +566,7 @@ func (os *onboardingService) Beliefs(ctx context.Context, beliefDetails domain.B
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", beliefDetails.UserID), zap.Any("userProfile", userProfile))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", beliefDetails.UserID))
 	}
 
 	educationLevels, err := os.getEducationLevels(ctx)
@@ -611,7 +611,7 @@ func (os *onboardingService) Background(ctx context.Context, backgroundDetails d
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", backgroundDetails.UserID), zap.Any("userProfile", userProfile))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", backgroundDetails.UserID))
 	}
 
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, backgroundDetails.UserID, StepForBackground)
@@ -643,7 +643,7 @@ func (os *onboardingService) WorkAndEducation(ctx context.Context, waeDetails do
 
 	err = os.profileService.UpdateProfile(ctx, userProfile)
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", waeDetails.UserID), zap.Any("userProfile", userProfile))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "update user profile", err, zap.String("userID", waeDetails.UserID))
 	}
 
 	languages, err := os.getLanguages(ctx)
@@ -675,7 +675,7 @@ func (os *onboardingService) Photos(ctx context.Context, uploadedPhotos domain.U
 	// insert photos into user photos table
 	err = os.profileService.UpsertUserPhotos(ctx, uploadedPhotos.UserID, mapper.MapUploadedPhotosToProfilePhotos(uploadedPhotos))
 	if err != nil {
-		return domain.StepResult{}, commonlogger.LogError(os.logger, "insert user photos", err, zap.String("userID", uploadedPhotos.UserID), zap.Any("uploadedPhotos", uploadedPhotos))
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "insert user photos", err, zap.String("userID", uploadedPhotos.UserID), zap.Int("photoCount", len(uploadedPhotos.Photos)))
 	}
 
 	// generate prompt urls.

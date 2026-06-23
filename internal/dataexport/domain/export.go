@@ -20,6 +20,8 @@ type ExportPayload struct {
 	Blocks               []BlockExport               `json:"blocks"`
 	Reports              []ReportExport              `json:"reports"`
 	MatchingAnswers      []UserAnswerExport          `json:"matching_answers"`
+	Consents             []ConsentExport             `json:"consents"`
+	DeviceTokens         []DeviceTokenExport         `json:"device_tokens"`
 }
 
 // AccountExport is the user account record (no sensitive auth details).
@@ -184,4 +186,19 @@ type UserAnswerExport struct {
 	AnswerID   int64     `json:"answer_id"`
 	Importance string    `json:"importance"`
 	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// ConsentExport is a consent record (IP and user-agent omitted from export).
+type ConsentExport struct {
+	ConsentType string     `json:"consent_type"`
+	Version     string     `json:"version"`
+	Accepted    bool       `json:"accepted"`
+	AcceptedAt  time.Time  `json:"accepted_at"`
+	RevokedAt   *time.Time `json:"revoked_at,omitempty"`
+}
+
+// DeviceTokenExport is a push notification device token.
+type DeviceTokenExport struct {
+	Token     string    `json:"token"`
+	CreatedAt time.Time `json:"created_at"`
 }

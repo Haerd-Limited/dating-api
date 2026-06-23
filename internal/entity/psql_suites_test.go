@@ -6,6 +6,8 @@ package entity
 import "testing"
 
 func TestUpsert(t *testing.T) {
+	t.Run("AdminAuditLogs", testAdminAuditLogsUpsert)
+
 	t.Run("ConversationParticipants", testConversationParticipantsUpsert)
 
 	t.Run("Conversations", testConversationsUpsert)

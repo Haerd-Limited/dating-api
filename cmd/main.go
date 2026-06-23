@@ -18,6 +18,8 @@ import (
 	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/auditlog"
+	auditlogstorage "github.com/Haerd-Limited/dating-api/internal/auditlog/storage"
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	authstorage "github.com/Haerd-Limited/dating-api/internal/auth/storage"
 	"github.com/Haerd-Limited/dating-api/internal/aws"
@@ -230,6 +232,7 @@ func main() {
 	insSvc := insightsvc.NewService(logger, insRepo)
 
 	// Data export (GDPR)
+	consentRepo := consentstorage.NewRepository(db)
 	dataExportRepo := dataexportstorage.NewRepository(db)
 	dataExportService := dataexport.NewService(
 		logger,
@@ -244,11 +247,16 @@ func main() {
 		verificationRepo,
 		safetyRepo,
 		compatibilityRepo,
+		consentRepo,
+		deviceTokenRepo,
 	)
 
 	// Consent (GDPR)
-	consentRepo := consentstorage.NewRepository(db)
 	consentService := consent.NewService(logger, consentRepo)
+
+	// Admin audit log (GDPR)
+	auditLogRepo := auditlogstorage.NewRepository(db)
+	auditLogService := auditlog.NewService(logger, auditLogRepo)
 
 	// Retention purge (GDPR)
 	retentionService := retention.NewService(logger, db)
@@ -282,6 +290,7 @@ func main() {
 		consentService,
 		cfg.EnableConsentGate,
 		cfg.AdminAPIKey,
+		auditLogService,
 	)
 
 	// Start server with context

@@ -4,6 +4,7 @@
 package entity
 
 var TableNames = struct {
+	AdminAuditLog                string
 	ConversationParticipants     string
 	Conversations                string
 	DataExportRequests           string
@@ -67,6 +68,7 @@ var TableNames = struct {
 	VoiceWorthHearingWeekly      string
 	WrappedAnnual                string
 }{
+	AdminAuditLog:                "admin_audit_log",
 	ConversationParticipants:     "conversation_participants",
 	Conversations:                "conversations",
 	DataExportRequests:           "data_export_requests",

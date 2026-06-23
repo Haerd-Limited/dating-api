@@ -25,6 +25,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime"
 	apisafety "github.com/Haerd-Limited/dating-api/internal/api/safety"
 	"github.com/Haerd-Limited/dating-api/internal/api/verification"
+	internalauditlog "github.com/Haerd-Limited/dating-api/internal/auditlog"
 	internalauth "github.com/Haerd-Limited/dating-api/internal/auth"
 	internalbroadcast "github.com/Haerd-Limited/dating-api/internal/broadcast"
 	internalcompatibility "github.com/Haerd-Limited/dating-api/internal/compatibility"
@@ -74,6 +75,7 @@ func New(
 	consentService internalconsent.Service,
 	enableConsentGate bool,
 	adminAPIKey string,
+	auditLogService internalauditlog.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -281,6 +283,7 @@ func New(
 
 			r.Route("/admin", func(r chi.Router) {
 				r.Use(haerdmiddleware.AdminMiddleware(adminAPIKey))
+				r.Use(haerdmiddleware.AdminAudit(auditLogService, logger))
 
 				r.Route("/reports", func(r chi.Router) {
 					r.Get("/", safetyHandler.AdminListReports())

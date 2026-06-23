@@ -317,7 +317,7 @@ func (s *service) validateMessage(msg domain.Message) error {
 func (s *service) SendMessage(ctx context.Context, tx *sql.Tx, msg domain.Message) (domain.Message, error) {
 	err := s.validateMessage(msg)
 	if err != nil {
-		return domain.Message{}, commonlogger.LogError(s.logger, "validate message", err, zap.Any("message", msg))
+		return domain.Message{}, commonlogger.LogError(s.logger, "validate message", err, zap.String("senderID", msg.SenderID), zap.String("conversationID", msg.ConversationID))
 	}
 
 	msg.ID = s.flake.Next()
