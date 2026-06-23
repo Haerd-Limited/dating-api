@@ -44,6 +44,7 @@ type ReportAction struct {
 	ID            string
 	ReportID      string
 	ReviewerID    *string
+	ReviewerName  *string
 	ActionType    string
 	ActionPayload map[string]any
 	Notes         *string
@@ -71,12 +72,13 @@ type ReportListFilter struct {
 }
 
 type ResolveReportRequest struct {
-	ReportID   string
-	ReviewerID string
-	ActionType string
-	ActionData map[string]any
-	Notes      *string
-	NewStatus  ReportStatus
-	AutoAction *string
-	ResolvedAt *time.Time
+	ReportID     string
+	ReviewerID   string
+	ReviewerName string
+	ActionType   string
+	ActionData   map[string]any
+	Notes        *string
+	NewStatus    ReportStatus
+	AutoAction   *string
+	ResolvedAt   *time.Time
 }

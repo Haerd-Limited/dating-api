@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
@@ -30,7 +31,8 @@ type Repository interface {
 	GetReportByID(ctx context.Context, reportID string) (*entity.UserReport, error)
 	ListReports(ctx context.Context, filter ReportListFilter) (entity.UserReportSlice, error)
 	UpdateReport(ctx context.Context, report *entity.UserReport, tx *sql.Tx) error
-	InsertReportAction(ctx context.Context, action *entity.ReportAction, tx *sql.Tx) error
+	InsertReportAction(ctx context.Context, action *entity.ReportAction, reviewerName string, tx *sql.Tx) error
+	LoadReviewerNamesForReport(ctx context.Context, reportID string) (map[string]string, error)
 
 	InsertModerationWarning(ctx context.Context, warning *entity.UserModerationWarning, tx *sql.Tx) error
 	ListUnacknowledgedWarnings(ctx context.Context, userID string) (entity.UserModerationWarningSlice, error)
@@ -141,9 +143,58 @@ func (r *repository) UpdateReport(ctx context.Context, report *entity.UserReport
 	return err
 }
 
-func (r *repository) InsertReportAction(ctx context.Context, action *entity.ReportAction, tx *sql.Tx) error {
+func (r *repository) InsertReportAction(ctx context.Context, action *entity.ReportAction, reviewerName string, tx *sql.Tx) error {
 	exec := r.executor(tx)
-	return action.Insert(ctx, exec, boil.Infer())
+
+	var reviewerID interface{}
+	if action.ReviewerID.Valid {
+		reviewerID = action.ReviewerID.String
+	}
+
+	var payload interface{}
+	if action.ActionPayload.Valid {
+		payload = action.ActionPayload.JSON
+	}
+
+	var notes interface{}
+	if action.Notes.Valid {
+		notes = action.Notes.String
+	}
+
+	err := exec.QueryRowContext(ctx, `
+		INSERT INTO report_actions (report_id, reviewer_id, reviewer_name, action_type, action_payload, notes, created_at)
+		VALUES ($1, $2, NULLIF($3, ''), $4, $5, $6, $7)
+		RETURNING id
+	`, action.ReportID, reviewerID, reviewerName, action.ActionType, payload, notes, action.CreatedAt).Scan(&action.ID)
+	if err != nil {
+		return fmt.Errorf("insert report action: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) LoadReviewerNamesForReport(ctx context.Context, reportID string) (map[string]string, error) {
+	rows, err := r.db.QueryxContext(ctx, `
+		SELECT id, reviewer_name FROM report_actions WHERE report_id = $1 AND reviewer_name IS NOT NULL
+	`, reportID)
+	if err != nil {
+		return nil, fmt.Errorf("load reviewer names: %w", err)
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	out := make(map[string]string)
+
+	for rows.Next() {
+		var id, name string
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, err
+		}
+
+		out[id] = name
+	}
+
+	return out, rows.Err()
 }
 
 func (r *repository) executor(tx *sql.Tx) boil.ContextExecutor {

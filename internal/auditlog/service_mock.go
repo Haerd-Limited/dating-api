@@ -42,6 +42,21 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// ListEvents mocks base method.
+func (m *MockService) ListEvents(ctx context.Context, filter domain.ListFilter) ([]domain.EventRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEvents", ctx, filter)
+	ret0, _ := ret[0].([]domain.EventRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEvents indicates an expected call of ListEvents.
+func (mr *MockServiceMockRecorder) ListEvents(ctx, filter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvents", reflect.TypeOf((*MockService)(nil).ListEvents), ctx, filter)
+}
+
 // Record mocks base method.
 func (m *MockService) Record(ctx context.Context, entry domain.Entry) error {
 	m.ctrl.T.Helper()

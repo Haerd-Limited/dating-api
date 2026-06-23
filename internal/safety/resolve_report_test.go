@@ -75,7 +75,7 @@ func expectReportLoadAndUpdate(repo *safetystorage.MockRepository) {
 		ID:             "report-1",
 		ReportedUserID: reportedUserID,
 	}, nil)
-	repo.EXPECT().InsertReportAction(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	repo.EXPECT().InsertReportAction(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	repo.EXPECT().UpdateReport(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 }
 

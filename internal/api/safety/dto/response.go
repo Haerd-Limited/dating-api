@@ -26,10 +26,11 @@ type ReportResponse struct {
 }
 
 type ReportActionDTO struct {
-	ID         string         `json:"id"`
-	ActionType string         `json:"action_type"`
-	ActionData map[string]any `json:"action_data,omitempty"`
-	Notes      *string        `json:"notes,omitempty"`
-	ReviewerID *string        `json:"reviewer_id,omitempty"`
-	CreatedAt  string         `json:"created_at"`
+	ID           string         `json:"id"`
+	ActionType   string         `json:"action_type"`
+	ActionData   map[string]any `json:"action_data,omitempty"`
+	Notes        *string        `json:"notes,omitempty"`
+	ReviewerID   *string        `json:"reviewer_id,omitempty"`
+	ReviewerName *string        `json:"reviewer_name,omitempty"`
+	CreatedAt    string         `json:"created_at"`
 }

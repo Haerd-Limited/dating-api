@@ -203,10 +203,8 @@ func (h *handler) AdminResolveReport() http.HandlerFunc {
 			return
 		}
 
-		// Admin routes are authenticated via the static admin API key, not a user
-		// JWT, so there is usually no user ID in context. Record it as the reviewer
-		// when present (e.g. an internal caller), otherwise leave the reviewer null.
-		adminID, _ := commoncontext.UserIDFromContext(ctx)
+		// Admin routes use static API key + admin session for attribution.
+		_, displayName, _ := commoncontext.AdminActorFromContext(ctx)
 
 		var req dto.ResolveReportRequest
 		if err := request.DecodeAndValidate(r.Body, &req); err != nil {
@@ -217,7 +215,7 @@ func (h *handler) AdminResolveReport() http.HandlerFunc {
 			return
 		}
 
-		domainReq, err := dtoMapper.ResolveReportRequestToDomain(req, reportID, adminID)
+		domainReq, err := dtoMapper.ResolveReportRequestToDomain(req, reportID, "", displayName)
 		if err != nil {
 			render.Json(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return

@@ -21,24 +21,24 @@ var (
 	_ = queries.Equal
 )
 
-func testAdminAuditLogs(t *testing.T) {
+func testAdminSessions(t *testing.T) {
 	t.Parallel()
 
-	query := AdminAuditLogs()
+	query := AdminSessions()
 
 	if query.Query == nil {
 		t.Error("expected a query, got nothing")
 	}
 }
 
-func testAdminAuditLogsDelete(t *testing.T) {
+func testAdminSessionsDelete(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -54,7 +54,7 @@ func testAdminAuditLogsDelete(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,14 +64,14 @@ func testAdminAuditLogsDelete(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsQueryDeleteAll(t *testing.T) {
+func testAdminSessionsQueryDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -81,13 +81,13 @@ func testAdminAuditLogsQueryDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	if rowsAff, err := AdminAuditLogs().DeleteAll(ctx, tx); err != nil {
+	if rowsAff, err := AdminSessions().DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -97,14 +97,14 @@ func testAdminAuditLogsQueryDeleteAll(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsSliceDeleteAll(t *testing.T) {
+func testAdminSessionsSliceDeleteAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -114,7 +114,7 @@ func testAdminAuditLogsSliceDeleteAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := AdminAuditLogSlice{o}
+	slice := AdminSessionSlice{o}
 
 	if rowsAff, err := slice.DeleteAll(ctx, tx); err != nil {
 		t.Error(err)
@@ -122,7 +122,7 @@ func testAdminAuditLogsSliceDeleteAll(t *testing.T) {
 		t.Error("should only have deleted one row, but affected:", rowsAff)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,14 +132,14 @@ func testAdminAuditLogsSliceDeleteAll(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsExists(t *testing.T) {
+func testAdminSessionsExists(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -149,23 +149,23 @@ func testAdminAuditLogsExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := AdminAuditLogExists(ctx, tx, o.ID)
+	e, err := AdminSessionExists(ctx, tx, o.ID)
 	if err != nil {
-		t.Errorf("Unable to check if AdminAuditLog exists: %s", err)
+		t.Errorf("Unable to check if AdminSession exists: %s", err)
 	}
 	if !e {
-		t.Errorf("Expected AdminAuditLogExists to return true, but got false.")
+		t.Errorf("Expected AdminSessionExists to return true, but got false.")
 	}
 }
 
-func testAdminAuditLogsFind(t *testing.T) {
+func testAdminSessionsFind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -175,24 +175,24 @@ func testAdminAuditLogsFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	adminAuditLogFound, err := FindAdminAuditLog(ctx, tx, o.ID)
+	adminSessionFound, err := FindAdminSession(ctx, tx, o.ID)
 	if err != nil {
 		t.Error(err)
 	}
 
-	if adminAuditLogFound == nil {
+	if adminSessionFound == nil {
 		t.Error("want a record, got nil")
 	}
 }
 
-func testAdminAuditLogsBind(t *testing.T) {
+func testAdminSessionsBind(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -202,19 +202,19 @@ func testAdminAuditLogsBind(t *testing.T) {
 		t.Error(err)
 	}
 
-	if err = AdminAuditLogs().Bind(ctx, tx, o); err != nil {
+	if err = AdminSessions().Bind(ctx, tx, o); err != nil {
 		t.Error(err)
 	}
 }
 
-func testAdminAuditLogsOne(t *testing.T) {
+func testAdminSessionsOne(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -224,38 +224,38 @@ func testAdminAuditLogsOne(t *testing.T) {
 		t.Error(err)
 	}
 
-	if x, err := AdminAuditLogs().One(ctx, tx); err != nil {
+	if x, err := AdminSessions().One(ctx, tx); err != nil {
 		t.Error(err)
 	} else if x == nil {
 		t.Error("expected to get a non nil record")
 	}
 }
 
-func testAdminAuditLogsAll(t *testing.T) {
+func testAdminSessionsAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	adminAuditLogOne := &AdminAuditLog{}
-	adminAuditLogTwo := &AdminAuditLog{}
-	if err = randomize.Struct(seed, adminAuditLogOne, adminAuditLogDBTypes, false, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	adminSessionOne := &AdminSession{}
+	adminSessionTwo := &AdminSession{}
+	if err = randomize.Struct(seed, adminSessionOne, adminSessionDBTypes, false, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
-	if err = randomize.Struct(seed, adminAuditLogTwo, adminAuditLogDBTypes, false, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	if err = randomize.Struct(seed, adminSessionTwo, adminSessionDBTypes, false, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = adminAuditLogOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = adminSessionOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = adminAuditLogTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = adminSessionTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	slice, err := AdminAuditLogs().All(ctx, tx)
+	slice, err := AdminSessions().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -265,31 +265,31 @@ func testAdminAuditLogsAll(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsCount(t *testing.T) {
+func testAdminSessionsCount(t *testing.T) {
 	t.Parallel()
 
 	var err error
 	seed := randomize.NewSeed()
-	adminAuditLogOne := &AdminAuditLog{}
-	adminAuditLogTwo := &AdminAuditLog{}
-	if err = randomize.Struct(seed, adminAuditLogOne, adminAuditLogDBTypes, false, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	adminSessionOne := &AdminSession{}
+	adminSessionTwo := &AdminSession{}
+	if err = randomize.Struct(seed, adminSessionOne, adminSessionDBTypes, false, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
-	if err = randomize.Struct(seed, adminAuditLogTwo, adminAuditLogDBTypes, false, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	if err = randomize.Struct(seed, adminSessionTwo, adminSessionDBTypes, false, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = adminAuditLogOne.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = adminSessionOne.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
-	if err = adminAuditLogTwo.Insert(ctx, tx, boil.Infer()); err != nil {
+	if err = adminSessionTwo.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Error(err)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -299,155 +299,155 @@ func testAdminAuditLogsCount(t *testing.T) {
 	}
 }
 
-func adminAuditLogBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionBeforeInsertHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func adminAuditLogAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionAfterInsertHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func adminAuditLogAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionAfterSelectHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func adminAuditLogBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionBeforeUpdateHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func adminAuditLogAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionAfterUpdateHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func adminAuditLogBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionBeforeDeleteHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func adminAuditLogAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionAfterDeleteHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func adminAuditLogBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionBeforeUpsertHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func adminAuditLogAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *AdminAuditLog) error {
-	*o = AdminAuditLog{}
+func adminSessionAfterUpsertHook(ctx context.Context, e boil.ContextExecutor, o *AdminSession) error {
+	*o = AdminSession{}
 	return nil
 }
 
-func testAdminAuditLogsHooks(t *testing.T) {
+func testAdminSessionsHooks(t *testing.T) {
 	t.Parallel()
 
 	var err error
 
 	ctx := context.Background()
-	empty := &AdminAuditLog{}
-	o := &AdminAuditLog{}
+	empty := &AdminSession{}
+	o := &AdminSession{}
 
 	seed := randomize.NewSeed()
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, false); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog object: %s", err)
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, false); err != nil {
+		t.Errorf("Unable to randomize AdminSession object: %s", err)
 	}
 
-	AddAdminAuditLogHook(boil.BeforeInsertHook, adminAuditLogBeforeInsertHook)
+	AddAdminSessionHook(boil.BeforeInsertHook, adminSessionBeforeInsertHook)
 	if err = o.doBeforeInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeInsertHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogBeforeInsertHooks = []AdminAuditLogHook{}
+	adminSessionBeforeInsertHooks = []AdminSessionHook{}
 
-	AddAdminAuditLogHook(boil.AfterInsertHook, adminAuditLogAfterInsertHook)
+	AddAdminSessionHook(boil.AfterInsertHook, adminSessionAfterInsertHook)
 	if err = o.doAfterInsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterInsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterInsertHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogAfterInsertHooks = []AdminAuditLogHook{}
+	adminSessionAfterInsertHooks = []AdminSessionHook{}
 
-	AddAdminAuditLogHook(boil.AfterSelectHook, adminAuditLogAfterSelectHook)
+	AddAdminSessionHook(boil.AfterSelectHook, adminSessionAfterSelectHook)
 	if err = o.doAfterSelectHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterSelectHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterSelectHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogAfterSelectHooks = []AdminAuditLogHook{}
+	adminSessionAfterSelectHooks = []AdminSessionHook{}
 
-	AddAdminAuditLogHook(boil.BeforeUpdateHook, adminAuditLogBeforeUpdateHook)
+	AddAdminSessionHook(boil.BeforeUpdateHook, adminSessionBeforeUpdateHook)
 	if err = o.doBeforeUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpdateHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogBeforeUpdateHooks = []AdminAuditLogHook{}
+	adminSessionBeforeUpdateHooks = []AdminSessionHook{}
 
-	AddAdminAuditLogHook(boil.AfterUpdateHook, adminAuditLogAfterUpdateHook)
+	AddAdminSessionHook(boil.AfterUpdateHook, adminSessionAfterUpdateHook)
 	if err = o.doAfterUpdateHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpdateHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpdateHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogAfterUpdateHooks = []AdminAuditLogHook{}
+	adminSessionAfterUpdateHooks = []AdminSessionHook{}
 
-	AddAdminAuditLogHook(boil.BeforeDeleteHook, adminAuditLogBeforeDeleteHook)
+	AddAdminSessionHook(boil.BeforeDeleteHook, adminSessionBeforeDeleteHook)
 	if err = o.doBeforeDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeDeleteHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogBeforeDeleteHooks = []AdminAuditLogHook{}
+	adminSessionBeforeDeleteHooks = []AdminSessionHook{}
 
-	AddAdminAuditLogHook(boil.AfterDeleteHook, adminAuditLogAfterDeleteHook)
+	AddAdminSessionHook(boil.AfterDeleteHook, adminSessionAfterDeleteHook)
 	if err = o.doAfterDeleteHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterDeleteHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterDeleteHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogAfterDeleteHooks = []AdminAuditLogHook{}
+	adminSessionAfterDeleteHooks = []AdminSessionHook{}
 
-	AddAdminAuditLogHook(boil.BeforeUpsertHook, adminAuditLogBeforeUpsertHook)
+	AddAdminSessionHook(boil.BeforeUpsertHook, adminSessionBeforeUpsertHook)
 	if err = o.doBeforeUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doBeforeUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected BeforeUpsertHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogBeforeUpsertHooks = []AdminAuditLogHook{}
+	adminSessionBeforeUpsertHooks = []AdminSessionHook{}
 
-	AddAdminAuditLogHook(boil.AfterUpsertHook, adminAuditLogAfterUpsertHook)
+	AddAdminSessionHook(boil.AfterUpsertHook, adminSessionAfterUpsertHook)
 	if err = o.doAfterUpsertHooks(ctx, nil); err != nil {
 		t.Errorf("Unable to execute doAfterUpsertHooks: %s", err)
 	}
 	if !reflect.DeepEqual(o, empty) {
 		t.Errorf("Expected AfterUpsertHook function to empty object, but got: %#v", o)
 	}
-	adminAuditLogAfterUpsertHooks = []AdminAuditLogHook{}
+	adminSessionAfterUpsertHooks = []AdminSessionHook{}
 }
 
-func testAdminAuditLogsInsert(t *testing.T) {
+func testAdminSessionsInsert(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -457,7 +457,7 @@ func testAdminAuditLogsInsert(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -467,24 +467,24 @@ func testAdminAuditLogsInsert(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsInsertWhitelist(t *testing.T) {
+func testAdminSessionsInsertWhitelist(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
-	if err = o.Insert(ctx, tx, boil.Whitelist(strmangle.SetMerge(adminAuditLogPrimaryKeyColumns, adminAuditLogColumnsWithoutDefault)...)); err != nil {
+	if err = o.Insert(ctx, tx, boil.Whitelist(strmangle.SetMerge(adminSessionPrimaryKeyColumns, adminSessionColumnsWithoutDefault)...)); err != nil {
 		t.Error(err)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -494,14 +494,14 @@ func testAdminAuditLogsInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsReload(t *testing.T) {
+func testAdminSessionsReload(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -516,14 +516,14 @@ func testAdminAuditLogsReload(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsReloadAll(t *testing.T) {
+func testAdminSessionsReloadAll(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -533,21 +533,21 @@ func testAdminAuditLogsReloadAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice := AdminAuditLogSlice{o}
+	slice := AdminSessionSlice{o}
 
 	if err = slice.ReloadAll(ctx, tx); err != nil {
 		t.Error(err)
 	}
 }
 
-func testAdminAuditLogsSelect(t *testing.T) {
+func testAdminSessionsSelect(t *testing.T) {
 	t.Parallel()
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -557,7 +557,7 @@ func testAdminAuditLogsSelect(t *testing.T) {
 		t.Error(err)
 	}
 
-	slice, err := AdminAuditLogs().All(ctx, tx)
+	slice, err := AdminSessions().All(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -568,25 +568,25 @@ func testAdminAuditLogsSelect(t *testing.T) {
 }
 
 var (
-	adminAuditLogDBTypes = map[string]string{`ID`: `uuid`, `OccurredAt`: `timestamp with time zone`, `ActorIP`: `inet`, `TokenFP`: `text`, `Method`: `text`, `Path`: `text`, `TargetID`: `text`, `StatusCode`: `integer`, `ActorSessionID`: `uuid`, `ActorName`: `text`}
-	_                    = bytes.MinRead
+	adminSessionDBTypes = map[string]string{`ID`: `uuid`, `DisplayName`: `text`, `TokenHash`: `text`, `APIKeyFP`: `text`, `IP`: `inet`, `CreatedAt`: `timestamp with time zone`, `LastSeenAt`: `timestamp with time zone`, `ExpiresAt`: `timestamp with time zone`}
+	_                   = bytes.MinRead
 )
 
-func testAdminAuditLogsUpdate(t *testing.T) {
+func testAdminSessionsUpdate(t *testing.T) {
 	t.Parallel()
 
-	if 0 == len(adminAuditLogPrimaryKeyColumns) {
+	if 0 == len(adminSessionPrimaryKeyColumns) {
 		t.Skip("Skipping table with no primary key columns")
 	}
-	if len(adminAuditLogAllColumns) == len(adminAuditLogPrimaryKeyColumns) {
+	if len(adminSessionAllColumns) == len(adminSessionPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -596,7 +596,7 @@ func testAdminAuditLogsUpdate(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -605,8 +605,8 @@ func testAdminAuditLogsUpdate(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	if rowsAff, err := o.Update(ctx, tx, boil.Infer()); err != nil {
@@ -616,18 +616,18 @@ func testAdminAuditLogsUpdate(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsSliceUpdateAll(t *testing.T) {
+func testAdminSessionsSliceUpdateAll(t *testing.T) {
 	t.Parallel()
 
-	if len(adminAuditLogAllColumns) == len(adminAuditLogPrimaryKeyColumns) {
+	if len(adminSessionAllColumns) == len(adminSessionPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
-	o := &AdminAuditLog{}
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := &AdminSession{}
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
@@ -637,7 +637,7 @@ func testAdminAuditLogsSliceUpdateAll(t *testing.T) {
 		t.Error(err)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -646,18 +646,18 @@ func testAdminAuditLogsSliceUpdateAll(t *testing.T) {
 		t.Error("want one record, got:", count)
 	}
 
-	if err = randomize.Struct(seed, o, adminAuditLogDBTypes, true, adminAuditLogPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	if err = randomize.Struct(seed, o, adminSessionDBTypes, true, adminSessionPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	// Remove Primary keys and unique columns from what we plan to update
 	var fields []string
-	if strmangle.StringSliceMatch(adminAuditLogAllColumns, adminAuditLogPrimaryKeyColumns) {
-		fields = adminAuditLogAllColumns
+	if strmangle.StringSliceMatch(adminSessionAllColumns, adminSessionPrimaryKeyColumns) {
+		fields = adminSessionAllColumns
 	} else {
 		fields = strmangle.SetComplement(
-			adminAuditLogAllColumns,
-			adminAuditLogPrimaryKeyColumns,
+			adminSessionAllColumns,
+			adminSessionPrimaryKeyColumns,
 		)
 	}
 
@@ -675,7 +675,7 @@ func testAdminAuditLogsSliceUpdateAll(t *testing.T) {
 		}
 	}
 
-	slice := AdminAuditLogSlice{o}
+	slice := AdminSessionSlice{o}
 	if rowsAff, err := slice.UpdateAll(ctx, tx, updateMap); err != nil {
 		t.Error(err)
 	} else if rowsAff != 1 {
@@ -683,29 +683,29 @@ func testAdminAuditLogsSliceUpdateAll(t *testing.T) {
 	}
 }
 
-func testAdminAuditLogsUpsert(t *testing.T) {
+func testAdminSessionsUpsert(t *testing.T) {
 	t.Parallel()
 
-	if len(adminAuditLogAllColumns) == len(adminAuditLogPrimaryKeyColumns) {
+	if len(adminSessionAllColumns) == len(adminSessionPrimaryKeyColumns) {
 		t.Skip("Skipping table with only primary key columns")
 	}
 
 	seed := randomize.NewSeed()
 	var err error
 	// Attempt the INSERT side of an UPSERT
-	o := AdminAuditLog{}
-	if err = randomize.Struct(seed, &o, adminAuditLogDBTypes, true); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	o := AdminSession{}
+	if err = randomize.Struct(seed, &o, adminSessionDBTypes, true); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 	if err = o.Upsert(ctx, tx, false, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert AdminAuditLog: %s", err)
+		t.Errorf("Unable to upsert AdminSession: %s", err)
 	}
 
-	count, err := AdminAuditLogs().Count(ctx, tx)
+	count, err := AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}
@@ -714,15 +714,15 @@ func testAdminAuditLogsUpsert(t *testing.T) {
 	}
 
 	// Attempt the UPDATE side of an UPSERT
-	if err = randomize.Struct(seed, &o, adminAuditLogDBTypes, false, adminAuditLogPrimaryKeyColumns...); err != nil {
-		t.Errorf("Unable to randomize AdminAuditLog struct: %s", err)
+	if err = randomize.Struct(seed, &o, adminSessionDBTypes, false, adminSessionPrimaryKeyColumns...); err != nil {
+		t.Errorf("Unable to randomize AdminSession struct: %s", err)
 	}
 
 	if err = o.Upsert(ctx, tx, true, nil, boil.Infer(), boil.Infer()); err != nil {
-		t.Errorf("Unable to upsert AdminAuditLog: %s", err)
+		t.Errorf("Unable to upsert AdminSession: %s", err)
 	}
 
-	count, err = AdminAuditLogs().Count(ctx, tx)
+	count, err = AdminSessions().Count(ctx, tx)
 	if err != nil {
 		t.Error(err)
 	}

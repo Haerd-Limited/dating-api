@@ -37,7 +37,8 @@ type VerificationRepository interface {
 	// Admin video verification methods
 	ListVideoAttempts(ctx context.Context, filter domain.VideoAttemptFilter) ([]*entity.VerificationAttempt, error)
 	GetVideoAttemptByID(ctx context.Context, attemptID string) (*entity.VerificationAttempt, error)
-	UpdateVideoAttemptStatus(ctx context.Context, attemptID string, status string, rejectionReason *string) error
+	UpdateVideoAttemptStatus(ctx context.Context, attemptID string, status string, rejectionReason *string, review *domain.VideoReviewInfo) error
+	LoadReviewFields(ctx context.Context, attemptID string) (*domain.VideoReviewInfo, *time.Time, error)
 	// Data export
 	ListVerificationAttemptsByUserID(ctx context.Context, userID string) ([]*entity.VerificationAttempt, error)
 }
@@ -418,7 +419,7 @@ func (r *verificationRepository) GetVideoAttemptByID(ctx context.Context, attemp
 	return attempt, nil
 }
 
-func (r *verificationRepository) UpdateVideoAttemptStatus(ctx context.Context, attemptID string, status string, rejectionReason *string) error {
+func (r *verificationRepository) UpdateVideoAttemptStatus(ctx context.Context, attemptID string, status string, rejectionReason *string, review *domain.VideoReviewInfo) error {
 	attempt, err := entity.FindVerificationAttempt(ctx, r.db, attemptID)
 	if err != nil {
 		return fmt.Errorf("get video attempt: %w", err)
@@ -427,7 +428,6 @@ func (r *verificationRepository) UpdateVideoAttemptStatus(ctx context.Context, a
 	attempt.Status = status
 	attempt.UpdatedAt = time.Now().UTC()
 
-	// Store rejection reason in reason_codes JSON field, or clear it if approving
 	if rejectionReason != nil {
 		reasonCodesJSON, marshalErr := json.Marshal([]string{*rejectionReason})
 		if marshalErr != nil {
@@ -436,7 +436,6 @@ func (r *verificationRepository) UpdateVideoAttemptStatus(ctx context.Context, a
 
 		attempt.ReasonCodes = null.JSONFrom(reasonCodesJSON)
 	} else {
-		// Clear reason codes when approving
 		attempt.ReasonCodes = null.JSON{}
 	}
 
@@ -449,5 +448,78 @@ func (r *verificationRepository) UpdateVideoAttemptStatus(ctx context.Context, a
 		return fmt.Errorf("update video attempt status: %w", err)
 	}
 
+	reviewedAt := time.Now().UTC()
+
+	var reviewedByName, reviewedBySessionID, reviewNotes interface{}
+	reviewedByName = nil
+	reviewedBySessionID = nil
+	reviewNotes = nil
+
+	if review != nil {
+		if review.ReviewedByName != "" {
+			reviewedByName = review.ReviewedByName
+		}
+
+		if review.ReviewedBySessionID != "" {
+			reviewedBySessionID = review.ReviewedBySessionID
+		}
+
+		if review.ReviewNotes != nil && *review.ReviewNotes != "" {
+			reviewNotes = *review.ReviewNotes
+		}
+	}
+
+	_, err = r.db.ExecContext(ctx, `
+		UPDATE verification_attempts
+		SET reviewed_by_name = $2,
+		    reviewed_by_session_id = $3,
+		    reviewed_at = $4,
+		    review_notes = $5
+		WHERE id = $1
+	`, attemptID, reviewedByName, reviewedBySessionID, reviewedAt, reviewNotes)
+	if err != nil {
+		return fmt.Errorf("update video attempt review metadata: %w", err)
+	}
+
 	return nil
+}
+
+func (r *verificationRepository) LoadReviewFields(ctx context.Context, attemptID string) (*domain.VideoReviewInfo, *time.Time, error) {
+	var name sql.NullString
+
+	var sessionID sql.NullString
+
+	var reviewedAt sql.NullTime
+
+	var notes sql.NullString
+
+	err := r.db.QueryRowContext(ctx, `
+		SELECT reviewed_by_name, reviewed_by_session_id, reviewed_at, review_notes
+		FROM verification_attempts WHERE id = $1
+	`, attemptID).Scan(&name, &sessionID, &reviewedAt, &notes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("load review fields: %w", err)
+	}
+
+	var info *domain.VideoReviewInfo
+	if name.Valid {
+		info = &domain.VideoReviewInfo{ReviewedByName: name.String}
+		if sessionID.Valid {
+			info.ReviewedBySessionID = sessionID.String
+		}
+
+		if notes.Valid {
+			n := notes.String
+			info.ReviewNotes = &n
+		}
+	}
+
+	var at *time.Time
+
+	if reviewedAt.Valid {
+		t := reviewedAt.Time
+		at = &t
+	}
+
+	return info, at, nil
 }

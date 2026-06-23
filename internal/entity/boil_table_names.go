@@ -5,6 +5,7 @@ package entity
 
 var TableNames = struct {
 	AdminAuditLog                string
+	AdminSessions                string
 	ConversationParticipants     string
 	Conversations                string
 	DataExportRequests           string
@@ -70,6 +71,7 @@ var TableNames = struct {
 	WrappedAnnual                string
 }{
 	AdminAuditLog:                "admin_audit_log",
+	AdminSessions:                "admin_sessions",
 	ConversationParticipants:     "conversation_participants",
 	Conversations:                "conversations",
 	DataExportRequests:           "data_export_requests",

@@ -17,15 +17,17 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
+	adminrealtime "github.com/Haerd-Limited/dating-api/internal/adminrealtime"
 	realtimedto "github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	internalaws "github.com/Haerd-Limited/dating-api/internal/aws"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/notification"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	profiledomain "github.com/Haerd-Limited/dating-api/internal/profile/domain"
-	"github.com/Haerd-Limited/dating-api/internal/realtime"
+	realtimehub "github.com/Haerd-Limited/dating-api/internal/realtime"
 	"github.com/Haerd-Limited/dating-api/internal/verification/domain"
 	"github.com/Haerd-Limited/dating-api/internal/verification/storage"
+	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
@@ -50,7 +52,8 @@ type service struct {
 	awsService          internalaws.Service
 	profileService      profile.Service
 	notificationService notification.Service
-	hub                 realtime.Broadcaster
+	hub                 realtimehub.Broadcaster
+	adminHub            adminrealtime.Broadcaster
 }
 
 func NewVerificationService(
@@ -60,7 +63,8 @@ func NewVerificationService(
 	awsService internalaws.Service,
 	profileService profile.Service,
 	logger *zap.Logger,
-	hub realtime.Broadcaster,
+	hub realtimehub.Broadcaster,
+	adminHub adminrealtime.Broadcaster,
 	notificationService notification.Service,
 ) Service {
 	return &service{
@@ -71,6 +75,7 @@ func NewVerificationService(
 		profileService:      profileService,
 		logger:              logger,
 		hub:                 hub,
+		adminHub:            adminHub,
 		notificationService: notificationService,
 	}
 }
@@ -496,6 +501,7 @@ func (s *service) ListVideoAttempts(ctx context.Context, filter domain.VideoAtte
 
 	for _, attempt := range attempts {
 		videoAttempt := s.entityToVideoAttempt(attempt)
+		s.applyReviewFields(ctx, &videoAttempt)
 
 		// Fetch user's profile photos for comparison
 		photos, err := s.profileService.GetUserPhotos(ctx, attempt.UserID)
@@ -531,6 +537,7 @@ func (s *service) GetVideoAttempt(ctx context.Context, attemptID string) (*domai
 	}
 
 	videoAttempt := s.entityToVideoAttempt(attempt)
+	s.applyReviewFields(ctx, &videoAttempt)
 
 	// Fetch user's profile photos for comparison
 	photos, err := s.profileService.GetUserPhotos(ctx, attempt.UserID)
@@ -582,7 +589,9 @@ func (s *service) ApproveVideoAttempt(ctx context.Context, attemptID string, not
 	}
 
 	// Update status to passed
-	err = s.verificationRepo.UpdateVideoAttemptStatus(ctx, attemptID, entity.VerificationStatusPassed, nil)
+	review := buildReviewInfo(ctx, notes)
+
+	err = s.verificationRepo.UpdateVideoAttemptStatus(ctx, attemptID, entity.VerificationStatusPassed, nil, review)
 	if err != nil {
 		return commonlogger.LogError(s.logger, "update video attempt status", err, zap.String("attemptID", attemptID))
 	}
@@ -630,6 +639,7 @@ func (s *service) ApproveVideoAttempt(ctx context.Context, attemptID string, not
 		}()))
 
 	s.sendVerificationStatusEvent(attempt.UserID, entity.VerificationStatusPassed, attemptID, nil)
+	s.broadcastAdminVerificationUpdate(ctx, attemptID, entity.VerificationStatusPassed)
 
 	return nil
 }
@@ -658,7 +668,9 @@ func (s *service) RejectVideoAttempt(ctx context.Context, attemptID string, reje
 	}
 
 	// Update status to failed with rejection reason
-	err = s.verificationRepo.UpdateVideoAttemptStatus(ctx, attemptID, entity.VerificationStatusFailed, &rejectionReason)
+	review := buildReviewInfo(ctx, notes)
+
+	err = s.verificationRepo.UpdateVideoAttemptStatus(ctx, attemptID, entity.VerificationStatusFailed, &rejectionReason, review)
 	if err != nil {
 		return commonlogger.LogError(s.logger, "update video attempt status", err, zap.String("attemptID", attemptID))
 	}
@@ -697,6 +709,7 @@ func (s *service) RejectVideoAttempt(ctx context.Context, attemptID string, reje
 		}()))
 
 	s.sendVerificationStatusEvent(attempt.UserID, entity.VerificationStatusFailed, attemptID, &rejectionReason)
+	s.broadcastAdminVerificationUpdate(ctx, attemptID, entity.VerificationStatusFailed)
 
 	return nil
 }
@@ -734,6 +747,58 @@ func (s *service) entityToVideoAttempt(attempt *entity.VerificationAttempt) doma
 	}
 }
 
+func (s *service) applyReviewFields(ctx context.Context, attempt *domain.VideoAttempt) {
+	info, reviewedAt, err := s.verificationRepo.LoadReviewFields(ctx, attempt.ID)
+	if err != nil {
+		return
+	}
+
+	if info != nil && info.ReviewedByName != "" {
+		name := info.ReviewedByName
+		attempt.ReviewedByName = &name
+	}
+
+	if reviewedAt != nil {
+		attempt.ReviewedAt = reviewedAt
+	}
+
+	if info != nil && info.ReviewNotes != nil {
+		attempt.ReviewNotes = info.ReviewNotes
+	}
+}
+
+func buildReviewInfo(ctx context.Context, notes *string) *domain.VideoReviewInfo {
+	sessionID, name, ok := commoncontext.AdminActorFromContext(ctx)
+	if !ok || name == "" {
+		return nil
+	}
+
+	return &domain.VideoReviewInfo{
+		ReviewedByName:      name,
+		ReviewedBySessionID: sessionID,
+		ReviewNotes:         notes,
+	}
+}
+
+func (s *service) broadcastAdminVerificationUpdate(ctx context.Context, attemptID, status string) {
+	if s.adminHub == nil {
+		return
+	}
+
+	_, actorName, ok := commoncontext.AdminActorFromContext(ctx)
+	if !ok {
+		actorName = ""
+	}
+
+	s.adminHub.BroadcastEvent(adminrealtime.Event{
+		Type:         adminrealtime.EventVerificationUpdated,
+		ResourceType: "video_verification",
+		ResourceID:   attemptID,
+		ActorName:    actorName,
+		Status:       status,
+	})
+}
+
 // sendVerificationStatusEvent sends a WebSocket event when verification status changes
 func (s *service) sendVerificationStatusEvent(userID string, status string, attemptID string, reason *string) {
 	eventData := map[string]interface{}{
@@ -745,7 +810,7 @@ func (s *service) sendVerificationStatusEvent(userID string, status string, atte
 	}
 
 	evt := realtimedto.Event{
-		ID:        realtime.NewEventID(),
+		ID:        realtimehub.NewEventID(),
 		Type:      "verification.status_changed",
 		ActorID:   userID,
 		Ts:        time.Now(),

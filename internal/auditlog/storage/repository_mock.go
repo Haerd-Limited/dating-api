@@ -55,3 +55,18 @@ func (mr *MockRepositoryMockRecorder) Insert(ctx, entry any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Insert", reflect.TypeOf((*MockRepository)(nil).Insert), ctx, entry)
 }
+
+// ListEvents mocks base method.
+func (m *MockRepository) ListEvents(ctx context.Context, filter domain.ListFilter) ([]domain.Entry, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEvents", ctx, filter)
+	ret0, _ := ret[0].([]domain.Entry)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEvents indicates an expected call of ListEvents.
+func (mr *MockRepositoryMockRecorder) ListEvents(ctx, filter any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEvents", reflect.TypeOf((*MockRepository)(nil).ListEvents), ctx, filter)
+}

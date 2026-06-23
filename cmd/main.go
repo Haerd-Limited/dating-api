@@ -18,6 +18,9 @@ import (
 	_ "github.com/lib/pq" // <-- Add this line to register the Postgres driver
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/adminrealtime"
+	"github.com/Haerd-Limited/dating-api/internal/adminsession"
+	adminsessionstorage "github.com/Haerd-Limited/dating-api/internal/adminsession/storage"
 	"github.com/Haerd-Limited/dating-api/internal/auditlog"
 	auditlogstorage "github.com/Haerd-Limited/dating-api/internal/auditlog/storage"
 	"github.com/Haerd-Limited/dating-api/internal/auth"
@@ -142,6 +145,8 @@ func main() {
 	unitOfWork := uow.New(db.DB)
 
 	hub := realtime.NewHub()
+	adminHub := adminrealtime.NewHub()
+	adminPresence := adminrealtime.NewPresenceStore()
 	flake := ids.NewSnowflake(1)
 
 	rek, err := aws.NewRek(ctx, cfg.AWSRekognitionRegion)
@@ -189,7 +194,7 @@ func main() {
 	}
 
 	notificationService.StartWeeklyRefreshScheduler(ctx)
-	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger, hub, notificationService)
+	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger, hub, adminHub, notificationService)
 	matchSlotRepo := matchslotstorage.NewRepository(db)
 	matchSlotNotifier := matchslot.NewNotifier(logger, matchSlotRepo, hub, notificationService, profileService)
 	conversationService := conversation.NewConversationService(logger, conversationRepo, profileService, flake, hub, interactionRepo, scoreService, unitOfWork, notificationService, matchSlotNotifier)
@@ -197,7 +202,7 @@ func main() {
 	communicationService := communication.NewService(cfg.TwilioAccountSID, cfg.TwilioAuthToken, cfg.TwilioNumber)
 	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env, notificationPhoneNumbers)
-	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub, matchSlotNotifier, userService, authService, notificationService)
+	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub, adminHub, matchSlotNotifier, userService, authService, notificationService)
 	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService, matchSlotNotifier)
 	mediaService := media.NewMediaService(logger, awsService, openaiService)
 	backendEngineerPhoneNumbers := parsePhoneNumbers(cfg.BackendEngineerPhoneNumbers)
@@ -258,6 +263,9 @@ func main() {
 	auditLogRepo := auditlogstorage.NewRepository(db)
 	auditLogService := auditlog.NewService(logger, auditLogRepo)
 
+	adminSessionRepo := adminsessionstorage.NewRepository(db)
+	adminSessionService := adminsession.NewService(logger, adminSessionRepo, adminsession.ParseRoster(cfg.AdminRoster))
+
 	// Retention purge (GDPR)
 	retentionService := retention.NewService(logger, db)
 
@@ -291,6 +299,9 @@ func main() {
 		cfg.EnableConsentGate,
 		cfg.AdminAPIKey,
 		auditLogService,
+		adminSessionService,
+		adminHub,
+		adminPresence,
 	)
 
 	// Start server with context

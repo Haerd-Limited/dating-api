@@ -3,6 +3,7 @@ package auditlog
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,6 +14,7 @@ import (
 
 type Service interface {
 	Record(ctx context.Context, entry domain.Entry) error
+	ListEvents(ctx context.Context, filter domain.ListFilter) ([]domain.EventRow, error)
 }
 
 type service struct {
@@ -43,4 +45,23 @@ func (s *service) Record(ctx context.Context, entry domain.Entry) error {
 	}
 
 	return nil
+}
+
+func (s *service) ListEvents(ctx context.Context, filter domain.ListFilter) ([]domain.EventRow, error) {
+	entries, err := s.repo.ListEvents(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("list events: %w", err)
+	}
+
+	out := make([]domain.EventRow, 0, len(entries))
+
+	for _, e := range entries {
+		if !domain.IsMeaningfulAction(e.Method, e.Path) {
+			continue
+		}
+
+		out = append(out, domain.EntryToEventRow(e))
+	}
+
+	return out, nil
 }

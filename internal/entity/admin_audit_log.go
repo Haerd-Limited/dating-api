@@ -24,57 +24,67 @@ import (
 
 // AdminAuditLog is an object representing the database table.
 type AdminAuditLog struct {
-	ID         string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	OccurredAt time.Time   `boil:"occurred_at" json:"occurred_at" toml:"occurred_at" yaml:"occurred_at"`
-	ActorIP    null.String `boil:"actor_ip" json:"actor_ip,omitempty" toml:"actor_ip" yaml:"actor_ip,omitempty"`
-	TokenFP    null.String `boil:"token_fp" json:"token_fp,omitempty" toml:"token_fp" yaml:"token_fp,omitempty"`
-	Method     string      `boil:"method" json:"method" toml:"method" yaml:"method"`
-	Path       string      `boil:"path" json:"path" toml:"path" yaml:"path"`
-	TargetID   null.String `boil:"target_id" json:"target_id,omitempty" toml:"target_id" yaml:"target_id,omitempty"`
-	StatusCode null.Int    `boil:"status_code" json:"status_code,omitempty" toml:"status_code" yaml:"status_code,omitempty"`
+	ID             string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	OccurredAt     time.Time   `boil:"occurred_at" json:"occurred_at" toml:"occurred_at" yaml:"occurred_at"`
+	ActorIP        null.String `boil:"actor_ip" json:"actor_ip,omitempty" toml:"actor_ip" yaml:"actor_ip,omitempty"`
+	TokenFP        null.String `boil:"token_fp" json:"token_fp,omitempty" toml:"token_fp" yaml:"token_fp,omitempty"`
+	Method         string      `boil:"method" json:"method" toml:"method" yaml:"method"`
+	Path           string      `boil:"path" json:"path" toml:"path" yaml:"path"`
+	TargetID       null.String `boil:"target_id" json:"target_id,omitempty" toml:"target_id" yaml:"target_id,omitempty"`
+	StatusCode     null.Int    `boil:"status_code" json:"status_code,omitempty" toml:"status_code" yaml:"status_code,omitempty"`
+	ActorSessionID null.String `boil:"actor_session_id" json:"actor_session_id,omitempty" toml:"actor_session_id" yaml:"actor_session_id,omitempty"`
+	ActorName      null.String `boil:"actor_name" json:"actor_name,omitempty" toml:"actor_name" yaml:"actor_name,omitempty"`
 
 	R *adminAuditLogR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L adminAuditLogL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AdminAuditLogColumns = struct {
-	ID         string
-	OccurredAt string
-	ActorIP    string
-	TokenFP    string
-	Method     string
-	Path       string
-	TargetID   string
-	StatusCode string
+	ID             string
+	OccurredAt     string
+	ActorIP        string
+	TokenFP        string
+	Method         string
+	Path           string
+	TargetID       string
+	StatusCode     string
+	ActorSessionID string
+	ActorName      string
 }{
-	ID:         "id",
-	OccurredAt: "occurred_at",
-	ActorIP:    "actor_ip",
-	TokenFP:    "token_fp",
-	Method:     "method",
-	Path:       "path",
-	TargetID:   "target_id",
-	StatusCode: "status_code",
+	ID:             "id",
+	OccurredAt:     "occurred_at",
+	ActorIP:        "actor_ip",
+	TokenFP:        "token_fp",
+	Method:         "method",
+	Path:           "path",
+	TargetID:       "target_id",
+	StatusCode:     "status_code",
+	ActorSessionID: "actor_session_id",
+	ActorName:      "actor_name",
 }
 
 var AdminAuditLogTableColumns = struct {
-	ID         string
-	OccurredAt string
-	ActorIP    string
-	TokenFP    string
-	Method     string
-	Path       string
-	TargetID   string
-	StatusCode string
+	ID             string
+	OccurredAt     string
+	ActorIP        string
+	TokenFP        string
+	Method         string
+	Path           string
+	TargetID       string
+	StatusCode     string
+	ActorSessionID string
+	ActorName      string
 }{
-	ID:         "admin_audit_log.id",
-	OccurredAt: "admin_audit_log.occurred_at",
-	ActorIP:    "admin_audit_log.actor_ip",
-	TokenFP:    "admin_audit_log.token_fp",
-	Method:     "admin_audit_log.method",
-	Path:       "admin_audit_log.path",
-	TargetID:   "admin_audit_log.target_id",
-	StatusCode: "admin_audit_log.status_code",
+	ID:             "admin_audit_log.id",
+	OccurredAt:     "admin_audit_log.occurred_at",
+	ActorIP:        "admin_audit_log.actor_ip",
+	TokenFP:        "admin_audit_log.token_fp",
+	Method:         "admin_audit_log.method",
+	Path:           "admin_audit_log.path",
+	TargetID:       "admin_audit_log.target_id",
+	StatusCode:     "admin_audit_log.status_code",
+	ActorSessionID: "admin_audit_log.actor_session_id",
+	ActorName:      "admin_audit_log.actor_name",
 }
 
 // Generated where
@@ -226,23 +236,27 @@ func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNu
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var AdminAuditLogWhere = struct {
-	ID         whereHelperstring
-	OccurredAt whereHelpertime_Time
-	ActorIP    whereHelpernull_String
-	TokenFP    whereHelpernull_String
-	Method     whereHelperstring
-	Path       whereHelperstring
-	TargetID   whereHelpernull_String
-	StatusCode whereHelpernull_Int
+	ID             whereHelperstring
+	OccurredAt     whereHelpertime_Time
+	ActorIP        whereHelpernull_String
+	TokenFP        whereHelpernull_String
+	Method         whereHelperstring
+	Path           whereHelperstring
+	TargetID       whereHelpernull_String
+	StatusCode     whereHelpernull_Int
+	ActorSessionID whereHelpernull_String
+	ActorName      whereHelpernull_String
 }{
-	ID:         whereHelperstring{field: "\"admin_audit_log\".\"id\""},
-	OccurredAt: whereHelpertime_Time{field: "\"admin_audit_log\".\"occurred_at\""},
-	ActorIP:    whereHelpernull_String{field: "\"admin_audit_log\".\"actor_ip\""},
-	TokenFP:    whereHelpernull_String{field: "\"admin_audit_log\".\"token_fp\""},
-	Method:     whereHelperstring{field: "\"admin_audit_log\".\"method\""},
-	Path:       whereHelperstring{field: "\"admin_audit_log\".\"path\""},
-	TargetID:   whereHelpernull_String{field: "\"admin_audit_log\".\"target_id\""},
-	StatusCode: whereHelpernull_Int{field: "\"admin_audit_log\".\"status_code\""},
+	ID:             whereHelperstring{field: "\"admin_audit_log\".\"id\""},
+	OccurredAt:     whereHelpertime_Time{field: "\"admin_audit_log\".\"occurred_at\""},
+	ActorIP:        whereHelpernull_String{field: "\"admin_audit_log\".\"actor_ip\""},
+	TokenFP:        whereHelpernull_String{field: "\"admin_audit_log\".\"token_fp\""},
+	Method:         whereHelperstring{field: "\"admin_audit_log\".\"method\""},
+	Path:           whereHelperstring{field: "\"admin_audit_log\".\"path\""},
+	TargetID:       whereHelpernull_String{field: "\"admin_audit_log\".\"target_id\""},
+	StatusCode:     whereHelpernull_Int{field: "\"admin_audit_log\".\"status_code\""},
+	ActorSessionID: whereHelpernull_String{field: "\"admin_audit_log\".\"actor_session_id\""},
+	ActorName:      whereHelpernull_String{field: "\"admin_audit_log\".\"actor_name\""},
 }
 
 // AdminAuditLogRels is where relationship names are stored.
@@ -262,9 +276,9 @@ func (*adminAuditLogR) NewStruct() *adminAuditLogR {
 type adminAuditLogL struct{}
 
 var (
-	adminAuditLogAllColumns            = []string{"id", "occurred_at", "actor_ip", "token_fp", "method", "path", "target_id", "status_code"}
+	adminAuditLogAllColumns            = []string{"id", "occurred_at", "actor_ip", "token_fp", "method", "path", "target_id", "status_code", "actor_session_id", "actor_name"}
 	adminAuditLogColumnsWithoutDefault = []string{"method", "path"}
-	adminAuditLogColumnsWithDefault    = []string{"id", "occurred_at", "actor_ip", "token_fp", "target_id", "status_code"}
+	adminAuditLogColumnsWithDefault    = []string{"id", "occurred_at", "actor_ip", "token_fp", "target_id", "status_code", "actor_session_id", "actor_name"}
 	adminAuditLogPrimaryKeyColumns     = []string{"id"}
 	adminAuditLogGeneratedColumns      = []string{}
 )

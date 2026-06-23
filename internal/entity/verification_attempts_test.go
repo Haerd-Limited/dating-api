@@ -1015,7 +1015,7 @@ func testVerificationAttemptsSelect(t *testing.T) {
 }
 
 var (
-	verificationAttemptDBTypes = map[string]string{`ID`: `uuid`, `UserID`: `uuid`, `Type`: `enum.verification_type('photo','manual_video','video')`, `Status`: `enum.verification_status('pending','passed','failed','needs_review')`, `SessionID`: `text`, `LivenessScore`: `double precision`, `MatchScore`: `double precision`, `ReasonCodes`: `jsonb`, `BestFrameS3Key`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `ClientToken`: `text`, `VerificationCode`: `text`, `VideoS3Key`: `text`}
+	verificationAttemptDBTypes = map[string]string{`ID`: `uuid`, `UserID`: `uuid`, `Type`: `enum.verification_type('photo','manual_video','video')`, `Status`: `enum.verification_status('pending','passed','failed','needs_review')`, `SessionID`: `text`, `LivenessScore`: `double precision`, `MatchScore`: `double precision`, `ReasonCodes`: `jsonb`, `BestFrameS3Key`: `text`, `CreatedAt`: `timestamp with time zone`, `UpdatedAt`: `timestamp with time zone`, `ClientToken`: `text`, `VerificationCode`: `text`, `VideoS3Key`: `text`, `ReviewedByName`: `text`, `ReviewedBySessionID`: `uuid`, `ReviewedAt`: `timestamp with time zone`, `ReviewNotes`: `text`}
 	_                          = bytes.MinRead
 )
 

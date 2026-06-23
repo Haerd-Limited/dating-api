@@ -130,17 +130,17 @@ func (mr *MockRepositoryMockRecorder) InsertModerationWarning(ctx, warning, tx a
 }
 
 // InsertReportAction mocks base method.
-func (m *MockRepository) InsertReportAction(ctx context.Context, action *entity.ReportAction, tx *sql.Tx) error {
+func (m *MockRepository) InsertReportAction(ctx context.Context, action *entity.ReportAction, reviewerName string, tx *sql.Tx) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertReportAction", ctx, action, tx)
+	ret := m.ctrl.Call(m, "InsertReportAction", ctx, action, reviewerName, tx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InsertReportAction indicates an expected call of InsertReportAction.
-func (mr *MockRepositoryMockRecorder) InsertReportAction(ctx, action, tx any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) InsertReportAction(ctx, action, reviewerName, tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertReportAction", reflect.TypeOf((*MockRepository)(nil).InsertReportAction), ctx, action, tx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertReportAction", reflect.TypeOf((*MockRepository)(nil).InsertReportAction), ctx, action, reviewerName, tx)
 }
 
 // IsBlockedPair mocks base method.
@@ -201,6 +201,21 @@ func (m *MockRepository) ListUnacknowledgedWarnings(ctx context.Context, userID 
 func (mr *MockRepositoryMockRecorder) ListUnacknowledgedWarnings(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUnacknowledgedWarnings", reflect.TypeOf((*MockRepository)(nil).ListUnacknowledgedWarnings), ctx, userID)
+}
+
+// LoadReviewerNamesForReport mocks base method.
+func (m *MockRepository) LoadReviewerNamesForReport(ctx context.Context, reportID string) (map[string]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoadReviewerNamesForReport", ctx, reportID)
+	ret0, _ := ret[0].(map[string]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadReviewerNamesForReport indicates an expected call of LoadReviewerNamesForReport.
+func (mr *MockRepositoryMockRecorder) LoadReviewerNamesForReport(ctx, reportID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadReviewerNamesForReport", reflect.TypeOf((*MockRepository)(nil).LoadReviewerNamesForReport), ctx, reportID)
 }
 
 // UpdateReport mocks base method.

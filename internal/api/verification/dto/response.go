@@ -35,6 +35,9 @@ type VideoAttemptResponse struct {
 	Status           string          `json:"status"`
 	RejectionReason  *string         `json:"rejection_reason,omitempty"`
 	Photos           []PhotoResponse `json:"photos"`
+	ReviewedByName   *string         `json:"reviewed_by_name,omitempty"`
+	ReviewedAt       *time.Time      `json:"reviewed_at,omitempty"`
+	ReviewNotes      *string         `json:"review_notes,omitempty"`
 	CreatedAt        time.Time       `json:"created_at"`
 	UpdatedAt        time.Time       `json:"updated_at"`
 }

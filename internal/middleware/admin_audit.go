@@ -11,6 +11,7 @@ import (
 
 	internalauditlog "github.com/Haerd-Limited/dating-api/internal/auditlog"
 	"github.com/Haerd-Limited/dating-api/internal/auditlog/domain"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/request"
 )
 
@@ -22,6 +23,10 @@ type statusRecorder struct {
 func (r *statusRecorder) WriteHeader(code int) {
 	r.status = code
 	r.ResponseWriter.WriteHeader(code)
+}
+
+func (r *statusRecorder) Unwrap() http.ResponseWriter {
+	return r.ResponseWriter
 }
 
 // AdminAudit logs every request under /admin for breach-reconstruction (GDPR Art. 33).
@@ -48,6 +53,13 @@ func AdminAudit(svc internalauditlog.Service, logger *zap.Logger) func(http.Hand
 
 			if targetID := adminTargetID(r); targetID != "" {
 				entry.TargetID = &targetID
+			}
+
+			if sessionID, displayName, ok := context.AdminActorFromContext(r.Context()); ok {
+				entry.ActorSessionID = &sessionID
+				if displayName != "" {
+					entry.ActorName = &displayName
+				}
 			}
 
 			if err := svc.Record(r.Context(), entry); err != nil {

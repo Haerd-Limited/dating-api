@@ -31,6 +31,7 @@ type ReportAction struct {
 	ActionPayload null.JSON   `boil:"action_payload" json:"action_payload,omitempty" toml:"action_payload" yaml:"action_payload,omitempty"`
 	Notes         null.String `boil:"notes" json:"notes,omitempty" toml:"notes" yaml:"notes,omitempty"`
 	CreatedAt     time.Time   `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	ReviewerName  null.String `boil:"reviewer_name" json:"reviewer_name,omitempty" toml:"reviewer_name" yaml:"reviewer_name,omitempty"`
 
 	R *reportActionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L reportActionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -44,6 +45,7 @@ var ReportActionColumns = struct {
 	ActionPayload string
 	Notes         string
 	CreatedAt     string
+	ReviewerName  string
 }{
 	ID:            "id",
 	ReportID:      "report_id",
@@ -52,6 +54,7 @@ var ReportActionColumns = struct {
 	ActionPayload: "action_payload",
 	Notes:         "notes",
 	CreatedAt:     "created_at",
+	ReviewerName:  "reviewer_name",
 }
 
 var ReportActionTableColumns = struct {
@@ -62,6 +65,7 @@ var ReportActionTableColumns = struct {
 	ActionPayload string
 	Notes         string
 	CreatedAt     string
+	ReviewerName  string
 }{
 	ID:            "report_actions.id",
 	ReportID:      "report_actions.report_id",
@@ -70,6 +74,7 @@ var ReportActionTableColumns = struct {
 	ActionPayload: "report_actions.action_payload",
 	Notes:         "report_actions.notes",
 	CreatedAt:     "report_actions.created_at",
+	ReviewerName:  "report_actions.reviewer_name",
 }
 
 // Generated where
@@ -106,6 +111,7 @@ var ReportActionWhere = struct {
 	ActionPayload whereHelpernull_JSON
 	Notes         whereHelpernull_String
 	CreatedAt     whereHelpertime_Time
+	ReviewerName  whereHelpernull_String
 }{
 	ID:            whereHelperstring{field: "\"report_actions\".\"id\""},
 	ReportID:      whereHelperstring{field: "\"report_actions\".\"report_id\""},
@@ -114,6 +120,7 @@ var ReportActionWhere = struct {
 	ActionPayload: whereHelpernull_JSON{field: "\"report_actions\".\"action_payload\""},
 	Notes:         whereHelpernull_String{field: "\"report_actions\".\"notes\""},
 	CreatedAt:     whereHelpertime_Time{field: "\"report_actions\".\"created_at\""},
+	ReviewerName:  whereHelpernull_String{field: "\"report_actions\".\"reviewer_name\""},
 }
 
 // ReportActionRels is where relationship names are stored.
@@ -172,9 +179,9 @@ func (r *reportActionR) GetReviewer() *User {
 type reportActionL struct{}
 
 var (
-	reportActionAllColumns            = []string{"id", "report_id", "reviewer_id", "action_type", "action_payload", "notes", "created_at"}
+	reportActionAllColumns            = []string{"id", "report_id", "reviewer_id", "action_type", "action_payload", "notes", "created_at", "reviewer_name"}
 	reportActionColumnsWithoutDefault = []string{"report_id", "action_type"}
-	reportActionColumnsWithDefault    = []string{"id", "reviewer_id", "action_payload", "notes", "created_at"}
+	reportActionColumnsWithDefault    = []string{"id", "reviewer_id", "action_payload", "notes", "created_at", "reviewer_name"}
 	reportActionPrimaryKeyColumns     = []string{"id"}
 	reportActionGeneratedColumns      = []string{}
 )

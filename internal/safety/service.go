@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
+	adminrealtime "github.com/Haerd-Limited/dating-api/internal/adminrealtime"
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/auth"
 	conversationdomain "github.com/Haerd-Limited/dating-api/internal/conversation/domain"
@@ -24,6 +25,7 @@ import (
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
 	commonanalytics "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/analytics"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	commoncontext "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/context"
 	commonlogger "github.com/Haerd-Limited/dating-api/pkg/commonlibrary/logger"
 )
 
@@ -48,6 +50,7 @@ type service struct {
 	conversationRepo    conversationstorage.ConversationRepository
 	uow                 uow.UoW
 	hub                 realtimehub.Broadcaster
+	adminHub            adminrealtime.Broadcaster
 	matchSlotNotifier   matchslot.Notifier
 	userService         user.Service
 	authService         auth.Service
@@ -60,6 +63,7 @@ func NewService(
 	conversationRepo conversationstorage.ConversationRepository,
 	uow uow.UoW,
 	hub realtimehub.Broadcaster,
+	adminHub adminrealtime.Broadcaster,
 	matchSlotNotifier matchslot.Notifier,
 	userService user.Service,
 	authService auth.Service,
@@ -71,6 +75,7 @@ func NewService(
 		conversationRepo:    conversationRepo,
 		uow:                 uow,
 		hub:                 hub,
+		adminHub:            adminHub,
 		matchSlotNotifier:   matchSlotNotifier,
 		userService:         userService,
 		authService:         authService,
@@ -260,6 +265,8 @@ func (s *service) GetReport(ctx context.Context, reportID string) (*safetydomain
 		return nil, commonlogger.LogError(s.logger, "map report entity to domain", err, zap.String("reportID", reportID))
 	}
 
+	s.enrichReportActionReviewerNames(ctx, reportID, &reportDomain)
+
 	accountState, err := s.userService.GetAccountGateState(ctx, reportEntity.ReportedUserID)
 	if err != nil {
 		return nil, commonlogger.LogError(s.logger, "get reported user account state", err, zap.String("reportID", reportID))
@@ -311,7 +318,7 @@ func (s *service) ResolveReport(ctx context.Context, req safetydomain.ResolveRep
 
 	defer func() { _ = tx.Rollback() }()
 
-	if err := s.repo.InsertReportAction(ctx, actionEntity, tx.Raw()); err != nil {
+	if err := s.repo.InsertReportAction(ctx, actionEntity, req.ReviewerName, tx.Raw()); err != nil {
 		return commonlogger.LogError(s.logger, "insert report action", err, zap.String("reportID", req.ReportID))
 	}
 
@@ -331,6 +338,7 @@ func (s *service) ResolveReport(ctx context.Context, req safetydomain.ResolveRep
 	}
 
 	s.runPostCommitModerationEffects(ctx, sideEffect)
+	s.broadcastAdminReportUpdate(ctx, req.ReportID, string(req.NewStatus))
 
 	return nil
 }
@@ -341,6 +349,38 @@ func (s *service) notifySlotFreedIfWasAtLimit(ctx context.Context, userID string
 	}
 
 	s.matchSlotNotifier.NotifySlotFreed(ctx, userID)
+}
+
+func (s *service) enrichReportActionReviewerNames(ctx context.Context, reportID string, report *safetydomain.Report) {
+	names, err := s.repo.LoadReviewerNamesForReport(ctx, reportID)
+	if err != nil {
+		return
+	}
+
+	for i := range report.Actions {
+		if name, ok := names[report.Actions[i].ID]; ok {
+			report.Actions[i].ReviewerName = &name
+		}
+	}
+}
+
+func (s *service) broadcastAdminReportUpdate(ctx context.Context, reportID, status string) {
+	if s.adminHub == nil {
+		return
+	}
+
+	_, actorName, ok := commoncontext.AdminActorFromContext(ctx)
+	if !ok {
+		actorName = ""
+	}
+
+	s.adminHub.BroadcastEvent(adminrealtime.Event{
+		Type:         adminrealtime.EventReportUpdated,
+		ResourceType: "report",
+		ResourceID:   reportID,
+		ActorName:    actorName,
+		Status:       status,
+	})
 }
 
 func (s *service) broadcastBlockEvent(blockerID, blockedID string, convoID *string) {

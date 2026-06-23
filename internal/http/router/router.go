@@ -8,6 +8,11 @@ import (
 	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 
+	"github.com/Haerd-Limited/dating-api/internal/adminrealtime"
+	internaladminsession "github.com/Haerd-Limited/dating-api/internal/adminsession"
+	apiadminrealtime "github.com/Haerd-Limited/dating-api/internal/api/adminrealtime"
+	apiadminsession "github.com/Haerd-Limited/dating-api/internal/api/adminsession"
+	apiauditlog "github.com/Haerd-Limited/dating-api/internal/api/auditlog"
 	"github.com/Haerd-Limited/dating-api/internal/api/auth"
 	apibroadcast "github.com/Haerd-Limited/dating-api/internal/api/broadcast"
 	"github.com/Haerd-Limited/dating-api/internal/api/compatibility"
@@ -76,6 +81,9 @@ func New(
 	enableConsentGate bool,
 	adminAPIKey string,
 	auditLogService internalauditlog.Service,
+	adminSessionService internaladminsession.Service,
+	adminHub *adminrealtime.Hub,
+	adminPresence *adminrealtime.PresenceStore,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -95,7 +103,7 @@ func New(
 			"https://haerd-admin-dashboard.up.railway.app",
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Admin-Token"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-Admin-Token", "X-Admin-Session"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
@@ -122,6 +130,9 @@ func New(
 	insightsHandler := apiinsights.NewHandler(logger, insightsService)
 	feedbackHandler := apifeedback.NewFeedbackHandler(logger, feedbackService)
 	broadcastHandler := apibroadcast.NewHandler(logger, broadcastService)
+	adminSessionHandler := apiadminsession.NewHandler(logger, adminSessionService)
+	adminRealtimeHandler := apiadminrealtime.NewHandler(logger, adminHub, adminPresence)
+	auditLogHandler := apiauditlog.NewHandler(logger, auditLogService)
 
 	// Define the /alive endpoint.
 	registerAliveEndpoint(router)
@@ -287,37 +298,54 @@ func New(
 			})
 
 			r.Route("/admin", func(r chi.Router) {
-				r.Use(haerdmiddleware.AdminMiddleware(adminAPIKey))
-				r.Use(haerdmiddleware.AdminAudit(auditLogService, logger))
+				r.With(haerdmiddleware.AdminSessionFromQuery(adminSessionService)).Get("/stream", adminRealtimeHandler.Stream())
 
-				r.Route("/reports", func(r chi.Router) {
-					r.Get("/", safetyHandler.AdminListReports())
-					r.Get("/{reportID}", safetyHandler.AdminGetReport())
-					r.Post("/{reportID}/resolve", safetyHandler.AdminResolveReport())
+				r.Group(func(r chi.Router) {
+					r.Use(haerdmiddleware.AdminMiddleware(adminAPIKey))
+
+					r.Get("/roster", adminSessionHandler.GetRoster())
+					r.Post("/session", adminSessionHandler.CreateSession())
 				})
 
-				r.Route("/analytics", func(r chi.Router) {
-					r.Route("/retention", func(r chi.Router) {
-						r.Get("/", insightsHandler.GetRetentionStats())
-						r.Get("/cohorts", insightsHandler.GetRetentionCohorts())
-						r.Get("/global", insightsHandler.GetGlobalRetentionStats())
-						r.Get("/users/{userID}", insightsHandler.GetUserRetentionProfile())
+				r.Group(func(r chi.Router) {
+					r.Use(haerdmiddleware.AdminMiddleware(adminAPIKey))
+					r.Use(haerdmiddleware.AdminSession(adminSessionService))
+					r.Use(haerdmiddleware.AdminAudit(auditLogService, logger))
+
+					r.Delete("/session", adminSessionHandler.DeleteSession())
+					r.Get("/events", auditLogHandler.ListEvents())
+					r.Post("/presence", adminRealtimeHandler.SetPresence())
+					r.Delete("/presence", adminRealtimeHandler.ClearPresence())
+
+					r.Route("/reports", func(r chi.Router) {
+						r.Get("/", safetyHandler.AdminListReports())
+						r.Get("/{reportID}", safetyHandler.AdminGetReport())
+						r.Post("/{reportID}/resolve", safetyHandler.AdminResolveReport())
 					})
-				})
 
-				r.Route("/verification", func(r chi.Router) {
-					r.Route("/video-attempts", func(r chi.Router) {
-						r.Get("/", verificationHandler.AdminListVideoAttempts())
-						r.Get("/{attemptID}", verificationHandler.AdminGetVideoAttempt())
-						r.Get("/{attemptID}/video-url", verificationHandler.AdminGetVideoDownloadURL())
-						r.Post("/{attemptID}/approve", verificationHandler.AdminApproveVideoAttempt())
-						r.Post("/{attemptID}/reject", verificationHandler.AdminRejectVideoAttempt())
+					r.Route("/analytics", func(r chi.Router) {
+						r.Route("/retention", func(r chi.Router) {
+							r.Get("/", insightsHandler.GetRetentionStats())
+							r.Get("/cohorts", insightsHandler.GetRetentionCohorts())
+							r.Get("/global", insightsHandler.GetGlobalRetentionStats())
+							r.Get("/users/{userID}", insightsHandler.GetUserRetentionProfile())
+						})
 					})
-				})
 
-				r.Route("/waitlist", func(r chi.Router) {
-					r.Get("/users", broadcastHandler.ListWaitlistUsers())
-					r.Post("/broadcast", broadcastHandler.SendBroadcast())
+					r.Route("/verification", func(r chi.Router) {
+						r.Route("/video-attempts", func(r chi.Router) {
+							r.Get("/", verificationHandler.AdminListVideoAttempts())
+							r.Get("/{attemptID}", verificationHandler.AdminGetVideoAttempt())
+							r.Get("/{attemptID}/video-url", verificationHandler.AdminGetVideoDownloadURL())
+							r.Post("/{attemptID}/approve", verificationHandler.AdminApproveVideoAttempt())
+							r.Post("/{attemptID}/reject", verificationHandler.AdminRejectVideoAttempt())
+						})
+					})
+
+					r.Route("/waitlist", func(r chi.Router) {
+						r.Get("/users", broadcastHandler.ListWaitlistUsers())
+						r.Post("/broadcast", broadcastHandler.SendBroadcast())
+					})
 				})
 			})
 		},

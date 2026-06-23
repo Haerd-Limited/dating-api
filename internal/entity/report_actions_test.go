@@ -856,7 +856,7 @@ func testReportActionsSelect(t *testing.T) {
 }
 
 var (
-	reportActionDBTypes = map[string]string{`ID`: `uuid`, `ReportID`: `uuid`, `ReviewerID`: `uuid`, `ActionType`: `text`, `ActionPayload`: `jsonb`, `Notes`: `text`, `CreatedAt`: `timestamp with time zone`}
+	reportActionDBTypes = map[string]string{`ID`: `uuid`, `ReportID`: `uuid`, `ReviewerID`: `uuid`, `ActionType`: `text`, `ActionPayload`: `jsonb`, `Notes`: `text`, `CreatedAt`: `timestamp with time zone`, `ReviewerName`: `text`}
 	_                   = bytes.MinRead
 )
 

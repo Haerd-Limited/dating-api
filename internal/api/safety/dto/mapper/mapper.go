@@ -30,7 +30,7 @@ func ReportRequestToDomain(req dto.ReportRequest, reporterID string) safetydomai
 	}
 }
 
-func ResolveReportRequestToDomain(req dto.ResolveReportRequest, reportID, reviewerID string) (safetydomain.ResolveReportRequest, error) {
+func ResolveReportRequestToDomain(req dto.ResolveReportRequest, reportID, reviewerID, reviewerName string) (safetydomain.ResolveReportRequest, error) {
 	var resolvedAt *time.Time
 
 	if req.ResolvedAt != nil {
@@ -46,14 +46,15 @@ func ResolveReportRequestToDomain(req dto.ResolveReportRequest, reportID, review
 	}
 
 	return safetydomain.ResolveReportRequest{
-		ReportID:   reportID,
-		ReviewerID: reviewerID,
-		ActionType: req.ActionType,
-		ActionData: req.ActionData,
-		Notes:      req.Notes,
-		NewStatus:  safetydomain.ReportStatus(req.NewStatus),
-		AutoAction: req.AutoAction,
-		ResolvedAt: resolvedAt,
+		ReportID:     reportID,
+		ReviewerID:   reviewerID,
+		ReviewerName: reviewerName,
+		ActionType:   req.ActionType,
+		ActionData:   req.ActionData,
+		Notes:        req.Notes,
+		NewStatus:    safetydomain.ReportStatus(req.NewStatus),
+		AutoAction:   req.AutoAction,
+		ResolvedAt:   resolvedAt,
 	}, nil
 }
 
@@ -84,12 +85,13 @@ func MapReportDomainToDTO(report safetydomain.Report) dto.ReportResponse {
 
 		for _, action := range report.Actions {
 			actionDTO := dto.ReportActionDTO{
-				ID:         action.ID,
-				ActionType: action.ActionType,
-				ActionData: action.ActionPayload,
-				ReviewerID: action.ReviewerID,
-				Notes:      action.Notes,
-				CreatedAt:  action.CreatedAt.UTC().Format(time.RFC3339),
+				ID:           action.ID,
+				ActionType:   action.ActionType,
+				ActionData:   action.ActionPayload,
+				ReviewerID:   action.ReviewerID,
+				ReviewerName: action.ReviewerName,
+				Notes:        action.Notes,
+				CreatedAt:    action.CreatedAt.UTC().Format(time.RFC3339),
 			}
 
 			resp.Actions = append(resp.Actions, actionDTO)

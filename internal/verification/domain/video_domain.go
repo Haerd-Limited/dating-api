@@ -29,10 +29,19 @@ type VideoAttempt struct {
 	VerificationCode string
 	VideoS3Key       string
 	Status           string
-	RejectionReason  *string               // Extracted from ReasonCodes JSON field
-	Photos           []profiledomain.Photo // User's profile photos for comparison
+	RejectionReason  *string
+	Photos           []profiledomain.Photo
+	ReviewedByName   *string
+	ReviewedAt       *time.Time
+	ReviewNotes      *string
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
+}
+
+type VideoReviewInfo struct {
+	ReviewedByName      string
+	ReviewedBySessionID string
+	ReviewNotes         *string
 }
 
 type ApproveVideoRequest struct {
