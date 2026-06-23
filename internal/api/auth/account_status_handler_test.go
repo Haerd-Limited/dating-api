@@ -141,6 +141,7 @@ func TestRefreshHandlerAccountGate(t *testing.T) {
 
 			_, hasAccess := actual["access_token"]
 			_, hasRefresh := actual["refresh_token"]
+
 			assert.False(t, hasAccess, "no access token should be minted")
 			assert.False(t, hasRefresh, "no refresh token should be minted")
 		})

@@ -148,6 +148,19 @@ func (s *service) applyModerationAction(
 			reason:         reason,
 		}, nil
 
+	case safetydomain.ActionReinstateUser:
+		// Lift any active ban/suspension and clear the moderation reason and
+		// suspension expiry so the user can authenticate again.
+		if err := s.userService.UpdateAccountStatus(ctx, reportedUserID, userdomain.AccountStatusActive, nil, nil, tx); err != nil {
+			return nil, fmt.Errorf("reinstate user: %w", err)
+		}
+
+		return &moderationSideEffect{
+			reportedUserID: reportedUserID,
+			actionType:     req.ActionType,
+			accountStatus:  userdomain.AccountStatusActive,
+		}, nil
+
 	case safetydomain.ActionEscalate, safetydomain.ActionNoAction:
 		return nil, nil
 
@@ -172,6 +185,10 @@ func (s *service) runPostCommitModerationEffects(ctx context.Context, effect *mo
 
 		s.broadcastAccountStatusChanged(effect)
 		s.sendAccountStatusPush(ctx, effect)
+	case safetydomain.ActionReinstateUser:
+		// No session revocation: the user already lost their sessions when
+		// banned/suspended and can simply log back in.
+		s.broadcastAccountStatusChanged(effect)
 	case safetydomain.ActionWarnUser:
 		s.broadcastModerationWarning(effect)
 		s.sendModerationWarningPush(ctx, effect)

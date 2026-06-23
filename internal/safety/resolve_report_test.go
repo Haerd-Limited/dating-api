@@ -162,6 +162,29 @@ func TestResolveReport_BanUser_SetsBannedAndRevokes(t *testing.T) {
 	assert.True(t, tx.committed)
 }
 
+// TestResolveReport_ReinstateUser_SetsActive proves reinstating lifts a ban or
+// suspension by writing the active status with a cleared suspension/reason, and
+// does NOT revoke sessions (the user can simply log back in).
+func TestResolveReport_ReinstateUser_SetsActive(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	repo := safetystorage.NewMockRepository(ctrl)
+	userSvc := user.NewMockService(ctrl)
+	authSvc := auth.NewMockService(ctrl)
+	tx := &fakeTx{}
+
+	expectReportLoadAndUpdate(repo)
+
+	userSvc.EXPECT().
+		UpdateAccountStatus(gomock.Any(), reportedUserID, userdomain.AccountStatusActive, gomock.Nil(), gomock.Nil(), gomock.Any()).
+		Return(nil)
+
+	// No RevokeAllUserSessions expectation: gomock fails if it is called.
+	svc := newResolveTestService(t, repo, userSvc, authSvc, tx)
+
+	require.NoError(t, svc.ResolveReport(context.Background(), baseResolveRequest(safetydomain.ActionReinstateUser)))
+	assert.True(t, tx.committed)
+}
+
 // TestResolveReport_NoUserEffect proves the gate is scoped: escalate / no_action
 // commit the report workflow change but never touch the user's account or insert
 // a warning. gomock fails the test if any unexpected method is called.
