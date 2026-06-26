@@ -530,34 +530,27 @@ set. **★ = recommend default-mandatory eligible (Tier A dealbreaker).**
 
 ## References
 
-- Joel, S., Eastwick, P. W., et al. (2020). *Machine learning uncovers the most robust
-  self-report predictors of relationship quality across 43 longitudinal couples studies.*
-  PNAS, 117(32), 19061–19071. https://doi.org/10.1073/pnas.1917036117
-- Montoya, R. M., Horton, R. S., & Kirchner, J. (2008). *Is actual similarity necessary
-  for attraction? A meta-analysis of actual and perceived similarity.* Journal of Social
-  and Personal Relationships, 25(6), 889–922.
-- Tidwell, N. D., Eastwick, P. W., & Finkel, E. J. (2013). *Perceived, not actual,
-  similarity predicts initial attraction in a live romantic context.* Personal Relationships.
-- Dyrenforth, P. S., Kashy, D. A., Donnellan, M. B., & Lucas, R. E. (2010). *Predicting
-  relationship and life satisfaction from personality… the relative importance of actor,
-  partner, and similarity effects.* JPSP, 99, 690.
-- Arránz Becker, O. (2013). *Effects of similarity of life goals, values, and personality
-  on relationship satisfaction and stability.* Personal Relationships.
-- *The role of goal interdependence in couples' relationship satisfaction: A meta-analysis*
-  (2022). Journal of Social and Personal Relationships. (Goal congruence r = .43.)
-- Gottman, J. M., & Levenson, R. W. — research on the "Four Horsemen" and the 5:1 ratio;
-  The Gottman Institute, *The Four Horsemen.*
-- Dew, J. (2009); Dew, J., Britt, S., & Huston, S. (2012). *Examining the Relationship
-  Between Financial Issues and Divorce.* Family Relations. Britt, S. L., & Huston, S. J.
-  (2012). *The role of money arguments in marriage.* Journal of Family and Economic Issues.
-- Heller, D., Watson, D., & Ilies, R. (2004); Karney, B. R., & Bradbury, T. N. (1995);
-  Roberts, B. W., et al. (2007) — neuroticism and Big Five predictors of marital
-  (dis)satisfaction and divorce.
-- Li, T., & Chan, D. K.-S. (2012). *How anxious and avoidant attachment affect romantic
-  relationship quality differently: A meta-analytic review.* European Journal of Social
-  Psychology, 42, 406–419.
-- Reis, H. T., Clark, M. S., & Holmes, J. G. — perceived partner responsiveness as a core
-  organising construct in relationship science.
-- Rudder, C. (OkTrends, 2011). *The Best Questions for a First Date.* (OkCupid data on the
-  three predictive questions; BBC News, 2014, *Is big data dating the key to long-lasting
-  romance?*)
+Every claim above traces to one of the sources below. Where possible the link goes to the
+primary paper; a free PDF or reputable summary is given when the journal is paywalled.
+"Key finding / effect size" is included so anyone challenging a question can see the basis
+at a glance.
+
+| # | Used in | Source | Key finding / effect size | Link(s) |
+|---|---------|--------|---------------------------|---------|
+| 1 | §1.1, model critique | Joel, Eastwick, et al. (2020). *Machine learning uncovers the most robust self-report predictors of relationship quality across 43 longitudinal couples studies.* **PNAS** 117(32):19061–19071. | 43 datasets, 11,196 couples. Top predictors are relationship-specific (commitment, appreciation, sexual satisfaction, conflict); partner/“matching” effects add ~nothing; change over time largely unpredictable. | [PNAS](https://www.pnas.org/doi/10.1073/pnas.1917036117) · [PubMed](https://pubmed.ncbi.nlm.nih.gov/32719123/) · [PDF](https://sites.lsa.umich.edu/whirl/wp-content/uploads/sites/792/2020/08/Joel-et-al-2020-PNAS.pdf) · [summary](https://www.psychologytoday.com/us/blog/dating-and-mating/202007/the-strongest-predictors-of-romantic-relationship-quality) |
+| 2 | §1.2 | Montoya, Horton & Kirchner (2008). *Is actual similarity necessary for attraction? A meta-analysis of actual and perceived similarity.* **J. Soc. & Pers. Relationships** 25(6):889–922. | 460 effects / 313 studies. Actual similarity predicts attraction only at zero/short acquaintance; ~null in existing relationships. Perceived similarity predicts throughout. | [DOI](https://doi.org/10.1177/0265407508096700) · [ResearchGate](https://www.researchgate.net/publication/249719130_Is_actual_similarity_necessary_for_attraction_A_meta-analysis_of_actual_and_perceived_similarity) |
+| 3 | §1.2 | Tidwell, Eastwick & Finkel (2013). *Perceived, not actual, similarity predicts initial attraction in a live romantic context.* **Personal Relationships.** | Speed-dating: perceived similarity drove attraction; actual similarity weak/inconsistent. | [PDF](https://faculty.wcas.northwestern.edu/eli-finkel/documents/InPress_TidwellEastwickFinkel_PersonalRelationships_000.pdf) |
+| 4 | §1.2 | Dyrenforth, Kashy, Donnellan & Lucas (2010). *Predicting relationship and life satisfaction from personality in nationally representative samples from three countries.* **JPSP** 99:690. | Across 3 national samples, personality *similarity* was unrelated to satisfaction; one's *own* personality mattered most. | [DOI](https://doi.org/10.1037/a0020385) |
+| 5 | §1.2 | From et al. (2025). *Does similarity matter? A scoping review of perceived and actual similarity in romantic couples.* **J. Soc. & Pers. Relationships.** | Synthesis of 339 studies: similarity is **not** universally linked to better outcomes; perceived > actual. | [Sage](https://journals.sagepub.com/doi/10.1177/02654075251349720) |
+| 6 | §1.3 | Arránz Becker (2013). *Effects of similarity of life goals, values, and personality on relationship satisfaction and stability.* **Personal Relationships.** | German Family Panel, 3,674 couples: value/goal similarity has *small but real* positive effects on satisfaction & stability. | [DOI](https://doi.org/10.1111/j.1475-6811.2012.01417.x) |
+| 7 | §1.3 | Bühler et al. (2022). *The role of goal interdependence in couples' relationship satisfaction: A meta-analysis.* **J. Soc. & Pers. Relationships.** | 49 samples: **goal congruence r = .43** with satisfaction; goal conflict r = −.29. | [Sage](https://journals.sagepub.com/doi/abs/10.1177/02654075221128994) |
+| 8 | §1.4, §3.9 | Gottman & Levenson — the "Four Horsemen" and the 5:1 ratio (Gottman Institute). | Criticism, contempt, defensiveness, stonewalling predict divorce **~90%**; contempt strongest; stable couples ≥ 5:1 positive:negative. | [Four Horsemen](https://www.gottman.com/blog/the-four-horsemen-recognizing-criticism-contempt-defensiveness-and-stonewalling/) · [Antidotes](https://www.gottman.com/blog/the-four-horsemen-the-antidotes/) |
+| 9 | §1.5, §3.7 | Dew, Britt & Huston (2012). *Examining the Relationship Between Financial Issues and Divorce.* **Family Relations** (N = 4,574). + Britt & Huston, *The role of money arguments in marriage.* | Financial disagreements are the **strongest disagreement type predicting divorce**, controlling for income/debt/net worth; weekly money fights ≈ 30%+ higher divorce risk. | [DOI](https://doi.org/10.1111/j.1741-3729.2012.00715.x) · [PDF](https://acci.memberclicks.net/assets/docs/CIA/CIA2011/2011_britthuston.pdf) · [NYT](https://archive.nytimes.com/economix.blogs.nytimes.com/2009/12/07/money-fights-predict-divorce-rates/) |
+| 10 | §1.6 | Heller, Watson & Ilies (2004) FFM meta-analysis; neuroticism × relationship-quality meta-analytic review (148 studies); Solomon & Jackson (2014), *Why do personality traits predict divorce?* | **Neuroticism** is the strongest, most consistent Big Five predictor of dissatisfaction/divorce (r ≈ −.24 to −.44); low conscientiousness/agreeableness also predict dissolution beyond SES & IQ. | [FFM meta](https://www.sciencedirect.com/science/article/abs/pii/S0092656609002001) · [Neuroticism meta (BYU)](https://scholarsarchive.byu.edu/cgi/viewcontent.cgi?article=11155&context=etd) · [Solomon & Jackson PDF](https://gwern.net/doc/psychology/personality/2014-solomon.pdf) |
+| 11 | §1.7, §3.5/§3.10 | Li & Chan (2012). *How anxious and avoidant attachment affect romantic relationship quality differently: A meta-analytic review.* **EJSP** 42:406–419 (73 studies, 21,602). + Candel & Turliuc (2019) actor–partner meta (132 studies). | Both attachment anxiety & avoidance lower relationship quality; avoidance most corrosive to closeness/support; anxiety drives conflict. Secure → more satisfaction, trust, longevity. | [Li & Chan DOI](https://doi.org/10.1002/ejsp.1842) · [Candel & Turliuc](https://www.sciencedirect.com/science/article/abs/pii/S0191886919302673) · [Fraley overview](https://labs.psychology.illinois.edu/~rcfraley/attachment.htm) |
+| 12 | §1.7, §3.5 | Perceived partner responsiveness — Canevello & Crocker (2010), *Creating Good Relationships*, PMC; Reis, Clark & Holmes framework. | Feeling understood/validated/cared-for is a core mechanism of satisfaction; **PPR ↔ satisfaction r ≈ .56**. | [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC2891543/) |
+| 13 | §1.8 | Rudder, C. (OkTrends, 2011), *The Best Questions for a First Date*; BBC News (2014), *Is big data dating the key to long-lasting romance?* | 3 questions (horror movies / travelled abroad alone / live on a sailboat) best predicted real couples — **agreement in ~32% of successful couples (3.7× chance)**; proxies for openness/sensation-seeking. Match % itself validated mainly against messaging, not long-term outcomes. | [OkTrends](https://gwern.net/doc/psychology/okcupid/thebestquestionsforafirstdate.html) · [BBC](https://www.bbc.co.uk/news/business-26613909) · [Mic](https://www.mic.com/articles/85297/these-3-simple-questions-can-predict-if-an-okcupid-date-will-succeed) |
+
+*Note on access:* paywalled journals (Wiley, ScienceDirect, Sage, PNAS) show abstract +
+key stats for free; the DOI resolves to the publisher of record. Free full-text PDFs are
+linked where a legitimate author/university copy exists.
