@@ -191,6 +191,71 @@ gates everything.
 
 ---
 
+## "But OkCupid made tons of couples by asking thousands of questions — why not copy that?"
+
+This comes up a lot, so it's worth answering head-on. The premise is half-true and the
+conclusion is wrong. OkCupid *did* produce many relationships — but **mostly not because
+of the question algorithm**, and "ask thousands of questions" is the wrong lesson to take.
+
+**1. Volume + free + good UX made the couples, not the algorithm.**
+OkCupid was enormous and *free* when Match.com and eHarmony charged. A massive, free,
+well-designed pool of people produces a lot of couples the same way every large platform
+does: scale, attraction, proximity, and people actually meeting up. The match % was a
+useful sorting-and-confidence layer on top — the cherry, not the cake.
+
+**2. "Thousands of questions" is a myth in two ways.**
+- The thousands were a *user-generated pool*; **no individual answered them all.** You
+  answered whatever subset you liked, and the % was computed only over questions you
+  *both* happened to answer. It was never "fill out a 2,000-item survey → soulmate."
+- The questions' actual predictive power was **modest**, by OkCupid's own admission. Their
+  match % was validated mainly against **whether people messaged each other**, not whether
+  they lasted (§1.8). And the questions that best predicted forming a relationship were
+  **quirky personality proxies** (horror movies, travelling alone, sailboat) — not deep
+  value items.
+
+**3. OkCupid proved a chunk of the magic was the *power of suggestion*.**
+In a now-famous experiment, OkCupid took pairs who were a real **30% match and told them
+they were a 90% match** — and those people messaged more *and actually hit it off more*
+than their true score predicted. Co-founder Christian Rudder's blunt conclusion: *"if you
+have to choose only one or the other, the mere myth of compatibility works just as well as
+the truth."* So the number partly functioned as a **self-fulfilling prophecy and
+conversation-starter**, not pure prediction.
+([We Experiment On Human Beings! — OkTrends, 2014](https://archive.ph/O2AF1)
+· [Forbes](https://www.forbes.com/sites/kashmirhill/2014/07/28/okcupid-experiment-compatibility-deception/)
+· [The Guardian](https://www.theguardian.com/technology/2014/jul/29/okcupid-experiment-human-beings-dating))
+
+**4. The site that *really* bet on a giant questionnaire — eHarmony — doesn't hold up to scrutiny.**
+eHarmony (200+ questions, "29 dimensions of compatibility") is the purest version of the
+"answer a huge survey, get scientifically matched" pitch. The landmark review
+**Finkel, Eastwick, Karney, Reis & Sprecher (2012)**, *Online Dating: A Critical Analysis
+From the Perspective of Psychological Science* (review of 400+ studies), concluded there is
+**"no compelling evidence that any online dating matching algorithm actually works"** —
+i.e. that algorithm-matched pairs do better than near-random pairing within basic
+demographic filters. The reason mirrors §1.1: the strongest predictors of success
+(interaction style, conflict navigation) **emerge between two people and can't be read off
+two questionnaires filled out before they've met.**
+([PSPI PDF](https://faculty.wcas.northwestern.edu/eli-finkel/documents/2012_FinkelEastwickKarneyReisSprecher_PSPI.pdf)
+· [APS press release](https://www.psychologicalscience.org/news/releases/grading-the-online-dating-industry.html)
+· [Scientific American summary](https://www.scientificamerican.com/article/scientific-flaws-online-dating-sites/))
+
+**Why this matters for Haerd specifically:**
+- **We can't out-OkCupid OkCupid on volume.** Their couple count came from being huge and
+  free; a newer app won't have that, so "we ask the most questions" is both a losing and a
+  scientifically shaky bet.
+- **It contradicts our own positioning.** Haerd's pivot is *away* from endless
+  questions/swiping toward **intentional, focused dating** (2-match cap, get off the app
+  and onto a date). A thousand-question survey is the opposite of that promise.
+- **The honest, defensible role of questions is a short, high-signal screen** — a
+  dealbreaker filter + values check + conversation fuel — not a soulmate oracle. **Fewer,
+  better questions beat thousands of noisy ones**, which is exactly what the rest of this
+  document argues for.
+
+> Takeaway: don't copy OkCupid's *question count*; copy the one part that was genuinely
+> useful (screening out dealbreakers and surfacing shared values), make it short and
+> sharp, and be honest about what the number means (see below).
+
+---
+
 ## What This Means For Haerd's Match %
 
 Putting the science together produces a clear verdict on the **model**, not just the
@@ -550,6 +615,8 @@ at a glance.
 | 11 | §1.7, §3.5/§3.10 | Li & Chan (2012). *How anxious and avoidant attachment affect romantic relationship quality differently: A meta-analytic review.* **EJSP** 42:406–419 (73 studies, 21,602). + Candel & Turliuc (2019) actor–partner meta (132 studies). | Both attachment anxiety & avoidance lower relationship quality; avoidance most corrosive to closeness/support; anxiety drives conflict. Secure → more satisfaction, trust, longevity. | [Li & Chan DOI](https://doi.org/10.1002/ejsp.1842) · [Candel & Turliuc](https://www.sciencedirect.com/science/article/abs/pii/S0191886919302673) · [Fraley overview](https://labs.psychology.illinois.edu/~rcfraley/attachment.htm) |
 | 12 | §1.7, §3.5 | Perceived partner responsiveness — Canevello & Crocker (2010), *Creating Good Relationships*, PMC; Reis, Clark & Holmes framework. | Feeling understood/validated/cared-for is a core mechanism of satisfaction; **PPR ↔ satisfaction r ≈ .56**. | [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC2891543/) |
 | 13 | §1.8 | Rudder, C. (OkTrends, 2011), *The Best Questions for a First Date*; BBC News (2014), *Is big data dating the key to long-lasting romance?* | 3 questions (horror movies / travelled abroad alone / live on a sailboat) best predicted real couples — **agreement in ~32% of successful couples (3.7× chance)**; proxies for openness/sensation-seeking. Match % itself validated mainly against messaging, not long-term outcomes. | [OkTrends](https://gwern.net/doc/psychology/okcupid/thebestquestionsforafirstdate.html) · [BBC](https://www.bbc.co.uk/news/business-26613909) · [Mic](https://www.mic.com/articles/85297/these-3-simple-questions-can-predict-if-an-okcupid-date-will-succeed) |
+| 14 | "Copy OkCupid?" section | Rudder, C. (2014). *We Experiment On Human Beings!* OkTrends. | OkCupid told real 30% matches they were 90% matches; the **suggestion alone** made them message and connect more — *"the mere myth of compatibility works just as well as the truth."* Match % partly a self-fulfilling prophecy. | [OkTrends (archive)](https://archive.ph/O2AF1) · [Forbes](https://www.forbes.com/sites/kashmirhill/2014/07/28/okcupid-experiment-compatibility-deception/) · [Guardian](https://www.theguardian.com/technology/2014/jul/29/okcupid-experiment-human-beings-dating) |
+| 15 | "Copy OkCupid?" section, §1.1 | Finkel, Eastwick, Karney, Reis & Sprecher (2012). *Online Dating: A Critical Analysis From the Perspective of Psychological Science.* **Psychological Science in the Public Interest** 13(1):3–66. | Review of 400+ studies: **no compelling evidence** matching algorithms beat near-random pairing; the predictive constructs emerge from interaction, not pre-meeting questionnaires. | [PSPI PDF](https://faculty.wcas.northwestern.edu/eli-finkel/documents/2012_FinkelEastwickKarneyReisSprecher_PSPI.pdf) · [APS release](https://www.psychologicalscience.org/news/releases/grading-the-online-dating-industry.html) · [Sci. American](https://www.scientificamerican.com/article/scientific-flaws-online-dating-sites/) |
 
 *Note on access:* paywalled journals (Wiley, ScienceDirect, Sage, PNAS) show abstract +
 key stats for free; the DOI resolves to the publisher of record. Free full-text PDFs are
