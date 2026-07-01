@@ -70,7 +70,7 @@ func (r *repository) GetUserAnswers(ctx context.Context, userID string) (entity.
 }
 
 func (r *repository) GetQuestionCategories(ctx context.Context) (entity.QuestionCategorySlice, error) {
-	result, err := entity.QuestionCategories().All(ctx, r.db)
+	result, err := entity.QuestionCategories(qm.OrderBy("id ASC")).All(ctx, r.db)
 	if err != nil {
 		return nil, err
 	}
