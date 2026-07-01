@@ -17,9 +17,12 @@ func SwipeMessageToDomain(swipe *entity.Swipe) (*interactiondomain.Message, erro
 
 	msg := &interactiondomain.Message{}
 
-	if swipe.Message.Valid && swipe.MessageType.Valid {
-		msg.MessageText = swipe.Message.Ptr()
+	if swipe.MessageType.Valid {
 		msg.MessageType = swipe.MessageType.Ptr()
+	}
+
+	if swipe.Message.Valid {
+		msg.MessageText = swipe.Message.Ptr()
 	}
 
 	if swipe.MessageType.Valid && swipe.MessageType.String == constants.MessageTypeVoice {
@@ -39,7 +42,9 @@ func SwipeMessageToDomain(swipe *entity.Swipe) (*interactiondomain.Message, erro
 // BuildTargetUserFirstMessage reconstructs the liker's first conversation message from their swipe.
 // seed is false when legacy voice swipes have no stored duration and no text to fall back to.
 func BuildTargetUserFirstMessage(swipe *entity.Swipe, convoID, senderID string) (domain.Message, bool, error) {
-	if swipe == nil || !swipe.Message.Valid || !swipe.MessageType.Valid || !swipe.IdempotencyKey.Valid {
+	// Voice-note likes have a NULL text Message but a populated VoicenoteURL,
+	// so require either a text message or a voice note.
+	if swipe == nil || (!swipe.Message.Valid && !swipe.VoicenoteURL.Valid) || !swipe.MessageType.Valid || !swipe.IdempotencyKey.Valid {
 		return domain.Message{}, false, nil
 	}
 

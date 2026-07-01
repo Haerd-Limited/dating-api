@@ -272,7 +272,9 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return "", commonlogger.LogError(is.logger, "get swipe by actorID and targetID", err, zap.String("actorID", swipe.TargetUserID), zap.String("targetUserID", swipe.UserID))
 		}
 
-		targetUserSentMeALikeWithAMessage := targetUserSwipe.Message.Valid && targetUserSwipe.MessageType.Valid && targetUserSwipe.IdempotencyKey.Valid
+		// A voice-note like has a NULL text Message but a populated VoicenoteURL, so
+		// treat either as "a like with a message" when seeding the conversation.
+		targetUserSentMeALikeWithAMessage := (targetUserSwipe.Message.Valid || targetUserSwipe.VoicenoteURL.Valid) && targetUserSwipe.MessageType.Valid && targetUserSwipe.IdempotencyKey.Valid
 		if targetUserSentMeALikeWithAMessage {
 			firstMessage, seedMessage, buildErr := mapper.BuildTargetUserFirstMessage(targetUserSwipe, convoID, swipe.TargetUserID)
 			if buildErr != nil {
@@ -486,7 +488,9 @@ func (is *service) GetLikes(ctx context.Context, userID, direction string, offse
 			like.Prompt.CoverMediaAspectRatio = voicePrompt.CoverMediaAspectRatio
 		}
 
-		if swipe.Message.Valid && swipe.MessageType.Valid {
+		// Voice-note likes store their content in VoicenoteURL with a NULL text Message,
+		// so accept either a text message or a voice note.
+		if (swipe.Message.Valid || swipe.VoicenoteURL.Valid) && swipe.MessageType.Valid {
 			likeMessage, likesErr := mapper.SwipeMessageToDomain(swipe)
 			if likesErr != nil {
 				return domain.Likes{}, commonlogger.LogError(is.logger, "map swipe message to domain", likesErr, zap.String("userID", userID), zap.String("targetUserID", id))
