@@ -607,13 +607,21 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 	if swipe.Action == constants.ActionSuperlike || swipe.Action == constants.ActionLike {
 		hasAny := swipe.Message != nil || swipe.MessageType != nil || swipe.IdempotencyKey != nil || swipe.VoiceNoteURL != nil
 
+		// Voice notes carry their content in VoiceNoteURL, not the text Message field,
+		// so the presence check must accept either depending on the message type.
+		isVoiceNote := swipe.MessageType != nil && *swipe.MessageType == constants.MessageTypeVoice
+		hasMessageContent := swipe.Message != nil
+		if isVoiceNote {
+			hasMessageContent = swipe.VoiceNoteURL != nil
+		}
+
 		var atleastOneIsMissing bool
 		if isMatchable {
-			atleastOneIsMissing = swipe.Message == nil || swipe.MessageType == nil || swipe.IdempotencyKey == nil
+			atleastOneIsMissing = !hasMessageContent || swipe.MessageType == nil || swipe.IdempotencyKey == nil
 		} else {
 			// Check if promptID is nil or 0 (0 is not a valid prompt_id)
 			hasValidPromptID := swipe.PromptID != nil && *swipe.PromptID != 0
-			atleastOneIsMissing = swipe.Message == nil || swipe.MessageType == nil || !hasValidPromptID || swipe.IdempotencyKey == nil
+			atleastOneIsMissing = !hasMessageContent || swipe.MessageType == nil || !hasValidPromptID || swipe.IdempotencyKey == nil
 		}
 
 		unableToSendLikeWithMessage := hasAny && atleastOneIsMissing
