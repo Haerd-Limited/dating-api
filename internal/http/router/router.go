@@ -69,6 +69,7 @@ func New(
 	hub *internalrealtime.Hub,
 	verificationService internalverification.Service,
 	compatibilityService internalcompatibility.Service,
+	adminCompatibilityService internalcompatibility.AdminService,
 	notificationService internalnotification.Service,
 	safetyService internalsafety.Service,
 	insightsService internalinsights.Service,
@@ -126,6 +127,7 @@ func New(
 	wsHandler := realtime.NewWsHandler(logger, hub, conversationService)
 	verificationHandler := verification.NewVerificationHandler(logger, verificationService)
 	compatibilityHandler := compatibility.NewCompatibilityHandler(logger, compatibilityService)
+	adminCompatibilityHandler := compatibility.NewAdminCompatibilityHandler(logger, adminCompatibilityService)
 	safetyHandler := apisafety.NewHandler(logger, safetyService)
 	insightsHandler := apiinsights.NewHandler(logger, insightsService)
 	feedbackHandler := apifeedback.NewFeedbackHandler(logger, feedbackService)
@@ -345,6 +347,26 @@ func New(
 					r.Route("/waitlist", func(r chi.Router) {
 						r.Get("/users", broadcastHandler.ListWaitlistUsers())
 						r.Post("/broadcast", broadcastHandler.SendBroadcast())
+					})
+
+					r.Route("/question-packs", func(r chi.Router) {
+						r.Get("/categories", adminCompatibilityHandler.ListCategories())
+						r.Post("/categories", adminCompatibilityHandler.CreateCategory())
+						r.Post("/categories/reorder", adminCompatibilityHandler.ReorderCategories())
+						r.Patch("/categories/{categoryID}", adminCompatibilityHandler.UpdateCategory())
+						r.Delete("/categories/{categoryID}", adminCompatibilityHandler.DeleteCategory())
+
+						r.Get("/categories/{categoryID}/questions", adminCompatibilityHandler.ListQuestions())
+						r.Post("/categories/{categoryID}/questions", adminCompatibilityHandler.CreateQuestion())
+						r.Post("/categories/{categoryID}/questions/reorder", adminCompatibilityHandler.ReorderQuestions())
+						r.Patch("/questions/{questionID}", adminCompatibilityHandler.UpdateQuestion())
+						r.Delete("/questions/{questionID}", adminCompatibilityHandler.DeleteQuestion())
+
+						r.Get("/questions/{questionID}/answers", adminCompatibilityHandler.ListAnswers())
+						r.Post("/questions/{questionID}/answers", adminCompatibilityHandler.CreateAnswer())
+						r.Post("/questions/{questionID}/answers/reorder", adminCompatibilityHandler.ReorderAnswers())
+						r.Patch("/answers/{answerID}", adminCompatibilityHandler.UpdateAnswer())
+						r.Delete("/answers/{answerID}", adminCompatibilityHandler.DeleteAnswer())
 					})
 				})
 			})

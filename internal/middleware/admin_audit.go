@@ -78,7 +78,7 @@ func tokenFingerprint(token string) string {
 }
 
 func adminTargetID(r *http.Request) string {
-	for _, key := range []string{"reportID", "attemptID", "userID"} {
+	for _, key := range []string{"reportID", "attemptID", "userID", "categoryID", "questionID", "answerID"} {
 		if id := chi.URLParam(r, key); id != "" {
 			return id
 		}

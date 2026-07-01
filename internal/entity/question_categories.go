@@ -27,6 +27,7 @@ type QuestionCategory struct {
 	Key       string    `boil:"key" json:"key" toml:"key" yaml:"key"`
 	Name      string    `boil:"name" json:"name" toml:"name" yaml:"name"`
 	CreatedAt time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
+	SortOrder int       `boil:"sort_order" json:"sort_order" toml:"sort_order" yaml:"sort_order"`
 
 	R *questionCategoryR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L questionCategoryL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -37,11 +38,13 @@ var QuestionCategoryColumns = struct {
 	Key       string
 	Name      string
 	CreatedAt string
+	SortOrder string
 }{
 	ID:        "id",
 	Key:       "key",
 	Name:      "name",
 	CreatedAt: "created_at",
+	SortOrder: "sort_order",
 }
 
 var QuestionCategoryTableColumns = struct {
@@ -49,11 +52,13 @@ var QuestionCategoryTableColumns = struct {
 	Key       string
 	Name      string
 	CreatedAt string
+	SortOrder string
 }{
 	ID:        "question_categories.id",
 	Key:       "question_categories.key",
 	Name:      "question_categories.name",
 	CreatedAt: "question_categories.created_at",
+	SortOrder: "question_categories.sort_order",
 }
 
 // Generated where
@@ -63,11 +68,13 @@ var QuestionCategoryWhere = struct {
 	Key       whereHelperstring
 	Name      whereHelperstring
 	CreatedAt whereHelpertime_Time
+	SortOrder whereHelperint
 }{
 	ID:        whereHelperint64{field: "\"question_categories\".\"id\""},
 	Key:       whereHelperstring{field: "\"question_categories\".\"key\""},
 	Name:      whereHelperstring{field: "\"question_categories\".\"name\""},
 	CreatedAt: whereHelpertime_Time{field: "\"question_categories\".\"created_at\""},
+	SortOrder: whereHelperint{field: "\"question_categories\".\"sort_order\""},
 }
 
 // QuestionCategoryRels is where relationship names are stored.
@@ -107,8 +114,8 @@ func (r *questionCategoryR) GetCategoryQuestions() QuestionSlice {
 type questionCategoryL struct{}
 
 var (
-	questionCategoryAllColumns            = []string{"id", "key", "name", "created_at"}
-	questionCategoryColumnsWithoutDefault = []string{"key", "name"}
+	questionCategoryAllColumns            = []string{"id", "key", "name", "created_at", "sort_order"}
+	questionCategoryColumnsWithoutDefault = []string{"key", "name", "sort_order"}
 	questionCategoryColumnsWithDefault    = []string{"id", "created_at"}
 	questionCategoryPrimaryKeyColumns     = []string{"id"}
 	questionCategoryGeneratedColumns      = []string{}

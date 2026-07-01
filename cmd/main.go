@@ -155,6 +155,8 @@ func main() {
 	}
 
 	compatibilityService := compatibility.NewCompatibilityService(logger, compatibilityRepo)
+	adminCompatibilityRepo := compatibilitystorage.NewAdminCompatibilityRepository(db, logger)
+	adminCompatibilityService := compatibility.NewAdminService(logger, adminCompatibilityRepo)
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner, s3Reader, cfg.Env)
 	openaiService := openai.NewOpenAIService(cfg.OpenAIAPIKey, logger)
 	lookupService := lookup.NewLookupService(logger, lookupRepo)
@@ -287,6 +289,7 @@ func main() {
 		hub,
 		verificationService,
 		compatibilityService,
+		adminCompatibilityService,
 		notificationService,
 		safetyService,
 		insSvc,
