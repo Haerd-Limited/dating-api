@@ -1,5 +1,7 @@
 # Compatibility Question Pack Review — Does the Science Back It Up?
 
+> **Implementation status (2026-07-01):** Content refresh **in progress**. The authoritative question bank spec lives in [question-packs-content-spec.md](question-packs-content-spec.md) (**40 questions, 11 packs** after signal-focused edits on the original 43: 6 low-signal items cut, 3 high-signal congruence items added). Phase 2 will re-seed the database from that spec. Deferred: editorial per-question weighting, score relabel, pets-as-profile-attribute, admin CRUD — see [question-packs-content-refresh.md](question-packs-content-refresh.md).
+
 A research-grounded audit of the 50 compatibility questions seeded in
 `migrations/20251022211336_create_matching_schema_and_seed.sql`, measured against
 what relationship science actually says predicts long-term romantic success.
