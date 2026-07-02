@@ -106,6 +106,28 @@ func (s *stubProfileService) CountBasicsCompleted(context.Context) (int64, error
 
 var _ internalprofile.Service = (*stubProfileService)(nil)
 
+func TestGetMyProfileIncludesAnalyticsOptOut(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	prefSvc := preference.NewMockService(ctrl)
+	profileSvc := &stubProfileService{}
+	h := NewProfileHandler(zaptest.NewLogger(t), profileSvc, nil, nil, nil, prefSvc)
+
+	prefSvc.EXPECT().IsAnalyticsOptedOut(gomock.Any(), "user-1").Return(true, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
+	req = req.WithContext(context.WithValue(req.Context(), commoncontext.UserIDKey, "user-1"))
+	rec := httptest.NewRecorder()
+	h.GetMyProfile().ServeHTTP(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var resp dto.Profile
+
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	require.NotNil(t, resp.AnalyticsOptOut)
+	assert.True(t, *resp.AnalyticsOptOut)
+}
+
 func TestSetAnalyticsOptOut(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	prefSvc := preference.NewMockService(ctrl)
