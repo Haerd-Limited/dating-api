@@ -103,8 +103,16 @@ func (h *handler) GetMyProfile() http.HandlerFunc {
 			return
 		}
 
+		analyticsOptOut, err := h.preferenceService.IsAnalyticsOptedOut(ctx, userID)
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "GetMyProfile", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
 		//todo:update to use a toresponse mapper
-		render.Json(w, http.StatusOK, mapper.ProfileToDto(userProfile))
+		response := mapper.ProfileToDto(userProfile)
+		response.AnalyticsOptOut = &analyticsOptOut
+		render.Json(w, http.StatusOK, response)
 	}
 }
 

@@ -41,6 +41,8 @@ type Profile struct {
 	JobTitle   *string `json:"job_title"`
 	University *string `json:"university"`
 
+	AnalyticsOptOut *bool `json:"analytics_opt_out,omitempty"`
+
 	MatchSummary *profilecarddto.MatchSummary `json:"match_summary,omitempty"`
 
 	CreatedAt string `json:"created_at"`
