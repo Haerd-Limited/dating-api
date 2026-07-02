@@ -149,7 +149,7 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		}
 
 		if !matchable {
-			if swipe.Message == nil {
+			if swipe.Message == nil && swipe.VoiceNoteURL == nil {
 				systemMsg := messages.LikedYourPromptMsg
 				swipe.Message = &systemMsg
 				systemMessageType := string(conversationDomain.MessageTypeSystem)

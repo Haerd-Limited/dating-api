@@ -2,6 +2,7 @@ package interaction
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -10,8 +11,14 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap/zaptest"
 
+	discoverdomain "github.com/Haerd-Limited/dating-api/internal/discover/domain"
+	"github.com/Haerd-Limited/dating-api/internal/entity"
+	interactiondomain "github.com/Haerd-Limited/dating-api/internal/interaction/domain"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/storage"
+	"github.com/Haerd-Limited/dating-api/internal/uow"
 	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/constants"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/objects/profilecard"
+	"github.com/Haerd-Limited/dating-api/pkg/commonlibrary/utils"
 )
 
 // newServiceWithRepo builds a partially-wired service exposing only the
@@ -25,6 +32,69 @@ func newServiceWithRepo(t *testing.T, repo storage.InteractionRepository) *servi
 		interactionRepo: repo,
 	}
 }
+
+type fakeTx struct {
+	committed bool
+}
+
+func (t *fakeTx) Commit() error {
+	t.committed = true
+	return nil
+}
+
+func (t *fakeTx) Rollback() error {
+	return nil
+}
+
+func (t *fakeTx) Raw() *sql.Tx {
+	return nil
+}
+
+type fakeUoW struct {
+	tx *fakeTx
+}
+
+func (u *fakeUoW) Begin(_ context.Context) (uow.Tx, error) {
+	return u.tx, nil
+}
+
+type fakeDiscoverService struct {
+	alreadyInteracted bool
+}
+
+func (s fakeDiscoverService) GetDiscoverFeed(context.Context, string, int, int) (discoverdomain.DiscoverFeedResult, error) {
+	return discoverdomain.DiscoverFeedResult{}, nil
+}
+
+func (s fakeDiscoverService) GetDiscoverFeedWithFilters(context.Context, string, int, int, *discoverdomain.DiscoverFilters) (discoverdomain.DiscoverFeedResult, error) {
+	return discoverdomain.DiscoverFeedResult{}, nil
+}
+
+func (s fakeDiscoverService) GetVoiceWorthHearing(context.Context, string) ([]profilecard.ProfileCard, error) {
+	return nil, nil
+}
+
+func (s fakeDiscoverService) GetVoiceWorthHearingIDs(context.Context, string) ([]string, error) {
+	return nil, nil
+}
+
+func (s fakeDiscoverService) AlreadyInteracted(context.Context, string, string) (bool, error) {
+	return s.alreadyInteracted, nil
+}
+
+func (s fakeDiscoverService) GetUserPreferences(context.Context, string) (*discoverdomain.StoredDiscoverPreferences, error) {
+	return nil, nil
+}
+
+func (s fakeDiscoverService) ComputeCompatibility(context.Context, string, string) (*profilecard.CompatibilitySummary, error) {
+	return nil, nil
+}
+
+type fakeBroadcaster struct{}
+
+func (fakeBroadcaster) BroadcastToConversation(string, []byte) {}
+
+func (fakeBroadcaster) BroadcastToUser(string, []byte) {}
 
 // TestEnforceActiveMatchCap covers the three branches of the symmetric cap:
 // actor full, target full, both under. The advisory-lock acquisition is the
@@ -104,6 +174,67 @@ func TestEnforceActiveMatchCap(t *testing.T) {
 	}
 }
 
+func TestCreateSwipeNonMatchableVoiceNotePreservesVoiceMessageType(t *testing.T) {
+	const (
+		actorID        = "actor-1"
+		targetID       = "target-1"
+		clientMsgID    = "client-msg-1"
+		promptID       = int64(42)
+		voiceNoteURL   = "https://example.com/voice-note.m4a"
+		mediaSeconds   = 8.5
+		messageType    = constants.MessageTypeVoice
+		expectedResult = ResultSent
+	)
+
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	repo := storage.NewMockInteractionRepository(ctrl)
+	tx := &fakeTx{}
+
+	repo.EXPECT().CheckIfMatchable(ctx, actorID, targetID).Return(false, nil)
+	repo.EXPECT().
+		InsertSwipe(ctx, gomock.Any(), gomock.Nil()).
+		DoAndReturn(func(_ context.Context, swipe entity.Swipe, _ *sql.Tx) error {
+			require.False(t, swipe.Message.Valid)
+			require.True(t, swipe.MessageType.Valid)
+			assert.Equal(t, messageType, swipe.MessageType.String)
+			require.True(t, swipe.VoicenoteURL.Valid)
+			assert.Equal(t, voiceNoteURL, swipe.VoicenoteURL.String)
+			require.True(t, swipe.IdempotencyKey.Valid)
+			assert.Equal(t, clientMsgID, swipe.IdempotencyKey.String)
+
+			gotSeconds, err := utils.NullDecimalToFloatPtr(swipe.MediaSeconds)
+			require.NoError(t, err)
+			require.NotNil(t, gotSeconds)
+			assert.InDelta(t, mediaSeconds, *gotSeconds, 0.001)
+
+			return nil
+		})
+
+	svc := &service{
+		logger:          zaptest.NewLogger(t),
+		uow:             &fakeUoW{tx: tx},
+		interactionRepo: repo,
+		discoverService: fakeDiscoverService{},
+		hub:             fakeBroadcaster{},
+	}
+
+	result, err := svc.CreateSwipe(ctx, interactiondomain.Swipe{
+		UserID:         actorID,
+		TargetUserID:   targetID,
+		Action:         constants.ActionLike,
+		PromptID:       ptr(promptID),
+		IdempotencyKey: ptr(clientMsgID),
+		MessageType:    ptr(messageType),
+		VoiceNoteURL:   ptr(voiceNoteURL),
+		MediaSeconds:   ptr(mediaSeconds),
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedResult, result)
+	assert.True(t, tx.committed)
+}
+
 // TestGetLikesEmptyIncomingPopulatesViewerCounts covers the "no incoming
 // likes" path: the per-id loop is skipped entirely so none of the per-like
 // dependencies (safety, profile, discover) are touched, and the response
@@ -172,4 +303,8 @@ func TestGetLikesInvalidDirectionShortCircuits(t *testing.T) {
 // the messages exposed by the swipes handler.
 func TestMaxActiveMatchesIsTwo(t *testing.T) {
 	assert.Equal(t, int64(2), constants.MaxActiveMatches, "match cap must remain 2 per HAE-411")
+}
+
+func ptr[T any](value T) *T {
+	return &value
 }
