@@ -6,8 +6,8 @@ const (
 
 	// Versions must match the "Last updated" date of the published documents at
 	// https://haerd.com/privacy and https://haerd.com/terms.
-	CurrentPrivacyPolicyVersion  = "2026-05-28"
-	CurrentTermsOfServiceVersion = "2026-05-28"
+	CurrentPrivacyPolicyVersion  = "2026-07-03"
+	CurrentTermsOfServiceVersion = "2026-07-03"
 )
 
 var MandatoryConsentTypes = []string{ConsentTypePrivacyPolicy, ConsentTypeTermsOfService}
