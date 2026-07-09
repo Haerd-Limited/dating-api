@@ -56,6 +56,7 @@ type Photo struct {
 }
 
 type VoicePrompt struct {
+	ID                    int64     `json:"id"`
 	URL                   string    `json:"url"`
 	PromptType            Prompt    `json:"prompt_type"`
 	IsPrimary             bool      `json:"is_primary"`
