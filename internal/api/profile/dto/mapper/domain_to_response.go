@@ -84,6 +84,7 @@ func ProfileToDto(profile domain.EnrichedProfile) dto.Profile {
 	if profile.VoicePrompts != nil {
 		for _, prompt := range profile.VoicePrompts {
 			result.VoicePrompts = append(result.VoicePrompts, dto.VoicePrompt{
+				ID:  prompt.ID,
 				URL: prompt.URL,
 				PromptType: dto.Prompt{
 					ID:           prompt.PromptType.ID,
