@@ -294,6 +294,8 @@ func (s *service) SendAccountBannedNotification(ctx context.Context, recipientUs
 }
 
 func (s *service) SendWeeklyRefreshNotifications(ctx context.Context) error {
+
+	/* commented out for now since the frontend doesn't have super likes and voices worth hearing picks
 	userIDs, err := s.deviceTokenRepo.ListUserIDsWithTokens(ctx)
 	if err != nil {
 		return fmt.Errorf("list users with device tokens: %w", err)
@@ -327,7 +329,11 @@ func (s *service) SendWeeklyRefreshNotifications(ctx context.Context) error {
 		}
 	}
 
-	return sendErr
+		return sendErr
+	*/
+
+	return nil
+
 }
 
 func (s *service) StartWeeklyRefreshScheduler(ctx context.Context) {
