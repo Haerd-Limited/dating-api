@@ -308,6 +308,14 @@ func EntityToDomain(e *entity.SomeEntity) domain.SomeModel {
 - **Always run** `make lint` and `make build` before considering work complete
 - **Use the Makefile** for common operations - it standardizes commands across the team
 
+## Decision Records
+
+Product and architectural decisions are recorded in [`docs/decisions/`](docs/decisions/).
+
+- **AskQuestion answers:** a hook at `.cursor/hooks/log-decision.sh` captures these automatically *when Cursor fires the hook* (currently broken for AskQuestion — see `docs/decisions/README.md`). Until fixed, call `.cursor/scripts/record-decision.sh` after every answered question.
+- **Prose decisions** ("go ahead", "approve", "use option 2"): always call `.cursor/scripts/record-decision.sh` — this is the only capture path that depends on agent compliance.
+- **Substantive decisions** need an ADR in `docs/decisions/` before the work is complete. Follow the [`decision-records` skill](.cursor/skills/decision-records/SKILL.md).
+
 ## When in Doubt
 
 1. Check `internal/README.MD` for detailed examples

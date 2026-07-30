@@ -68,6 +68,7 @@ Note these in the critique to the user, but don't ask permission — patch them 
    - Record every Bucket A decision in the `Decisions` section with rationale.
    - Absorb every Bucket B fix into the relevant `Parts` subsection. Pin file paths and line numbers.
    - Add new test cases to `Validation` for any new runtime behaviour.
+   - Update or create the feature's ADR in `docs/decisions/` with each Bucket A decision and rejected options. Call `.cursor/scripts/record-decision.sh` for each answered question. Update the README index.
 7. **Self-check and report.** Run the plan against the acceptance criteria from `create-implementation-plan.md`. Report pass/fail per criterion. Ask whether to iterate again or treat as approved.
 
 ## Anti-patterns
@@ -76,7 +77,7 @@ Note these in the critique to the user, but don't ask permission — patch them 
 - **Vague critique.** "Inaccurate file path" is useless. "§7 says handler `UpsertVoicePrompts` exists at `internal/api/profile/handler.go`, but voice-prompt writes flow through the general profile-update handler at line N" is useful.
 - **Re-creating the plan.** Never call `CreatePlan` again — patch in place with `StrReplace`. Calling `CreatePlan` would create a sibling file and orphan the user's annotations.
 - **Patching before the user answers.** Bucket A questions block the patch step. Apply Bucket B fixes only after Bucket A is resolved (some Bucket B items may evolve based on Bucket A answers).
-- **Running `make` targets, editing non-plan files, or committing.** Plan mode rules apply throughout this skill.
+- **Running `make` targets or committing.** Plan mode rules apply throughout this skill. **Exception:** edits to `docs/decisions/` are allowed when recording Bucket A decisions.
 
 ## Tone
 

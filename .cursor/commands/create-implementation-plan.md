@@ -92,6 +92,16 @@ The plan is a living document until I approve it.
    - Validation plan is concrete and risk-based.
    - Todos are actionable and ordered.
    - An engineer unfamiliar with this area could implement it without further questions.
+   - Every Step 2 decision, and the options rejected, recorded in `docs/decisions/`.
 4. Report which criteria pass and which don't, then ask whether to iterate again or treat the plan as approved.
 
 Do not start implementing until I explicitly approve the plan.
+
+## Step 5: Record the decisions
+
+After plan approval, write or update the feature's ADR in `docs/decisions/`:
+
+1. Use the [`decision-records` skill](.cursor/skills/decision-records/SKILL.md).
+2. Record every Step 2 decision and the options that were rejected.
+3. Call `.cursor/scripts/record-decision.sh` for each answered question (the AskQuestion hook may not have fired).
+4. Update the ADR index in `docs/decisions/README.md`.

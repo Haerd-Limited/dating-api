@@ -65,6 +65,7 @@ Once the answers are in:
 - Update the `Decisions` section to record every Bucket A choice with the rationale I gave.
 - Update the relevant `Parts` subsections to absorb every Bucket B fix. Pin file paths and line numbers; show code structures where they clarify intent.
 - Update the `Validation` section if any new test cases were added (typically one new case per Bucket A or B item that affects runtime behaviour).
+- Update or create the feature's ADR in `docs/decisions/` with each Bucket A decision and rejected options. Call `.cursor/scripts/record-decision.sh` for each answered question. Update the README index.
 - Keep the plan proportional — don't bloat sections with restatements of what I just told you.
 
 ## Step 5: Self-check and report
@@ -77,6 +78,7 @@ Run the plan against the acceptance criteria from [create-implementation-plan.md
 - Validation plan is concrete and risk-based.
 - Todos are actionable and ordered (bottom-up — repo → service → handler → wiring → mocks → tests).
 - An engineer unfamiliar with this area could implement it without further questions.
+- Every Bucket A decision, and the options rejected, recorded in `docs/decisions/`.
 
 Report which criteria pass and which don't, then ask whether to iterate again or treat the plan as approved. If approved, suggest switching to agent mode to begin executing.
 
@@ -85,4 +87,4 @@ Report which criteria pass and which don't, then ask whether to iterate again or
 - Be specific. "Inaccurate file path" is useless; "§7 says `internal/api/profile/handler.go` has an `UpsertVoicePrompts` method, but voice-prompt writes flow through the general profile-update handler at line N" is useful.
 - Distinguish "this is wrong" from "this is missing". Both warrant a fix; only the former warrants an apology in the critique.
 - Never invent ambiguities to look thorough. If a section is fine, leave it alone.
-- Do not run `make` targets, edit non-plan files, or make commits during this command. Plan mode rules apply throughout.
+- Do not run `make` targets or make commits during this command. Plan mode rules apply throughout. **Exception:** edits to `docs/decisions/` (ADRs, ledger, README index) are allowed when recording Bucket A decisions.
