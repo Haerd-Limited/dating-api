@@ -10,6 +10,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto"
 	"github.com/Haerd-Limited/dating-api/internal/api/onboarding/dto/mapper"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding"
+	onboardingdomain "github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/profile"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userstorage "github.com/Haerd-Limited/dating-api/internal/user/storage"
@@ -35,6 +36,7 @@ type Handler interface {
 	Languages() http.HandlerFunc
 	Photos() http.HandlerFunc
 	Prompts() http.HandlerFunc
+	QuestionPacks() http.HandlerFunc
 	VideoVerification() http.HandlerFunc
 }
 
@@ -436,6 +438,26 @@ func (h *handler) Prompts() http.HandlerFunc {
 	}
 }
 
+func (h *handler) QuestionPacks() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		userID, ok := commoncontext.UserIDFromContext(ctx)
+		if !ok {
+			render.UnauthorizedResponse(w, r, h.logger)
+			return
+		}
+
+		result, err := h.onboardingService.QuestionPacks(ctx, onboardingdomain.QuestionPacks{UserID: userID})
+		if err != nil {
+			render.HandleServiceErrorResponse(h.logger, w, r, "QuestionPacks", err, mapErrorsToStatusCodeAndUserFriendlyMessages)
+			return
+		}
+
+		render.Json(w, http.StatusOK, mapper.ToOnboardingResponse(result))
+	}
+}
+
 func (h *handler) VideoVerification() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -520,6 +542,8 @@ func mapErrorsToStatusCodeAndUserFriendlyMessages(err error) (int, string) {
 		return http.StatusBadRequest, "Last name cannot contain spaces"
 	case errors.Is(err, onboarding.ErrPreregistrationCapped):
 		return http.StatusConflict, "Registration for this cohort is full. Please check back later."
+	case errors.Is(err, onboarding.ErrQuestionPacksIncomplete):
+		return http.StatusConflict, "Answer all compatibility questions before continuing."
 
 	default:
 		return http.StatusInternalServerError, messages.InternalServerErrorMsg

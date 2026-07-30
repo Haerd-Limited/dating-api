@@ -228,6 +228,7 @@ func main() {
 		profileService,
 		lookupRepo,
 		verificationService,
+		compatibilityService,
 		cfg.EnablePreregCap,
 		cfg.MaxParticipants,
 		cfg.MaxMaleParticipants,

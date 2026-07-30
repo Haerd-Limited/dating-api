@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/Haerd-Limited/dating-api/internal/auth"
+	"github.com/Haerd-Limited/dating-api/internal/compatibility"
 	lookupstorage "github.com/Haerd-Limited/dating-api/internal/lookup/storage"
 	"github.com/Haerd-Limited/dating-api/internal/media"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
@@ -49,16 +50,19 @@ type Service interface {
 	Prompts(ctx context.Context, uploadedPrompts domain.Prompts) (domain.StepResult, error)
 	// VideoVerification handles the video verification step in onboarding
 	VideoVerification(ctx context.Context, videoDetails domain.VideoVerification) (domain.StepResult, error)
+	// QuestionPacks verifies all compatibility question packs are complete and advances onboarding.
+	QuestionPacks(ctx context.Context, req domain.QuestionPacks) (domain.StepResult, error)
 }
 
 type onboardingService struct {
-	logger              *zap.Logger
-	userService         user.Service
-	authService         auth.Service
-	lookupRepo          lookupstorage.LookupRepository
-	mediaService        media.Service
-	profileService      profile.Service
-	verificationService verification.Service
+	logger               *zap.Logger
+	userService          user.Service
+	authService          auth.Service
+	lookupRepo           lookupstorage.LookupRepository
+	mediaService         media.Service
+	profileService       profile.Service
+	verificationService  verification.Service
+	compatibilityService compatibility.Service
 	// prereg caps
 	enablePreregCap       bool
 	maxTotalParticipants  int
@@ -74,6 +78,7 @@ func NewOnboardingService(
 	profileService profile.Service,
 	lookupRepo lookupstorage.LookupRepository,
 	verificationService verification.Service,
+	compatibilityService compatibility.Service,
 	enablePreregCap bool,
 	maxTotal int,
 	maxMale int,
@@ -87,6 +92,7 @@ func NewOnboardingService(
 		mediaService:          mediaService,
 		profileService:        profileService,
 		verificationService:   verificationService,
+		compatibilityService:  compatibilityService,
 		enablePreregCap:       enablePreregCap,
 		maxTotalParticipants:  maxTotal,
 		maxMaleParticipants:   maxMale,
@@ -100,6 +106,7 @@ var (
 	ErrNotEnoughPromptsProvided = errors.New("not enough prompts provided")
 	ErrTooManyPromptsProvided   = errors.New("too many prompts provided")
 	ErrPreregistrationCapped    = errors.New("preregistration cap reached")
+	ErrQuestionPacksIncomplete  = errors.New("all compatibility question packs must be completed")
 )
 
 const (
@@ -260,6 +267,16 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 				Prompts:                prompts,
 				VoicePromptsUploadUrls: voicePromptUploadUrls,
 			},
+		}, nil
+	case domain.OnboardingStepsQuestionPacks:
+		overview, err := os.compatibilityService.GetOverview(ctx, userID)
+		if err != nil {
+			return domain.StepResult{}, commonlogger.LogError(os.logger, "get question packs overview", err, zap.String("userID", userID))
+		}
+
+		return domain.StepResult{
+			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
+			Content:         overview,
 		}, nil
 	case domain.OnboardingStepsVideoVerification:
 		return domain.StepResult{
@@ -761,6 +778,33 @@ func (os *onboardingService) VideoVerification(ctx context.Context, videoDetails
 	onBoardingStep, err := os.bumpOnboardingStep(ctx, videoDetails.UserID, StepForVideoVerification)
 	if err != nil {
 		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", videoDetails.UserID), zap.String("step", string(StepForVideoVerification)))
+	}
+
+	return domain.StepResult{
+		OnboardingSteps: onBoardingStep.GenerateOnboardingSteps(),
+	}, nil
+}
+
+func (os *onboardingService) QuestionPacks(ctx context.Context, req domain.QuestionPacks) (domain.StepResult, error) {
+	const step = domain.OnboardingStepsQuestionPacks
+
+	err := os.ensureStep(ctx, req.UserID, step)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "ensure step", err, zap.String("userID", req.UserID), zap.String("step", string(step)))
+	}
+
+	complete, err := os.compatibilityService.IsQuestionPacksComplete(ctx, req.UserID)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "check question packs complete", err, zap.String("userID", req.UserID))
+	}
+
+	if !complete {
+		return domain.StepResult{}, ErrQuestionPacksIncomplete
+	}
+
+	onBoardingStep, err := os.bumpOnboardingStep(ctx, req.UserID, step)
+	if err != nil {
+		return domain.StepResult{}, commonlogger.LogError(os.logger, "bump onboarding step", err, zap.String("userID", req.UserID), zap.String("step", string(step)))
 	}
 
 	return domain.StepResult{

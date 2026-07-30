@@ -207,6 +207,21 @@ func (mr *MockServiceMockRecorder) Prompts(ctx, uploadedPrompts any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Prompts", reflect.TypeOf((*MockService)(nil).Prompts), ctx, uploadedPrompts)
 }
 
+// QuestionPacks mocks base method.
+func (m *MockService) QuestionPacks(ctx context.Context, req domain.QuestionPacks) (domain.StepResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QuestionPacks", ctx, req)
+	ret0, _ := ret[0].(domain.StepResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QuestionPacks indicates an expected call of QuestionPacks.
+func (mr *MockServiceMockRecorder) QuestionPacks(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QuestionPacks", reflect.TypeOf((*MockService)(nil).QuestionPacks), ctx, req)
+}
+
 // VideoVerification mocks base method.
 func (m *MockService) VideoVerification(ctx context.Context, videoDetails domain.VideoVerification) (domain.StepResult, error) {
 	m.ctrl.T.Helper()

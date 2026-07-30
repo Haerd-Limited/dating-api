@@ -213,6 +213,7 @@ func New(
 							r.Post("/languages", onboardingHandler.Languages())
 							r.Post("/photos", onboardingHandler.Photos())
 							r.Post("/prompts", onboardingHandler.Prompts())
+							r.Post("/question-packs", onboardingHandler.QuestionPacks())
 							r.Post("/video-verification", onboardingHandler.VideoVerification())
 						},
 					)

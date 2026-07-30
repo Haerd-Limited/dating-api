@@ -1,5 +1,7 @@
 package storage
 
+//go:generate mockgen -source=repository.go -destination=repository_mock.go -package=storage
+
 import (
 	"context"
 	"database/sql"
@@ -24,6 +26,7 @@ type CompatibilityRepository interface {
 	GetQuestionCategories(ctx context.Context) (entity.QuestionCategorySlice, error)
 	GetUserAnswers(ctx context.Context, userID string) (entity.UserAnswerSlice, error)
 	CountAnsweredByCategory(ctx context.Context, userID, categoryKey string) (int, error)
+	CountUserAnswers(ctx context.Context, userID string) (int, error)
 
 	HasMandatoryMismatch(ctx context.Context, aID, bID string) (bool, error)
 	PerspectiveSums(ctx context.Context, aID, bID string) (earned int, total int, overlap int, err error)
@@ -482,6 +485,22 @@ func (r *repository) CountAnsweredByCategory(ctx context.Context, userID, catego
 	var n int
 	if err := queries.Raw(q, userID, categoryKey).QueryRowContext(ctx, r.db).Scan(&n); err != nil {
 		return 0, fmt.Errorf("CountAnsweredByCategory: %w", err)
+	}
+
+	return n, nil
+}
+
+// CountUserAnswers returns how many questions the user has answered across all categories.
+func (r *repository) CountUserAnswers(ctx context.Context, userID string) (int, error) {
+	const q = `
+		SELECT COUNT(*)::int
+		FROM user_answers
+		WHERE user_id = $1::uuid;
+	`
+
+	var n int
+	if err := queries.Raw(q, userID).QueryRowContext(ctx, r.db).Scan(&n); err != nil {
+		return 0, fmt.Errorf("CountUserAnswers: %w", err)
 	}
 
 	return n, nil

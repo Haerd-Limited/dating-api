@@ -5,6 +5,10 @@ type VideoVerification struct {
 	VideoKey string
 }
 
+type QuestionPacks struct {
+	UserID string
+}
+
 type Prompts struct {
 	UploadedPrompts []VoicePrompt
 	UserID          string

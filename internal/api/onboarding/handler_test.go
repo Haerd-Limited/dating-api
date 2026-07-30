@@ -124,3 +124,78 @@ func TestPromptsHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestQuestionPacksHandler(t *testing.T) {
+	mockLog := zaptest.NewLogger(t)
+
+	cases := []struct {
+		name         string
+		withUserID   bool
+		setupMock    func(svc *onboarding.MockService)
+		wantStatus   int
+		wantContains string
+	}{
+		{
+			name:       "incomplete question packs returns 409",
+			withUserID: true,
+			setupMock: func(svc *onboarding.MockService) {
+				svc.EXPECT().
+					QuestionPacks(gomock.Any(), onboardingdomain.QuestionPacks{UserID: testUserID}).
+					Return(onboardingdomain.StepResult{}, onboarding.ErrQuestionPacksIncomplete)
+			},
+			wantStatus:   http.StatusConflict,
+			wantContains: "Answer all compatibility questions before continuing.",
+		},
+		{
+			name:       "incorrect step returns 400",
+			withUserID: true,
+			setupMock: func(svc *onboarding.MockService) {
+				svc.EXPECT().
+					QuestionPacks(gomock.Any(), onboardingdomain.QuestionPacks{UserID: testUserID}).
+					Return(onboardingdomain.StepResult{}, onboarding.ErrIncorrectStepCalled)
+			},
+			wantStatus:   http.StatusBadRequest,
+			wantContains: "Incorrect step called",
+		},
+		{
+			name:       "complete question packs returns 200",
+			withUserID: true,
+			setupMock: func(svc *onboarding.MockService) {
+				svc.EXPECT().
+					QuestionPacks(gomock.Any(), onboardingdomain.QuestionPacks{UserID: testUserID}).
+					Return(onboardingdomain.StepResult{
+						OnboardingSteps: onboardingdomain.OnboardingStepsVideoVerification.GenerateOnboardingSteps(),
+					}, nil)
+			},
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			mockService := onboarding.NewMockService(ctrl)
+			tc.setupMock(mockService)
+
+			var ctx context.Context
+			if tc.withUserID {
+				ctx = context.WithValue(context.Background(), commoncontext.UserIDKey, testUserID)
+			} else {
+				ctx = context.Background()
+			}
+
+			req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/api/v1/onboarding/question-packs", http.NoBody)
+			require.NoError(t, err)
+
+			recorder := httptest.NewRecorder()
+			h := NewOnboardingHandler(mockLog, mockService)
+			h.QuestionPacks().ServeHTTP(recorder, req)
+
+			assert.Equal(t, tc.wantStatus, recorder.Code, "body=%s", recorder.Body.String())
+
+			if tc.wantContains != "" {
+				assert.Contains(t, recorder.Body.String(), tc.wantContains)
+			}
+		})
+	}
+}

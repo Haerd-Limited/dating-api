@@ -1,5 +1,7 @@
 package compatibility
 
+//go:generate mockgen -source=service.go -destination=service_mock.go -package=compatibility
+
 import (
 	"context"
 	"fmt"
@@ -19,6 +21,7 @@ type Service interface {
 	SaveAnswer(ctx context.Context, cmd domain.SaveAnswerCommand) error
 	ComputeCompatibility(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.CompatibilitySummary, error)
 	ComputeCompatibilityDetailed(ctx context.Context, viewerID, targetID string, minOverlap int) (*domain.CompatibilitySummary, error)
+	IsQuestionPacksComplete(ctx context.Context, userID string) (bool, error)
 }
 
 type service struct {
@@ -92,6 +95,20 @@ func (s *service) GetOverview(ctx context.Context, userID string) (domain.Overvi
 	return domain.Overview{
 		QuestionPacks: questionPacks,
 	}, nil
+}
+
+func (s *service) IsQuestionPacksComplete(ctx context.Context, userID string) (bool, error) {
+	total, err := s.compatibilityRepo.CountQuestions(ctx, nil)
+	if err != nil {
+		return false, fmt.Errorf("count active questions: %w", err)
+	}
+
+	answered, err := s.compatibilityRepo.CountUserAnswers(ctx, userID)
+	if err != nil {
+		return false, fmt.Errorf("count user answers: %w", err)
+	}
+
+	return answered >= total, nil
 }
 
 // ComputeCompatibility calculates the viewer↔target compatibility summary.
