@@ -11,6 +11,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap/zaptest"
 
+	dailypicks "github.com/Haerd-Limited/dating-api/internal/dailypicks"
 	discoverdomain "github.com/Haerd-Limited/dating-api/internal/discover/domain"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	interactiondomain "github.com/Haerd-Limited/dating-api/internal/interaction/domain"
@@ -296,6 +297,82 @@ func TestGetLikesInvalidDirectionShortCircuits(t *testing.T) {
 	assert.ErrorIs(t, err, ErrInvalidDirection)
 	assert.Empty(t, likes.FreeToMatch)
 	assert.Empty(t, likes.SlotsFull)
+}
+
+func TestCreateSwipeMarksDailyPickDecided(t *testing.T) {
+	const (
+		actorID  = "actor-1"
+		targetID = "target-1"
+	)
+
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	repo := storage.NewMockInteractionRepository(ctrl)
+	dailyPicks := dailypicks.NewMockService(ctrl)
+	tx := &fakeTx{}
+
+	repo.EXPECT().CheckIfMatchable(ctx, actorID, targetID).Return(false, nil)
+	repo.EXPECT().InsertSwipe(ctx, gomock.Any(), gomock.Nil()).Return(nil)
+	dailyPicks.EXPECT().
+		MarkDecided(ctx, gomock.Nil(), actorID, targetID, constants.ActionPass).
+		Return(nil)
+
+	svc := &service{
+		logger:            zaptest.NewLogger(t),
+		uow:               &fakeUoW{tx: tx},
+		interactionRepo:   repo,
+		discoverService:   fakeDiscoverService{},
+		hub:               fakeBroadcaster{},
+		dailyPicksService: dailyPicks,
+	}
+
+	result, err := svc.CreateSwipe(ctx, interactiondomain.Swipe{
+		UserID:       actorID,
+		TargetUserID: targetID,
+		Action:       constants.ActionPass,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, ResultPassed, result)
+	assert.True(t, tx.committed)
+}
+
+func TestCreateSwipeMarkDecidedErrorDoesNotFailSwipe(t *testing.T) {
+	const (
+		actorID  = "actor-1"
+		targetID = "target-1"
+	)
+
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	repo := storage.NewMockInteractionRepository(ctrl)
+	dailyPicks := dailypicks.NewMockService(ctrl)
+	tx := &fakeTx{}
+
+	repo.EXPECT().CheckIfMatchable(ctx, actorID, targetID).Return(false, nil)
+	repo.EXPECT().InsertSwipe(ctx, gomock.Any(), gomock.Nil()).Return(nil)
+	dailyPicks.EXPECT().
+		MarkDecided(ctx, gomock.Nil(), actorID, targetID, constants.ActionPass).
+		Return(errors.New("daily picks unavailable"))
+
+	svc := &service{
+		logger:            zaptest.NewLogger(t),
+		uow:               &fakeUoW{tx: tx},
+		interactionRepo:   repo,
+		discoverService:   fakeDiscoverService{},
+		hub:               fakeBroadcaster{},
+		dailyPicksService: dailyPicks,
+	}
+
+	result, err := svc.CreateSwipe(ctx, interactiondomain.Swipe{
+		UserID:       actorID,
+		TargetUserID: targetID,
+		Action:       constants.ActionPass,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, ResultPassed, result)
+	assert.True(t, tx.committed)
 }
 
 // TestMaxActiveMatchesIsTwo pins the spec contract: HAE-411 requires a hard

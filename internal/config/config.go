@@ -38,6 +38,7 @@ type Config struct {
 	MaxMaleParticipants   int  `mapstructure:"MAX_MALE_PARTICIPANTS" yaml:"max_male_participants"`
 	MaxFemaleParticipants int  `mapstructure:"MAX_FEMALE_PARTICIPANTS" yaml:"max_female_participants"`
 	EnableConsentGate     bool `mapstructure:"ENABLE_CONSENT_GATE" yaml:"enable_consent_gate"`
+	EnableDailyPicks      bool `mapstructure:"ENABLE_DAILY_PICKS" yaml:"enable_daily_picks"`
 }
 
 // LoadConfig loads from OS env; if ENV=local (or unset) it will attempt to load .env first.
@@ -52,6 +53,7 @@ func LoadConfig() (*Config, error) {
 	viper.SetDefault("MAX_MALE_PARTICIPANTS", 750)
 	viper.SetDefault("MAX_FEMALE_PARTICIPANTS", 750)
 	viper.SetDefault("ENABLE_CONSENT_GATE", false)
+	viper.SetDefault("ENABLE_DAILY_PICKS", false)
 
 	// If ENV explicitly set to "local" (or not set in OS), try .env without failing hard.
 	rawEnv := os.Getenv("ENV")
@@ -89,6 +91,7 @@ func LoadConfig() (*Config, error) {
 		MaxMaleParticipants:          viper.GetInt("MAX_MALE_PARTICIPANTS"),
 		MaxFemaleParticipants:        viper.GetInt("MAX_FEMALE_PARTICIPANTS"),
 		EnableConsentGate:            viper.GetBool("ENABLE_CONSENT_GATE"),
+		EnableDailyPicks:             viper.GetBool("ENABLE_DAILY_PICKS"),
 	}
 
 	// Validate the config.

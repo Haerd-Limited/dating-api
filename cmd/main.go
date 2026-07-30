@@ -37,6 +37,8 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
 	"github.com/Haerd-Limited/dating-api/internal/conversation/score"
 	conversationstorage "github.com/Haerd-Limited/dating-api/internal/conversation/storage"
+	"github.com/Haerd-Limited/dating-api/internal/dailypicks"
+	dailypicksstorage "github.com/Haerd-Limited/dating-api/internal/dailypicks/storage"
 	"github.com/Haerd-Limited/dating-api/internal/dataexport"
 	dataexportstorage "github.com/Haerd-Limited/dating-api/internal/dataexport/storage"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
@@ -155,6 +157,7 @@ func main() {
 	}
 
 	compatibilityService := compatibility.NewCompatibilityService(logger, compatibilityRepo)
+	dailyPicksRepo := dailypicksstorage.NewRepository(db, logger)
 	adminCompatibilityRepo := compatibilitystorage.NewAdminCompatibilityRepository(db, logger)
 	adminCompatibilityService := compatibility.NewAdminService(logger, adminCompatibilityRepo)
 	awsService := aws.NewAwsService(logger, s3Uploader, s3Presigner, s3Reader, cfg.Env)
@@ -195,6 +198,8 @@ func main() {
 		logger.Sugar().Fatalf("failed to initialise notification service: %v", err)
 	}
 
+	dailyPicksService := dailypicks.NewService(logger, dailyPicksRepo, profileService, notificationService, unitOfWork)
+
 	notificationService.StartWeeklyRefreshScheduler(ctx)
 	verificationService := verification.NewVerificationService(rek.Client, cfg.AWSRekognitionRegion, verificationRepo, awsService, profileService, logger, hub, adminHub, notificationService)
 	matchSlotRepo := matchslotstorage.NewRepository(db)
@@ -205,7 +210,7 @@ func main() {
 	notificationPhoneNumbers := parsePhoneNumbers(cfg.NotificationPhoneNumbers)
 	authService := auth.NewAuthService(logger, cfg.JwtSecret, userService, authRepo, awsService, communicationService, cfg.Env, notificationPhoneNumbers)
 	safetyService := safety.NewService(logger, safetyRepo, conversationRepo, unitOfWork, hub, adminHub, matchSlotNotifier, userService, authService, notificationService)
-	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService, matchSlotNotifier)
+	interactionService := interaction.NewInteractionService(logger, profileService, conversationService, interactionRepo, discoverService, safetyService, unitOfWork, hub, notificationService, matchSlotNotifier, dailyPicksService)
 	mediaService := media.NewMediaService(logger, awsService, openaiService)
 	backendEngineerPhoneNumbers := parsePhoneNumbers(cfg.BackendEngineerPhoneNumbers)
 	frontendEngineerPhoneNumbers := parsePhoneNumbers(cfg.FrontendEngineerPhoneNumbers)
@@ -276,6 +281,10 @@ func main() {
 	runInsightsWeekly(ctx, logger, insSvc, insRepo)
 	runRetentionDaily(ctx, logger, retentionService)
 
+	if cfg.EnableDailyPicks {
+		runDailyPicksScheduler(ctx, logger, dailyPicksService)
+	}
+
 	mux := router.New(
 		logger,
 		cfg.JwtSecret,
@@ -306,6 +315,8 @@ func main() {
 		adminSessionService,
 		adminHub,
 		adminPresence,
+		cfg.EnableDailyPicks,
+		dailyPicksService,
 	)
 
 	// Start server with context
@@ -408,6 +419,45 @@ func runRetentionDaily(ctx context.Context, logger *zap.Logger, svc retention.Se
 			}
 
 			logger.Sugar().Infow("retention purge complete", "stats", stats)
+		}
+	}()
+}
+
+func runDailyPicksScheduler(ctx context.Context, logger *zap.Logger, svc dailypicks.Service) {
+	loc, err := time.LoadLocation("Europe/London")
+	if err != nil {
+		logger.Sugar().Errorw("load London location; daily picks scheduler not started", "error", err)
+		return
+	}
+
+	go func() {
+		for {
+			now := time.Now().In(loc)
+			next := time.Date(now.Year(), now.Month(), now.Day(), 19, 0, 0, 0, loc)
+
+			if !next.After(now) {
+				next = next.Add(24 * time.Hour)
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(time.Until(next)):
+			}
+
+			runCtx, cancel := context.WithTimeout(ctx, 30*time.Minute)
+
+			stats, err := svc.GenerateForAllUsers(runCtx)
+			if err != nil {
+				logger.Sugar().Errorw("daily picks generation failed", "error", err)
+			} else {
+				logger.Sugar().Infow("daily picks generated",
+					"usersProcessed", stats.UsersProcessed,
+					"batchesCreated", stats.BatchesCreated,
+					"notified", stats.Notified)
+			}
+
+			cancel()
 		}
 	}()
 }

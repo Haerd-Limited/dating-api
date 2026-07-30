@@ -15,6 +15,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/realtime/dto"
 	"github.com/Haerd-Limited/dating-api/internal/conversation"
 	conversationDomain "github.com/Haerd-Limited/dating-api/internal/conversation/domain"
+	"github.com/Haerd-Limited/dating-api/internal/dailypicks"
 	"github.com/Haerd-Limited/dating-api/internal/discover"
 	"github.com/Haerd-Limited/dating-api/internal/entity"
 	"github.com/Haerd-Limited/dating-api/internal/interaction/domain"
@@ -51,6 +52,7 @@ type service struct {
 	hub                 realtime.Broadcaster
 	notificationService notification.Service
 	matchSlotNotifier   matchslot.Notifier
+	dailyPicksService   dailypicks.Service
 }
 
 func NewInteractionService(
@@ -64,6 +66,7 @@ func NewInteractionService(
 	hub realtime.Broadcaster,
 	notificationService notification.Service,
 	matchSlotNotifier matchslot.Notifier,
+	dailyPicksService dailypicks.Service,
 ) Service {
 	return &service{
 		logger:              logger,
@@ -76,6 +79,7 @@ func NewInteractionService(
 		hub:                 hub,
 		notificationService: notificationService,
 		matchSlotNotifier:   matchSlotNotifier,
+		dailyPicksService:   dailyPicksService,
 	}
 }
 
@@ -180,6 +184,8 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			if err != nil {
 				return "", commonlogger.LogError(is.logger, "commit tx", err)
 			}
+
+			is.markDailyPickDecided(ctx, swipe.UserID, swipe.TargetUserID, swipe.Action)
 
 			evt := dto.Event{
 				ID:        realtime.NewEventID(),
@@ -337,6 +343,8 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 			return "", fmt.Errorf("commit tx: %w", err)
 		}
 
+		is.markDailyPickDecided(ctx, swipe.UserID, swipe.TargetUserID, swipe.Action)
+
 		evt := dto.Event{
 			ID:        realtime.NewEventID(),
 			Type:      "match.created",
@@ -388,6 +396,8 @@ func (is *service) CreateSwipe(ctx context.Context, swipe domain.Swipe) (string,
 		if err != nil {
 			return "", commonlogger.LogError(is.logger, "commit tx", err)
 		}
+
+		is.markDailyPickDecided(ctx, swipe.UserID, swipe.TargetUserID, swipe.Action)
 
 		return ResultPassed, nil
 	}
@@ -723,5 +733,15 @@ func (is *service) sendMatchNotifications(ctx context.Context, userA, userB, con
 
 	if err := is.notificationService.SendMatchNotification(ctx, userAProfile.DisplayName, userB, conversationID); err != nil {
 		is.logger.Sugar().Warnw("failed to send match notification", "error", err, "recipientID", userB, "counterpartID", userA)
+	}
+}
+
+func (is *service) markDailyPickDecided(ctx context.Context, userID, targetUserID, action string) {
+	if is.dailyPicksService == nil {
+		return
+	}
+
+	if err := is.dailyPicksService.MarkDecided(ctx, nil, userID, targetUserID, action); err != nil {
+		is.logger.Sugar().Warnw("mark daily pick decided", "error", err, "userID", userID)
 	}
 }

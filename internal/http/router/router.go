@@ -18,6 +18,7 @@ import (
 	"github.com/Haerd-Limited/dating-api/internal/api/compatibility"
 	apiconsent "github.com/Haerd-Limited/dating-api/internal/api/consent"
 	"github.com/Haerd-Limited/dating-api/internal/api/conversation"
+	"github.com/Haerd-Limited/dating-api/internal/api/dailypicks"
 	"github.com/Haerd-Limited/dating-api/internal/api/discover"
 	apifeedback "github.com/Haerd-Limited/dating-api/internal/api/feedback"
 	apiinsights "github.com/Haerd-Limited/dating-api/internal/api/insights"
@@ -36,6 +37,7 @@ import (
 	internalcompatibility "github.com/Haerd-Limited/dating-api/internal/compatibility"
 	internalconsent "github.com/Haerd-Limited/dating-api/internal/consent"
 	internalconversation "github.com/Haerd-Limited/dating-api/internal/conversation"
+	internaldailypicks "github.com/Haerd-Limited/dating-api/internal/dailypicks"
 	internaldataexport "github.com/Haerd-Limited/dating-api/internal/dataexport"
 	internaldiscover "github.com/Haerd-Limited/dating-api/internal/discover"
 	internalfeedback "github.com/Haerd-Limited/dating-api/internal/feedback"
@@ -85,6 +87,8 @@ func New(
 	adminSessionService internaladminsession.Service,
 	adminHub *adminrealtime.Hub,
 	adminPresence *adminrealtime.PresenceStore,
+	enableDailyPicks bool,
+	dailyPicksService internaldailypicks.Service,
 ) http.Handler {
 	// Create a new Chi router.
 	router := chi.NewRouter()
@@ -120,6 +124,7 @@ func New(
 	onboardingHandler := onboarding.NewOnboardingHandler(logger, onboardingService)
 	notificationHandler := apinotification.NewNotificationHandler(logger, notificationService)
 	discoverHandler := discover.NewDiscoverHandler(logger, discoverService)
+	dailyPicksHandler := dailypicks.NewHandler(logger, dailyPicksService)
 	interactionHandler := interaction.NewInteractionHandler(logger, interactionService)
 	conversationHandler := conversation.NewConversationHandler(logger, conversationService)
 	mediaHandler := media.NewMediaHandler(logger, mediaService)
@@ -218,11 +223,18 @@ func New(
 						},
 					)
 
-					r.Route("/discover", func(r chi.Router) {
-						r.Get("/", discoverHandler.GetDiscover())
-						r.Post("/filters", discoverHandler.GetDiscoverWithFilters())
-						r.Get("/preferences", discoverHandler.GetUserPreferences())
-					})
+					if enableDailyPicks {
+						r.Route("/daily-picks", func(r chi.Router) {
+							r.Get("/", dailyPicksHandler.GetDailyPicks())
+						})
+					} else {
+						r.Route("/discover", func(r chi.Router) {
+							r.Get("/", discoverHandler.GetDiscover())
+							r.Post("/filters", discoverHandler.GetDiscoverWithFilters())
+							r.Get("/preferences", discoverHandler.GetUserPreferences())
+						})
+					}
+
 					r.Get("/voice-prompts/{id}/transcript", profileHandler.GetVoicePromptTranscript())
 					r.Route("/vwh", func(r chi.Router) {
 						r.Get("/", discoverHandler.GetVoiceWorthHearing())

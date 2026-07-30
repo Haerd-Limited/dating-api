@@ -43,6 +43,7 @@ type Service interface {
 	SendAccountBannedNotification(ctx context.Context, recipientUserID string) error
 	SendSlotFreedNotification(ctx context.Context, freedUserID, freedUserName, recipientUserID string) error
 	SendWeeklyRefreshNotifications(ctx context.Context) error
+	SendDailyPicksNotification(ctx context.Context, recipientUserIDs []string) error
 	StartWeeklyRefreshScheduler(ctx context.Context)
 }
 
@@ -331,6 +332,37 @@ func (s *service) SendWeeklyRefreshNotifications(ctx context.Context) error {
 		return sendErr
 	*/
 	return nil
+}
+
+func (s *service) SendDailyPicksNotification(ctx context.Context, recipientUserIDs []string) error {
+	if s.disableMessaging || len(recipientUserIDs) == 0 {
+		return nil
+	}
+
+	msg := domain.Message{
+		Title: "Your two most compatible are ready",
+		Body:  "Two people we think you'll click with are waiting. Take a look.",
+		Data: map[string]string{
+			"type":          "daily_picks.ready",
+			"timestamp_utc": time.Now().UTC().Format(time.RFC3339),
+		},
+	}
+
+	var sendErr error
+
+	for start := 0; start < len(recipientUserIDs); start += weeklyBatchSize {
+		end := start + weeklyBatchSize
+		if end > len(recipientUserIDs) {
+			end = len(recipientUserIDs)
+		}
+
+		chunk := recipientUserIDs[start:end]
+		if err := s.sendToUsers(ctx, chunk, msg); err != nil {
+			sendErr = multierr.Append(sendErr, err)
+		}
+	}
+
+	return sendErr
 }
 
 func (s *service) StartWeeklyRefreshScheduler(ctx context.Context) {
