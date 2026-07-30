@@ -615,6 +615,7 @@ func (is *service) validateSwipe(ctx context.Context, swipe domain.Swipe, isMatc
 		// so the presence check must accept either depending on the message type.
 		isVoiceNote := swipe.MessageType != nil && *swipe.MessageType == constants.MessageTypeVoice
 		hasMessageContent := swipe.Message != nil
+
 		if isVoiceNote {
 			hasMessageContent = swipe.VoiceNoteURL != nil
 		}
