@@ -105,3 +105,12 @@ After plan approval, write or update the feature's ADR in `docs/decisions/`:
 2. Record every Step 2 decision and the options that were rejected.
 3. Call `.cursor/scripts/record-decision.sh` for each answered question (the AskQuestion hook may not have fired).
 4. Update the ADR index in `docs/decisions/README.md`.
+
+## Step 6: Close ADR when implementation ships
+
+After the plan is built and committed (same PR or immediate follow-up):
+
+1. Use the [`close-adr-on-ship` skill](.cursor/skills/close-adr-on-ship/SKILL.md).
+2. Update the feature ADR: `Implemented`, `Commit`, `## Implementation` section; remove "planned" wording.
+3. Run `.cursor/scripts/mark-adr-implemented.sh --adr docs/decisions/NNNN-slug.md --commit <sha> [--linear URL]`.
+4. Do not rewrite `## Decision` or rejected options — those record intent at decision time.

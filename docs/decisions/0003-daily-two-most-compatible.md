@@ -2,9 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-30
-- **Feature:** dailypicks (planned — not yet implemented)
+- **Feature:** dailypicks (implemented)
 - **Plan:** `daily-two-most-compatible_658fe2bb.plan.md` (lives outside the repo in `~/.cursor/plans/`)
-- **Linear:** —
+- **Linear:** [HAE-451](https://linear.app/haerd/issue/HAE-451/frontend-daily-two-most-compatible-screen-replace-discover) (FE handoff)
+- **Implemented:** 2026-07-30
+- **Commit:** `90a484a`
 - **Reconstructed:** partial (early design decisions yes; critique-round decisions no)
 
 ## Context
@@ -65,6 +67,24 @@ New `dailypicks` domain with batch state machine (`pending` → `revealed` → `
 - Thin pools may yield 1 or 0 picks (quality over fill rate).
 - `ReplacePendingBatch` must delete prior pending batch (cross-date partial unique index).
 - `resolveVisibleBatch` needs per-user advisory lock (writes on read path).
+
+## Implementation
+
+Shipped on `main` in commit `90a484a` behind `ENABLE_DAILY_PICKS` (default `false`).
+
+| Area | Location |
+|------|----------|
+| Migration | `migrations/20260730160000_create_daily_picks_tables.sql` |
+| Domain | `internal/dailypicks/` (service, storage, domain) |
+| API | `GET /api/v1/daily-picks` — `internal/api/dailypicks/` |
+| Swipe hook | `internal/interaction/service.go` — post-commit `MarkDecided` |
+| Notification | `daily_picks.ready` push in `internal/notification/service.go` |
+| Config flag | `ENABLE_DAILY_PICKS` in `internal/config/config.go` |
+| Router | Conditional `/daily-picks` vs `/discover` in `internal/http/router/router.go` |
+| Scheduler | 19:00 Europe/London in `cmd/main.go` (`runDailyPicksScheduler`) |
+| FE handoff | [HAE-451](https://linear.app/haerd/issue/HAE-451/frontend-daily-two-most-compatible-screen-replace-discover) |
+
+**Enable / deploy notes:** Run `make migrate-up` (and `make entity` for schema parity) in each environment before setting `ENABLE_DAILY_PICKS=true`. Flag off = no user-visible change; discover routes unchanged.
 
 ## Supersedes / Superseded by
 

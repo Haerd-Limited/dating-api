@@ -315,6 +315,7 @@ Product and architectural decisions are recorded in [`docs/decisions/`](docs/dec
 - **AskQuestion answers:** a hook at `.cursor/hooks/log-decision.sh` captures these automatically *when Cursor fires the hook* (currently broken for AskQuestion — see `docs/decisions/README.md`). Until fixed, call `.cursor/scripts/record-decision.sh` after every answered question.
 - **Prose decisions** ("go ahead", "approve", "use option 2"): always call `.cursor/scripts/record-decision.sh` — this is the only capture path that depends on agent compliance.
 - **Substantive decisions** need an ADR in `docs/decisions/` before the work is complete. Follow the [`decision-records` skill](.cursor/skills/decision-records/SKILL.md).
+- **When a planned feature is committed**, update its ADR to mark it implemented. Follow the [`close-adr-on-ship` skill](.cursor/skills/close-adr-on-ship/SKILL.md) and run `.cursor/scripts/mark-adr-implemented.sh` — same commit as the feature or an immediate follow-up.
 
 ## When in Doubt
 

@@ -17,7 +17,7 @@ The ledger is the audit trail. ADRs are what you read when revisiting a choice.
 |---|-------|--------|------|---------------|
 | [0001](0001-two-match-cap.md) | Two active match cap | Accepted | 2026-04-30 | yes |
 | [0002](0002-question-packs-onboarding-step.md) | Question packs as onboarding step | Accepted | 2026-07-30 | yes |
-| [0003](0003-daily-two-most-compatible.md) | Daily two most compatible | Accepted | 2026-07-30 | partial |
+| [0003](0003-daily-two-most-compatible.md) | Daily two most compatible (implemented) | Accepted | 2026-07-30 | partial |
 | [0004](0004-decision-records-system.md) | Decision records system | Accepted | 2026-07-30 | no |
 
 **Next free number:** 0005
@@ -56,6 +56,12 @@ Substantive decisions (schema, API contract, product behaviour, security, archit
 
 ```json
 {"type": "promotion", "ts": "2026-07-30T16:00:00Z", "question_id": "structure", "adr": "0004"}
+```
+
+When a feature is **built and committed**, mark its ADR implemented using the [`close-adr-on-ship` skill](../.cursor/skills/close-adr-on-ship/SKILL.md) and `.cursor/scripts/mark-adr-implemented.sh`. Append-only ledger record:
+
+```json
+{"type": "implementation", "ts": "2026-07-30T16:00:00Z", "adr": "0003-daily-two-most-compatible", "commit": "90a484a", "linear": "https://...", "implemented_date": "2026-07-30"}
 ```
 
 ## Reading the ledger

@@ -77,6 +77,16 @@ After Bucket A answers are in and the plan is patched:
 2. Call `record-decision.sh` for each answered question (hook will not have fired).
 3. Append promotion records for promoted decisions.
 
+## When implementation ships
+
+After the plan is built and committed, close the ADR — do not leave "planned" or "not implemented" on `main`:
+
+1. Follow [`close-adr-on-ship`](../close-adr-on-ship/SKILL.md).
+2. Update header (`Implemented`, `Commit`, `Linear`) and add `## Implementation`.
+3. Run `.cursor/scripts/mark-adr-implemented.sh` to append a ledger record.
+
+Decision sections stay unchanged; only implementation metadata is added.
+
 ## Status lifecycle
 
-`Proposed` → `Accepted` → `Superseded by NNNN`
+`Proposed` → `Accepted` → *(implemented — document in `## Implementation`)* → `Superseded by NNNN`
