@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/Haerd-Limited/dating-api/internal/compatibility"
+	compatibilitydomain "github.com/Haerd-Limited/dating-api/internal/compatibility/domain"
 	"github.com/Haerd-Limited/dating-api/internal/onboarding/domain"
 	"github.com/Haerd-Limited/dating-api/internal/user"
 	userdomain "github.com/Haerd-Limited/dating-api/internal/user/domain"
@@ -56,6 +57,47 @@ func TestOrderedStepsQuestionPacksPlacement(t *testing.T) {
 	assert.Less(t, promptsIdx, questionPacksIdx)
 	assert.Less(t, questionPacksIdx, videoIdx)
 	assert.Equal(t, domain.OnboardingStepsVideoVerification, domain.OnboardingStepsQuestionPacks.NextStep())
+}
+
+func TestGetUserCurrentStepMapsQuestionPacksOverview(t *testing.T) {
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	userSvc := user.NewMockService(ctrl)
+	compatSvc := compatibility.NewMockService(ctrl)
+
+	userSvc.EXPECT().
+		GetUser(ctx, questionPacksTestUserID).
+		Return(userAtOnboardingStep(domain.OnboardingStepsQuestionPacks), nil)
+	compatSvc.EXPECT().
+		GetOverview(ctx, questionPacksTestUserID).
+		Return(compatibilitydomain.Overview{
+			QuestionPacks: []compatibilitydomain.Pack{
+				{
+					CategoryKey:                "communication",
+					CategoryName:               "Communication",
+					NumberOfCompletedQuestions: 4,
+					TotalQuestions:             10,
+					ProgressPercent:            40,
+				},
+			},
+		}, nil)
+
+	svc := newQuestionPacksOnboardingService(t, userSvc, compatSvc)
+	result, err := svc.GetUserCurrentStep(ctx, questionPacksTestUserID)
+
+	require.NoError(t, err)
+	assert.Equal(t, domain.OnboardingStepsQuestionPacks, result.CurrentStep)
+	assert.Equal(t, domain.QuestionPacksContent{
+		QuestionPacks: []domain.QuestionPack{
+			{
+				CategoryKey:                "communication",
+				CategoryName:               "Communication",
+				NumberOfCompletedQuestions: 4,
+				TotalQuestions:             10,
+				ProgressPercent:            40,
+			},
+		},
+	}, result.Content)
 }
 
 func TestQuestionPacks(t *testing.T) {

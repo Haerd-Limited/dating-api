@@ -9,6 +9,18 @@ type QuestionPacks struct {
 	UserID string
 }
 
+type QuestionPacksContent struct {
+	QuestionPacks []QuestionPack
+}
+
+type QuestionPack struct {
+	CategoryKey                string
+	CategoryName               string
+	NumberOfCompletedQuestions int
+	TotalQuestions             int
+	ProgressPercent            float64
+}
+
 type Prompts struct {
 	UploadedPrompts []VoicePrompt
 	UserID          string

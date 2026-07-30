@@ -16,6 +16,18 @@ type OnboardingSteps struct {
 	TotalSteps   int      `json:"total_steps"`
 }
 
+type QuestionPacksContent struct {
+	QuestionPacks []QuestionPack `json:"question_packs"`
+}
+
+type QuestionPack struct {
+	CategoryKey                string  `json:"category_key"`
+	CategoryName               string  `json:"category_name"`
+	NumberOfCompletedQuestions int     `json:"number_of_completed_questions"`
+	TotalQuestions             int     `json:"total_questions"`
+	ProgressPercent            float64 `json:"progress_percent"`
+}
+
 type PhotosContent struct {
 	Prompts                []Prompt    `json:"prompts"`
 	VoicePromptsUploadUrls []UploadUrl `json:"prompt_upload_urls"`
