@@ -44,13 +44,37 @@ func ToOnboardingResponse(result domain.StepResult) dto.OnboardingResponse {
 			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
 			Content:         MapPhotosContentToDto(v),
 		}
+	case domain.QuestionPacksContent:
+		return dto.OnboardingResponse{
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         MapQuestionPacksContentToDto(v),
+		}
 	case nil: // for background,prompts and basics steps that don't populate content
 		return dto.OnboardingResponse{
 			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
 		}
 	default:
-		return dto.OnboardingResponse{}
+		return dto.OnboardingResponse{
+			OnboardingSteps: mapOnboardingStepsToDto(result.OnboardingSteps),
+			Content:         nil,
+		}
 	}
+}
+
+func MapQuestionPacksContentToDto(content domain.QuestionPacksContent) dto.QuestionPacksContent {
+	var questionPacks []dto.QuestionPack
+
+	for _, pack := range content.QuestionPacks {
+		questionPacks = append(questionPacks, dto.QuestionPack{
+			CategoryKey:                pack.CategoryKey,
+			CategoryName:               pack.CategoryName,
+			NumberOfCompletedQuestions: pack.NumberOfCompletedQuestions,
+			TotalQuestions:             pack.TotalQuestions,
+			ProgressPercent:            pack.ProgressPercent,
+		})
+	}
+
+	return dto.QuestionPacksContent{QuestionPacks: questionPacks}
 }
 
 func mapOnboardingStepsToDto(steps domain.OnboardingSteps) dto.OnboardingSteps {

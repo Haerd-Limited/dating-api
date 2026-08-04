@@ -276,7 +276,7 @@ func (os *onboardingService) GetUserCurrentStep(ctx context.Context, userID stri
 
 		return domain.StepResult{
 			OnboardingSteps: currentStep.GenerateOnboardingSteps(),
-			Content:         overview,
+			Content:         mapper.MapCompatibilityOverviewToQuestionPacksContent(overview),
 		}, nil
 	case domain.OnboardingStepsVideoVerification:
 		return domain.StepResult{
